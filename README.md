@@ -22,13 +22,23 @@ The system enforces access control using `ProtectedRoute` wrappers. Below are th
 
 ## 🚀 Tech Stack
 
-- **Core Framework:** [React 19](https://react.dev/) & [Vite 8](https://vite.dev/) (application bundler with Hot Module Replacement)
-- **Styling & Theme:** [Tailwind CSS v4](https://tailwindcss.com/) & `@tailwindcss/vite`
-- **Routing & Navigation:** NextJs 16 (routing and role-based route protection using NextJs middleware)
-- **Authentication:** Google OAuth 2.0 authentication
-- **Forms & Validation:** [React Hook Form](https://react-hook-form.com/) & [Yup](https://github.com/jquense/yup)
-- **Icons & Date Utilities:** [Lucide React](https://lucide.dev/) & [Day.js](https://day.js.org/) (icons, date handling, and publication scheduling)
-- **Code Quality & Linting:** ESLint 10 & Prettier
+- **Core Framework:** [Next.js 15](https://nextjs.org/) và [React 19](https://react.dev/), dùng App Router.
+- **Language:** TypeScript với `strict` type checking.
+- **Styling:** CSS thuần trong `src/styles/globals.css`.
+- **Routing & Navigation:** Dynamic locale routes (`/vi`, `/en`) và Next.js Middleware để điều hướng locale.
+- **Client state / server state:** React Context cho Auth và TanStack React Query cho query state.
+- **Data access:** Repository pattern. Hiện có dữ liệu mock để chạy độc lập; có thể thay bằng backend qua `NEXT_PUBLIC_API_URL`.
+
+## ▶️ Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Mở [http://localhost:3000/vi/dashboard](http://localhost:3000/vi/dashboard). Để kiểm tra production build, chạy `npm run build`.
+
+> Các repository hiện trả về dữ liệu demo. Khi backend sẵn sàng, cập nhật các hàm trong `src/repositories/` để dùng `apiClient` và tạo `.env.local` từ `.env.example`.
 ---
 
 ## 📂 Project Structure
