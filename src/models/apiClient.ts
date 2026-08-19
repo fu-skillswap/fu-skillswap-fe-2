@@ -1,6 +1,8 @@
 import type { ApiResponse, TokenResponse, ValidationError } from "@/models/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+// Vercel environment values may be pasted with wrapping quotes or a trailing newline.
+// Normalise the public API origin before composing request URLs.
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").trim().replace(/^['"]|['"]$/g, "");
 let memoryToken: string | null = null;
 let refreshPromise: Promise<string> | null = null;
 let unauthenticatedHandler: (() => void) | undefined;
