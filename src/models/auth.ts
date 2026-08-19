@@ -23,6 +23,12 @@ export interface StudentProfileRequest {
   studentCode: string; displayName?: string; avatarUrl?: string; campusId: string; programId: string;
   specializationId: string; semester: number; intakeYear: number; isAlumni: boolean; graduationYear?: number; bio?: string;
 }
+export interface StudentProfileResponse {
+  userId: string; email: string; studentCode: string; displayName?: string | null; avatarUrl?: string | null;
+  campus: CampusResponse; program: AcademicProgramResponse; specialization: SpecializationResponse;
+  semester: number; intakeYear: number; graduationYear?: number | null; bio?: string | null;
+  createdAt: string; updatedAt: string; alumni: boolean;
+}
 export type BackendRole = "MENTEE" | "MENTOR" | "ADMIN" | "SYSTEM_ADMIN";
 export interface UserMeResponse {
   publicId: string; email: string; fullName: string; avatarUrl?: string | null;
