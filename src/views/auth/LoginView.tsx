@@ -53,12 +53,16 @@ export function LoginView({ locale }: { locale: string }) {
           }}
         >
           <div className="figma-login-brand">
-            <img
-              src="https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png"
-              alt="SkillSwap"
-            />
-            <p>Kết nối. Học hỏi. Phát triển.</p>
+            <span className="flex flex-row items-center">
+              <img
+                src="https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png"
+                alt="SkillSwap"
+              />
+              <p className="font-bold text-lg">SkillSwap</p>
+            </span>
+            <p>Kết nối - Học hỏi - Phát triển.</p>
           </div>
+
 
           <div className="figma-login-tabs" aria-label="Authentication mode">
             <span className="figma-login-tab figma-login-tab-active">
@@ -67,30 +71,6 @@ export function LoginView({ locale }: { locale: string }) {
             <span className="figma-login-tab">Đăng ký</span>
           </div>
 
-          <section
-            className="figma-login-role-section"
-            aria-label="Đăng nhập với tư cách"
-          >
-            <h1>ĐĂNG NHẬP VỚI TƯ CÁCH</h1>
-            <div className="figma-login-role-grid">
-              {signInRoles.map((role) => (
-                <button
-                  key={role.id}
-                  type="button"
-                  className={
-                    selectedRole === role.id
-                      ? "figma-login-role figma-login-role-active"
-                      : "figma-login-role"
-                  }
-                  aria-pressed={selectedRole === role.id}
-                  onClick={() => setSelectedRole(role.id)}
-                >
-                  <strong>{role.name}</strong>
-                  <small>{role.description}</small>
-                </button>
-              ))}
-            </div>
-          </section>
 
           <div className="figma-login-fields">
             <TextField
