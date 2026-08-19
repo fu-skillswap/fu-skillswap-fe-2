@@ -86,6 +86,14 @@ export const dashboardStories = [
   { id: "member-thu-ha", name: "Thu Ha" },
 ];
 
-export function mergeMentors(repositoryMentors: Mentor[], seededMentors = demoMentors) {
-  return [...repositoryMentors, ...seededMentors.filter((seed) => !repositoryMentors.some((mentor) => mentor.id === seed.id))];
+export function mergeMentors(
+  repositoryMentors: Mentor[],
+  seededMentors = demoMentors,
+) {
+  return [
+    ...repositoryMentors,
+    ...seededMentors.filter(
+      (seed) => !repositoryMentors.some((mentor) => mentor.id === seed.id),
+    ),
+  ];
 }

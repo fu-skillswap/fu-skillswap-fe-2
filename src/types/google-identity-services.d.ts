@@ -22,7 +22,10 @@ interface Window {
     accounts: {
       id: {
         initialize: (configuration: GoogleIdConfiguration) => void;
-        renderButton: (parent: HTMLElement, options: GoogleButtonConfiguration) => void;
+        renderButton: (
+          parent: HTMLElement,
+          options: GoogleButtonConfiguration,
+        ) => void;
       };
     };
   };

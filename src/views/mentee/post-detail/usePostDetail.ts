@@ -12,7 +12,8 @@ export function usePostDetail(postId: string, initialComments: Comment[]) {
     const validationError = validateComment(content);
     if (validationError) return setError(validationError);
     const comment = await postRepo.addComment(postId, content);
-    setComments((items) => [...items, comment]); setError(undefined);
+    setComments((items) => [...items, comment]);
+    setError(undefined);
   };
   return { comments, error, submitComment };
 }

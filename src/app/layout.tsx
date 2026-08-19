@@ -9,7 +9,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   // Browser extensions can add attributes to <html> before React hydrates.
-  return <html lang="vi" suppressHydrationWarning><body>{children}</body></html>;
+  return (
+    <html lang="vi" suppressHydrationWarning>
+      <body>{children}</body>
+    </html>
+  );
 }
