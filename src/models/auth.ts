@@ -13,9 +13,9 @@ export interface ApiResponse<T> {
   retryAfterSeconds?: number;
 }
 
-export interface AuthorizationContextResponse { state: string; expiresAt: string; }
+export interface GoogleLoginNonceResponse { nonce: string; expiresAt: string; }
 export interface TokenResponse { accessToken: string; tokenType: string; }
-export interface GoogleLoginRequest { authorizationCode: string; redirectUri: string; codeVerifier: string; state: string; }
+export interface GoogleLoginRequest { credential: string; nonce: string; }
 export type BackendRole = "MENTEE" | "MENTOR" | "ADMIN" | "SYSTEM_ADMIN";
 export interface UserMeResponse {
   publicId: string; email: string; fullName: string; avatarUrl?: string | null;

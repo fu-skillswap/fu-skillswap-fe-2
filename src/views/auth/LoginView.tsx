@@ -13,7 +13,9 @@ const signInRoles = [
 ] as const;
 
 export function LoginView({ locale }: { locale: string }) {
-  const { error, loading, googleLoading, submit, loginWithGoogle } = useLoginLogic(locale);
+  const {
+    error, loading, googleLoading, submit, googleButtonRef,
+  } = useLoginLogic(locale);
   const [selectedRole, setSelectedRole] = useState<(typeof signInRoles)[number]["id"]>("mentee");
   return <main className="figma-login-page">
     <section className="figma-login-panel" aria-label="Log in">
@@ -47,7 +49,7 @@ export function LoginView({ locale }: { locale: string }) {
         {error && <p className="figma-login-error" role="alert">{error}</p>}
         <Button className="figma-login-submit" type="submit" disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
         <div className="figma-login-divider" aria-hidden="true"><span />hoặc<span /></div>
-        <button type="button" className="figma-login-google" disabled={googleLoading} onClick={() => { void loginWithGoogle(); }}><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.51h3.14c1.84-1.7 2.91-4.2 2.91-7.28Z" /><path fill="#34A853" d="M12 21.78c2.62 0 4.82-.87 6.44-2.23l-3.14-2.51c-.87.58-1.98.92-3.3.92-2.53 0-4.67-1.7-5.43-4v2.59H3.33a9.73 9.73 0 0 0 8.67 5.23Z" /><path fill="#FBBC05" d="M6.57 13.96A5.86 5.86 0 0 1 6.27 12c0-.68.12-1.34.3-1.96V7.45H3.33A9.73 9.73 0 0 0 2.27 12c0 1.57.38 3.06 1.06 4.55l3.24-2.59Z" /><path fill="#EA4335" d="M12 6.04c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.81 3.11 14.62 2.22 12 2.22a9.73 9.73 0 0 0-8.67 5.23l3.24 2.59c.76-2.3 2.9-4 5.43-4Z" /></svg>{googleLoading ? "Đang chuyển đến Google..." : "Đăng nhập bằng Google"}</button>
+        <div className="figma-login-google" aria-busy={googleLoading}><div ref={googleButtonRef} /></div>
         <p className="figma-login-signup">Chưa có tài khoản? <span>Đăng ký</span></p>
       </form>
     </section>
