@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoginLogic } from "./useLoginLogic";
 
 const signInRoles = [
@@ -14,9 +14,14 @@ const signInRoles = [
 
 export function LoginView({ locale }: { locale: string }) {
   const {
-    error, loading, googleLoading, submit, googleButtonRef,
+    error, clearError, loading, googleLoading, submit, googleButtonRef,
   } = useLoginLogic(locale);
   const [selectedRole, setSelectedRole] = useState<(typeof signInRoles)[number]["id"]>("mentee");
+  useEffect(() => {
+    if (!error) return;
+    const timeout = window.setTimeout(clearError, 7000);
+    return () => window.clearTimeout(timeout);
+  }, [clearError, error]);
   return <main className="figma-login-page">
     <section className="figma-login-panel" aria-label="Log in">
       <form className="figma-login-form" noValidate onSubmit={(event) => {
@@ -46,7 +51,6 @@ export function LoginView({ locale }: { locale: string }) {
           <TextField label="Mật khẩu" name="password" type="password" placeholder="••••••••" autoComplete="current-password" />
         </div>
         <span className="figma-login-forgot" aria-disabled="true">Quên mật khẩu?</span>
-        {error && <p className="figma-login-error" role="alert">{error}</p>}
         <Button className="figma-login-submit" type="submit" disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
         <div className="figma-login-divider" aria-hidden="true"><span />hoặc<span /></div>
         <div className="figma-login-google" aria-busy={googleLoading}><div ref={googleButtonRef} /></div>
@@ -67,5 +71,6 @@ export function LoginView({ locale }: { locale: string }) {
         </div>
       </div>
     </aside>
+    {error && <div className="figma-toast figma-toast-error" role="alert" aria-live="assertive"><span className="figma-toast-icon" aria-hidden="true">!</span><div><strong>Không thể đăng nhập</strong><p>{error}</p></div><button type="button" aria-label="Đóng thông báo" onClick={clearError}>×</button></div>}
   </main>;
 }
