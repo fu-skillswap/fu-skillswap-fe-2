@@ -1,19 +1,25 @@
 /**
  * @file MyProfileView.tsx
- * @description React Component màn hình Hồ sơ cá nhân của tôi (Mentee Profile View).
+ * @description React Component màn hình Hồ sơ cá nhân của tôi (Mentee Profile View) sử dụng React Hook Form & Yup.
  * Hiển thị thông tin sinh viên, ngành học, cơ sở, mã sinh viên và cho phép cập nhật tên hiển thị, bio.
  */
 
 "use client";
 
+import { useMenteeShell } from "@/components/domain/mentee-shell/MenteeShell";
 import { ApiClientError } from "@/models/apiClient";
 import type {
   StudentProfileRequest,
   StudentProfileResponse,
 } from "@/models/auth";
-import { studentProfileService } from "@/services/studentProfileService";
-import { useMenteeShell } from "@/components/domain/mentee-shell/MenteeShell";
+import {
+  editProfileSchema,
+  type EditProfileFormValues,
+} from "@/models/schemas/studentProfileSchema";
+import { studentProfileRepo } from "@/repositories/studentProfileRepo";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
 /** Tạo chữ viết tắt 2 ký tự làm Avatar */
 function initials(name: string) {
@@ -32,12 +38,12 @@ function initials(name: string) {
 /** Chuyển đổi dữ liệu hồ sơ cá nhân sang định dạng payload cập nhật */
 function profileRequest(
   profile: StudentProfileResponse,
-  values: { displayName: string; studentCode: string; bio: string },
+  values: EditProfileFormValues,
 ): StudentProfileRequest {
   return {
     studentCode: values.studentCode.trim(),
-    displayName: values.displayName.trim() || undefined,
-    bio: values.bio.trim() || undefined,
+    displayName: values.displayName?.trim() || undefined,
+    bio: values.bio?.trim() || undefined,
     avatarUrl: profile.avatarUrl || undefined,
     campusId: profile.campus.id,
     programId: profile.program.id,
@@ -60,22 +66,34 @@ export function MyProfileView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
-  const [values, setValues] = useState({
-    displayName: "",
-    studentCode: "",
-    bio: "",
+
+  const form = useForm<EditProfileFormValues>({
+    resolver: yupResolver(editProfileSchema),
+    defaultValues: {
+      displayName: "",
+      studentCode: "",
+      bio: "",
+    },
   });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = form;
 
   useEffect(() => {
     setHeaderTitle("Hồ sơ của tôi");
     return () => setHeaderTitle(undefined);
   }, [setHeaderTitle]);
+
   useEffect(() => {
     void (async () => {
       try {
-        const data = await studentProfileService.get();
+        const data = await studentProfileRepo.get();
         setProfile(data);
-        setValues({
+        reset({
           displayName: data.displayName || "",
           studentCode: data.studentCode,
           bio: data.bio || "",
@@ -90,7 +108,7 @@ export function MyProfileView() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [reset]);
 
   const displayName = useMemo(
     () =>
@@ -99,19 +117,17 @@ export function MyProfileView() {
       "SkillSwap Member",
     [profile],
   );
-  const update = (field: keyof typeof values, value: string) =>
-    setValues((current) => ({ ...current, [field]: value }));
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault();
+
+  const save = async (values: EditProfileFormValues) => {
     if (!profile) return;
     setSaving(true);
     setError(undefined);
     setNotice(undefined);
     try {
-      await studentProfileService.save(profileRequest(profile, values));
-      const updated = await studentProfileService.get();
+      await studentProfileRepo.save(profileRequest(profile, values));
+      const updated = await studentProfileRepo.get();
       setProfile(updated);
-      setValues({
+      reset({
         displayName: updated.displayName || "",
         studentCode: updated.studentCode,
         bio: updated.bio || "",
@@ -226,35 +242,33 @@ export function MyProfileView() {
               )}
             </>
           ) : (
-            <form className="figma-my-profile-form" onSubmit={save} noValidate>
+            <form
+              className="figma-my-profile-form"
+              onSubmit={handleSubmit(save)}
+              noValidate
+            >
               <label>
                 Tên hiển thị
-                <input
-                  value={values.displayName}
-                  onChange={(event) =>
-                    update("displayName", event.target.value)
-                  }
-                  maxLength={150}
-                />
+                <input maxLength={150} {...register("displayName")} />
+                {errors.displayName && (
+                  <small>{errors.displayName.message}</small>
+                )}
               </label>
               <label>
                 Mã số sinh viên
-                <input
-                  value={values.studentCode}
-                  onChange={(event) =>
-                    update("studentCode", event.target.value)
-                  }
-                  required
-                />
+                <input {...register("studentCode")} />
+                {errors.studentCode && (
+                  <small>{errors.studentCode.message}</small>
+                )}
               </label>
               <label>
                 Giới thiệu bản thân
                 <textarea
-                  value={values.bio}
-                  onChange={(event) => update("bio", event.target.value)}
                   rows={4}
                   placeholder="Mục tiêu học tập, kỹ năng và lĩnh vực bạn quan tâm…"
+                  {...register("bio")}
                 />
+                {errors.bio && <small>{errors.bio.message}</small>}
               </label>
               <p>
                 Thông tin học thuật được xác thực: {profile.campus.name} ·{" "}

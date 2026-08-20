@@ -1,6 +1,6 @@
 /**
  * @file LoginView.tsx
- * @description React Component giao diện trang Đăng nhập (Login Page View).
+ * @description React Component giao diện trang Đăng nhập (Login Page View) sử dụng React Hook Form.
  * Hiển thị form đăng nhập với lựa chọn vai trò (Mentee, Mentor, Admin, SysAdmin),
  * hỗ trợ Đăng nhập bằng Google Identity Services native button, và hiển thị bảng thông tin giới thiệu SkillSwap.
  */
@@ -25,10 +25,22 @@ const signInRoles = [
  * @param props.locale - Mã ngôn ngữ hiện tại của route (ví dụ: "vi", "en")
  */
 export function LoginView({ locale }: { locale: string }) {
-  const { error, clearError, loading, googleLoading, submit, googleButtonRef } =
-    useLoginLogic(locale);
+  const {
+    form,
+    error,
+    clearError,
+    loading,
+    googleLoading,
+    submit,
+    googleButtonRef,
+  } = useLoginLogic(locale);
   const [selectedRole, setSelectedRole] =
     useState<(typeof signInRoles)[number]["id"]>("mentee");
+
+  const {
+    register,
+    formState: { errors },
+  } = form;
 
   /** Tự động ẩn thông báo lỗi sau 7 giây */
   useEffect(() => {
@@ -40,18 +52,7 @@ export function LoginView({ locale }: { locale: string }) {
   return (
     <main className="figma-login-page">
       <section className="figma-login-panel" aria-label="Log in">
-        <form
-          className="figma-login-form"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            const data = new FormData(event.currentTarget);
-            void submit({
-              email: String(data.get("email")),
-              password: String(data.get("password")),
-            });
-          }}
-        >
+        <form className="figma-login-form" noValidate onSubmit={submit}>
           <div className="figma-login-brand">
             <span className="flex flex-row items-center">
               <img
@@ -73,17 +74,19 @@ export function LoginView({ locale }: { locale: string }) {
           <div className="figma-login-fields">
             <TextField
               label="Email"
-              name="email"
               type="email"
               placeholder="your@email.com"
               autoComplete="email"
+              error={errors.email?.message}
+              {...register("email")}
             />
             <TextField
               label="Mật khẩu"
-              name="password"
               type="password"
               placeholder="••••••••"
               autoComplete="current-password"
+              error={errors.password?.message}
+              {...register("password")}
             />
           </div>
           <span className="figma-login-forgot" aria-disabled="true">

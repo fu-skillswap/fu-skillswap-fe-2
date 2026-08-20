@@ -1,14 +1,19 @@
 /**
  * @file usePostDetail.ts
- * @description Custom React Hook quản lý việc gửi bình luận cho bài viết (Post Detail Hook).
+ * @description Custom React Hook quản lý việc gửi bình luận cho bài viết (Post Detail Hook) sử dụng React Hook Form & Yup.
  */
 
 "use client";
 
 import type { Comment } from "@/models/entities";
+import {
+  commentSchema,
+  type CommentFormValues,
+} from "@/models/schemas/postSchema";
 import { postRepo } from "@/repositories/postRepo";
-import { validateComment } from "@/models/schemas/postSchema";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 /**
  * Hook xử lý thêm bình luận mới và đồng bộ danh sách bình luận của bài viết.
@@ -17,19 +22,43 @@ import { useState } from "react";
  */
 export function usePostDetail(postId: string, initialComments: Comment[]) {
   const [comments, setComments] = useState(initialComments);
-  const [error, setError] = useState<string>();
+  const [serverError, setServerError] = useState<string>();
+
+  const form = useForm<CommentFormValues>({
+    resolver: yupResolver(commentSchema),
+    defaultValues: {
+      content: "",
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = form;
 
   /**
    * Validate và gửi bình luận mới
-   * @param content - Nội dung bình luận
+   * @param values - Form values từ React Hook Form
    */
-  const submitComment = async (content: string) => {
-    const validationError = validateComment(content);
-    if (validationError) return setError(validationError);
-    const comment = await postRepo.addComment(postId, content);
-    setComments((items) => [...items, comment]);
-    setError(undefined);
+  const submitComment = async (values: CommentFormValues) => {
+    setServerError(undefined);
+    try {
+      const comment = await postRepo.addComment(postId, values.content);
+      setComments((items) => [...items, comment]);
+      reset({ content: "" });
+    } catch {
+      setServerError("Không thể gửi bình luận lúc này. Vui lòng thử lại.");
+    }
   };
 
-  return { comments, error, submitComment };
+  return {
+    form,
+    register,
+    errors,
+    serverError,
+    comments,
+    submitComment: handleSubmit(submitComment),
+  };
 }

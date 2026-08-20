@@ -1,6 +1,6 @@
 /**
  * @file StudentOnboardingView.tsx
- * @description React Component màn hình Hoàn thiện Hồ sơ Sinh viên (Student Profile Onboarding View).
+ * @description React Component màn hình Hoàn thiện Hồ sơ Sinh viên (Student Profile Onboarding View) sử dụng React Hook Form & Yup.
  * Cho phép sinh viên tạo hồ sơ ban đầu bằng cách chọn cơ sở (Campus), ngành học, chuyên ngành,
  * mã sinh viên và các thông tin học tập cần thiết để hoàn tất quy trình onboarding.
  */
@@ -14,24 +14,16 @@ import type {
   CampusResponse,
   SpecializationResponse,
 } from "@/models/auth";
+import {
+  studentOnboardingSchema,
+  type StudentOnboardingFormValues,
+} from "@/models/schemas/studentProfileSchema";
 import { useAuth } from "@/providers/AuthProvider";
-import { studentProfileService } from "@/services/studentProfileService";
+import { studentProfileRepo } from "@/repositories/studentProfileRepo";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
-
-/** Cấu trúc các trường giá trị trong biểu mẫu Hồ sơ sinh viên */
-type FormValues = {
-  studentCode: string;
-  displayName: string;
-  campusId: string;
-  programId: string;
-  specializationId: string;
-  semester: string;
-  intakeYear: string;
-  isAlumni: boolean;
-  graduationYear: string;
-  bio: string;
-};
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 /**
  * Component hiển thị và xử lý form nhập Hồ sơ Sinh viên (Onboarding Step).
@@ -44,35 +36,44 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>();
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [campuses, setCampuses] = useState<CampusResponse[]>([]);
   const [programs, setPrograms] = useState<AcademicProgramResponse[]>([]);
   const [specializations, setSpecializations] = useState<
     SpecializationResponse[]
   >([]);
-  const [form, setForm] = useState<FormValues>({
-    studentCode: "",
-    displayName: user?.fullName ?? "",
-    campusId: "",
-    programId: "",
-    specializationId: "",
-    semester: "1",
-    intakeYear: String(new Date().getFullYear()),
-    isAlumni: false,
-    graduationYear: "",
-    bio: "",
+
+  const form = useForm<StudentOnboardingFormValues>({
+    resolver: yupResolver(studentOnboardingSchema) as any,
+    defaultValues: {
+      studentCode: "",
+      displayName: user?.fullName ?? "",
+      campusId: "",
+      programId: "",
+      specializationId: "",
+      semester: 1,
+      intakeYear: new Date().getFullYear(),
+      isAlumni: false,
+      graduationYear: undefined,
+      bio: "",
+    },
   });
 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = form;
+
+  const isAlumni = watch("isAlumni");
+  const selectedProgramId = watch("programId");
+
   useEffect(() => {
-    if (user?.fullName)
-      setForm((current) =>
-        current.displayName
-          ? current
-          : { ...current, displayName: user.fullName },
-      );
-  }, [user?.fullName]);
-  const update = <K extends keyof FormValues>(key: K, value: FormValues[K]) =>
-    setForm((current) => ({ ...current, [key]: value }));
+    if (user?.fullName) {
+      setValue("displayName", user.fullName);
+    }
+  }, [user?.fullName, setValue]);
 
   const openCreateForm = async () => {
     setIsCreating(true);
@@ -81,8 +82,8 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
     setIsLoadingCatalog(true);
     try {
       const [campusData, programData] = await Promise.all([
-        studentProfileService.getCampuses(),
-        studentProfileService.getPrograms(),
+        studentProfileRepo.getCampuses(),
+        studentProfileRepo.getPrograms(),
       ]);
       setCampuses(campusData);
       setPrograms(programData);
@@ -98,15 +99,14 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
   };
 
   const selectProgram = async (programId: string) => {
-    update("programId", programId);
-    update("specializationId", "");
+    setValue("programId", programId);
+    setValue("specializationId", "");
     setSpecializations([]);
     setError(undefined);
     if (!programId) return;
     try {
-      setSpecializations(
-        await studentProfileService.getSpecializations(programId),
-      );
+      const specs = await studentProfileRepo.getSpecializations(programId);
+      setSpecializations(specs);
     } catch (reason) {
       setError(
         reason instanceof ApiClientError
@@ -116,48 +116,27 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
     }
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submit = async (values: StudentOnboardingFormValues) => {
     setError(undefined);
-    setFieldErrors({});
-    const missing = [
-      "studentCode",
-      "campusId",
-      "programId",
-      "specializationId",
-    ].filter((key) => !form[key as keyof FormValues]);
-    if (missing.length) {
-      setError("Vui lòng điền đầy đủ các trường bắt buộc.");
-      return;
-    }
-    if (form.isAlumni && !form.graduationYear) {
-      setFieldErrors({ graduationYear: "Vui lòng nhập năm tốt nghiệp." });
-      return;
-    }
     setIsSubmitting(true);
     try {
-      await studentProfileService.save({
-        studentCode: form.studentCode.trim(),
-        displayName: form.displayName.trim() || undefined,
-        campusId: form.campusId,
-        programId: form.programId,
-        specializationId: form.specializationId,
-        semester: Number(form.semester),
-        intakeYear: Number(form.intakeYear),
-        isAlumni: form.isAlumni,
-        graduationYear: form.isAlumni ? Number(form.graduationYear) : undefined,
-        bio: form.bio.trim() || undefined,
+      await studentProfileRepo.save({
+        studentCode: values.studentCode.trim(),
+        displayName: values.displayName?.trim() || undefined,
+        campusId: values.campusId,
+        programId: values.programId,
+        specializationId: values.specializationId,
+        semester: Number(values.semester),
+        intakeYear: Number(values.intakeYear),
+        isAlumni: Boolean(values.isAlumni),
+        graduationYear: values.isAlumni && values.graduationYear
+          ? Number(values.graduationYear)
+          : undefined,
+        bio: values.bio?.trim() || undefined,
       });
       router.replace(`/${locale}/dashboard`);
     } catch (reason) {
       if (reason instanceof ApiClientError) {
-        setFieldErrors(
-          Object.fromEntries(
-            (reason.data ?? [])
-              .filter((item) => item.field)
-              .map((item) => [item.field as string, item.message]),
-          ),
-        );
         setError(reason.message);
       } else setError("Không thể lưu hồ sơ. Vui lòng thử lại.");
     } finally {
@@ -194,7 +173,11 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
               </button>
             </>
           ) : (
-            <form className="figma-profile-form" onSubmit={submit} noValidate>
+            <form
+              className="figma-profile-form"
+              onSubmit={handleSubmit(submit)}
+              noValidate
+            >
               <p>Điền thông tin sinh viên để hoàn tất hồ sơ Mentee.</p>
               {error && (
                 <p className="figma-profile-error" role="alert">
@@ -208,37 +191,27 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                   <label>
                     Mã số sinh viên
                     <input
-                      value={form.studentCode}
-                      onChange={(event) =>
-                        update("studentCode", event.target.value)
-                      }
                       placeholder="SE192621"
-                      required
+                      {...register("studentCode")}
                     />
-                    {fieldErrors.studentCode && (
-                      <small>{fieldErrors.studentCode}</small>
+                    {errors.studentCode && (
+                      <small>{errors.studentCode.message}</small>
                     )}
                   </label>
                   <label>
                     Tên hiển thị
                     <input
-                      value={form.displayName}
-                      onChange={(event) =>
-                        update("displayName", event.target.value)
-                      }
                       placeholder="Nguyễn Văn A"
+                      {...register("displayName")}
                     />
+                    {errors.displayName && (
+                      <small>{errors.displayName.message}</small>
+                    )}
                   </label>
                   <div className="figma-profile-grid">
                     <label>
                       Cơ sở
-                      <select
-                        value={form.campusId}
-                        onChange={(event) =>
-                          update("campusId", event.target.value)
-                        }
-                        required
-                      >
+                      <select {...register("campusId")}>
                         <option value="">Chọn cơ sở</option>
                         {campuses.map((campus) => (
                           <option key={campus.id} value={campus.id}>
@@ -246,18 +219,16 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                           </option>
                         ))}
                       </select>
-                      {fieldErrors.campusId && (
-                        <small>{fieldErrors.campusId}</small>
+                      {errors.campusId && (
+                        <small>{errors.campusId.message}</small>
                       )}
                     </label>
                     <label>
                       Ngành học
                       <select
-                        value={form.programId}
-                        onChange={(event) => {
-                          void selectProgram(event.target.value);
-                        }}
-                        required
+                        {...register("programId", {
+                          onChange: (e) => void selectProgram(e.target.value),
+                        })}
                       >
                         <option value="">Chọn ngành</option>
                         {programs.map((program) => (
@@ -266,23 +237,19 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                           </option>
                         ))}
                       </select>
-                      {fieldErrors.programId && (
-                        <small>{fieldErrors.programId}</small>
+                      {errors.programId && (
+                        <small>{errors.programId.message}</small>
                       )}
                     </label>
                   </div>
                   <label>
                     Chuyên ngành
                     <select
-                      value={form.specializationId}
-                      onChange={(event) =>
-                        update("specializationId", event.target.value)
-                      }
-                      disabled={!form.programId}
-                      required
+                      disabled={!selectedProgramId}
+                      {...register("specializationId")}
                     >
                       <option value="">
-                        {form.programId
+                        {selectedProgramId
                           ? "Chọn chuyên ngành"
                           : "Chọn ngành trước"}
                       </option>
@@ -295,19 +262,14 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                         </option>
                       ))}
                     </select>
-                    {fieldErrors.specializationId && (
-                      <small>{fieldErrors.specializationId}</small>
+                    {errors.specializationId && (
+                      <small>{errors.specializationId.message}</small>
                     )}
                   </label>
                   <div className="figma-profile-grid">
                     <label>
                       Học kỳ
-                      <select
-                        value={form.semester}
-                        onChange={(event) =>
-                          update("semester", event.target.value)
-                        }
-                      >
+                      <select {...register("semester", { valueAsNumber: true })}>
                         {Array.from({ length: 10 }, (_, value) => (
                           <option key={value} value={value}>
                             {value === 0
@@ -316,6 +278,9 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                           </option>
                         ))}
                       </select>
+                      {errors.semester && (
+                        <small>{errors.semester.message}</small>
+                      )}
                     </label>
                     <label>
                       Năm nhập học
@@ -323,49 +288,41 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                         type="number"
                         min="2000"
                         max={new Date().getFullYear()}
-                        value={form.intakeYear}
-                        onChange={(event) =>
-                          update("intakeYear", event.target.value)
-                        }
-                        required
+                        {...register("intakeYear", { valueAsNumber: true })}
                       />
+                      {errors.intakeYear && (
+                        <small>{errors.intakeYear.message}</small>
+                      )}
                     </label>
                   </div>
                   <label className="figma-profile-check">
                     <input
                       type="checkbox"
-                      checked={form.isAlumni}
-                      onChange={(event) =>
-                        update("isAlumni", event.target.checked)
-                      }
+                      {...register("isAlumni")}
                     />{" "}
                     Tôi đã tốt nghiệp
                   </label>
-                  {form.isAlumni && (
+                  {isAlumni && (
                     <label>
                       Năm tốt nghiệp
                       <input
                         type="number"
-                        min={Number(form.intakeYear) + 2}
-                        value={form.graduationYear}
-                        onChange={(event) =>
-                          update("graduationYear", event.target.value)
-                        }
-                        required
+                        min="2000"
+                        {...register("graduationYear", { valueAsNumber: true })}
                       />
-                      {fieldErrors.graduationYear && (
-                        <small>{fieldErrors.graduationYear}</small>
+                      {errors.graduationYear && (
+                        <small>{errors.graduationYear.message}</small>
                       )}
                     </label>
                   )}
                   <label>
                     Giới thiệu bản thân <em>(không bắt buộc)</em>
                     <textarea
-                      value={form.bio}
-                      onChange={(event) => update("bio", event.target.value)}
                       rows={3}
                       placeholder="Kỹ năng và mục tiêu học tập của bạn"
+                      {...register("bio")}
                     />
+                    {errors.bio && <small>{errors.bio.message}</small>}
                   </label>
                   <button
                     className="figma-onboarding-action"

@@ -1,6 +1,6 @@
 /**
  * @file PostDetailView.tsx
- * @description React Component trang Chi tiết bài viết & Bình luận (Post Detail & Comments View).
+ * @description React Component trang Chi tiết bài viết & Bình luận (Post Detail & Comments View) sử dụng React Hook Form.
  * Hiển thị nội dung chi tiết bài viết, tác giả, hashtag và khung thảo luận bình luận của cộng đồng.
  */
 
@@ -29,10 +29,9 @@ export function PostDetailView({
   initialComments,
   locale,
 }: PostDetailViewProps) {
-  const { comments, error, submitComment } = usePostDetail(
-    post.id,
-    initialComments,
-  );
+  const { register, errors, serverError, comments, submitComment } =
+    usePostDetail(post.id, initialComments);
+
   return (
     <main className="page-shell narrow">
       <Link href={`/${locale}/dashboard`} className="back-link">
@@ -59,22 +58,14 @@ export function PostDetailView({
             <p>{comment.content}</p>
           </article>
         ))}
-        <form
-          className="comment-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const form = event.currentTarget;
-            void submitComment(String(new FormData(form).get("content"))).then(
-              () => form.reset(),
-            );
-          }}
-        >
+        <form className="comment-form" onSubmit={submitComment} noValidate>
           <textarea
-            name="content"
             placeholder="Viết bình luận của bạn..."
             rows={4}
+            {...register("content")}
           />
-          {error && <p className="error">{error}</p>}
+          {errors.content && <p className="error">{errors.content.message}</p>}
+          {serverError && <p className="error">{serverError}</p>}
           <Button type="submit">Gửi bình luận</Button>
         </form>
       </section>

@@ -3,8 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "",
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "https://api.skillswap.asia/api/:path*",
+      },
+    ];
   },
 };
 

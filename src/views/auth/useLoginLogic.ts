@@ -1,6 +1,6 @@
 /**
  * @file useLoginLogic.ts
- * @description Custom React Hook quản lý logic Đăng nhập (Authentication Hook).
+ * @description Custom React Hook quản lý logic Đăng nhập (Authentication Hook) sử dụng React Hook Form & Yup.
  * Tự động tải động Google Identity Services SDK, tạo và quản lý mã Nonce dùng 1 lần,
  * render nút Google Sign-In native và điều hướng sau khi xác thực thành công.
  */
@@ -10,13 +10,15 @@
 import { onboardingDestination } from "@/lib/auth/google";
 import { ApiClientError } from "@/models/apiClient";
 import {
-  validateLogin,
+  loginSchema,
   type LoginFormValues,
 } from "@/models/schemas/authSchema";
 import { useAuth } from "@/providers/AuthProvider";
-import { authService } from "@/services/authService";
+import { authRepo } from "@/repositories/authRepo";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 
 /** URL thư viện SDK chính thức của Google Identity Services */
 const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
@@ -69,7 +71,7 @@ function messageForGoogleError(reason: unknown) {
  * Custom Hook điều khiển toàn bộ logic trang Đăng nhập.
  *
  * @param locale - Mã ngôn ngữ hiện tại (ví dụ: "vi", "en")
- * @returns Đối tượng chứa trạng thái lỗi, cờ loading, hàm submit form và `googleButtonRef`
+ * @returns Đối tượng chứa form state, trạng thái lỗi, cờ loading, hàm submit form và `googleButtonRef`
  */
 export function useLoginLogic(locale: string) {
   const router = useRouter();
@@ -85,10 +87,17 @@ export function useLoginLogic(locale: string) {
 
   completeGoogleLoginRef.current = completeGoogleLogin;
 
+  /** Khởi tạo React Hook Form với Yup Resolver */
+  const form = useForm<LoginFormValues>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
   /** Xử lý khi người dùng submit form đăng nhập bằng Email/Password truyền thống */
-  const submit = async (values: LoginFormValues) => {
-    const validationError = validateLogin(values);
-    if (validationError) return setError(validationError);
+  const submit = async () => {
     setLoading(true);
     setError("Đăng nhập bằng email và mật khẩu hiện chưa được hỗ trợ.");
     setLoading(false);
@@ -115,7 +124,7 @@ export function useLoginLogic(locale: string) {
 
     setGoogleLoading(true);
     try {
-      const { nonce } = await authService.getGoogleNonce();
+      const { nonce } = await authRepo.getGoogleNonce();
       nonceRef.current = nonce;
       await loadGoogleIdentityServices();
       if (!window.google?.accounts.id)
@@ -131,7 +140,7 @@ export function useLoginLogic(locale: string) {
           setGoogleLoading(true);
           setError(undefined);
           try {
-            await authService.loginWithGoogle({
+            await authRepo.loginWithGoogle({
               credential,
               nonce: loginNonce,
             });
@@ -172,5 +181,13 @@ export function useLoginLogic(locale: string) {
     };
   }, [configureGoogleButton]);
 
-  return { error, clearError, loading, googleLoading, submit, googleButtonRef };
+  return {
+    form,
+    error,
+    clearError,
+    loading,
+    googleLoading,
+    submit: form.handleSubmit(submit),
+    googleButtonRef,
+  };
 }

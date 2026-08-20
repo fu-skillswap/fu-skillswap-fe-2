@@ -1,11 +1,17 @@
 /**
  * @file apiClient.ts
- * @description HTTP Client trung tâm cho ứng dụng SkillSwap Frontend.
+ * @description HTTP Client trung tâm cho ứng dụng SkillSwap Frontend (sử dụng Axios).
  * Quản lý gửi request API, tự động đính kèm Access Token trong bộ nhớ (In-memory),
  * bóc tách dữ liệu từ API Envelope chuẩn của Backend, tự động làm mới token (Refresh Token) khi hết hạn (HTTP 401),
  * và xử lý lỗi chuẩn hóa qua ApiClientError.
  */
 
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import type {
   ApiResponse,
   TokenResponse,
@@ -73,7 +79,6 @@ export const setUnauthenticatedHandler = (handler?: () => void) => {
 
 /**
  * Kiểm tra path API có phù hợp để thực hiện tự động Refresh Token khi nhận lỗi HTTP 401 hay không.
- * Các path liên quan đến authentication chính không được phép refresh tự động để tránh vòng lặp vô tận.
  * @param path - Đường dẫn API (ví dụ: "/api/auth/refresh")
  */
 function canRefresh(path: string) {
@@ -84,98 +89,142 @@ function canRefresh(path: string) {
   );
 }
 
-/**
- * Hàm core thực hiện gọi HTTP Fetch và bóc tách dữ liệu theo chuẩn ApiResponse Envelope của Backend.
- * Tự động gắn Authorization Header và thực hiện làm mới Token nếu gặp lỗi HTTP 401.
- *
- * @template T Kiểu dữ liệu mong đợi của payload trả về trong `envelope.data`
- * @param path - Đường dẫn tương đối của endpoint API (ví dụ: "/api/auth/me")
- * @param init - Tùy chọn cấu hình cho fetch (method, body, headers,...)
- * @param retry - Cờ đánh dấu request này có phải là lần thử lại sau khi refresh token hay không
- * @returns Payload dữ liệu kiểu T thu được từ API
- * @throws {Error} Khi chưa cấu hình biến môi trường NEXT_PUBLIC_API_URL
- * @throws {ApiClientError} Khi request thất bại, phản hồi không thành công hoặc lỗi dữ liệu từ Backend
- */
-async function requestEnvelope<T>(
-  path: string,
-  init: RequestInit = {},
-  retry = false,
-): Promise<T> {
-  if (!API_URL) throw new Error("NEXT_PUBLIC_API_URL is not configured.");
+/** Axios instance chính cấu hình mặc định baseURL và withCredentials: true */
+const axiosInstance = axios.create({
+  baseURL: API_URL || undefined,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  const headers = new Headers(init.headers);
-  if (init.body && !headers.has("Content-Type"))
-    headers.set("Content-Type", "application/json");
-
-  if (memoryToken && !headers.has("Authorization"))
-    headers.set("Authorization", `Bearer ${memoryToken}`);
-
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers,
-    credentials: "include",
-  });
-
-  const envelope = (await response
-    .json()
-    .catch(() => null)) as ApiResponse<T> | null;
-
-  // Xử lý tự động làm mới Access Token khi gặp lỗi HTTP 401 Unauthorized
-  if (response.status === 401 && !retry && canRefresh(path)) {
-    try {
-      await refreshAccessToken();
-      return requestEnvelope<T>(path, init, true);
-    } catch {
-      unauthenticatedHandler?.();
+/** Request Interceptor: Tự động đính kèm Authorization Header nếu memoryToken tồn tại */
+axiosInstance.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    if (memoryToken && !config.headers.has("Authorization")) {
+      config.headers.set("Authorization", `Bearer ${memoryToken}`);
     }
-  }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
-  // Ném lỗi ApiClientError chuẩn hóa nếu HTTP không ok hoặc envelope không hợp lệ
-  if (!response.ok || !envelope || envelope.data === null) {
+/** Response Interceptor: Bóc tách ApiResponse Envelope & Tự động Refresh Token khi nhận lỗi 401 */
+axiosInstance.interceptors.response.use(
+  (response) => {
+    const envelope = response.data as ApiResponse<unknown> | null;
+    if (envelope && typeof envelope === "object" && "data" in envelope) {
+      if (
+        response.status >= 200 &&
+        response.status < 300 &&
+        envelope.data !== null
+      ) {
+        return envelope.data as any;
+      }
+      throw new ApiClientError(
+        response.status,
+        envelope.code ?? "ERROR",
+        envelope.message ?? "API request failed.",
+        Array.isArray(envelope.data) ? envelope.data : null,
+        envelope.retryAfterSeconds,
+      );
+    }
+    return response.data;
+  },
+  async (error: AxiosError<ApiResponse<unknown>>) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+    const status = error.response?.status ?? 500;
+    const path = originalRequest?.url ?? "";
+
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      canRefresh(path)
+    ) {
+      originalRequest._retry = true;
+      try {
+        const newToken = await refreshAccessToken();
+        if (originalRequest.headers) {
+          originalRequest.headers.set("Authorization", `Bearer ${newToken}`);
+        }
+        const res = await axiosInstance(originalRequest);
+        return res;
+      } catch (refreshErr) {
+        unauthenticatedHandler?.();
+        return Promise.reject(refreshErr);
+      }
+    }
+
+    const envelope = error.response?.data;
     throw new ApiClientError(
-      response.status,
-      envelope?.code ?? "NETWORK_ERROR",
-      envelope?.message ?? `API request failed (${response.status}).`,
+      status,
+      envelope?.code ?? error.code ?? "NETWORK_ERROR",
+      envelope?.message ?? error.message ?? `API request failed (${status}).`,
       Array.isArray(envelope?.data) ? envelope.data : null,
       envelope?.retryAfterSeconds,
     );
-  }
-
-  return envelope.data as T;
-}
+  },
+);
 
 /**
  * Thực hiện gửi Yêu cầu làm mới Access Token từ refreshToken cookie qua API `/api/auth/refresh`.
  * Sử dụng cơ chế gom request (Promise singleton) để tránh gửi trùng lặp nhiều request refresh.
  * @returns Promise chứa Access Token mới
  */
-async function refreshAccessToken() {
-  if (!refreshPromise)
-    refreshPromise = requestEnvelope<TokenResponse>(
-      "/api/auth/refresh",
-      { method: "POST" },
-      true,
-    )
-      .then(({ accessToken }) => {
-        setAccessToken(accessToken);
-        return accessToken;
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = apiClient<TokenResponse>("/api/auth/refresh", {
+      method: "POST",
+    })
+      .then((tokenRes) => {
+        setAccessToken(tokenRes.accessToken);
+        return tokenRes.accessToken;
       })
       .finally(() => {
         refreshPromise = null;
       });
+  }
   return refreshPromise;
 }
 
 /**
- * Hàm gọi API chính được xuất ra cho toàn bộ các dịch vụ frontend sử dụng.
+ * Hàm gọi API chính xuất ra cho toàn bộ Repositories và Services sử dụng.
+ * Tương thích cả Axios config lẫn RequestInit legacy (body/method).
  *
  * @template T Kiểu dữ liệu mong đợi trả về từ API
  * @param path - Đường dẫn API tương đối (ví dụ: "/api/me/onboarding-status")
- * @param init - Tùy chọn HTTP Fetch Request
- * @returns Dữ liệu kiểu T
+ * @param config - Tùy chọn Axios HTTP Request hoặc RequestInit
+ * @returns Dữ liệu kiểu T bóc tách từ ApiResponse
  */
-export const apiClient = <T>(path: string, init: RequestInit = {}) =>
-  requestEnvelope<T>(path, init);
+export const apiClient = async <T>(
+  path: string,
+  config: (AxiosRequestConfig & { body?: unknown }) | RequestInit = {},
+): Promise<T> => {
+  const method = (config.method ?? "GET").toString().toUpperCase();
+  let data = "data" in config ? config.data : undefined;
+  if (data === undefined && "body" in config && config.body) {
+    try {
+      data =
+        typeof config.body === "string"
+          ? JSON.parse(config.body)
+          : config.body;
+    } catch {
+      data = config.body;
+    }
+  }
+
+  const res = await axiosInstance.request<ApiResponse<T>>({
+    url: path,
+    method,
+    data,
+    headers: config.headers as any,
+  });
+
+  return res as unknown as T;
+};
 
 /**
  * Chủ động thực hiện làm mới phiên đăng nhập hiện tại từ cookie.

@@ -17,7 +17,7 @@ import {
   setAccessToken,
   setUnauthenticatedHandler,
 } from "@/models/apiClient";
-import { authService } from "@/services/authService";
+import { authRepo } from "@/repositories/authRepo";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 /** Dữ liệu và các hàm thao tác được cung cấp bởi AuthContext */
@@ -68,9 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const completeGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const me = await authService.getMe();
+      const me = await authRepo.getMe();
       setUser(toAuthenticatedUser(me));
-      return await authService.getOnboardingStatus();
+      return await authRepo.getOnboardingStatus();
     } finally {
       setIsLoading(false);
     }
@@ -84,9 +84,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsBootstrapping(true);
     try {
       await refreshSession();
-      const me = await authService.getMe();
+      const me = await authRepo.getMe();
       setUser(toAuthenticatedUser(me));
-      await authService.getOnboardingStatus();
+      await authRepo.getOnboardingStatus();
     } catch {
       clearSession();
     } finally {
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await authService.logout();
+      await authRepo.logout();
     } catch {
       /* Xóa cookie Backend dựa trên best-effort; state địa phương vẫn phải được dọn dẹp */
     } finally {
