@@ -1,6 +1,13 @@
+/**
+ * @file MentorDetail.tsx
+ * @description Component Trang Hồ sơ chi tiết Mentor (Mentor Profile Detail Component).
+ * Hiển thị tiểu sử, danh sách kỹ năng chuyên môn, chỉ số đánh giá và các gói dịch vụ tư vấn 1:1.
+ */
+
 import type { Mentor, MentorService } from "@/models/entities";
 import { getMentorServices } from "@/data/demoMentorServices";
 
+/** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {
   return name
     .split(" ")
@@ -9,19 +16,25 @@ function initials(name: string) {
     .join("");
 }
 
+/** Định dạng hiển thị mức giá S-Coins */
 function priceLabel(price?: number) {
   return price ? new Intl.NumberFormat("en-US").format(price) : "—";
 }
 
-export function MentorDetail({
-  mentor,
-  onBack,
-  onBook,
-}: {
+/** Props của MentorDetail Component */
+interface MentorDetailProps {
+  /** Chi tiết đối tượng Mentor */
   mentor: Mentor;
+  /** Callback quay lại danh sách Mentor */
   onBack: () => void;
+  /** Callback khi Mentee chọn một gói dịch vụ để đặt lịch */
   onBook: (service: MentorService) => void;
-}) {
+}
+
+/**
+ * Component hiển thị hồ sơ chi tiết Mentor kèm các gói dịch vụ tư vấn.
+ */
+export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
   const services = getMentorServices(mentor);
 
   return (

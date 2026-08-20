@@ -63,14 +63,12 @@ export function LoginView({ locale }: { locale: string }) {
             <p>Kết nối - Học hỏi - Phát triển.</p>
           </div>
 
-
           <div className="figma-login-tabs" aria-label="Authentication mode">
             <span className="figma-login-tab figma-login-tab-active">
               Đăng nhập
             </span>
             <span className="figma-login-tab">Đăng ký</span>
           </div>
-
 
           <div className="figma-login-fields">
             <TextField

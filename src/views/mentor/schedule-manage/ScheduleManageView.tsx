@@ -1,8 +1,17 @@
+/**
+ * @file ScheduleManageView.tsx
+ * @description React Component giao diện Quản lý lịch rảnh của Mentor (Schedule Management Page View).
+ * Cho phép Mentor thiết lập các mốc ngày/giờ khả dụng để Mentee có thể đặt lịch tư vấn.
+ */
+
 "use client";
 
 import { Button } from "@/components/ui/Button";
 import { useScheduleManage } from "./useScheduleManage";
 
+/**
+ * Component trang Quản lý lịch rảnh dành riêng cho Mentor.
+ */
 export function ScheduleManageView() {
   const { available, addSlot, removeSlot } = useScheduleManage();
   return (

@@ -1,5 +1,13 @@
+/**
+ * @file not-found.tsx
+ * @description Trang báo lỗi 404 Không tìm thấy trang (404 Not Found Page Component).
+ */
+
 import Link from "next/link";
 
+/**
+ * Component hiển thị màn hình 404 tùy chỉnh với hình ảnh linh vật Cú SkillSwap.
+ */
 export default function NotFound() {
   return (
     <main className="skillswap-not-found">

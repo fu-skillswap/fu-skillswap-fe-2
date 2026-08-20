@@ -1,6 +1,13 @@
+/**
+ * @file layout.tsx
+ * @description Layout gốc của ứng dụng (Root Layout Component).
+ * Nạp file stylesheet toàn cục `globals.css` và định nghĩa metadata mặc định cho ứng dụng SkillSwap.
+ */
+
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 
+/** Metadata mặc định của trang web */
 export const metadata: Metadata = {
   title: "SkillSwap",
   description: "University skill exchange platform",
@@ -9,6 +16,9 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Component RootLayout bọc toàn bộ mã HTML gốc của ứng dụng Next.js.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

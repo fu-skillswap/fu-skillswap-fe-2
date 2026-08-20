@@ -1,3 +1,9 @@
+/**
+ * @file DashboardNavigation.tsx
+ * @description Component Thanh điều hướng bên trái (Sidebar Navigation Component).
+ * Chứa Logo thương hiệu và các liên kết điều hướng Bảng tin, Tìm Mentor, Ví S-Coin và Lịch hẹn.
+ */
+
 "use client";
 
 import Link from "next/link";
@@ -5,6 +11,7 @@ import { usePathname } from "next/navigation";
 
 type NavIcon = "home" | "search" | "wallet" | "calendar";
 
+/** Helper render SVG Icon tương ứng cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
   if (name === "search") {
     return (
@@ -39,8 +46,12 @@ function Icon({ name }: { name: NavIcon }) {
   );
 }
 
+/**
+ * Component thanh điều hướng chính ở cạnh trái màn hình Dashboard.
+ */
 export function DashboardNavigation({ locale }: { locale: string }) {
   const pathname = usePathname();
+
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
   const dashboardActive =

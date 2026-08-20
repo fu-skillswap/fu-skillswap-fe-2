@@ -83,20 +83,49 @@ export interface SpecializationResponse {
 
 /** Yêu cầu cập nhật Hồ sơ sinh viên (Onboarding Step) */
 export interface StudentProfileRequest {
+  /** Mã số sinh viên (ví dụ: SE123456) */
   studentCode: string;
+  /** Tên hiển thị */
   displayName?: string;
+  /** Ảnh đại diện */
   avatarUrl?: string;
+  /** ID Cơ sở / Campus đại học */
   campusId: string;
+  /** ID Chương trình / Ngành học */
   programId: string;
+  /** ID Chuyên ngành hẹp */
   specializationId: string;
+  /** Học kỳ hiện tại */
   semester: number;
+  /** Khóa học / Năm nhập học */
   intakeYear: number;
+  /** Đã tốt nghiệp hay chưa */
   isAlumni: boolean;
+  /** Năm tốt nghiệp (nếu là Alumni) */
   graduationYear?: number;
+  /** Giới thiệu bản thân ngắn */
   bio?: string;
 }
 
-/** Các vai trò người dùng hệ thống trên Backend */
+/** Phản hồi thông tin hồ sơ sinh viên đầy đủ từ hệ thống Backend */
+export interface StudentProfileResponse {
+  userId: string;
+  email: string;
+  studentCode: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  campus: CampusResponse;
+  program: AcademicProgramResponse;
+  specialization: SpecializationResponse;
+  semester: number;
+  intakeYear: number;
+  graduationYear?: number | null;
+  bio?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  alumni: boolean;
+}
+
 export type BackendRole = "MENTEE" | "MENTOR" | "ADMIN" | "SYSTEM_ADMIN";
 
 /** Phản hồi thông tin cá nhân người dùng (`/api/auth/me`) */

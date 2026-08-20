@@ -1,3 +1,9 @@
+/**
+ * @file PostCard.tsx
+ * @description Component Thẻ hiển thị Bài viết trên Bảng tin (Post Card Component).
+ * Hiển thị tác giả, tiêu đề, nội dung, hình ảnh đính kèm, hashtag, lượt like, bình luận xem trước.
+ */
+
 "use client";
 
 import Link from "next/link";
@@ -7,13 +13,18 @@ import { usePostCard } from "./usePostCard";
 const mascotSrc =
   "https://fang-squad-69023135.figma.site/assets/Koko-CeSODsvb.png";
 
-export function PostCard({
-  post,
-  locale = "vi",
-}: {
+/** Props của PostCard Component */
+interface PostCardProps {
+  /** Thông tin đối tượng bài viết */
   post: Post;
+  /** Mã ngôn ngữ hiện tại */
   locale?: string;
-}) {
+}
+
+/**
+ * Component thẻ bài viết hiển thị trên dòng thời gian Bảng tin.
+ */
+export function PostCard({ post, locale = "vi" }: PostCardProps) {
   const { likes, liked, toggleLike } = usePostCard(post.likes);
   const initials = post.author.name
     .split(" ")

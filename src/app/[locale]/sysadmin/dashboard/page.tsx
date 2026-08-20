@@ -1,8 +1,18 @@
+/**
+ * @file page.tsx
+ * @description Route Dashboard Quản trị Hệ thống (`/[locale]/sysadmin/dashboard`).
+ * Hiển thị tình trạng hoạt động của các dịch vụ hệ thống (Web App, API, Database).
+ */
+
 const services = [
   ["Web application", "Hoạt động"],
   ["API backend", "Chưa kết nối"],
   ["Database", "Chưa kết nối"],
 ];
+
+/**
+ * Server Component cho trang Dashboard Quản trị Hệ thống (System Admin).
+ */
 export default function SysadminDashboard() {
   return (
     <main className="page-shell">

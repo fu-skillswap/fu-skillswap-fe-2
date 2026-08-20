@@ -9,6 +9,14 @@ import { MentorDetail } from "@/components/domain/mentor-detail/MentorDetail";
 import { useEffect, useMemo, useState } from "react";
 import { useMentorBooking } from "./useMentorBooking";
 
+/**
+ * @file MentorBookingView.tsx
+ * @description React Component màn hình Danh sách & Đặt lịch Mentor (Mentor Discovery & Booking Page View).
+ * Cung cấp ô tìm kiếm, bộ lọc danh mục (PM, Tech, Design, Data, Marketing, Leadership),
+ * xem hồ sơ chi tiết Mentor và bật Modal quy trình Đặt lịch tư vấn 1:1.
+ */
+
+/** Bản đồ từ khóa lĩnh vực phục vụ việc lọc Mentor */
 const categoryKeywords = {
   PM: ["product"],
   Tech: ["react", "typescript", "system design"],
@@ -18,6 +26,7 @@ const categoryKeywords = {
   Leadership: ["leadership", "team management"],
 } as const;
 
+/** Kiểm tra Mentor có thuộc danh mục kỹ năng tìm kiếm hay không */
 function matchesCategory(
   mentor: Mentor,
   category: NonNullable<Mentor["category"]>,
@@ -30,13 +39,18 @@ function matchesCategory(
   );
 }
 
-export function MentorBookingView({
-  mentors,
-  locale,
-}: {
+/** Props cho MentorBookingView Component */
+interface MentorBookingViewProps {
+  /** Danh sách Mentor ban đầu */
   mentors: Mentor[];
+  /** Mã locale ngôn ngữ */
   locale: string;
-}) {
+}
+
+/**
+ * Component trang Tìm kiếm và Đặt lịch hẹn với Mentor.
+ */
+export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
   const [detailMentor, setDetailMentor] = useState<Mentor>();
   const [bookingMentor, setBookingMentor] = useState<Mentor>();
   const [bookingService, setBookingService] = useState<MentorService>();

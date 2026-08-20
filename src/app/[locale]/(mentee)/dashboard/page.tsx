@@ -1,7 +1,16 @@
+/**
+ * @file page.tsx
+ * @description Route Bảng tin cộng đồng Mentee (`/[locale]/dashboard`).
+ * Tải danh sách bài viết thảo luận và tin nổi bật từ `postRepo` để render giao diện Bảng tin.
+ */
+
 import { PostCard } from "@/components/domain/post-card/PostCard";
 import { dashboardStories } from "@/data/demoMentors";
 import { postRepo } from "@/repositories/postRepo";
 
+/**
+ * Server Component cho trang Bảng tin chính.
+ */
 export default async function DashboardPage({
   params,
 }: {

@@ -1,9 +1,16 @@
+/**
+ * @file BookingFlow.tsx
+ * @description Component quy trình Đặt lịch tư vấn Mentoring (Booking Flow Component).
+ * Bao gồm tóm tắt thông tin Mentor, gói dịch vụ, bảng chọn khung giờ và xác nhận đặt lịch hẹn.
+ */
+
 "use client";
 
 import type { Mentor, MentorService } from "@/models/entities";
 import { Button } from "@/components/ui/Button";
 import { BookingCalendar } from "@/components/domain/booking-calendar/BookingCalendar";
 
+/** Tạo chữ cái viết tắt từ tên người dùng cho avatar */
 function initials(name: string) {
   return name
     .split(" ")
@@ -12,16 +19,43 @@ function initials(name: string) {
     .join("");
 }
 
+/** Định dạng hiển thị giá điểm S-Coins */
 function priceLabel(price?: number) {
   return price ? new Intl.NumberFormat("en-US").format(price) : "—";
 }
 
+/** Định dạng hiển thị chuỗi ngày giờ từ slot ISO */
 function slotLabel(slot?: string) {
   if (!slot) return "Select an available time slot";
   const [date, time] = slot.split("T");
   return `${date.split("-").reverse().join("/")} · ${time}`;
 }
 
+/** Props của BookingFlow Component */
+interface BookingFlowProps {
+  /** Thông tin Mentor */
+  mentor: Mentor;
+  /** Thông tin gói dịch vụ Mentoring được chọn */
+  service: MentorService;
+  /** Slot khung giờ đã chọn */
+  slot?: string;
+  /** Callback khi đổi slot khung giờ */
+  onSlotChange: (slot: string) => void;
+  /** Callback xác nhận đặt lịch */
+  onConfirm: () => void;
+  /** Cờ trạng thái đang gửi request xác nhận */
+  isSubmitting: boolean;
+  /** Thông báo lỗi nếu có */
+  error?: string;
+  /** Cờ đánh dấu đã đặt thành công */
+  success: boolean;
+  /** Callback đóng modal quy trình đặt */
+  onClose: () => void;
+}
+
+/**
+ * Component hiển thị form giao diện các bước đặt lịch hẹn tư vấn.
+ */
 export function BookingFlow({
   mentor,
   service,
@@ -32,17 +66,7 @@ export function BookingFlow({
   error,
   success,
   onClose,
-}: {
-  mentor: Mentor;
-  service: MentorService;
-  slot?: string;
-  onSlotChange: (slot: string) => void;
-  onConfirm: () => void;
-  isSubmitting: boolean;
-  error?: string;
-  success: boolean;
-  onClose: () => void;
-}) {
+}: BookingFlowProps) {
   if (success)
     return (
       <section className="figma-booking-success" aria-live="polite">

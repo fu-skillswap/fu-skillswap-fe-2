@@ -1,3 +1,9 @@
+/**
+ * @file MenteeShell.tsx
+ * @description Component Khung giao diện chính dành cho khu vực Mentee (Mentee Dashboard Layout Shell).
+ * Cung cấp Context điều chỉnh tiêu đề thanh Topbar động theo từng trang con.
+ */
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -7,6 +13,7 @@ import { MenteeHeader } from "@/components/domain/mentee-shell/MenteeHeader";
 import { useAuth } from "@/providers/AuthProvider";
 
 type MenteeShellContextValue = {
+  /** Hàm tùy chỉnh tiêu đề Topbar từ các view con */
   setHeaderTitle: (title?: string) => void;
 };
 
@@ -14,12 +21,15 @@ const MenteeShellContext = createContext<MenteeShellContextValue | undefined>(
   undefined,
 );
 
+/** Helper tự động xác định tiêu đề hiển thị mặc định theo path */
 function routeTitle(pathname: string) {
+  if (pathname.endsWith("/profile")) return "Hồ sơ của tôi";
   if (pathname.includes("/mentor-booking")) return "Tìm Mentor";
   if (pathname.includes("/post-detail/")) return "Chi tiết bài viết";
   return "Bảng tin";
 }
 
+/** Hook tùy chỉnh tiêu đề Topbar dành cho các component con nằm trong MenteeShell */
 export function useMenteeShell() {
   const context = useContext(MenteeShellContext);
   if (!context)
@@ -27,6 +37,9 @@ export function useMenteeShell() {
   return context;
 }
 
+/**
+ * Component bọc layout chuẩn của Mentee (Sidebar navigation, topbar header, mascot trợ lý).
+ */
 export function MenteeShell({
   children,
   locale,

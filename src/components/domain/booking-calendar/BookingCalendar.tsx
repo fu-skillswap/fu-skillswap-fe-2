@@ -1,7 +1,14 @@
+/**
+ * @file BookingCalendar.tsx
+ * @description Component Lịch đặt giờ Mentoring (Booking Calendar Component).
+ * Hiển thị ma trận ngày trong tuần và các khung giờ khả dụng cho phép Mentee click để chọn lịch hẹn.
+ */
+
 "use client";
 
 import { useBookingCalendar } from "./useBookingCalendar";
 
+/** Danh sách các ngày trong tuần mẫu cho lịch đặt */
 const days = [
   { label: "Mon", date: "2026-08-17" },
   { label: "Tue", date: "2026-08-18" },
@@ -11,7 +18,11 @@ const days = [
   { label: "Sat", date: "2026-08-22" },
   { label: "Sun", date: "2026-08-23" },
 ];
+
+/** Danh sách các mốc giờ làm việc trong ngày */
 const times = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"];
+
+/** Tập hợp các slot khung giờ rảnh khả dụng của Mentor */
 const availableSlots = new Set([
   "2026-08-17T09:00",
   "2026-08-18T09:00",
@@ -25,13 +36,18 @@ const availableSlots = new Set([
   "2026-08-21T15:00",
 ]);
 
-export function BookingCalendar({
-  value,
-  onSelect,
-}: {
+/** Props khởi tạo cho BookingCalendar Component */
+interface BookingCalendarProps {
+  /** Giá trị slot khung giờ đang được chọn */
   value?: string;
+  /** Callback nhận khung giờ mới được chọn */
   onSelect: (value: string) => void;
-}) {
+}
+
+/**
+ * Component hiển thị ma trận chọn khung giờ tư vấn.
+ */
+export function BookingCalendar({ value, onSelect }: BookingCalendarProps) {
   const { slot, setSlot } = useBookingCalendar(value);
   const selectSlot = (nextSlot: string) => {
     setSlot(nextSlot);

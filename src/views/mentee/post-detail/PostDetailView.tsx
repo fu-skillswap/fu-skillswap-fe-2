@@ -1,3 +1,9 @@
+/**
+ * @file PostDetailView.tsx
+ * @description React Component trang Chi tiết bài viết & Bình luận (Post Detail & Comments View).
+ * Hiển thị nội dung chi tiết bài viết, tác giả, hashtag và khung thảo luận bình luận của cộng đồng.
+ */
+
 "use client";
 
 import Link from "next/link";
@@ -5,15 +11,24 @@ import type { Comment, Post } from "@/models/entities";
 import { Button } from "@/components/ui/Button";
 import { usePostDetail } from "./usePostDetail";
 
+/** Props của PostDetailView Component */
+interface PostDetailViewProps {
+  /** Chi tiết đối tượng bài viết */
+  post: Post;
+  /** Danh sách các bình luận ban đầu của bài viết */
+  initialComments: Comment[];
+  /** Mã locale ngôn ngữ */
+  locale: string;
+}
+
+/**
+ * Component hiển thị chi tiết bài viết và form bình luận.
+ */
 export function PostDetailView({
   post,
   initialComments,
   locale,
-}: {
-  post: Post;
-  initialComments: Comment[];
-  locale: string;
-}) {
+}: PostDetailViewProps) {
   const { comments, error, submitComment } = usePostDetail(
     post.id,
     initialComments,

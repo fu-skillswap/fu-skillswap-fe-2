@@ -1,8 +1,18 @@
+/**
+ * @file page.tsx
+ * @description Route Dashboard quản trị viên (`/[locale]/admin/dashboard`).
+ * Hiển thị các chỉ số tổng quan hệ thống và danh sách công việc cần xử lý.
+ */
+
 const metrics = [
   ["Người dùng hoạt động", "1,248"],
   ["Bài viết chờ duyệt", "16"],
   ["Lịch hẹn tuần này", "84"],
 ];
+
+/**
+ * Server Component cho trang Dashboard Quản trị viên (Admin).
+ */
 export default function AdminDashboard() {
   return (
     <main className="page-shell">

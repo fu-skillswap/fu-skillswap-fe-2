@@ -10,11 +10,18 @@ import type {
   CampusResponse,
   SpecializationResponse,
   StudentProfileRequest,
+  StudentProfileResponse,
 } from "@/models/auth";
 
 export const studentProfileService = {
   /**
-   * Truy xuất danh sách tất cả các Cơ sở / Campus đại học khả dụng.
+   * Truy xuất thông tin Hồ sơ sinh viên của người dùng hiện tại.
+   * @returns Promise chứa thông tin Hồ sơ sinh viên (`StudentProfileResponse`)
+   */
+  get: () => apiClient<StudentProfileResponse>("/api/me/student-profile"),
+
+  /**
+   * Truy xuất danh sách các Cơ sở / Campus đại học.
    * @returns Promise chứa mảng danh sách Campus (`CampusResponse[]`)
    */
   getCampuses: () => apiClient<CampusResponse[]>("/api/campuses"),
