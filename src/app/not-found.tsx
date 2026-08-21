@@ -16,7 +16,11 @@ export default function NotFound() {
         aria-labelledby="not-found-title"
       >
         <div className="skillswap-not-found-copy">
-          <p>SKILLSWAP</p>
+          <img
+            src="/images/SkillSwap_Logo_Text.png"
+            alt="SKILLSWAP"
+            className="skillswap-not-found-brand-text"
+          />
           <h1 id="not-found-title">
             4<span>0</span>4
           </h1>
@@ -29,7 +33,7 @@ export default function NotFound() {
         </div>
         <img
           // THAY ẢNH CÚ
-          src="/images/skillswap-owl-404.png"
+          src="/images/Koko_404.png"
           alt="Cú linh vật SkillSwap đội mũ tốt nghiệp"
         />
       </section>

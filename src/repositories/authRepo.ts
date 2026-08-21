@@ -39,7 +39,7 @@ export const authRepo = {
   },
 
   /**
-   * Lấy thông tin cá nhân chi tiết của người dùng đang đăng nhập hiện tại.
+   * Lấy thông tin cá nhân chi tiết của người dùng đang đăng nhập hiện tại từ API `/api/auth/me`.
    * @returns Promise chứa thông tin người dùng (`UserMeResponse`)
    */
   getMe() {
@@ -47,7 +47,7 @@ export const authRepo = {
   },
 
   /**
-   * Lấy trạng thái hoàn thiện hồ sơ (Onboarding Status) của người dùng hiện tại.
+   * Lấy trạng thái hoàn thiện hồ sơ (Onboarding Status) của người dùng hiện tại (`/api/me/onboarding-status`).
    * Giúp hệ thống quyết định điều hướng người dùng tới bước hoàn thiện hồ sơ sinh viên hay mentor.
    * @returns Promise chứa chi tiết các mốc hồ sơ đã hoàn thành
    */
@@ -56,7 +56,8 @@ export const authRepo = {
   },
 
   /**
-   * Gửi yêu cầu đăng xuất người dùng đến Backend để vô hiệu hóa phiên làm việc và xóa cookie HttpOnly.
+   * Gửi yêu cầu đăng xuất người dùng đến Backend (`POST /api/auth/logout`)
+   * để vô hiệu hóa phiên làm việc, thu hồi Refresh Token và xóa cookie HttpOnly.
    */
   logout() {
     return apiClient<unknown>("/api/auth/logout", { method: "POST" });
@@ -81,5 +82,3 @@ export const authRepo = {
   },
 };
 
-/** Export alias authService để đảm bảo tương thích hoàn toàn nếu nơi nào chưa đổi import */
-export const authService = authRepo;

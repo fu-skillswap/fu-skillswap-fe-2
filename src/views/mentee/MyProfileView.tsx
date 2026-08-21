@@ -108,7 +108,8 @@ export function MyProfileView() {
         setLoading(false);
       }
     })();
-  }, [reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const displayName = useMemo(
     () =>
@@ -122,10 +123,10 @@ export function MyProfileView() {
     if (!profile) return;
     setSaving(true);
     setError(undefined);
-    setNotice(undefined);
     try {
-      await studentProfileRepo.save(profileRequest(profile, values));
-      const updated = await studentProfileRepo.get();
+      const updated = await studentProfileRepo.save(
+        profileRequest(profile, values),
+      );
       setProfile(updated);
       reset({
         displayName: updated.displayName || "",

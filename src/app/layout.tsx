@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "SkillSwap",
   description: "University skill exchange platform",
   icons: {
-    icon: "https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png",
+    icon: "/images/SkillSwapLogo.png",
   },
 };
 

@@ -10,8 +10,7 @@ import Link from "next/link";
 import type { Post } from "@/models/entities";
 import { usePostCard } from "./usePostCard";
 
-const mascotSrc =
-  "https://fang-squad-69023135.figma.site/assets/Koko-CeSODsvb.png";
+const mascotSrc = "/images/Koko.png";
 
 /** Props của PostCard Component */
 interface PostCardProps {

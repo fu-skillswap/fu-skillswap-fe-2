@@ -18,6 +18,7 @@ import {
   setUnauthenticatedHandler,
 } from "@/models/apiClient";
 import { authRepo } from "@/repositories/authRepo";
+import { studentProfileRepo } from "@/repositories/studentProfileRepo";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 /** Dữ liệu và các hàm thao tác được cung cấp bởi AuthContext */
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearSession = () => {
     setAccessToken(null);
     setUser(null);
+    studentProfileRepo.clearCache();
   };
 
   /**

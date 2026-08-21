@@ -46,10 +46,24 @@ function Icon({ name }: { name: NavIcon }) {
   );
 }
 
+/** Props của DashboardNavigation Component */
+interface DashboardNavigationProps {
+  /** Mã locale ngôn ngữ hiện tại */
+  locale: string;
+  /** Cờ đánh dấu sidebar đang mở trên mobile/tablet */
+  isOpen?: boolean;
+  /** Callback đóng sidebar */
+  onClose?: () => void;
+}
+
 /**
  * Component thanh điều hướng chính ở cạnh trái màn hình Dashboard.
  */
-export function DashboardNavigation({ locale }: { locale: string }) {
+export function DashboardNavigation({
+  locale,
+  isOpen,
+  onClose,
+}: DashboardNavigationProps) {
   const pathname = usePathname();
 
   const dashboardHref = `/${locale}/dashboard`;
@@ -60,21 +74,45 @@ export function DashboardNavigation({ locale }: { locale: string }) {
   const mentorActive = pathname.startsWith(mentorHref);
 
   return (
-    <aside className="figma-sidebar">
-      <Link
-        href={dashboardHref}
-        className="figma-brand"
-        aria-label="SkillSwap newsfeed"
-      >
-        <img
-          src="https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png"
-          alt=""
-        />
-        <span>SkillSwap</span>
-      </Link>
+    <aside
+      className={`figma-sidebar ${
+        isOpen ? "figma-sidebar-open" : ""
+      }`}
+    >
+      <div className="figma-sidebar-header">
+        <Link
+          href={dashboardHref}
+          className="figma-brand"
+          aria-label="SkillSwap newsfeed"
+          onClick={onClose}
+        >
+          <img
+            src="/images/SkillSwap_Logo_Text.png"
+            alt="SkillSwap"
+            className="figma-brand-logo-text"
+          />
+        </Link>
+        <button
+          type="button"
+          className="figma-sidebar-close-btn"
+          onClick={onClose}
+          aria-label="Đóng thanh điều hướng"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M18 6 6 18M6 6l12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
       <nav className="figma-navigation" aria-label="Main navigation">
         <Link
           href={dashboardHref}
+          onClick={onClose}
           className={
             dashboardActive
               ? "figma-nav-link figma-nav-link-active"
@@ -86,6 +124,7 @@ export function DashboardNavigation({ locale }: { locale: string }) {
         </Link>
         <Link
           href={mentorHref}
+          onClick={onClose}
           className={
             mentorActive
               ? "figma-nav-link figma-nav-link-active"

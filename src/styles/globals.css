@@ -288,16 +288,18 @@ p {
 }
 
 .figma-login-brand {
-  margin-bottom: 28px;
+  margin-bottom: 14px;
   display: grid;
   justify-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
-.figma-login-brand img {
-  width: 80px;
-  height: 80px;
+.figma-login-brand .figma-login-logo-text {
+  height: 120px;
+  width: auto;
+  max-width: 100%;
   object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 149, 246, 0.15));
 }
 
 .figma-login-brand p {
@@ -1015,7 +1017,7 @@ textarea:focus,
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 10;
+  z-index: 100;
   background-color: #fff;
   background-image: repeating-linear-gradient(
     -45deg,
@@ -1025,27 +1027,50 @@ textarea:focus,
     #0095f606 19px
   );
   border-right: 1px solid var(--figma-border);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.figma-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.figma-sidebar-close-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--figma-muted);
+  cursor: pointer;
+  margin-right: 8px;
+  border-radius: 8px;
+}
+
+.figma-sidebar-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--figma-text);
 }
 
 .figma-brand {
   height: 87px;
-  padding: 16px 20px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   color: var(--figma-blue);
   border-bottom: 1px dashed #d8edfb;
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: -0.4px;
-  line-height: 1;
 }
 
-.figma-brand img {
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
+.figma-brand .figma-brand-logo-text {
+  height: 68px;
+  width: auto;
+  max-width: 200px;
   object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 149, 246, 0.12));
 }
 
 .figma-navigation {
@@ -1123,6 +1148,55 @@ textarea:focus,
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.figma-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.figma-sidebar-toggle-btn {
+  display: none;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--figma-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.figma-sidebar-toggle-btn:hover {
+  background: #f0f7ff;
+  border-color: var(--figma-blue);
+  color: var(--figma-blue);
+}
+
+.figma-sidebar-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Backdrop che mờ màn hình khi mở Sidebar Drawer trên màn hình nhỏ */
+.figma-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.figma-sidebar-backdrop-open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .figma-topbar {
@@ -1442,7 +1516,7 @@ textarea:focus,
   z-index: 0;
   opacity: 0.06;
   transform: translateX(-50%);
-  background: url("https://fang-squad-69023135.figma.site/assets/Koko-CeSODsvb.png")
+  background: url("/images/Koko.png")
     center top / contain no-repeat;
   content: "";
   pointer-events: none;
@@ -2755,14 +2829,48 @@ textarea:focus,
   font-weight: 700;
 }
 
+@media (max-width: 1024px) {
+  .figma-sidebar-toggle-btn {
+    display: inline-flex;
+  }
+
+  .figma-sidebar {
+    width: 260px;
+    z-index: 100;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 24px rgb(15 23 42 / 18%);
+  }
+
+  .figma-sidebar.figma-sidebar-open {
+    transform: translateX(0);
+  }
+
+  .figma-sidebar-close-btn {
+    display: inline-flex;
+  }
+
+  .figma-content-pane {
+    width: 100vw;
+    margin-left: 0;
+  }
+
+  .figma-feed::before {
+    left: 50%;
+  }
+}
+
 @media (max-width: 650px) {
   .figma-topbar {
-    padding: 0 6px;
-    justify-content: flex-end;
+    padding: 0 12px;
+    justify-content: space-between;
   }
 
   .figma-topbar h1 {
-    display: none;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 160px;
   }
 
   .figma-topbar-actions {
@@ -3068,12 +3176,11 @@ textarea:focus,
   box-shadow: 0 20px 60px rgb(0 149 246 / 14%);
 }
 
-.skillswap-not-found-copy > p:first-child {
-  margin: 0 0 6px;
-  color: #0095f6;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
+.skillswap-not-found-brand-text {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 4px;
 }
 
 .skillswap-not-found-copy h1 {

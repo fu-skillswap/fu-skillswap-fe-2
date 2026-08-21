@@ -54,13 +54,11 @@ export function LoginView({ locale }: { locale: string }) {
       <section className="figma-login-panel" aria-label="Log in">
         <form className="figma-login-form" noValidate onSubmit={submit}>
           <div className="figma-login-brand">
-            <span className="flex flex-row items-center">
-              <img
-                src="https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png"
-                alt="SkillSwap"
-              />
-              <p className="font-bold text-lg">SkillSwap</p>
-            </span>
+            <img
+              src="/images/SkillSwap_Logo_Text.png"
+              alt="SkillSwap"
+              className="figma-login-logo-text"
+            />
             <p>Kết nối - Học hỏi - Phát triển.</p>
           </div>
 

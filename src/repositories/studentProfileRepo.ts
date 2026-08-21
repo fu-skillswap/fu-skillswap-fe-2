@@ -13,21 +13,41 @@ import type {
   StudentProfileResponse,
 } from "@/models/auth";
 
+let profilePromise: Promise<StudentProfileResponse> | null = null;
+let cachedProfile: StudentProfileResponse | null = null;
+
 export const studentProfileRepo = {
   /**
-   * Truy xuất thông tin Hồ sơ sinh viên của người dùng hiện tại.
+   * Lấy hồ sơ học thuật của tôi (GET `/api/me/student-profile`).
+   * Tự động gom các request gọi đồng thời (Promise Deduplication) và lưu bộ nhớ tạm (In-memory Cache).
+   * @param forceRefresh - Đặt true nếu muốn ép buộc gọi lại API mới nhất từ Backend
    * @returns Promise chứa thông tin Hồ sơ sinh viên (`StudentProfileResponse`)
    */
-  get: () => apiClient<StudentProfileResponse>("/api/me/student-profile"),
+  get: (forceRefresh = false): Promise<StudentProfileResponse> => {
+    if (cachedProfile && !forceRefresh) {
+      return Promise.resolve(cachedProfile);
+    }
+    if (!profilePromise || forceRefresh) {
+      profilePromise = apiClient<StudentProfileResponse>("/api/me/student-profile")
+        .then((data) => {
+          cachedProfile = data;
+          return data;
+        })
+        .finally(() => {
+          profilePromise = null;
+        });
+    }
+    return profilePromise;
+  },
 
   /**
-   * Truy xuất danh sách các Cơ sở / Campus đại học.
+   * Truy xuất danh sách các Cơ sở / Campus đại học (`/api/campuses`).
    * @returns Promise chứa mảng danh sách Campus (`CampusResponse[]`)
    */
   getCampuses: () => apiClient<CampusResponse[]>("/api/campuses"),
 
   /**
-   * Truy xuất danh sách tất cả các Chương trình / Ngành đào tạo.
+   * Truy xuất danh sách tất cả các Chương trình / Ngành đào tạo (`/api/academic-programs`).
    * @returns Promise chứa mảng danh sách Ngành đào tạo (`AcademicProgramResponse[]`)
    */
   getPrograms: () =>
@@ -44,16 +64,24 @@ export const studentProfileRepo = {
     ),
 
   /**
-   * Lưu hoặc cập nhật thông tin Hồ sơ sinh viên của người dùng hiện tại (Onboarding Step).
+   * Lưu hoặc cập nhật hồ sơ học thuật của tôi (PUT `/api/me/student-profile`).
+   * Cập nhật ngay bộ nhớ tạm sau khi lưu thành công.
    * @param profile - Đối tượng dữ liệu hồ sơ sinh viên (`StudentProfileRequest`)
-   * @returns Promise kết quả từ API Backend
+   * @returns Promise chứa dữ liệu Hồ sơ sinh viên đã cập nhật (`StudentProfileResponse`)
    */
-  save: (profile: StudentProfileRequest) =>
-    apiClient<unknown>("/api/me/student-profile", {
+  save: async (profile: StudentProfileRequest): Promise<StudentProfileResponse> => {
+    const updated = await apiClient<StudentProfileResponse>("/api/me/student-profile", {
       method: "PUT",
       data: profile,
-    }),
+    });
+    cachedProfile = updated;
+    return updated;
+  },
+
+  /** Xóa cache dữ liệu hồ sơ cá nhân trong bộ nhớ tạm (dùng khi đăng xuất) */
+  clearCache: () => {
+    cachedProfile = null;
+    profilePromise = null;
+  },
 };
 
-/** Export alias studentProfileService để duy trì tương thích nếu chưa đổi import */
-export const studentProfileService = studentProfileRepo;

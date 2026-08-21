@@ -15,6 +15,12 @@ import { useAuth } from "@/providers/AuthProvider";
 type MenteeShellContextValue = {
   /** Hàm tùy chỉnh tiêu đề Topbar từ các view con */
   setHeaderTitle: (title?: string) => void;
+  /** Cờ đánh dấu Sidebar đang mở (trên mobile/tablet) */
+  isSidebarOpen: boolean;
+  /** Hàm bật/tắt hiển thị Sidebar */
+  toggleSidebar: () => void;
+  /** Hàm đóng Sidebar */
+  closeSidebar: () => void;
 };
 
 const MenteeShellContext = createContext<MenteeShellContextValue | undefined>(
@@ -50,21 +56,57 @@ export function MenteeShell({
   const pathname = usePathname();
   const { user } = useAuth();
   const [headerTitle, setHeaderTitle] = useState<string>();
-  const title = headerTitle ?? routeTitle(pathname);
-  const contextValue = useMemo(() => ({ setHeaderTitle }), []);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const title = headerTitle ?? routeTitle(pathname);
+
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  const contextValue = useMemo(
+    () => ({
+      setHeaderTitle,
+      isSidebarOpen,
+      toggleSidebar,
+      closeSidebar,
+    }),
+    [isSidebarOpen],
+  );
+
+  /** Tự động đóng sidebar và reset tiêu đề khi thay đổi trang */
   useEffect(() => {
     setHeaderTitle(undefined);
+    setIsSidebarOpen(false);
   }, [pathname]);
 
   return (
     <MenteeShellContext.Provider value={contextValue}>
-      <div className="figma-app">
-        <DashboardNavigation locale={locale} />
+      <div className={`figma-app ${isSidebarOpen ? "figma-app-sidebar-open" : ""}`}>
+        {/* Backdrop che mờ màn hình khi mở Sidebar trên thiết bị di động */}
+        <div
+          className={`figma-sidebar-backdrop ${
+            isSidebarOpen ? "figma-sidebar-backdrop-open" : ""
+          }`}
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+
+        <DashboardNavigation
+          locale={locale}
+          isOpen={isSidebarOpen}
+          onClose={closeSidebar}
+        />
+
         <div className="figma-content-pane">
-          <MenteeHeader title={title} locale={locale} user={user} />
+          <MenteeHeader
+            title={title}
+            locale={locale}
+            user={user}
+            onToggleSidebar={toggleSidebar}
+          />
           <main className="figma-shell-main">{children}</main>
         </div>
+
         <img
           className="figma-assistant-mascot"
           src="https://fang-squad-69023135.figma.site/assets/image-ByFusQW8.png"
