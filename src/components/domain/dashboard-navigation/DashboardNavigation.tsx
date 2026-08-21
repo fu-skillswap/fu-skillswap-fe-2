@@ -1,10 +1,18 @@
+/**
+ * @file DashboardNavigation.tsx
+ * @description Component Thanh điều hướng bên trái (Sidebar Navigation Component).
+ * Chứa Logo thương hiệu và các liên kết điều hướng Bảng tin, Tìm Mentor, Ví S-Coin và Lịch hẹn.
+ */
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 
 type NavIcon = 'home' | 'search' | 'wallet' | 'calendar';
 
+/** Helper render SVG Icon tương ứng cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
   if (name === 'search') {
     return (
@@ -39,26 +47,74 @@ function Icon({ name }: { name: NavIcon }) {
   );
 }
 
-export function DashboardNavigation({ locale }: { locale: string }) {
+/** Props của DashboardNavigation Component */
+interface DashboardNavigationProps {
+  /** Mã locale ngôn ngữ hiện tại */
+  locale: string;
+  /** Cờ đánh dấu sidebar đang mở trên mobile/tablet */
+  isOpen?: boolean;
+  /** Callback đóng sidebar */
+  onClose?: () => void;
+}
+
+/**
+ * Component thanh điều hướng chính ở cạnh trái màn hình Dashboard.
+ */
+export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNavigationProps) {
   const pathname = usePathname();
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
   const dashboardActive =
     pathname === dashboardHref || pathname.startsWith(`/${locale}/post-detail/`);
   const mentorActive = pathname.startsWith(mentorHref);
 
+  const handleProtectedAction = (featureName: string) => {
+    if (onClose) onClose();
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        `Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng ${featureName}.`,
+      );
+    }
+  };
+
   return (
-    <aside className="figma-sidebar">
-      <Link href={dashboardHref} className="figma-brand" aria-label="SkillSwap newsfeed">
-        <img
-          src="https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png"
-          alt=""
-        />
-        <span>SkillSwap</span>
-      </Link>
+    <aside className={`figma-sidebar ${isOpen ? 'figma-sidebar-open' : ''}`}>
+      <div className="figma-sidebar-header">
+        <Link
+          href={dashboardHref}
+          className="figma-brand"
+          aria-label="SkillSwap newsfeed"
+          onClick={onClose}
+        >
+          <img
+            src="/images/SkillSwap_Logo_Text.png"
+            alt="SkillSwap"
+            className="figma-brand-logo-text"
+          />
+        </Link>
+        <button
+          type="button"
+          className="figma-sidebar-close-btn"
+          onClick={onClose}
+          aria-label="Đóng thanh điều hướng"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M18 6 6 18M6 6l12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
       <nav className="figma-navigation" aria-label="Main navigation">
         <Link
           href={dashboardHref}
+          onClick={onClose}
           className={dashboardActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
         >
           <Icon name="home" />
@@ -66,23 +122,51 @@ export function DashboardNavigation({ locale }: { locale: string }) {
         </Link>
         <Link
           href={mentorHref}
+          onClick={onClose}
           className={mentorActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
         >
           <Icon name="search" />
           <span>Tìm Mentor</span>
         </Link>
-        <span className="figma-nav-link figma-nav-link-static" aria-disabled="true">
+        <button
+          type="button"
+          onClick={() => handleProtectedAction('Ví S-Coin')}
+          className="figma-nav-link figma-nav-link-static"
+          style={{
+            width: '100%',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
           <Icon name="wallet" />
           <span>S-coin Wallet</span>
-        </span>
-        <span className="figma-nav-link figma-nav-link-static" aria-disabled="true">
+        </button>
+        <button
+          type="button"
+          onClick={() => handleProtectedAction('Lịch đặt của tôi')}
+          className="figma-nav-link figma-nav-link-static"
+          style={{
+            width: '100%',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
           <Icon name="calendar" />
           <span>Lịch đặt của tôi</span>
-        </span>
+        </button>
       </nav>
-      <span className="figma-sidebar-compose" aria-disabled="true">
+      <button
+        type="button"
+        onClick={() => handleProtectedAction('Tạo bài viết mới')}
+        className="figma-sidebar-compose"
+        style={{ cursor: 'pointer' }}
+      >
         + Bài viết mới
-      </span>
+      </button>
     </aside>
   );
 }

@@ -1,6 +1,14 @@
+/**
+ * @file MentorDetail.tsx
+ * @description Component Trang Hồ sơ chi tiết Mentor (Mentor Profile Detail Component).
+ * Hiển thị tiểu sử, danh sách kỹ năng chuyên môn, chỉ số đánh giá và các gói dịch vụ tư vấn 1:1.
+ */
+
 import type { Mentor, MentorService } from '@/models/entities';
 import { getMentorServices } from '@/data/demoMentorServices';
+import { useAuth } from '@/providers/AuthProvider';
 
+/** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {
   return name
     .split(' ')
@@ -9,20 +17,43 @@ function initials(name: string) {
     .join('');
 }
 
+/** Định dạng hiển thị mức giá S-Coins */
 function priceLabel(price?: number) {
   return price ? new Intl.NumberFormat('en-US').format(price) : '—';
 }
 
-export function MentorDetail({
-  mentor,
-  onBack,
-  onBook,
-}: {
+/** Props của MentorDetail Component */
+interface MentorDetailProps {
+  /** Chi tiết đối tượng Mentor */
   mentor: Mentor;
+  /** Callback quay lại danh sách Mentor */
   onBack: () => void;
+  /** Callback khi Mentee chọn một gói dịch vụ để đặt lịch */
   onBook: (service: MentorService) => void;
-}) {
+}
+
+/**
+ * Component hiển thị hồ sơ chi tiết Mentor kèm các gói dịch vụ tư vấn.
+ */
+export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
   const services = getMentorServices(mentor);
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
+  const handleServiceClick = (service: MentorService) => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để xem chi tiết dịch vụ tư vấn 1:1 và đặt lịch.',
+      );
+      return;
+    }
+    onBook(service);
+  };
+
+  const handleProtectedTabClick = (featureName: string) => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(`Bạn cần Đăng nhập hoặc Đăng ký tài khoản để truy cập ${featureName}.`);
+    }
+  };
 
   return (
     <section className="figma-mentor-detail" aria-label={`${mentor.name} mentor profile`}>
@@ -53,10 +84,10 @@ export function MentorDetail({
             </div>
           </div>
           <div className="figma-detail-actions">
-            <button type="button" aria-disabled="true">
+            <button type="button" onClick={() => handleProtectedTabClick('Nhắn tin với Mentor')}>
               Nhắn tin
             </button>
-            <button type="button" aria-disabled="true">
+            <button type="button" onClick={() => handleProtectedTabClick('Theo dõi Mentor')}>
               Theo dõi
             </button>
           </div>
@@ -90,12 +121,22 @@ export function MentorDetail({
       </article>
       <nav className="figma-detail-tabs" aria-label="Mentor profile sections">
         <span className="figma-detail-tab figma-detail-tab-active">Dịch vụ &amp; Lịch dạy</span>
-        <span className="figma-detail-tab" aria-disabled="true">
+        <button
+          type="button"
+          className="figma-detail-tab"
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          onClick={() => handleProtectedTabClick('Blog của Mentor')}
+        >
           Blog
-        </span>
-        <span className="figma-detail-tab" aria-disabled="true">
+        </button>
+        <button
+          type="button"
+          className="figma-detail-tab"
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          onClick={() => handleProtectedTabClick('Khóa học của Mentor')}
+        >
           Khóa học
-        </span>
+        </button>
       </nav>
       <section className="figma-detail-services" aria-label="One-to-one mentoring services">
         <h3>Dịch vụ tư vấn 1:1</h3>
@@ -106,11 +147,11 @@ export function MentorDetail({
               role="button"
               tabIndex={0}
               key={service.id}
-              onClick={() => onBook(service)}
+              onClick={() => handleServiceClick(service)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  onBook(service);
+                  handleServiceClick(service);
                 }
               }}
             >

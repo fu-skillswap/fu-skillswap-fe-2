@@ -1,19 +1,63 @@
+/**
+ * @file PostCard.tsx
+ * @description Component Thẻ hiển thị Bài viết trên Bảng tin (Post Card Component).
+ * Hiển thị tác giả, tiêu đề, nội dung, hình ảnh đính kèm, hashtag, lượt like, bình luận xem trước.
+ */
+
 'use client';
 
 import Link from 'next/link';
 import type { Post } from '@/models/entities';
+import { useAuth } from '@/providers/AuthProvider';
 import { usePostCard } from './usePostCard';
 
-const mascotSrc = 'https://fang-squad-69023135.figma.site/assets/Koko-CeSODsvb.png';
+const mascotSrc = '/images/Koko.png';
 
-export function PostCard({ post, locale = 'vi' }: { post: Post; locale?: string }) {
+/** Props của PostCard Component */
+interface PostCardProps {
+  /** Thông tin đối tượng bài viết */
+  post: Post;
+  /** Mã ngôn ngữ hiện tại */
+  locale?: string;
+}
+
+/**
+ * Component thẻ bài viết hiển thị trên dòng thời gian Bảng tin.
+ */
+export function PostCard({ post, locale = 'vi' }: PostCardProps) {
   const { likes, liked, toggleLike } = usePostCard(post.likes);
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
   const initials = post.author.name
     .split(' ')
     .map((part) => part[0])
     .slice(0, 2)
     .join('');
   const commentCount = post.commentCount ?? 0;
+
+  const handleLikeClick = () => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tương tác yêu thích bài viết.',
+      );
+      return;
+    }
+    toggleLike();
+  };
+
+  const handleCommentClick = () => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.',
+      );
+    }
+  };
+
+  const handleFlagClick = () => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal('Bạn cần Đăng nhập hoặc Đăng ký tài khoản để lưu bài viết.');
+    }
+  };
 
   return (
     <article className="figma-post-card">
@@ -28,6 +72,7 @@ export function PostCard({ post, locale = 'vi' }: { post: Post; locale?: string 
           type="button"
           className="figma-more-button"
           aria-label={`More options for ${post.title}`}
+          onClick={handleFlagClick}
         >
           ⋮
         </button>
@@ -52,7 +97,7 @@ export function PostCard({ post, locale = 'vi' }: { post: Post; locale?: string 
       <footer className="figma-post-actions">
         <button
           type="button"
-          onClick={toggleLike}
+          onClick={handleLikeClick}
           className={liked ? 'figma-like-button figma-like-button-active' : 'figma-like-button'}
           aria-pressed={liked}
         >
@@ -75,7 +120,7 @@ export function PostCard({ post, locale = 'vi' }: { post: Post; locale?: string 
           type="button"
           className="figma-flag-button"
           aria-label="Save post"
-          aria-disabled="true"
+          onClick={handleFlagClick}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 20V4m0 1.5h11l-1.6 3L17 12H6" />
@@ -91,9 +136,18 @@ export function PostCard({ post, locale = 'vi' }: { post: Post; locale?: string 
           ))}
         </div>
       ) : null}
-      <div className="figma-post-comment-input">
+      <div
+        className="figma-post-comment-input"
+        onClick={handleCommentClick}
+        style={{ cursor: 'pointer' }}
+      >
         <span className="figma-inline-avatar">YO</span>
-        <input readOnly aria-label="Add a comment" placeholder="Add a comment..." />
+        <input
+          readOnly
+          aria-label="Add a comment"
+          placeholder="Add a comment..."
+          style={{ cursor: 'pointer' }}
+        />
       </div>
     </article>
   );

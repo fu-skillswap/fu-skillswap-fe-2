@@ -12,10 +12,14 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@tanstack/react-query": "^5.66.8",
+    "axios": "^1.19.0",
     "next": "^15.2.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.85.0",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",

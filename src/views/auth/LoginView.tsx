@@ -1,3 +1,10 @@
+/**
+ * @file LoginView.tsx
+ * @description React Component giao diện trang Đăng nhập (Login Page View) sử dụng React Hook Form.
+ * Hiển thị form đăng nhập, hỗ trợ Google Identity Services native button,
+ * và hiển thị bảng thông tin giới thiệu SkillSwap.
+ */
+
 'use client';
 
 import { Button } from '@/components/ui/Button';
@@ -5,35 +12,37 @@ import { TextField } from '@/components/ui/TextField';
 import { useEffect } from 'react';
 import { useLoginLogic } from './useLoginLogic';
 
+/**
+ * Component trang Đăng nhập SkillSwap.
+ * @param props.locale - Mã ngôn ngữ hiện tại của route (ví dụ: "vi", "en")
+ */
 export function LoginView({ locale }: { locale: string }) {
-  const { error, clearError, loading, googleLoading, submit, googleButtonRef } =
+  const { form, error, clearError, loading, googleLoading, submit, googleButtonRef } =
     useLoginLogic(locale);
+
+  const {
+    register,
+    formState: { errors },
+  } = form;
+
+  /** Tự động ẩn thông báo lỗi sau 7 giây */
   useEffect(() => {
     if (!error) return;
     const timeout = window.setTimeout(clearError, 7000);
     return () => window.clearTimeout(timeout);
   }, [clearError, error]);
+
   return (
     <main className="figma-login-page">
       <section className="figma-login-panel" aria-label="Log in">
-        <form
-          className="figma-login-form"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            const data = new FormData(event.currentTarget);
-            void submit({
-              email: String(data.get('email')),
-              password: String(data.get('password')),
-            });
-          }}
-        >
+        <form className="figma-login-form" noValidate onSubmit={submit}>
           <div className="figma-login-brand">
             <img
-              src="https://fang-squad-69023135.figma.site/assets/SkillSwapLogo-1-geFhVeE4.png"
+              src="/images/SkillSwap_Logo_Text.png"
               alt="SkillSwap"
+              className="figma-login-logo-text"
             />
-            <p>Kết nối. Học hỏi. Phát triển.</p>
+            <p>Kết nối - Học hỏi - Phát triển.</p>
           </div>
 
           <div className="figma-login-tabs" aria-label="Authentication mode">
@@ -44,17 +53,19 @@ export function LoginView({ locale }: { locale: string }) {
           <div className="figma-login-fields">
             <TextField
               label="Email"
-              name="email"
               type="email"
               placeholder="your@email.com"
               autoComplete="email"
+              error={errors.email?.message}
+              {...register('email')}
             />
             <TextField
               label="Mật khẩu"
-              name="password"
               type="password"
               placeholder="••••••••"
               autoComplete="current-password"
+              error={errors.password?.message}
+              {...register('password')}
             />
           </div>
           <span className="figma-login-forgot" aria-disabled="true">
