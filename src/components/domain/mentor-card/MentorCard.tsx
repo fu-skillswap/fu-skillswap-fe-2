@@ -1,5 +1,12 @@
+/**
+ * @file MentorCard.tsx
+ * @description Component Thẻ hiển thị tóm tắt thông tin Chuyên gia (Mentor Card Component).
+ * Hiển thị tên, lĩnh vực chuyên môn, đánh giá sao, mức giá tham khảo và nút xem hồ sơ chi tiết.
+ */
+
 import type { Mentor } from '@/models/entities';
 
+/** Tạo chữ cái đầu từ tên làm avatar */
 function initials(name: string) {
   return name
     .split(' ')
@@ -8,17 +15,23 @@ function initials(name: string) {
     .join('');
 }
 
+/** Định dạng hiển thị giá điểm S-Coins */
 function priceLabel(price?: number) {
   return price ? new Intl.NumberFormat('en-US').format(price) : undefined;
 }
 
-export function MentorCard({
-  mentor,
-  onSelect,
-}: {
+/** Props của MentorCard Component */
+interface MentorCardProps {
+  /** Thông tin đối tượng Mentor */
   mentor: Mentor;
+  /** Callback khi Mentee bấm nút xem hồ sơ Mentor */
   onSelect: (mentor: Mentor) => void;
-}) {
+}
+
+/**
+ * Component hiển thị thẻ thông tin Mentor trên giao diện danh sách tìm kiếm.
+ */
+export function MentorCard({ mentor, onSelect }: MentorCardProps) {
   const price = priceLabel(mentor.startingPrice);
 
   return (

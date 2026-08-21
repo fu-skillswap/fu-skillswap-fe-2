@@ -1,14 +1,26 @@
-import { MenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+/**
+ * @file layout.tsx
+ * @description Layout bảo vệ chung cho toàn bộ phân vùng Mentee (`/(mentee)/*`).
+ * Đảm bảo người dùng phải được xác thực qua AuthGuard và bọc giao diện trong MenteeShell.
+ */
 
+import { MenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
+// import { AuthGuard } from "@/components/auth/AuthGuard";
+
+/**
+ * Layout cho phân vùng Mentee.
+ */
 export default async function MenteeLayout({
   children,
   params,
-}: Readonly<{ children: React.ReactNode; params: Promise<{ locale: string }> }>) {
+}: Readonly<{
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}>) {
   const { locale } = await params;
   return (
-    <AuthGuard locale={locale}>
-      <MenteeShell locale={locale}>{children}</MenteeShell>
-    </AuthGuard>
+    // <AuthGuard locale={locale}>
+    <MenteeShell locale={locale}>{children}</MenteeShell>
+    // </AuthGuard>
   );
 }

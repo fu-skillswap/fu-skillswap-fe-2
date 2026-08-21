@@ -1,9 +1,18 @@
-export interface LoginFormValues {
-  email: string;
-  password: string;
-}
+/**
+ * @file authSchema.ts
+ * @description Schema validation dữ liệu các biểu mẫu liên quan đến xác thực (Auth Validation Schema) bằng Yup.
+ */
 
-export function validateLogin(values: LoginFormValues): string | undefined {
-  if (!/^\S+@\S+\.\S+$/.test(values.email)) return 'Email không hợp lệ.';
-  if (values.password.length < 6) return 'Mật khẩu cần tối thiểu 6 ký tự.';
-}
+import * as yup from 'yup';
+
+/** Quy tắc kiểm tra tính hợp lệ biểu mẫu Đăng nhập */
+export const loginSchema = yup.object().shape({
+  email: yup.string().required('Email không được để trống.').email('Email không đúng định dạng.'),
+  password: yup
+    .string()
+    .required('Mật khẩu không được để trống.')
+    .min(6, 'Mật khẩu cần tối thiểu 6 ký tự.'),
+});
+
+/** Dữ liệu form nhập liệu đăng nhập suy ra từ Yup Schema */
+export type LoginFormValues = yup.InferType<typeof loginSchema>;

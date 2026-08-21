@@ -1,20 +1,45 @@
+/**
+ * @file PostDetailView.tsx
+ * @description React Component trang Chi tiết bài viết & Bình luận (Post Detail & Comments View) sử dụng React Hook Form.
+ * Hiển thị nội dung chi tiết bài viết, tác giả, hashtag và khung thảo luận bình luận của cộng đồng.
+ */
+
 'use client';
 
 import Link from 'next/link';
 import type { Comment, Post } from '@/models/entities';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/providers/AuthProvider';
 import { usePostDetail } from './usePostDetail';
 
-export function PostDetailView({
-  post,
-  initialComments,
-  locale,
-}: {
+/** Props của PostDetailView Component */
+interface PostDetailViewProps {
+  /** Chi tiết đối tượng bài viết */
   post: Post;
+  /** Danh sách các bình luận ban đầu của bài viết */
   initialComments: Comment[];
+  /** Mã locale ngôn ngữ */
   locale: string;
-}) {
-  const { comments, error, submitComment } = usePostDetail(post.id, initialComments);
+}
+
+/**
+ * Component hiển thị chi tiết bài viết và form bình luận.
+ */
+export function PostDetailView({ post, initialComments, locale }: PostDetailViewProps) {
+  const { register, errors, serverError, comments, submitComment } = usePostDetail(
+    post.id,
+    initialComments,
+  );
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
+  const handleTextareaClick = () => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.',
+      );
+    }
+  };
+
   return (
     <main className="page-shell narrow">
       <Link href={`/${locale}/dashboard`} className="back-link">
@@ -41,16 +66,15 @@ export function PostDetailView({
             <p>{comment.content}</p>
           </article>
         ))}
-        <form
-          className="comment-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const form = event.currentTarget;
-            void submitComment(String(new FormData(form).get('content'))).then(() => form.reset());
-          }}
-        >
-          <textarea name="content" placeholder="Viết bình luận của bạn..." rows={4} />
-          {error && <p className="error">{error}</p>}
+        <form className="comment-form" onSubmit={submitComment} noValidate>
+          <textarea
+            placeholder="Viết bình luận của bạn..."
+            rows={4}
+            onClick={handleTextareaClick}
+            {...register('content')}
+          />
+          {errors.content && <p className="error">{errors.content.message}</p>}
+          {serverError && <p className="error">{serverError}</p>}
           <Button type="submit">Gửi bình luận</Button>
         </form>
       </section>

@@ -1,16 +1,31 @@
+/**
+ * @file useLoginLogic.ts
+ * @description Custom React Hook quản lý logic Đăng nhập (Authentication Hook) sử dụng React Hook Form & Yup.
+ * Tự động tải động Google Identity Services SDK, tạo và quản lý mã Nonce dùng 1 lần,
+ * render nút Google Sign-In native và điều hướng sau khi xác thực thành công.
+ */
+
 'use client';
 
 import { onboardingDestination } from '@/lib/auth/google';
 import { ApiClientError } from '@/models/apiClient';
-import { validateLogin, type LoginFormValues } from '@/models/schemas/authSchema';
+import { loginSchema, type LoginFormValues } from '@/models/schemas/authSchema';
 import { useAuth } from '@/providers/AuthProvider';
-import { authService } from '@/services/authService';
+import { authRepo } from '@/repositories/authRepo';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
+/** URL thư viện SDK chính thức của Google Identity Services */
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 let googleIdentityServicesPromise: Promise<void> | null = null;
 
+/**
+ * Tải script Google Identity Services SDK vào DOM nếu chưa có.
+ * Gom các yêu cầu tải trùng lặp thành một Promise duy nhất.
+ * @returns Promise hoàn thành khi script GIS đã sẵn sàng
+ */
 function loadGoogleIdentityServices() {
   if (window.google?.accounts.id) return Promise.resolve();
   if (!googleIdentityServicesPromise) {
@@ -27,6 +42,11 @@ function loadGoogleIdentityServices() {
   return googleIdentityServicesPromise;
 }
 
+/**
+ * Chuyển đổi các đối tượng lỗi từ API/Network thành thông điệp thân thiện với người dùng bằng tiếng Việt.
+ * @param reason - Lỗi thu được từ khối catch
+ * @returns Chuỗi thông báo lỗi tiếng Việt
+ */
 function messageForGoogleError(reason: unknown) {
   if (reason instanceof ApiClientError) {
     if (reason.code === 'SYS_0010')
@@ -41,6 +61,12 @@ function messageForGoogleError(reason: unknown) {
   return 'Không thể khởi tạo đăng nhập Google. Vui lòng thử lại.';
 }
 
+/**
+ * Custom Hook điều khiển toàn bộ logic trang Đăng nhập.
+ *
+ * @param locale - Mã ngôn ngữ hiện tại (ví dụ: "vi", "en")
+ * @returns Đối tượng chứa form state, trạng thái lỗi, cờ loading, hàm submit form và `googleButtonRef`
+ */
 export function useLoginLogic(locale: string) {
   const router = useRouter();
   const { completeGoogleLogin } = useAuth();
@@ -55,14 +81,29 @@ export function useLoginLogic(locale: string) {
 
   completeGoogleLoginRef.current = completeGoogleLogin;
 
-  const submit = async (values: LoginFormValues) => {
-    const validationError = validateLogin(values);
-    if (validationError) return setError(validationError);
+  /** Khởi tạo React Hook Form với Yup Resolver */
+  const form = useForm<LoginFormValues>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  /** Xử lý khi người dùng submit form đăng nhập bằng Email/Password truyền thống */
+  const submit = async () => {
     setLoading(true);
     setError('Đăng nhập bằng email và mật khẩu hiện chưa được hỗ trợ.');
     setLoading(false);
   };
 
+  /**
+   * Khởi tạo nút Google Sign-In:
+   * 1. Lấy mã Nonce dùng một lần từ Backend
+   * 2. Tải Google Identity Services SDK
+   * 3. Gọi `google.accounts.id.initialize` với callback gửi ID Token về Backend
+   * 4. Render nút Google chuẩn vào DOM container
+   */
   const configureGoogleButton = useCallback(async () => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const button = googleButtonRef.current;
@@ -75,7 +116,7 @@ export function useLoginLogic(locale: string) {
 
     setGoogleLoading(true);
     try {
-      const { nonce } = await authService.getGoogleNonce();
+      const { nonce } = await authRepo.getGoogleNonce();
       nonceRef.current = nonce;
       await loadGoogleIdentityServices();
       if (!window.google?.accounts.id) throw new Error('Google Identity Services is unavailable.');
@@ -84,19 +125,20 @@ export function useLoginLogic(locale: string) {
         client_id: clientId,
         nonce,
         callback: async ({ credential }) => {
-          // Nonces are single-use, so discard it before sending the ID token.
           const loginNonce = nonceRef.current;
           nonceRef.current = null;
           if (!credential || !loginNonce) return;
           setGoogleLoading(true);
           setError(undefined);
           try {
-            await authService.loginWithGoogle({ credential, nonce: loginNonce });
+            await authRepo.loginWithGoogle({
+              credential,
+              nonce: loginNonce,
+            });
             const onboarding = await completeGoogleLoginRef.current();
             router.replace(onboardingDestination(locale, onboarding.nextRecommendedAction));
           } catch (reason) {
             setError(messageForGoogleError(reason));
-            // Never retry an invalid/expired nonce-credential pair.
             void configureGoogleButtonRef.current();
           } finally {
             setGoogleLoading(false);
@@ -128,5 +170,13 @@ export function useLoginLogic(locale: string) {
     };
   }, [configureGoogleButton]);
 
-  return { error, clearError, loading, googleLoading, submit, googleButtonRef };
+  return {
+    form,
+    error,
+    clearError,
+    loading,
+    googleLoading,
+    submit: form.handleSubmit(submit),
+    googleButtonRef,
+  };
 }
