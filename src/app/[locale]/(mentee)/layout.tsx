@@ -5,7 +5,7 @@
  */
 
 import { MenteeShell } from "@/components/domain/mentee-shell/MenteeShell";
-import { AuthGuard } from "@/components/auth/AuthGuard";
+// import { AuthGuard } from "@/components/auth/AuthGuard";
 
 /**
  * Layout cho phân vùng Mentee.
@@ -19,8 +19,8 @@ export default async function MenteeLayout({
 }>) {
   const { locale } = await params;
   return (
-    <AuthGuard locale={locale}>
-      <MenteeShell locale={locale}>{children}</MenteeShell>
-    </AuthGuard>
+    // <AuthGuard locale={locale}>
+    <MenteeShell locale={locale}>{children}</MenteeShell>
+    // </AuthGuard>
   );
 }

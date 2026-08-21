@@ -17,6 +17,7 @@ import {
   setAccessToken,
   setUnauthenticatedHandler,
 } from "@/models/apiClient";
+import { AuthRequiredModal } from "@/components/domain/auth/AuthRequiredModal";
 import { authRepo } from "@/repositories/authRepo";
 import { studentProfileRepo } from "@/repositories/studentProfileRepo";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -31,6 +32,10 @@ interface AuthContextValue {
   isBootstrapping: boolean;
   /** Cờ đánh dấu các tác vụ auth (đăng nhập, đăng xuất) đang được thực thi */
   isLoading: boolean;
+  /** Hàm bật Modal yêu cầu Đăng nhập dành cho Guest Mode */
+  showAuthRequiredModal: (message?: string) => void;
+  /** Hàm đóng Modal yêu cầu Đăng nhập */
+  closeAuthRequiredModal: () => void;
   /** Hàm hoàn tất quy trình đăng nhập Google và tải lại hồ sơ người dùng */
   completeGoogleLogin: () => Promise<OnboardingStatusResponse>;
   /** Hàm chủ động khôi phục phiên làm việc từ Refresh Token */
@@ -49,6 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState<string | undefined>();
+
+  const showAuthRequiredModal = (message?: string) => {
+    setAuthModalMessage(message);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthRequiredModal = () => {
+    setIsAuthModalOpen(false);
+    setAuthModalMessage(undefined);
+  };
 
   /** Chuyển đổi dữ liệu thông tin người dùng từ Backend API sang dạng AuthenticatedUser chuẩn */
   const toAuthenticatedUser = (me: UserMeResponse): AuthenticatedUser => ({
@@ -112,7 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    setUnauthenticatedHandler(clearSession);
+    const handleUnauthenticated = () => {
+      clearSession();
+      showAuthRequiredModal("Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng này.");
+    };
+    setUnauthenticatedHandler(handleUnauthenticated);
     void restoreSession();
     return () => setUnauthenticatedHandler(undefined);
   }, []);
@@ -123,6 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: Boolean(user),
       isBootstrapping,
       isLoading,
+      showAuthRequiredModal,
+      closeAuthRequiredModal,
       completeGoogleLogin,
       restoreSession,
       logout,
@@ -130,7 +154,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, isBootstrapping, isLoading],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <AuthRequiredModal
+        open={isAuthModalOpen}
+        message={authModalMessage}
+        onClose={closeAuthRequiredModal}
+      />
+    </AuthContext.Provider>
+  );
 }
 
 /**

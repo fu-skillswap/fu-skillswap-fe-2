@@ -1,6 +1,7 @@
 "use client";
 
 import type { AuthenticatedUser, StudentProfileResponse, UserMeResponse } from "@/models/auth";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
@@ -62,31 +63,34 @@ export function MenteeHeader({
   onToggleSidebar,
 }: MenteeHeaderProps) {
   const router = useRouter();
-  const { logout, user: authUser } = useAuth();
+  const { logout, user: authUser, isAuthenticated } = useAuth();
   const [fetchedUser, setFetchedUser] = useState<UserMeResponse | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileResponse | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  /** Tải thông tin hồ sơ học thuật từ API GET /api/me/student-profile */
+  /** Tải thông tin hồ sơ học thuật từ API GET /api/me/student-profile nếu đã đăng nhập */
   useEffect(() => {
-    studentProfileRepo
-      .get()
-      .then((sp) => setStudentProfile(sp))
-      .catch(() => {});
-  }, []);
+    if (isAuthenticated) {
+      studentProfileRepo
+        .get()
+        .then((sp) => setStudentProfile(sp))
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   /** Tải thông tin người dùng từ API GET /api/auth/me nếu chưa có trong props/context */
   useEffect(() => {
-    if (!user && !authUser) {
+    if (isAuthenticated && !user && !authUser) {
       authRepo
         .getMe()
         .then((me) => setFetchedUser(me))
         .catch(() => {});
     }
-  }, [user, authUser]);
+  }, [isAuthenticated, user, authUser]);
 
   const activeUser = user ?? authUser ?? fetchedUser;
+  const isGuest = !isAuthenticated && !activeUser;
 
   const displayName =
     studentProfile?.displayName ||
@@ -155,53 +159,66 @@ export function MenteeHeader({
         <h1>{title}</h1>
       </div>
       <div className="figma-topbar-actions" aria-label="Account actions">
-        <button
-          type="button"
-          className="figma-icon-button"
-          aria-label="Notifications"
-        >
-          <svg className="figma-bell" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          <span className="figma-notification-dot" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="figma-icon-button"
-          aria-label="Messages"
-        >
-          <span className="figma-message" aria-hidden="true" />
-        </button>
-
-        {/* Nút hiển thị Tên người dùng và nút dropdown ngay bên cạnh icon Chat */}
-        <div className="figma-profile-menu" ref={profileMenuRef}>
-          <button
-            type="button"
-            className="figma-profile-link"
-            onClick={() => setIsProfileOpen((prev) => !prev)}
-            aria-expanded={isProfileOpen}
-            aria-label="User profile menu"
-          >
-            <span className="figma-profile-avatar">
-              {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="" />
-              ) : (
-                profile.initials
-              )}
-            </span>
-            <span className="figma-profile-copy">
-              <strong>{profile.fullName}</strong>
-              <small>{profile.role}</small>
-            </span>
-            <svg
-              className={`figma-chevron ${isProfileOpen ? "figma-chevron-open" : ""}`}
-              viewBox="0 0 24 24"
-              aria-hidden="true"
+        {!isGuest && (
+          <>
+            <button
+              type="button"
+              className="figma-icon-button"
+              aria-label="Notifications"
             >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
+              <svg className="figma-bell" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span className="figma-notification-dot" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="figma-icon-button"
+              aria-label="Messages"
+            >
+              <span className="figma-message" aria-hidden="true" />
+            </button>
+          </>
+        )}
+
+        {isGuest ? (
+          /* Nút Đăng nhập / Đăng ký dành cho Guest Mode khi chưa đăng nhập */
+          <Link
+            href={`/${locale}/login`}
+            className="figma-topbar-guest-login-btn"
+          >
+            Đăng nhập / Đăng ký
+          </Link>
+        ) : (
+          /* Nút hiển thị Tên người dùng và nút dropdown ngay bên cạnh icon Chat */
+          <div className="figma-profile-menu" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="figma-profile-link"
+              onClick={() => setIsProfileOpen((prev) => !prev)}
+              aria-expanded={isProfileOpen}
+              aria-label="User profile menu"
+            >
+              <span className="figma-profile-avatar">
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" />
+                ) : (
+                  profile.initials
+                )}
+              </span>
+              <span className="figma-profile-copy">
+                <strong>{profile.fullName}</strong>
+                <small>{profile.role}</small>
+              </span>
+              <svg
+                className={`figma-chevron ${isProfileOpen ? "figma-chevron-open" : ""}`}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
 
           {isProfileOpen && (
             <section
@@ -255,6 +272,7 @@ export function MenteeHeader({
             </section>
           )}
         </div>
+        )}
       </div>
     </header>
   );

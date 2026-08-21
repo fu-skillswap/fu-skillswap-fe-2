@@ -6,6 +6,7 @@
 
 import type { Mentor, MentorService } from "@/models/entities";
 import { getMentorServices } from "@/data/demoMentorServices";
+import { useAuth } from "@/providers/AuthProvider";
 
 /** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {
@@ -36,6 +37,25 @@ interface MentorDetailProps {
  */
 export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
   const services = getMentorServices(mentor);
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
+  const handleServiceClick = (service: MentorService) => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để xem chi tiết dịch vụ tư vấn 1:1 và đặt lịch.",
+      );
+      return;
+    }
+    onBook(service);
+  };
+
+  const handleProtectedTabClick = (featureName: string) => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        `Bạn cần Đăng nhập hoặc Đăng ký tài khoản để truy cập ${featureName}.`,
+      );
+    }
+  };
 
   return (
     <section
@@ -71,10 +91,16 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
             </div>
           </div>
           <div className="figma-detail-actions">
-            <button type="button" aria-disabled="true">
+            <button
+              type="button"
+              onClick={() => handleProtectedTabClick("Nhắn tin với Mentor")}
+            >
               Nhắn tin
             </button>
-            <button type="button" aria-disabled="true">
+            <button
+              type="button"
+              onClick={() => handleProtectedTabClick("Theo dõi Mentor")}
+            >
               Theo dõi
             </button>
           </div>
@@ -110,12 +136,22 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
         <span className="figma-detail-tab figma-detail-tab-active">
           Dịch vụ &amp; Lịch dạy
         </span>
-        <span className="figma-detail-tab" aria-disabled="true">
+        <button
+          type="button"
+          className="figma-detail-tab"
+          style={{ background: "none", border: "none", cursor: "pointer" }}
+          onClick={() => handleProtectedTabClick("Blog của Mentor")}
+        >
           Blog
-        </span>
-        <span className="figma-detail-tab" aria-disabled="true">
+        </button>
+        <button
+          type="button"
+          className="figma-detail-tab"
+          style={{ background: "none", border: "none", cursor: "pointer" }}
+          onClick={() => handleProtectedTabClick("Khóa học của Mentor")}
+        >
           Khóa học
-        </span>
+        </button>
       </nav>
       <section
         className="figma-detail-services"
@@ -129,11 +165,11 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
               role="button"
               tabIndex={0}
               key={service.id}
-              onClick={() => onBook(service)}
+              onClick={() => handleServiceClick(service)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onBook(service);
+                  handleServiceClick(service);
                 }
               }}
             >

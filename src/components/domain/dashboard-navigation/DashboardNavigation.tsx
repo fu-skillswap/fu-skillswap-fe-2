@@ -8,6 +8,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 
 type NavIcon = "home" | "search" | "wallet" | "calendar";
 
@@ -65,6 +66,7 @@ export function DashboardNavigation({
   onClose,
 }: DashboardNavigationProps) {
   const pathname = usePathname();
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
@@ -72,6 +74,15 @@ export function DashboardNavigation({
     pathname === dashboardHref ||
     pathname.startsWith(`/${locale}/post-detail/`);
   const mentorActive = pathname.startsWith(mentorHref);
+
+  const handleProtectedAction = (featureName: string) => {
+    if (onClose) onClose();
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        `Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng ${featureName}.`,
+      );
+    }
+  };
 
   return (
     <aside
@@ -134,24 +145,33 @@ export function DashboardNavigation({
           <Icon name="search" />
           <span>Tìm Mentor</span>
         </Link>
-        <span
+        <button
+          type="button"
+          onClick={() => handleProtectedAction("Ví S-Coin")}
           className="figma-nav-link figma-nav-link-static"
-          aria-disabled="true"
+          style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
         >
           <Icon name="wallet" />
           <span>S-coin Wallet</span>
-        </span>
-        <span
+        </button>
+        <button
+          type="button"
+          onClick={() => handleProtectedAction("Lịch đặt của tôi")}
           className="figma-nav-link figma-nav-link-static"
-          aria-disabled="true"
+          style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
         >
           <Icon name="calendar" />
           <span>Lịch đặt của tôi</span>
-        </span>
+        </button>
       </nav>
-      <span className="figma-sidebar-compose" aria-disabled="true">
+      <button
+        type="button"
+        onClick={() => handleProtectedAction("Tạo bài viết mới")}
+        className="figma-sidebar-compose"
+        style={{ cursor: "pointer" }}
+      >
         + Bài viết mới
-      </span>
+      </button>
     </aside>
   );
 }

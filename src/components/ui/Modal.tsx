@@ -12,8 +12,10 @@ import { useEffect } from "react";
 interface ModalProps {
   /** Trạng thái ẩn/hiện Modal */
   open: boolean;
-  /** Tiêu đề của Modal */
-  title: string;
+  /** Tiêu đề của Modal (tùy chọn) */
+  title?: string;
+  /** Ẩn thanh header mặc định nếu tự render header riêng */
+  hideHeader?: boolean;
   /** Callback xử lý đóng Modal */
   onClose: () => void;
   /** Nội dung bên trong Modal */
@@ -28,6 +30,7 @@ interface ModalProps {
 export function Modal({
   open,
   title,
+  hideHeader = false,
   onClose,
   children,
   className = "",
@@ -46,15 +49,17 @@ export function Modal({
         className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={title || "Hộp thoại"}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="modal-header">
-          <h2>{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
+        {!hideHeader && (
+          <div className="modal-header">
+            {title && <h2>{title}</h2>}
+            <button type="button" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </div>
+        )}
         {children}
       </section>
     </div>

@@ -7,6 +7,12 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useForm } from "react-hook-form";
+import {
+  scheduleSchema,
+  type ScheduleFormValues,
+} from "@/models/schemas/scheduleSchema";
 import { useScheduleManage } from "./useScheduleManage";
 
 /**
@@ -14,6 +20,26 @@ import { useScheduleManage } from "./useScheduleManage";
  */
 export function ScheduleManageView() {
   const { available, addSlot, removeSlot } = useScheduleManage();
+
+  const form = useForm<ScheduleFormValues>({
+    resolver: yupResolver(scheduleSchema),
+    defaultValues: {
+      slot: "",
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = form;
+
+  const submitSlot = (data: ScheduleFormValues) => {
+    addSlot(new Date(data.slot).toLocaleString("vi-VN"));
+    reset();
+  };
+
   return (
     <main className="page-shell narrow">
       <section className="content-section">
@@ -22,20 +48,17 @@ export function ScheduleManageView() {
         <p>Thêm các khung giờ để mentee có thể đặt lịch trao đổi với bạn.</p>
         <form
           className="inline-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const field = event.currentTarget.elements.namedItem(
-              "slot",
-            ) as HTMLInputElement;
-            if (field.value) {
-              addSlot(new Date(field.value).toLocaleString("vi-VN"));
-              field.value = "";
-            }
-          }}
+          onSubmit={handleSubmit(submitSlot)}
+          noValidate
         >
-          <input name="slot" type="datetime-local" />
+          <input type="datetime-local" {...register("slot")} />
           <Button type="submit">Thêm lịch</Button>
         </form>
+        {errors.slot && (
+          <p className="figma-field-error" style={{ color: "#ef4444", fontSize: "13px", marginTop: "4px" }}>
+            {errors.slot.message}
+          </p>
+        )}
         <div className="schedule-list">
           {available.map((slot) => (
             <div className="card schedule-item" key={slot}>

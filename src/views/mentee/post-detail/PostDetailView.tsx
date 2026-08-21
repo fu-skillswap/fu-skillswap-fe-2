@@ -9,6 +9,7 @@
 import Link from "next/link";
 import type { Comment, Post } from "@/models/entities";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/providers/AuthProvider";
 import { usePostDetail } from "./usePostDetail";
 
 /** Props của PostDetailView Component */
@@ -31,6 +32,15 @@ export function PostDetailView({
 }: PostDetailViewProps) {
   const { register, errors, serverError, comments, submitComment } =
     usePostDetail(post.id, initialComments);
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
+  const handleTextareaClick = () => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.",
+      );
+    }
+  };
 
   return (
     <main className="page-shell narrow">
@@ -62,6 +72,7 @@ export function PostDetailView({
           <textarea
             placeholder="Viết bình luận của bạn..."
             rows={4}
+            onClick={handleTextareaClick}
             {...register("content")}
           />
           {errors.content && <p className="error">{errors.content.message}</p>}

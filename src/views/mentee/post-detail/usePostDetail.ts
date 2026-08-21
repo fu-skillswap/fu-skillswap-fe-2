@@ -10,6 +10,7 @@ import {
   commentSchema,
   type CommentFormValues,
 } from "@/models/schemas/postSchema";
+import { useAuth } from "@/providers/AuthProvider";
 import { postRepo } from "@/repositories/postRepo";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
@@ -23,6 +24,7 @@ import { useForm } from "react-hook-form";
 export function usePostDetail(postId: string, initialComments: Comment[]) {
   const [comments, setComments] = useState(initialComments);
   const [serverError, setServerError] = useState<string>();
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   const form = useForm<CommentFormValues>({
     resolver: yupResolver(commentSchema),
@@ -44,6 +46,12 @@ export function usePostDetail(postId: string, initialComments: Comment[]) {
    */
   const submitComment = async (values: CommentFormValues) => {
     setServerError(undefined);
+    if (!isAuthenticated) {
+      showAuthRequiredModal(
+        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để gửi bình luận.",
+      );
+      return;
+    }
     try {
       const comment = await postRepo.addComment(postId, values.content);
       setComments((items) => [...items, comment]);
