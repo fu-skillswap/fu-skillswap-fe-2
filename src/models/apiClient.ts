@@ -17,6 +17,10 @@ import type { ApiResponse, TokenResponse, ValidationError } from '@/models/auth'
 /** Chuẩn hóa địa chỉ API gốc từ biến môi trường (xóa bỏ khoảng trắng và dấu ngoặc kép thừa nếu có) */
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').trim().replace(/^['"]|['"]$/g, '');
 
+// Browser requests stay on the Vercel origin so Next.js can proxy `/api/*` and avoid backend CORS.
+// Server-rendered calls may still use the configured API origin directly.
+const apiBaseUrl = typeof window === 'undefined' ? API_URL || undefined : undefined;
+
 /** Access token được lưu trực tiếp trong bộ nhớ tạm (đảm bảo an toàn khỏi tấn công XSS) */
 let memoryToken: string | null = null;
 
@@ -85,7 +89,7 @@ function canRefresh(path: string) {
 
 /** Axios instance chính cấu hình mặc định baseURL và withCredentials: true */
 const axiosInstance = axios.create({
-  baseURL: API_URL || undefined,
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
