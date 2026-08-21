@@ -6,6 +6,7 @@
 
 "use client";
 
+import { Calendar } from "lucide-react";
 import { useBookingCalendar } from "./useBookingCalendar";
 
 /** Danh sách các ngày trong tuần mẫu cho lịch đặt */
@@ -58,10 +59,7 @@ export function BookingCalendar({ value, onSelect }: BookingCalendarProps) {
     <section className="figma-booking-calendar" aria-label="Pick a time slot">
       <div className="figma-booking-calendar-heading">
         <span className="figma-booking-calendar-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <rect x="4" y="5" width="16" height="15" rx="2" />
-            <path d="M8 3v4M16 3v4M4 10h16" />
-          </svg>
+          <Calendar aria-hidden="true" />
         </span>
         <div>
           <h3>Pick a Time Slot</h3>

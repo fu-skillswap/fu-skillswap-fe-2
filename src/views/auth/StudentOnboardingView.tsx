@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 import { studentProfileRepo } from "@/repositories/studentProfileRepo";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -152,7 +153,7 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
           aria-labelledby="onboarding-title"
         >
           <span className="figma-onboarding-icon" aria-hidden="true">
-            ✓
+            <CheckCircle2 />
           </span>
           <p className="figma-onboarding-eyebrow">ĐĂNG NHẬP THÀNH CÔNG</p>
           <h1 id="onboarding-title">Chào {user?.fullName || "bạn"}!</h1>

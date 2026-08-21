@@ -19,6 +19,7 @@ export default async function MenteeLayout({
 }>) {
   const { locale } = await params;
   return (
+    // Comment đi để Guest có thể vào xem dashboard
     // <AuthGuard locale={locale}>
     <MenteeShell locale={locale}>{children}</MenteeShell>
     // </AuthGuard>

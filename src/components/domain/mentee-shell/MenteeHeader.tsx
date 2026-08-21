@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { authRepo } from "@/repositories/authRepo";
 import { studentProfileRepo } from "@/repositories/studentProfileRepo";
+import { BookOpen, ChevronDown, LogOut, User } from "lucide-react";
 
 const prototypeProfile: {
   initials: string;
@@ -211,13 +212,10 @@ export function MenteeHeader({
                 <strong>{profile.fullName}</strong>
                 <small>{profile.role}</small>
               </span>
-              <svg
+              <ChevronDown
                 className={`figma-chevron ${isProfileOpen ? "figma-chevron-open" : ""}`}
-                viewBox="0 0 24 24"
                 aria-hidden="true"
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
+              />
             </button>
 
           {isProfileOpen && (
@@ -225,48 +223,37 @@ export function MenteeHeader({
               className="figma-profile-dropdown"
               aria-label="User profile menu"
             >
-              <div className="figma-profile-dropdown-summary">
-                <span className="figma-profile-avatar figma-profile-avatar-large">
-                  {profile.avatarUrl ? (
-                    <img src={profile.avatarUrl} alt="" />
-                  ) : (
-                    profile.initials
-                  )}
-                </span>
-                <div>
-                  <strong>{profile.fullName}</strong>
-                  <small>{profile.role}</small>
-                </div>
-              </div>
               <div className="figma-profile-dropdown-actions">
                 <button
                   type="button"
                   className="figma-profile-menu-item"
                   onClick={openProfile}
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
-                  </svg>
+                  <User aria-hidden="true" />
                   Hồ sơ của tôi
                 </button>
-                <button type="button" className="figma-profile-menu-item">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.14 2.14-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56v.1h-3.03v-.1A1.7 1.7 0 0 0 10.63 18.7a1.7 1.7 0 0 0-1.88.34l-.06.06-2.14-2.14.06-.06A1.7 1.7 0 0 0 6.95 15a1.7 1.7 0 0 0-1.56-1.03h-.1v-3.03h.1A1.7 1.7 0 0 0 6.95 9.9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.14-2.14.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.03-1.56v-.1h3.03v.1a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.14 2.14-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.03h.1v3.03h-.1A1.7 1.7 0 0 0 19.4 15Z" />
-                  </svg>
-                  Cài đặt
-                </button>
+                {(activeUser?.roles?.includes("MENTEE") ||
+                  profile.role === "Mentee" ||
+                  !activeUser?.roles?.length) && (
+                  <button
+                    type="button"
+                    className="figma-profile-menu-item"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      router.push(`/${locale}/mentor-registration`);
+                    }}
+                  >
+                    <BookOpen aria-hidden="true" />
+                    Đăng ký làm Mentor
+                  </button>
+                )}
               </div>
               <button
                 type="button"
                 className="figma-profile-menu-item figma-profile-logout"
                 onClick={handleLogout}
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
-                  <path d="m14 8 4 4-4 4M18 12H8" />
-                </svg>
+                <LogOut aria-hidden="true" />
                 Đăng xuất
               </button>
             </section>

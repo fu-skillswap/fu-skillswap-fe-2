@@ -9,6 +9,7 @@
 import type { Mentor, MentorService } from "@/models/entities";
 import { Button } from "@/components/ui/Button";
 import { BookingCalendar } from "@/components/domain/booking-calendar/BookingCalendar";
+import { CheckCircle2 } from "lucide-react";
 
 /** Tạo chữ cái viết tắt từ tên người dùng cho avatar */
 function initials(name: string) {
@@ -71,9 +72,7 @@ export function BookingFlow({
     return (
       <section className="figma-booking-success" aria-live="polite">
         <span className="figma-booking-success-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="m5 12 4.2 4.2L19 6.5" />
-          </svg>
+          <CheckCircle2 aria-hidden="true" />
         </span>
         <h3>Booking confirmed</h3>
         <p>

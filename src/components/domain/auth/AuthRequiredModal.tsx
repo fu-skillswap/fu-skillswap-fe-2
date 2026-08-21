@@ -7,6 +7,7 @@
 
 import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
+import { Lock, X } from "lucide-react";
 
 interface AuthRequiredModalProps {
   /** Trạng thái bật/tắt modal */
@@ -44,23 +45,17 @@ export function AuthRequiredModal({
           onClick={onClose}
           aria-label="Đóng"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <X aria-hidden="true" />
         </button>
 
         <div className="figma-auth-modal-badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
+          <Lock aria-hidden="true" />
         </div>
 
         <h3>Yêu cầu xác thực tài khoản</h3>
         <p>
           {message ||
-            "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng này."}
+            "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tiếp tục sử dụng tính năng này."}
         </p>
 
         <div className="figma-auth-modal-actions">

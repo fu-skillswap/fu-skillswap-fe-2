@@ -7,6 +7,7 @@
 import type { Mentor, MentorService } from "@/models/entities";
 import { getMentorServices } from "@/data/demoMentorServices";
 import { useAuth } from "@/providers/AuthProvider";
+import { ChevronLeft } from "lucide-react";
 
 /** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {
@@ -63,9 +64,7 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
       aria-label={`${mentor.name} mentor profile`}
     >
       <button type="button" className="figma-detail-back" onClick={onBack}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m15 18-6-6 6-6" />
-        </svg>
+        <ChevronLeft aria-hidden="true" />
         Quay lại danh sách
       </button>
       <article className="figma-detail-profile-card">

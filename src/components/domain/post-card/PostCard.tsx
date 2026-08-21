@@ -9,6 +9,7 @@
 import Link from "next/link";
 import type { Post } from "@/models/entities";
 import { useAuth } from "@/providers/AuthProvider";
+import { Bookmark, Heart, MessageCircle } from "lucide-react";
 import { usePostCard } from "./usePostCard";
 
 const mascotSrc = "/images/Koko.png";
@@ -114,9 +115,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
           }
           aria-pressed={liked}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
-          </svg>
+          <Heart aria-hidden="true" fill={liked ? "currentColor" : "none"} />
           <span>{likes}</span>
         </button>
         <Link
@@ -124,9 +123,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
           className="figma-discussion-link"
           aria-label={`${commentCount} comments`}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.8 9.8 0 0 1-3.8-.8L3 21l1.6-4.2A8 8 0 1 1 21 11.5Z" />
-          </svg>
+          <MessageCircle aria-hidden="true" />
           <span>{commentCount}</span>
         </Link>
         <button
@@ -135,9 +132,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
           aria-label="Save post"
           onClick={handleFlagClick}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 20V4m0 1.5h11l-1.6 3L17 12H6" />
-          </svg>
+          <Bookmark aria-hidden="true" />
         </button>
       </footer>
       {post.previewComments?.length ? (
