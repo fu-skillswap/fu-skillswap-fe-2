@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { mentorRepo } from "@/repositories/mentorRepo";
-import { useState } from "react";
+import { mentorRepo } from '@/repositories/mentorRepo';
+import { useState } from 'react';
 
 export function useMentorBooking() {
   const [message, setMessage] = useState<string>();
@@ -13,10 +13,10 @@ export function useMentorBooking() {
     setError(undefined);
     try {
       await mentorRepo.createBooking(mentorId, startsAt);
-      setMessage("Đặt lịch thành công. Mentor sẽ nhận được thông báo.");
+      setMessage('Đặt lịch thành công. Mentor sẽ nhận được thông báo.');
       return true;
     } catch {
-      setError("Không thể đặt lịch vào lúc này. Vui lòng thử lại.");
+      setError('Không thể đặt lịch vào lúc này. Vui lòng thử lại.');
       return false;
     } finally {
       setIsSubmitting(false);

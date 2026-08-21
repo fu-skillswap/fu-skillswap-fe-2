@@ -1,4 +1,4 @@
-export type Role = "mentee" | "mentor" | "admin" | "sysadmin";
+export type Role = 'mentee' | 'mentor' | 'admin' | 'sysadmin';
 
 export interface User {
   id: string;
@@ -12,7 +12,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  author: Pick<User, "id" | "name">;
+  author: Pick<User, 'id' | 'name'>;
   tags: string[];
   createdAt: string;
   likes: number;
@@ -33,7 +33,7 @@ export interface Mentor {
   organization?: string;
   reviewCount?: number;
   startingPrice?: number;
-  category?: "PM" | "Tech" | "Design" | "Data" | "Marketing" | "Leadership";
+  category?: 'PM' | 'Tech' | 'Design' | 'Data' | 'Marketing' | 'Leadership';
 }
 
 export interface MentorService {
@@ -51,7 +51,7 @@ export interface Booking {
   mentorId: string;
   menteeId: string;
   startsAt: string;
-  status: "pending" | "confirmed" | "cancelled";
+  status: 'pending' | 'confirmed' | 'cancelled';
 }
 
 export interface Comment {

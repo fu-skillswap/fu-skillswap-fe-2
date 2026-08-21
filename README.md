@@ -1,6 +1,6 @@
 ﻿# SkillSwap - Univeristy-base exchanging experience platform 📚✍️
 
-**SkillSwap* 
+*_SkillSwap_
 ---
 
 ## 📋 Table of Contents
@@ -17,7 +17,8 @@
 The system enforces access control using `ProtectedRoute` wrappers. Below are the primary user roles and their corresponding permissions.
 
 | Role | Portals & Key Features |
-| :--- | :--- |
+| :--- | :--------------------- |
+
 ---
 
 ## 🚀 Tech Stack
@@ -39,6 +40,7 @@ npm run dev
 Mở [http://localhost:3000/vi/dashboard](http://localhost:3000/vi/dashboard). Để kiểm tra production build, chạy `npm run build`.
 
 > Các repository hiện trả về dữ liệu demo. Khi backend sẵn sàng, cập nhật các hàm trong `src/repositories/` để dùng `apiClient` và tạo `.env.local` từ `.env.example`.
+
 ---
 
 ## 📂 Project Structure
@@ -64,13 +66,13 @@ src/
 │   │   ├── LoginView.tsx          # Chỉ chứa HTML, Form UI, nhúng useLoginLogic vào
 │   │   └── useLoginLogic.ts       # Khởi tạo useForm, handle submit, gọi authRepo
 │   │
-│   ├── mentee/                    
+│   ├── mentee/
 │   │   ├── post-detail/
-│   │   │   ├── PostDetailView.tsx 
+│   │   │   ├── PostDetailView.tsx
 │   │   │   └── usePostDetail.ts   # Quản lý state comment, lấy ID bài viết gọi postRepo
 │   │   ├── mentor-booking/
 │   │   │   ├── MentorBookingView.tsx
-│   │   │   └── useMentorBooking.ts 
+│   │   │   └── useMentorBooking.ts
 │   │   └── ...
 │   │
 │   ├── mentor/
@@ -96,9 +98,9 @@ src/
 │
 ├── repositories/                  # TẦNG DATA ACCESS (Không chứa UI, chỉ gọi API)
 │   ├── authRepo.ts                # Dùng apiClient gọi /login, /logout
-│   ├── postRepo.ts                
-│   ├── mentorRepo.ts              
-│   └── walletRepo.ts              
+│   ├── postRepo.ts
+│   ├── mentorRepo.ts
+│   └── walletRepo.ts
 │
 ├── models/                        # TẦNG DOMAIN & CONFIG
 │   ├── apiClient.ts               # Setup Axios, tự đính Token, bắt lỗi 401

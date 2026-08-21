@@ -1,3 +1,5 @@
-import { MyProfileView } from "@/views/mentee/MyProfileView";
+import { MyProfileView } from '@/views/mentee/MyProfileView';
 
-export default function MyProfilePage() { return <MyProfileView />; }
+export default function MyProfilePage() {
+  return <MyProfileView />;
+}

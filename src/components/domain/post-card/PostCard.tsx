@@ -1,45 +1,100 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import type { Post } from "@/models/entities";
-import { usePostCard } from "./usePostCard";
+import Link from 'next/link';
+import type { Post } from '@/models/entities';
+import { usePostCard } from './usePostCard';
 
-const mascotSrc = "https://fang-squad-69023135.figma.site/assets/Koko-CeSODsvb.png";
+const mascotSrc = 'https://fang-squad-69023135.figma.site/assets/Koko-CeSODsvb.png';
 
-export function PostCard({ post, locale = "vi" }: { post: Post; locale?: string }) {
+export function PostCard({ post, locale = 'vi' }: { post: Post; locale?: string }) {
   const { likes, liked, toggleLike } = usePostCard(post.likes);
-  const initials = post.author.name.split(" ").map((part) => part[0]).slice(0, 2).join("");
+  const initials = post.author.name
+    .split(' ')
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('');
   const commentCount = post.commentCount ?? 0;
 
-  return <article className="figma-post-card">
-    <span className="figma-post-accent" />
-    <header className="figma-post-header">
-      <span className="figma-avatar figma-post-avatar">{initials}</span>
-      <span className="figma-post-author"><strong>{post.author.name}</strong><small>{post.createdAt}</small></span>
-      <button type="button" className="figma-more-button" aria-label={`More options for ${post.title}`}>⋮</button>
-      {post.showMascot && <img className="figma-post-mascot" src={mascotSrc} alt="" />}
-    </header>
-    {post.mediaUrl && <img className="figma-post-media" src={post.mediaUrl} alt="" />}
-    <div className="figma-post-body">
-      {post.showTitle !== false && <Link href={`/${locale}/post-detail/${post.id}`} className="figma-post-title">{post.title}</Link>}
-      <p>{post.content}</p>
-      {post.tags.length > 0 && <div className="figma-post-tags">{post.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div>}
-    </div>
-    <footer className="figma-post-actions">
-      <button type="button" onClick={toggleLike} className={liked ? "figma-like-button figma-like-button-active" : "figma-like-button"} aria-pressed={liked}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" /></svg>
-        <span>{likes}</span>
-      </button>
-      <Link href={`/${locale}/post-detail/${post.id}`} className="figma-discussion-link" aria-label={`${commentCount} comments`}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.8 9.8 0 0 1-3.8-.8L3 21l1.6-4.2A8 8 0 1 1 21 11.5Z" /></svg>
-        <span>{commentCount}</span>
-      </Link>
-      <button type="button" className="figma-flag-button" aria-label="Save post" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20V4m0 1.5h11l-1.6 3L17 12H6" /></svg></button>
-    </footer>
-    {post.previewComments?.length ? <div className="figma-post-comment-preview">{post.previewComments.map((comment) => <p key={comment.id}><strong>{comment.authorName}</strong> {comment.content}</p>)}</div> : null}
-    <div className="figma-post-comment-input">
-      <span className="figma-inline-avatar">YO</span>
-      <input readOnly aria-label="Add a comment" placeholder="Add a comment..." />
-    </div>
-  </article>;
+  return (
+    <article className="figma-post-card">
+      <span className="figma-post-accent" />
+      <header className="figma-post-header">
+        <span className="figma-avatar figma-post-avatar">{initials}</span>
+        <span className="figma-post-author">
+          <strong>{post.author.name}</strong>
+          <small>{post.createdAt}</small>
+        </span>
+        <button
+          type="button"
+          className="figma-more-button"
+          aria-label={`More options for ${post.title}`}
+        >
+          ⋮
+        </button>
+        {post.showMascot && <img className="figma-post-mascot" src={mascotSrc} alt="" />}
+      </header>
+      {post.mediaUrl && <img className="figma-post-media" src={post.mediaUrl} alt="" />}
+      <div className="figma-post-body">
+        {post.showTitle !== false && (
+          <Link href={`/${locale}/post-detail/${post.id}`} className="figma-post-title">
+            {post.title}
+          </Link>
+        )}
+        <p>{post.content}</p>
+        {post.tags.length > 0 && (
+          <div className="figma-post-tags">
+            {post.tags.map((tag) => (
+              <span key={tag}>#{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+      <footer className="figma-post-actions">
+        <button
+          type="button"
+          onClick={toggleLike}
+          className={liked ? 'figma-like-button figma-like-button-active' : 'figma-like-button'}
+          aria-pressed={liked}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
+          </svg>
+          <span>{likes}</span>
+        </button>
+        <Link
+          href={`/${locale}/post-detail/${post.id}`}
+          className="figma-discussion-link"
+          aria-label={`${commentCount} comments`}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.8 9.8 0 0 1-3.8-.8L3 21l1.6-4.2A8 8 0 1 1 21 11.5Z" />
+          </svg>
+          <span>{commentCount}</span>
+        </Link>
+        <button
+          type="button"
+          className="figma-flag-button"
+          aria-label="Save post"
+          aria-disabled="true"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 20V4m0 1.5h11l-1.6 3L17 12H6" />
+          </svg>
+        </button>
+      </footer>
+      {post.previewComments?.length ? (
+        <div className="figma-post-comment-preview">
+          {post.previewComments.map((comment) => (
+            <p key={comment.id}>
+              <strong>{comment.authorName}</strong> {comment.content}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      <div className="figma-post-comment-input">
+        <span className="figma-inline-avatar">YO</span>
+        <input readOnly aria-label="Add a comment" placeholder="Add a comment..." />
+      </div>
+    </article>
+  );
 }

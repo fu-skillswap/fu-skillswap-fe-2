@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { onboardingDestination } from "@/lib/auth/google";
-import { ApiClientError } from "@/models/apiClient";
-import { validateLogin, type LoginFormValues } from "@/models/schemas/authSchema";
-import { useAuth } from "@/providers/AuthProvider";
-import { authService } from "@/services/authService";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { onboardingDestination } from '@/lib/auth/google';
+import { ApiClientError } from '@/models/apiClient';
+import { validateLogin, type LoginFormValues } from '@/models/schemas/authSchema';
+import { useAuth } from '@/providers/AuthProvider';
+import { authService } from '@/services/authService';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
+const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 let googleIdentityServicesPromise: Promise<void> | null = null;
 
 function loadGoogleIdentityServices() {
   if (window.google?.accounts.id) return Promise.resolve();
   if (!googleIdentityServicesPromise) {
     googleIdentityServicesPromise = new Promise((resolve, reject) => {
-      const script = document.createElement("script");
+      const script = document.createElement('script');
       script.src = GIS_SCRIPT_URL;
       script.async = true;
       script.defer = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Unable to load Google Identity Services."));
+      script.onerror = () => reject(new Error('Unable to load Google Identity Services.'));
       document.head.appendChild(script);
     });
   }
@@ -29,12 +29,16 @@ function loadGoogleIdentityServices() {
 
 function messageForGoogleError(reason: unknown) {
   if (reason instanceof ApiClientError) {
-    if (reason.code === "SYS_0010") return reason.retryAfterSeconds ? `Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau ${reason.retryAfterSeconds} giây.` : "Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau.";
-    if (reason.code === "AUTH_1004") return "Tài khoản của bạn đã bị khóa.";
-    if (/nonce/i.test(reason.message)) return "Phiên đăng nhập Google đã hết hạn hoặc không còn hợp lệ. Vui lòng bấm “Đăng nhập bằng Google” và thử lại.";
-    return reason.message || "Đăng nhập Google không thành công. Vui lòng thử lại.";
+    if (reason.code === 'SYS_0010')
+      return reason.retryAfterSeconds
+        ? `Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau ${reason.retryAfterSeconds} giây.`
+        : 'Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau.';
+    if (reason.code === 'AUTH_1004') return 'Tài khoản của bạn đã bị khóa.';
+    if (/nonce/i.test(reason.message))
+      return 'Phiên đăng nhập Google đã hết hạn hoặc không còn hợp lệ. Vui lòng bấm “Đăng nhập bằng Google” và thử lại.';
+    return reason.message || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
   }
-  return "Không thể khởi tạo đăng nhập Google. Vui lòng thử lại.";
+  return 'Không thể khởi tạo đăng nhập Google. Vui lòng thử lại.';
 }
 
 export function useLoginLogic(locale: string) {
@@ -55,7 +59,7 @@ export function useLoginLogic(locale: string) {
     const validationError = validateLogin(values);
     if (validationError) return setError(validationError);
     setLoading(true);
-    setError("Đăng nhập bằng email và mật khẩu hiện chưa được hỗ trợ.");
+    setError('Đăng nhập bằng email và mật khẩu hiện chưa được hỗ trợ.');
     setLoading(false);
   };
 
@@ -63,7 +67,7 @@ export function useLoginLogic(locale: string) {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const button = googleButtonRef.current;
     if (!clientId) {
-      setError("Đăng nhập Google chưa được cấu hình. Vui lòng liên hệ quản trị viên.");
+      setError('Đăng nhập Google chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
       setGoogleLoading(false);
       return;
     }
@@ -74,7 +78,7 @@ export function useLoginLogic(locale: string) {
       const { nonce } = await authService.getGoogleNonce();
       nonceRef.current = nonce;
       await loadGoogleIdentityServices();
-      if (!window.google?.accounts.id) throw new Error("Google Identity Services is unavailable.");
+      if (!window.google?.accounts.id) throw new Error('Google Identity Services is unavailable.');
 
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -100,7 +104,13 @@ export function useLoginLogic(locale: string) {
         },
       });
       button.replaceChildren();
-      window.google.accounts.id.renderButton(button, { theme: "outline", size: "large", text: "signin_with", shape: "rectangular", width: Math.floor(button.getBoundingClientRect().width) || 380 });
+      window.google.accounts.id.renderButton(button, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        shape: 'rectangular',
+        width: Math.floor(button.getBoundingClientRect().width) || 380,
+      });
     } catch (reason) {
       nonceRef.current = null;
       setError(messageForGoogleError(reason));
@@ -113,7 +123,9 @@ export function useLoginLogic(locale: string) {
 
   useEffect(() => {
     void configureGoogleButton();
-    return () => { nonceRef.current = null; };
+    return () => {
+      nonceRef.current = null;
+    };
   }, [configureGoogleButton]);
 
   return { error, clearError, loading, googleLoading, submit, googleButtonRef };
