@@ -13,6 +13,7 @@ type MenteeShellContextValue = {
 const MenteeShellContext = createContext<MenteeShellContextValue | undefined>(undefined);
 
 function routeTitle(pathname: string) {
+  if (pathname.endsWith("/profile")) return "Hồ sơ của tôi";
   if (pathname.includes("/mentor-booking")) return "Tìm Mentor";
   if (pathname.includes("/post-detail/")) return "Chi tiết bài viết";
   return "Bảng tin";

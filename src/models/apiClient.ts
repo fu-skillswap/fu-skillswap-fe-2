@@ -28,10 +28,12 @@ async function requestEnvelope<T>(path: string, init: RequestInit = {}, retry = 
     try { await refreshAccessToken(); return requestEnvelope<T>(path, init, true); }
     catch { unauthenticatedHandler?.(); }
   }
-  if (!response.ok || !envelope || envelope.data === null || Array.isArray(envelope.data)) {
+  // Successful catalog endpoints legitimately return arrays. Validation arrays only
+  // need special handling on non-success HTTP responses.
+  if (!response.ok || !envelope || envelope.data === null) {
     throw new ApiClientError(response.status, envelope?.code ?? "NETWORK_ERROR", envelope?.message ?? `API request failed (${response.status}).`, Array.isArray(envelope?.data) ? envelope.data : null, envelope?.retryAfterSeconds);
   }
-  return envelope.data;
+  return envelope.data as T;
 }
 
 async function refreshAccessToken() {

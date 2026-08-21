@@ -16,6 +16,19 @@ export interface ApiResponse<T> {
 export interface GoogleLoginNonceResponse { nonce: string; expiresAt: string; }
 export interface TokenResponse { accessToken: string; tokenType: string; }
 export interface GoogleLoginRequest { credential: string; nonce: string; }
+export interface CampusResponse { id: string; code: string; name: string; city: string; }
+export interface AcademicProgramResponse { id: string; code: string; nameVi: string; nameEn: string; }
+export interface SpecializationResponse { id: string; programId: string; code: string; nameVi: string; nameEn: string; expected?: boolean; other?: boolean; }
+export interface StudentProfileRequest {
+  studentCode: string; displayName?: string; avatarUrl?: string; campusId: string; programId: string;
+  specializationId: string; semester: number; intakeYear: number; isAlumni: boolean; graduationYear?: number; bio?: string;
+}
+export interface StudentProfileResponse {
+  userId: string; email: string; studentCode: string; displayName?: string | null; avatarUrl?: string | null;
+  campus: CampusResponse; program: AcademicProgramResponse; specialization: SpecializationResponse;
+  semester: number; intakeYear: number; graduationYear?: number | null; bio?: string | null;
+  createdAt: string; updatedAt: string; alumni: boolean;
+}
 export type BackendRole = "MENTEE" | "MENTOR" | "ADMIN" | "SYSTEM_ADMIN";
 export interface UserMeResponse {
   publicId: string; email: string; fullName: string; avatarUrl?: string | null;

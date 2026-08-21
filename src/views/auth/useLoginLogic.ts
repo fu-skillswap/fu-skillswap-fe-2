@@ -31,6 +31,7 @@ function messageForGoogleError(reason: unknown) {
   if (reason instanceof ApiClientError) {
     if (reason.code === "SYS_0010") return reason.retryAfterSeconds ? `Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau ${reason.retryAfterSeconds} giây.` : "Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau.";
     if (reason.code === "AUTH_1004") return "Tài khoản của bạn đã bị khóa.";
+    if (/nonce/i.test(reason.message)) return "Phiên đăng nhập Google đã hết hạn hoặc không còn hợp lệ. Vui lòng bấm “Đăng nhập bằng Google” và thử lại.";
     return reason.message || "Đăng nhập Google không thành công. Vui lòng thử lại.";
   }
   return "Không thể khởi tạo đăng nhập Google. Vui lòng thử lại.";
@@ -46,6 +47,7 @@ export function useLoginLogic(locale: string) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(true);
+  const clearError = useCallback(() => setError(undefined), []);
 
   completeGoogleLoginRef.current = completeGoogleLogin;
 
@@ -114,5 +116,5 @@ export function useLoginLogic(locale: string) {
     return () => { nonceRef.current = null; };
   }, [configureGoogleButton]);
 
-  return { error, loading, googleLoading, submit, googleButtonRef };
+  return { error, clearError, loading, googleLoading, submit, googleButtonRef };
 }
