@@ -126,7 +126,7 @@ export interface StudentProfileResponse {
   alumni: boolean;
 }
 
-export type BackendRole = "MENTEE" | "MENTOR" | "ADMIN" | "SYSTEM_ADMIN";
+export type BackendRole = 'MENTEE' | 'MENTOR' | 'ADMIN' | 'SYSTEM_ADMIN';
 
 /** Phản hồi thông tin cá nhân người dùng (`/api/auth/me`) */
 export interface UserMeResponse {
@@ -134,7 +134,7 @@ export interface UserMeResponse {
   email: string;
   fullName: string;
   avatarUrl?: string | null;
-  status: "ACTIVE" | "INACTIVE" | "BANNED" | "DELETED";
+  status: 'ACTIVE' | 'INACTIVE' | 'BANNED' | 'DELETED';
   roles: BackendRole[];
   profileCompleted: boolean;
   hasStudentProfile: boolean;

@@ -4,22 +4,16 @@
  * Kiểm tra trạng thái đăng nhập người dùng, nếu chưa xác thực sẽ tự động điều hướng về trang Login kèm query parameter `next`.
  */
 
-"use client";
+'use client';
 
-import { useAuth } from "@/providers/AuthProvider";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useAuth } from '@/providers/AuthProvider';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 /**
  * Component bọc các trang yêu cầu xác thực để bảo vệ truy cập.
  */
-export function AuthGuard({
-  children,
-  locale,
-}: {
-  children: React.ReactNode;
-  locale: string;
-}) {
+export function AuthGuard({ children, locale }: { children: React.ReactNode; locale: string }) {
   const { isAuthenticated, isBootstrapping } = useAuth();
   const router = useRouter();
   const pathname = usePathname();

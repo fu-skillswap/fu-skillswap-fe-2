@@ -3,41 +3,39 @@
  * @description Repository bài viết thảo luận và bình luận (Post & Comment Repository) dành cho môi trường demo.
  */
 
-import type { Comment, Post } from "@/models/entities";
-import { mergePosts } from "@/data/demoPosts";
+import type { Comment, Post } from '@/models/entities';
+import { mergePosts } from '@/data/demoPosts';
 
 /** Danh sách bài viết mẫu khởi tạo ban đầu */
 const posts: Post[] = [
   {
-    id: "1",
-    title: "Cần mentor React cơ bản",
-    content:
-      "Mình muốn được định hướng component, state và cách tổ chức dự án React.",
-    author: { id: "u-2", name: "Minh Anh" },
-    tags: ["React", "Frontend"],
-    createdAt: "2026-08-16",
+    id: '1',
+    title: 'Cần mentor React cơ bản',
+    content: 'Mình muốn được định hướng component, state và cách tổ chức dự án React.',
+    author: { id: 'u-2', name: 'Minh Anh' },
+    tags: ['React', 'Frontend'],
+    createdAt: '2026-08-16',
     likes: 12,
   },
   {
-    id: "2",
-    title: "Chia sẻ kinh nghiệm phỏng vấn intern",
-    content:
-      "Tổng hợp các câu hỏi và cách chuẩn bị portfolio cho vị trí frontend intern.",
-    author: { id: "u-3", name: "Quang Huy" },
-    tags: ["Career", "Frontend"],
-    createdAt: "2026-08-15",
+    id: '2',
+    title: 'Chia sẻ kinh nghiệm phỏng vấn intern',
+    content: 'Tổng hợp các câu hỏi và cách chuẩn bị portfolio cho vị trí frontend intern.',
+    author: { id: 'u-3', name: 'Quang Huy' },
+    tags: ['Career', 'Frontend'],
+    createdAt: '2026-08-15',
     likes: 24,
   },
 ];
 
 /** Bản đồ lưu trữ danh sách bình luận theo postId */
 const comments: Record<string, Comment[]> = {
-  "1": [
+  '1': [
     {
-      id: "c-1",
-      authorName: "Thanh Hà",
-      content: "Mình có thể hỗ trợ bạn cuối tuần này.",
-      createdAt: "2026-08-16",
+      id: 'c-1',
+      authorName: 'Thanh Hà',
+      content: 'Mình có thể hỗ trợ bạn cuối tuần này.',
+      createdAt: '2026-08-16',
     },
   ],
 };
@@ -59,7 +57,7 @@ export const postRepo = {
    */
   async findById(id: string): Promise<{ post: Post; comments: Comment[] }> {
     const post = mergePosts(posts).find((item) => item.id === id);
-    if (!post) throw new Error("Không tìm thấy bài viết.");
+    if (!post) throw new Error('Không tìm thấy bài viết.');
     return { post, comments: comments[id] ?? post.previewComments ?? [] };
   },
 
@@ -72,7 +70,7 @@ export const postRepo = {
   async addComment(postId: string, content: string): Promise<Comment> {
     const comment = {
       id: crypto.randomUUID(),
-      authorName: "Bạn",
+      authorName: 'Bạn',
       content,
       createdAt: new Date().toISOString().slice(0, 10),
     };

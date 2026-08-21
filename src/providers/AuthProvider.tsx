@@ -5,22 +5,14 @@
  * các phương thức hoàn tất đăng nhập Google, khôi phục phiên đăng nhập và đăng xuất.
  */
 
-"use client";
+'use client';
 
-import type {
-  AuthenticatedUser,
-  OnboardingStatusResponse,
-  UserMeResponse,
-} from "@/models/auth";
-import {
-  refreshSession,
-  setAccessToken,
-  setUnauthenticatedHandler,
-} from "@/models/apiClient";
-import { AuthRequiredModal } from "@/components/domain/auth/AuthRequiredModal";
-import { authRepo } from "@/repositories/authRepo";
-import { studentProfileRepo } from "@/repositories/studentProfileRepo";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { AuthenticatedUser, OnboardingStatusResponse, UserMeResponse } from '@/models/auth';
+import { refreshSession, setAccessToken, setUnauthenticatedHandler } from '@/models/apiClient';
+import { AuthRequiredModal } from '@/components/domain/auth/AuthRequiredModal';
+import { authRepo } from '@/repositories/authRepo';
+import { studentProfileRepo } from '@/repositories/studentProfileRepo';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 /** Dữ liệu và các hàm thao tác được cung cấp bởi AuthContext */
 interface AuthContextValue {
@@ -132,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleUnauthenticated = () => {
       clearSession();
-      showAuthRequiredModal("Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng này.");
+      showAuthRequiredModal('Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng này.');
     };
     setUnauthenticatedHandler(handleUnauthenticated);
     void restoreSession();
@@ -173,6 +165,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
  */
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider.");
+  if (!context) throw new Error('useAuth must be used within AuthProvider.');
   return context;
 }

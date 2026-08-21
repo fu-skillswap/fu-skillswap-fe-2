@@ -4,7 +4,7 @@
  * Render giao diện `ScheduleManageView`.
  */
 
-import { ScheduleManageView } from "@/views/mentor/schedule-manage/ScheduleManageView";
+import { ScheduleManageView } from '@/views/mentor/schedule-manage/ScheduleManageView';
 
 /**
  * Server Component cho trang Quản lý lịch dạy/tư vấn Mentor.

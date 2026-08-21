@@ -4,10 +4,10 @@
  * Tự động chuyển hướng các đường dẫn chưa có tiền tố ngôn ngữ về ngôn ngữ mặc định (Tiếng Việt `/vi`).
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
 /** Danh sách ngôn ngữ được hỗ trợ trong hệ thống */
-const supportedLocales = ["vi", "en"];
+const supportedLocales = ['vi', 'en'];
 
 /**
  * Middleware kiểm tra và bổ sung prefix locale vào URL request nếu thiếu.
@@ -18,16 +18,13 @@ const supportedLocales = ["vi", "en"];
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith("/_next") || pathname.includes("."))
-    return NextResponse.next();
+  if (pathname.startsWith('/_next') || pathname.includes('.')) return NextResponse.next();
   const hasLocale = supportedLocales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
   if (hasLocale) return NextResponse.next();
-  return NextResponse.redirect(
-    new URL(`/vi${pathname === "/" ? "" : pathname}`, request.url),
-  );
+  return NextResponse.redirect(new URL(`/vi${pathname === '/' ? '' : pathname}`, request.url));
 }
 
 /** Cấu hình matcher áp dụng middleware cho tất cả đường dẫn trừ `/api` */
-export const config = { matcher: ["/((?!api).*)"] };
+export const config = { matcher: ['/((?!api).*)'] };

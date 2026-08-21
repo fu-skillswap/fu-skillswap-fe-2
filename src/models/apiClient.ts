@@ -11,17 +11,15 @@ import axios, {
   AxiosHeaders,
   type AxiosRequestConfig,
   type InternalAxiosRequestConfig,
-} from "axios";
-import type {
-  ApiResponse,
-  TokenResponse,
-  ValidationError,
-} from "@/models/auth";
+} from 'axios';
+import type { ApiResponse, TokenResponse, ValidationError } from '@/models/auth';
 
 /** Chuẩn hóa địa chỉ API gốc từ biến môi trường (xóa bỏ khoảng trắng và dấu ngoặc kép thừa nếu có) */
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "")
-  .trim()
-  .replace(/^['"]|['"]$/g, "");
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').trim().replace(/^['"]|['"]$/g, '');
+
+// Browser requests stay on the Vercel origin so Next.js can proxy `/api/*` and avoid backend CORS.
+// Server-rendered calls may still use the configured API origin directly.
+const apiBaseUrl = typeof window === 'undefined' ? API_URL || undefined : undefined;
 
 /** Access token được lưu trực tiếp trong bộ nhớ tạm (đảm bảo an toàn khỏi tấn công XSS) */
 let memoryToken: string | null = null;
@@ -83,26 +81,26 @@ export const setUnauthenticatedHandler = (handler?: () => void) => {
  */
 function canRefresh(path: string) {
   return (
-    !path.startsWith("/api/auth/refresh") &&
-    !path.startsWith("/api/auth/logout") &&
-    !path.startsWith("/api/auth/google")
+    !path.startsWith('/api/auth/refresh') &&
+    !path.startsWith('/api/auth/logout') &&
+    !path.startsWith('/api/auth/google')
   );
 }
 
 /** Axios instance chính cấu hình mặc định baseURL và withCredentials: true */
 const axiosInstance = axios.create({
-  baseURL: API_URL || undefined,
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
 /** Request Interceptor: Tự động đính kèm Authorization Header nếu memoryToken tồn tại */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (memoryToken && !config.headers.has("Authorization")) {
-      config.headers.set("Authorization", `Bearer ${memoryToken}`);
+    if (memoryToken && !config.headers.has('Authorization')) {
+      config.headers.set('Authorization', `Bearer ${memoryToken}`);
     }
     return config;
   },
@@ -113,18 +111,14 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     const envelope = response.data as ApiResponse<unknown> | null;
-    if (envelope && typeof envelope === "object" && "data" in envelope) {
-      if (
-        response.status >= 200 &&
-        response.status < 300 &&
-        envelope.data !== null
-      ) {
+    if (envelope && typeof envelope === 'object' && 'data' in envelope) {
+      if (response.status >= 200 && response.status < 300 && envelope.data !== null) {
         return envelope.data as any;
       }
       throw new ApiClientError(
         response.status,
-        envelope.code ?? "ERROR",
-        envelope.message ?? "API request failed.",
+        envelope.code ?? 'ERROR',
+        envelope.message ?? 'API request failed.',
         Array.isArray(envelope.data) ? envelope.data : null,
         envelope.retryAfterSeconds,
       );
@@ -136,19 +130,14 @@ axiosInstance.interceptors.response.use(
       _retry?: boolean;
     };
     const status = error.response?.status ?? 500;
-    const path = originalRequest?.url ?? "";
+    const path = originalRequest?.url ?? '';
 
-    if (
-      status === 401 &&
-      originalRequest &&
-      !originalRequest._retry &&
-      canRefresh(path)
-    ) {
+    if (status === 401 && originalRequest && !originalRequest._retry && canRefresh(path)) {
       originalRequest._retry = true;
       try {
         const newToken = await refreshAccessToken();
         if (originalRequest.headers) {
-          originalRequest.headers.set("Authorization", `Bearer ${newToken}`);
+          originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
         }
         const res = await axiosInstance(originalRequest);
         return res;
@@ -161,7 +150,7 @@ axiosInstance.interceptors.response.use(
     const envelope = error.response?.data;
     throw new ApiClientError(
       status,
-      envelope?.code ?? error.code ?? "NETWORK_ERROR",
+      envelope?.code ?? error.code ?? 'NETWORK_ERROR',
       envelope?.message ?? error.message ?? `API request failed (${status}).`,
       Array.isArray(envelope?.data) ? envelope.data : null,
       envelope?.retryAfterSeconds,
@@ -176,8 +165,8 @@ axiosInstance.interceptors.response.use(
  */
 async function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
-    refreshPromise = apiClient<TokenResponse>("/api/auth/refresh", {
-      method: "POST",
+    refreshPromise = apiClient<TokenResponse>('/api/auth/refresh', {
+      method: 'POST',
     })
       .then((tokenRes) => {
         setAccessToken(tokenRes.accessToken);
@@ -203,14 +192,11 @@ export const apiClient = async <T>(
   path: string,
   config: (AxiosRequestConfig & { body?: unknown }) | RequestInit = {},
 ): Promise<T> => {
-  const method = (config.method ?? "GET").toString().toUpperCase();
-  let data = "data" in config ? config.data : undefined;
-  if (data === undefined && "body" in config && config.body) {
+  const method = (config.method ?? 'GET').toString().toUpperCase();
+  let data = 'data' in config ? config.data : undefined;
+  if (data === undefined && 'body' in config && config.body) {
     try {
-      data =
-        typeof config.body === "string"
-          ? JSON.parse(config.body)
-          : config.body;
+      data = typeof config.body === 'string' ? JSON.parse(config.body) : config.body;
     } catch {
       data = config.body;
     }

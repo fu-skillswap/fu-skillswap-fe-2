@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
-        destination: "https://api.skillswap.asia/api/:path*",
+        source: '/api/:path*',
+        destination: 'https://api.skillswap.asia/api/:path*',
       },
     ];
   },

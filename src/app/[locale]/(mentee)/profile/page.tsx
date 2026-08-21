@@ -4,7 +4,7 @@
  * Render giao diện `MyProfileView`.
  */
 
-import { MyProfileView } from "@/views/mentee/MyProfileView";
+import { MyProfileView } from '@/views/mentee/MyProfileView';
 
 /**
  * Server Component cho trang Hồ sơ cá nhân.

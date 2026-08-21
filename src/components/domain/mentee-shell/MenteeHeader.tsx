@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import type { AuthenticatedUser, StudentProfileResponse, UserMeResponse } from "@/models/auth";
 import Link from "next/link";
@@ -16,10 +16,10 @@ const prototypeProfile: {
   role: string;
   avatarUrl?: string | null;
 } = {
-  initials: "TH",
-  name: "Nguyen",
-  fullName: "Nguyen Thu Ha",
-  role: "Mentee",
+  initials: 'TH',
+  name: 'Nguyen',
+  fullName: 'Nguyen Thu Ha',
+  role: 'Mentee',
   avatarUrl: null,
 };
 
@@ -30,16 +30,14 @@ function initialsFor(name: string) {
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
-    .join("");
+    .join('');
   return initials ? initials.toUpperCase() : prototypeProfile.initials;
 }
 
-function roleLabel(roles?: AuthenticatedUser["roles"]) {
+function roleLabel(roles?: AuthenticatedUser['roles']) {
   const role = roles?.[0];
-  if (!role || role === "MENTEE") return "Mentee";
-  return role === "SYSTEM_ADMIN"
-    ? "System Admin"
-    : role.charAt(0) + role.slice(1).toLowerCase();
+  if (!role || role === 'MENTEE') return 'Mentee';
+  return role === 'SYSTEM_ADMIN' ? 'System Admin' : role.charAt(0) + role.slice(1).toLowerCase();
 }
 
 /** Props của MenteeHeader Component */
@@ -57,12 +55,7 @@ interface MenteeHeaderProps {
 /**
  * Component thanh tiêu đề trên cùng (Topbar) dành cho giao diện Mentee.
  */
-export function MenteeHeader({
-  title,
-  locale,
-  user,
-  onToggleSidebar,
-}: MenteeHeaderProps) {
+export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHeaderProps) {
   const router = useRouter();
   const { logout, user: authUser, isAuthenticated } = useAuth();
   const [fetchedUser, setFetchedUser] = useState<UserMeResponse | null>(null);
@@ -76,7 +69,7 @@ export function MenteeHeader({
       studentProfileRepo
         .get()
         .then((sp) => setStudentProfile(sp))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [isAuthenticated]);
 
@@ -86,7 +79,7 @@ export function MenteeHeader({
       authRepo
         .getMe()
         .then((me) => setFetchedUser(me))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [isAuthenticated, user, authUser]);
 
@@ -96,14 +89,14 @@ export function MenteeHeader({
   const displayName =
     studentProfile?.displayName ||
     activeUser?.fullName ||
-    studentProfile?.email?.split("@")[0] ||
+    studentProfile?.email?.split('@')[0] ||
     prototypeProfile.fullName;
 
   const avatarUrl = studentProfile?.avatarUrl || activeUser?.avatarUrl;
 
   const profile = {
     initials: initialsFor(displayName),
-    name: displayName.split(" ")[0] || displayName,
+    name: displayName.split(' ')[0] || displayName,
     fullName: displayName,
     role: roleLabel(activeUser?.roles),
     avatarUrl,
@@ -111,17 +104,16 @@ export function MenteeHeader({
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
-      if (!profileMenuRef.current?.contains(event.target as Node))
-        setIsProfileOpen(false);
+      if (!profileMenuRef.current?.contains(event.target as Node)) setIsProfileOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsProfileOpen(false);
+      if (event.key === 'Escape') setIsProfileOpen(false);
     };
-    document.addEventListener("mousedown", closeMenu);
-    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener('mousedown', closeMenu);
+    document.addEventListener('keydown', closeOnEscape);
     return () => {
-      document.removeEventListener("mousedown", closeMenu);
-      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener('mousedown', closeMenu);
+      document.removeEventListener('keydown', closeOnEscape);
     };
   }, []);
 
@@ -131,7 +123,7 @@ export function MenteeHeader({
     try {
       await logout();
     } catch {
-      await authRepo.logout().catch(() => {});
+      await authRepo.logout().catch(() => { });
     } finally {
       router.push(`/${locale}/login`);
     }
@@ -151,7 +143,13 @@ export function MenteeHeader({
           onClick={onToggleSidebar}
           aria-label="Bật/Tắt thanh điều hướng"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />
@@ -162,22 +160,14 @@ export function MenteeHeader({
       <div className="figma-topbar-actions" aria-label="Account actions">
         {!isGuest && (
           <>
-            <button
-              type="button"
-              className="figma-icon-button"
-              aria-label="Notifications"
-            >
+            <button type="button" className="figma-icon-button" aria-label="Notifications">
               <svg className="figma-bell" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
               <span className="figma-notification-dot" aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              className="figma-icon-button"
-              aria-label="Messages"
-            >
+            <button type="button" className="figma-icon-button" aria-label="Messages">
               <span className="figma-message" aria-hidden="true" />
             </button>
           </>
@@ -185,10 +175,7 @@ export function MenteeHeader({
 
         {isGuest ? (
           /* Nút Đăng nhập / Đăng ký dành cho Guest Mode khi chưa đăng nhập */
-          <Link
-            href={`/${locale}/login`}
-            className="figma-topbar-guest-login-btn"
-          >
+          <Link href={`/${locale}/login`} className="figma-topbar-guest-login-btn">
             Đăng nhập / Đăng ký
           </Link>
         ) : (
@@ -202,11 +189,7 @@ export function MenteeHeader({
               aria-label="User profile menu"
             >
               <span className="figma-profile-avatar">
-                {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="" />
-                ) : (
-                  profile.initials
-                )}
+                {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : profile.initials}
               </span>
               <span className="figma-profile-copy">
                 <strong>{profile.fullName}</strong>
@@ -218,47 +201,47 @@ export function MenteeHeader({
               />
             </button>
 
-          {isProfileOpen && (
-            <section
-              className="figma-profile-dropdown"
-              aria-label="User profile menu"
-            >
-              <div className="figma-profile-dropdown-actions">
-                <button
-                  type="button"
-                  className="figma-profile-menu-item"
-                  onClick={openProfile}
-                >
-                  <User aria-hidden="true" />
-                  Hồ sơ của tôi
-                </button>
-                {(activeUser?.roles?.includes("MENTEE") ||
-                  profile.role === "Mentee" ||
-                  !activeUser?.roles?.length) && (
+            {isProfileOpen && (
+              <section
+                className="figma-profile-dropdown"
+                aria-label="User profile menu"
+              >
+                <div className="figma-profile-dropdown-actions">
                   <button
                     type="button"
                     className="figma-profile-menu-item"
-                    onClick={() => {
-                      setIsProfileOpen(false);
-                      router.push(`/${locale}/mentor-registration`);
-                    }}
+                    onClick={openProfile}
                   >
-                    <BookOpen aria-hidden="true" />
-                    Đăng ký làm Mentor
+                    <User aria-hidden="true" />
+                    Hồ sơ của tôi
                   </button>
-                )}
-              </div>
-              <button
-                type="button"
-                className="figma-profile-menu-item figma-profile-logout"
-                onClick={handleLogout}
-              >
-                <LogOut aria-hidden="true" />
-                Đăng xuất
-              </button>
-            </section>
-          )}
-        </div>
+                  {(activeUser?.roles?.includes("MENTEE") ||
+                    profile.role === "Mentee" ||
+                    !activeUser?.roles?.length) && (
+                      <button
+                        type="button"
+                        className="figma-profile-menu-item"
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          router.push(`/${locale}/mentor-registration`);
+                        }}
+                      >
+                        <BookOpen aria-hidden="true" />
+                        Đăng ký làm Mentor
+                      </button>
+                    )}
+                </div>
+                <button
+                  type="button"
+                  className="figma-profile-menu-item figma-profile-logout"
+                  onClick={handleLogout}
+                >
+                  <LogOut aria-hidden="true" />
+                  Đăng xuất
+                </button>
+              </section>
+            )}
+          </div>
         )}
       </div>
     </header>

@@ -5,9 +5,9 @@
  */
 
 const services = [
-  ["Web application", "Hoạt động"],
-  ["API backend", "Chưa kết nối"],
-  ["Database", "Chưa kết nối"],
+  ['Web application', 'Hoạt động'],
+  ['API backend', 'Chưa kết nối'],
+  ['Database', 'Chưa kết nối'],
 ];
 
 /**
@@ -23,11 +23,7 @@ export default function SysadminDashboard() {
           {services.map(([service, status]) => (
             <article className="card schedule-item" key={service}>
               <strong>{service}</strong>
-              <span
-                className={status === "Hoạt động" ? "status-ok" : "status-warn"}
-              >
-                {status}
-              </span>
+              <span className={status === 'Hoạt động' ? 'status-ok' : 'status-warn'}>{status}</span>
             </article>
           ))}
         </div>

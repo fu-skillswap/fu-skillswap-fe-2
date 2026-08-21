@@ -4,14 +4,14 @@
  * Cung cấp các hàm truy xuất danh sách cơ sở campus, ngành học, chuyên ngành và lưu hồ sơ sinh viên trong quy trình Onboarding.
  */
 
-import { apiClient } from "@/models/apiClient";
+import { apiClient } from '@/models/apiClient';
 import type {
   AcademicProgramResponse,
   CampusResponse,
   SpecializationResponse,
   StudentProfileRequest,
   StudentProfileResponse,
-} from "@/models/auth";
+} from '@/models/auth';
 
 let profilePromise: Promise<StudentProfileResponse> | null = null;
 let cachedProfile: StudentProfileResponse | null = null;
@@ -28,7 +28,7 @@ export const studentProfileRepo = {
       return Promise.resolve(cachedProfile);
     }
     if (!profilePromise || forceRefresh) {
-      profilePromise = apiClient<StudentProfileResponse>("/api/me/student-profile")
+      profilePromise = apiClient<StudentProfileResponse>('/api/me/student-profile')
         .then((data) => {
           cachedProfile = data;
           return data;
@@ -44,14 +44,13 @@ export const studentProfileRepo = {
    * Truy xuất danh sách các Cơ sở / Campus đại học (`/api/campuses`).
    * @returns Promise chứa mảng danh sách Campus (`CampusResponse[]`)
    */
-  getCampuses: () => apiClient<CampusResponse[]>("/api/campuses"),
+  getCampuses: () => apiClient<CampusResponse[]>('/api/campuses'),
 
   /**
    * Truy xuất danh sách tất cả các Chương trình / Ngành đào tạo (`/api/academic-programs`).
    * @returns Promise chứa mảng danh sách Ngành đào tạo (`AcademicProgramResponse[]`)
    */
-  getPrograms: () =>
-    apiClient<AcademicProgramResponse[]>("/api/academic-programs"),
+  getPrograms: () => apiClient<AcademicProgramResponse[]>('/api/academic-programs'),
 
   /**
    * Truy xuất danh sách các Chuyên ngành hẹp thuộc về một Ngành đào tạo cụ thể.
@@ -59,9 +58,7 @@ export const studentProfileRepo = {
    * @returns Promise chứa mảng danh sách Chuyên ngành (`SpecializationResponse[]`)
    */
   getSpecializations: (programId: string) =>
-    apiClient<SpecializationResponse[]>(
-      `/api/academic-programs/${programId}/specializations`,
-    ),
+    apiClient<SpecializationResponse[]>(`/api/academic-programs/${programId}/specializations`),
 
   /**
    * Lưu hoặc cập nhật hồ sơ học thuật của tôi (PUT `/api/me/student-profile`).
@@ -70,8 +67,8 @@ export const studentProfileRepo = {
    * @returns Promise chứa dữ liệu Hồ sơ sinh viên đã cập nhật (`StudentProfileResponse`)
    */
   save: async (profile: StudentProfileRequest): Promise<StudentProfileResponse> => {
-    const updated = await apiClient<StudentProfileResponse>("/api/me/student-profile", {
-      method: "PUT",
+    const updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
+      method: 'PUT',
       data: profile,
     });
     cachedProfile = updated;
@@ -84,4 +81,3 @@ export const studentProfileRepo = {
     profilePromise = null;
   },
 };
-

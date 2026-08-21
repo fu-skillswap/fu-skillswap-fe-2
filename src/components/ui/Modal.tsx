@@ -4,9 +4,9 @@
  * Tự động lắng nghe phím Escape để đóng hộp thoại và ngăn chặn sự kiện nổi bọt trên backdrop.
  */
 
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 /** Props khởi tạo cho Modal Component */
 interface ModalProps {
@@ -33,13 +33,12 @@ export function Modal({
   hideHeader = false,
   onClose,
   children,
-  className = "",
+  className = '',
 }: ModalProps) {
   useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) =>
-      event.key === "Escape" && onClose();
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [onClose]);
 
   if (!open) return null;
@@ -49,7 +48,7 @@ export function Modal({
         className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-label={title || "Hộp thoại"}
+        aria-label={title || 'Hộp thoại'}
         onMouseDown={(event) => event.stopPropagation()}
       >
         {!hideHeader && (

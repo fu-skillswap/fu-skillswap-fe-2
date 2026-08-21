@@ -3,7 +3,7 @@
  * @description Trang báo lỗi 404 Không tìm thấy trang (404 Not Found Page Component).
  */
 
-import Link from "next/link";
+import Link from 'next/link';
 
 /**
  * Component hiển thị màn hình 404 tùy chỉnh với hình ảnh linh vật Cú SkillSwap.
@@ -11,10 +11,7 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <main className="skillswap-not-found">
-      <section
-        className="skillswap-not-found-card"
-        aria-labelledby="not-found-title"
-      >
+      <section className="skillswap-not-found-card" aria-labelledby="not-found-title">
         <div className="skillswap-not-found-copy">
           <img
             src="/images/SkillSwap_Logo_Text.png"
@@ -26,8 +23,8 @@ export default function NotFound() {
           </h1>
           <h2>Trang này đã bay mất rồi</h2>
           <p>
-            Đường dẫn có thể không tồn tại hoặc đã được thay đổi. Cú nhỏ sẽ dẫn
-            bạn quay lại bảng tin.
+            Đường dẫn có thể không tồn tại hoặc đã được thay đổi. Cú nhỏ sẽ dẫn bạn quay lại bảng
+            tin.
           </p>
           <Link href="/vi/dashboard">Về Bảng tin</Link>
         </div>

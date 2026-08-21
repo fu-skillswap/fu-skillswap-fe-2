@@ -4,37 +4,37 @@
  * Hiển thị ma trận ngày trong tuần và các khung giờ khả dụng cho phép Mentee click để chọn lịch hẹn.
  */
 
-"use client";
+'use client';
 
 import { Calendar } from "lucide-react";
 import { useBookingCalendar } from "./useBookingCalendar";
 
 /** Danh sách các ngày trong tuần mẫu cho lịch đặt */
 const days = [
-  { label: "Mon", date: "2026-08-17" },
-  { label: "Tue", date: "2026-08-18" },
-  { label: "Wed", date: "2026-08-19" },
-  { label: "Thu", date: "2026-08-20" },
-  { label: "Fri", date: "2026-08-21" },
-  { label: "Sat", date: "2026-08-22" },
-  { label: "Sun", date: "2026-08-23" },
+  { label: 'Mon', date: '2026-08-17' },
+  { label: 'Tue', date: '2026-08-18' },
+  { label: 'Wed', date: '2026-08-19' },
+  { label: 'Thu', date: '2026-08-20' },
+  { label: 'Fri', date: '2026-08-21' },
+  { label: 'Sat', date: '2026-08-22' },
+  { label: 'Sun', date: '2026-08-23' },
 ];
 
 /** Danh sách các mốc giờ làm việc trong ngày */
-const times = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"];
+const times = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'];
 
 /** Tập hợp các slot khung giờ rảnh khả dụng của Mentor */
 const availableSlots = new Set([
-  "2026-08-17T09:00",
-  "2026-08-18T09:00",
-  "2026-08-20T09:00",
-  "2026-08-17T10:00",
-  "2026-08-19T10:00",
-  "2026-08-17T14:00",
-  "2026-08-19T14:00",
-  "2026-08-21T14:00",
-  "2026-08-19T15:00",
-  "2026-08-21T15:00",
+  '2026-08-17T09:00',
+  '2026-08-18T09:00',
+  '2026-08-20T09:00',
+  '2026-08-17T10:00',
+  '2026-08-19T10:00',
+  '2026-08-17T14:00',
+  '2026-08-19T14:00',
+  '2026-08-21T14:00',
+  '2026-08-19T15:00',
+  '2026-08-21T15:00',
 ]);
 
 /** Props khởi tạo cho BookingCalendar Component */
@@ -86,13 +86,13 @@ export function BookingCalendar({ value, onSelect }: BookingCalendarProps) {
                   key={nextSlot}
                   disabled={!isAvailable}
                   onClick={() => selectSlot(nextSlot)}
-                  aria-label={`${day.label} ${time}${isAvailable ? ", available" : ", unavailable"}`}
+                  aria-label={`${day.label} ${time}${isAvailable ? ', available' : ', unavailable'}`}
                   className={
                     isSelected
-                      ? "figma-booking-slot figma-booking-slot-selected"
+                      ? 'figma-booking-slot figma-booking-slot-selected'
                       : isAvailable
-                        ? "figma-booking-slot figma-booking-slot-available"
-                        : "figma-booking-slot"
+                        ? 'figma-booking-slot figma-booking-slot-available'
+                        : 'figma-booking-slot'
                   }
                 />
               );

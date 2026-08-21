@@ -3,23 +3,23 @@
  * @description Repository quản lý danh sách Mentor và tạo/truy xuất thông tin Lịch hẹn (Booking Repository) cho môi trường demo.
  */
 
-import type { Booking, Mentor } from "@/models/entities";
-import { mergeMentors } from "@/data/demoMentors";
+import type { Booking, Mentor } from '@/models/entities';
+import { mergeMentors } from '@/data/demoMentors';
 
 /** Danh sách mentor tĩnh khởi tạo ban đầu */
 const mentors: Mentor[] = [
   {
-    id: "m-1",
-    name: "Nguyễn Lan",
-    expertise: ["React", "TypeScript"],
-    bio: "Frontend developer, yêu thích hỗ trợ sinh viên xây portfolio.",
+    id: 'm-1',
+    name: 'Nguyễn Lan',
+    expertise: ['React', 'TypeScript'],
+    bio: 'Frontend developer, yêu thích hỗ trợ sinh viên xây portfolio.',
     rating: 4.9,
   },
   {
-    id: "m-2",
-    name: "Trần Đức",
-    expertise: ["UI/UX", "Figma"],
-    bio: "Product designer với 4 năm kinh nghiệm làm sản phẩm số.",
+    id: 'm-2',
+    name: 'Trần Đức',
+    expertise: ['UI/UX', 'Figma'],
+    bio: 'Product designer với 4 năm kinh nghiệm làm sản phẩm số.',
     rating: 4.8,
   },
 ];
@@ -46,9 +46,9 @@ export const mentorRepo = {
     const booking: Booking = {
       id: crypto.randomUUID(),
       mentorId,
-      menteeId: "u-1",
+      menteeId: 'u-1',
       startsAt,
-      status: "confirmed",
+      status: 'confirmed',
     };
     bookings.push(booking);
     return booking;

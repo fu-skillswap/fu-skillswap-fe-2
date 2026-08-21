@@ -5,9 +5,9 @@
  */
 
 const metrics = [
-  ["Người dùng hoạt động", "1,248"],
-  ["Bài viết chờ duyệt", "16"],
-  ["Lịch hẹn tuần này", "84"],
+  ['Người dùng hoạt động', '1,248'],
+  ['Bài viết chờ duyệt', '16'],
+  ['Lịch hẹn tuần này', '84'],
 ];
 
 /**

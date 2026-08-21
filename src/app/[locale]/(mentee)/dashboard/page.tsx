@@ -4,18 +4,14 @@
  * Tải danh sách bài viết thảo luận và tin nổi bật từ `postRepo` để render giao diện Bảng tin.
  */
 
-import { PostCard } from "@/components/domain/post-card/PostCard";
-import { dashboardStories } from "@/data/demoMentors";
-import { postRepo } from "@/repositories/postRepo";
+import { PostCard } from '@/components/domain/post-card/PostCard';
+import { dashboardStories } from '@/data/demoMentors';
+import { postRepo } from '@/repositories/postRepo';
 
 /**
  * Server Component cho trang Bảng tin chính.
  */
-export default async function DashboardPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const [{ locale }, posts] = await Promise.all([params, postRepo.list()]);
   return (
     <section className="figma-feed" aria-label="Community posts">
@@ -25,13 +21,13 @@ export default async function DashboardPage({
             <span className="figma-story-ring">
               <span className="figma-avatar">
                 {person.name
-                  .split(" ")
+                  .split(' ')
                   .map((part) => part[0])
                   .slice(0, 2)
-                  .join("")}
+                  .join('')}
               </span>
             </span>
-            <span>{person.name.split(" ")[0]}</span>
+            <span>{person.name.split(' ')[0]}</span>
           </div>
         ))}
       </div>

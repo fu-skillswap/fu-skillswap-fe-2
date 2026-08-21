@@ -4,22 +4,19 @@
  * Hiển thị thông tin sinh viên, ngành học, cơ sở, mã sinh viên và cho phép cập nhật tên hiển thị, bio.
  */
 
-"use client";
+'use client';
 
-import { useMenteeShell } from "@/components/domain/mentee-shell/MenteeShell";
-import { ApiClientError } from "@/models/apiClient";
-import type {
-  StudentProfileRequest,
-  StudentProfileResponse,
-} from "@/models/auth";
+import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
+import { ApiClientError } from '@/models/apiClient';
+import type { StudentProfileRequest, StudentProfileResponse } from '@/models/auth';
 import {
   editProfileSchema,
   type EditProfileFormValues,
-} from "@/models/schemas/studentProfileSchema";
-import { studentProfileRepo } from "@/repositories/studentProfileRepo";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+} from '@/models/schemas/studentProfileSchema';
+import { studentProfileRepo } from '@/repositories/studentProfileRepo';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 /** Tạo chữ viết tắt 2 ký tự làm Avatar */
 function initials(name: string) {
@@ -30,8 +27,8 @@ function initials(name: string) {
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part[0])
-      .join("")
-      .toUpperCase() || "SS"
+      .join('')
+      .toUpperCase() || 'SS'
   );
 }
 
@@ -70,9 +67,9 @@ export function MyProfileView() {
   const form = useForm<EditProfileFormValues>({
     resolver: yupResolver(editProfileSchema),
     defaultValues: {
-      displayName: "",
-      studentCode: "",
-      bio: "",
+      displayName: '',
+      studentCode: '',
+      bio: '',
     },
   });
 
@@ -84,7 +81,7 @@ export function MyProfileView() {
   } = form;
 
   useEffect(() => {
-    setHeaderTitle("Hồ sơ của tôi");
+    setHeaderTitle('Hồ sơ của tôi');
     return () => setHeaderTitle(undefined);
   }, [setHeaderTitle]);
 
@@ -94,15 +91,15 @@ export function MyProfileView() {
         const data = await studentProfileRepo.get();
         setProfile(data);
         reset({
-          displayName: data.displayName || "",
+          displayName: data.displayName || '',
           studentCode: data.studentCode,
-          bio: data.bio || "",
+          bio: data.bio || '',
         });
       } catch (reason) {
         setError(
           reason instanceof ApiClientError && reason.status === 404
-            ? "Bạn chưa có hồ sơ học thuật. Vui lòng hoàn tất hồ sơ để tiếp tục."
-            : "Không thể tải hồ sơ lúc này. Vui lòng thử lại.",
+            ? 'Bạn chưa có hồ sơ học thuật. Vui lòng hoàn tất hồ sơ để tiếp tục.'
+            : 'Không thể tải hồ sơ lúc này. Vui lòng thử lại.',
         );
       } finally {
         setLoading(false);
@@ -112,10 +109,7 @@ export function MyProfileView() {
   }, []);
 
   const displayName = useMemo(
-    () =>
-      profile?.displayName ||
-      profile?.email.split("@")[0] ||
-      "SkillSwap Member",
+    () => profile?.displayName || profile?.email.split('@')[0] || 'SkillSwap Member',
     [profile],
   );
 
@@ -124,22 +118,20 @@ export function MyProfileView() {
     setSaving(true);
     setError(undefined);
     try {
-      const updated = await studentProfileRepo.save(
-        profileRequest(profile, values),
-      );
+      const updated = await studentProfileRepo.save(profileRequest(profile, values));
       setProfile(updated);
       reset({
-        displayName: updated.displayName || "",
+        displayName: updated.displayName || '',
         studentCode: updated.studentCode,
-        bio: updated.bio || "",
+        bio: updated.bio || '',
       });
       setEditing(false);
-      setNotice("Hồ sơ của bạn đã được cập nhật.");
+      setNotice('Hồ sơ của bạn đã được cập nhật.');
     } catch (reason) {
       setError(
         reason instanceof ApiClientError
           ? reason.message
-          : "Không thể lưu thay đổi. Vui lòng thử lại.",
+          : 'Không thể lưu thay đổi. Vui lòng thử lại.',
       );
     } finally {
       setSaving(false);
@@ -154,10 +146,7 @@ export function MyProfileView() {
     );
   if (!profile)
     return (
-      <section
-        className="figma-my-profile-state figma-my-profile-state-error"
-        role="alert"
-      >
+      <section className="figma-my-profile-state figma-my-profile-state-error" role="alert">
         <strong>Không thể hiển thị hồ sơ</strong>
         <span>{error}</span>
       </section>
@@ -179,11 +168,7 @@ export function MyProfileView() {
         <div className="figma-my-profile-cover" />
         <div className="figma-my-profile-content">
           <span className="figma-my-profile-avatar">
-            {profile.avatarUrl ? (
-              <img src={profile.avatarUrl} alt="" />
-            ) : (
-              initials(displayName)
-            )}
+            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initials(displayName)}
           </span>
           <button
             type="button"
@@ -193,7 +178,7 @@ export function MyProfileView() {
               setError(undefined);
             }}
           >
-            {editing ? "Hủy chỉnh sửa" : "Chỉnh sửa hồ sơ"}
+            {editing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}
           </button>
           {!editing ? (
             <>
@@ -204,7 +189,7 @@ export function MyProfileView() {
               </div>
               <p className="figma-my-profile-bio">
                 {profile.bio ||
-                  "Hãy thêm một vài dòng giới thiệu để các mentor hiểu hơn về mục tiêu học tập của bạn."}
+                  'Hãy thêm một vài dòng giới thiệu để các mentor hiểu hơn về mục tiêu học tập của bạn.'}
               </p>
               <dl className="figma-my-profile-academic">
                 <div>
@@ -226,9 +211,7 @@ export function MyProfileView() {
                 <div>
                   <dt>Học kỳ</dt>
                   <dd>
-                    {profile.semester === 0
-                      ? "Tiếng Anh dự bị"
-                      : `Học kỳ ${profile.semester}`}
+                    {profile.semester === 0 ? 'Tiếng Anh dự bị' : `Học kỳ ${profile.semester}`}
                   </dd>
                 </div>
                 <div>
@@ -243,40 +226,32 @@ export function MyProfileView() {
               )}
             </>
           ) : (
-            <form
-              className="figma-my-profile-form"
-              onSubmit={handleSubmit(save)}
-              noValidate
-            >
+            <form className="figma-my-profile-form" onSubmit={handleSubmit(save)} noValidate>
               <label>
                 Tên hiển thị
-                <input maxLength={150} {...register("displayName")} />
-                {errors.displayName && (
-                  <small>{errors.displayName.message}</small>
-                )}
+                <input maxLength={150} {...register('displayName')} />
+                {errors.displayName && <small>{errors.displayName.message}</small>}
               </label>
               <label>
                 Mã số sinh viên
-                <input {...register("studentCode")} />
-                {errors.studentCode && (
-                  <small>{errors.studentCode.message}</small>
-                )}
+                <input {...register('studentCode')} />
+                {errors.studentCode && <small>{errors.studentCode.message}</small>}
               </label>
               <label>
                 Giới thiệu bản thân
                 <textarea
                   rows={4}
                   placeholder="Mục tiêu học tập, kỹ năng và lĩnh vực bạn quan tâm…"
-                  {...register("bio")}
+                  {...register('bio')}
                 />
                 {errors.bio && <small>{errors.bio.message}</small>}
               </label>
               <p>
-                Thông tin học thuật được xác thực: {profile.campus.name} ·{" "}
-                {profile.program.nameVi} · {profile.specialization.nameVi}
+                Thông tin học thuật được xác thực: {profile.campus.name} · {profile.program.nameVi}{' '}
+                · {profile.specialization.nameVi}
               </p>
               <button type="submit" disabled={saving}>
-                {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
               </button>
             </form>
           )}

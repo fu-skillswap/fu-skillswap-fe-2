@@ -4,7 +4,7 @@
  * Bao gồm tóm tắt thông tin Mentor, gói dịch vụ, bảng chọn khung giờ và xác nhận đặt lịch hẹn.
  */
 
-"use client";
+'use client';
 
 import type { Mentor, MentorService } from "@/models/entities";
 import { Button } from "@/components/ui/Button";
@@ -14,22 +14,22 @@ import { CheckCircle2 } from "lucide-react";
 /** Tạo chữ cái viết tắt từ tên người dùng cho avatar */
 function initials(name: string) {
   return name
-    .split(" ")
+    .split(' ')
     .map((part) => part[0])
     .slice(0, 2)
-    .join("");
+    .join('');
 }
 
 /** Định dạng hiển thị giá điểm S-Coins */
 function priceLabel(price?: number) {
-  return price ? new Intl.NumberFormat("en-US").format(price) : "—";
+  return price ? new Intl.NumberFormat('en-US').format(price) : '—';
 }
 
 /** Định dạng hiển thị chuỗi ngày giờ từ slot ISO */
 function slotLabel(slot?: string) {
-  if (!slot) return "Select an available time slot";
-  const [date, time] = slot.split("T");
-  return `${date.split("-").reverse().join("/")} · ${time}`;
+  if (!slot) return 'Select an available time slot';
+  const [date, time] = slot.split('T');
+  return `${date.split('-').reverse().join('/')} · ${time}`;
 }
 
 /** Props của BookingFlow Component */
@@ -95,14 +95,9 @@ export function BookingFlow({
     );
 
   return (
-    <section
-      className="figma-booking-flow"
-      aria-label="Book a mentoring session"
-    >
+    <section className="figma-booking-flow" aria-label="Book a mentoring session">
       <div className="figma-booking-mentor-summary">
-        <span className="figma-booking-mentor-avatar">
-          {initials(mentor.name)}
-        </span>
+        <span className="figma-booking-mentor-avatar">{initials(mentor.name)}</span>
         <div>
           <span>Booking with</span>
           <strong>{mentor.name}</strong>
@@ -164,7 +159,7 @@ export function BookingFlow({
         disabled={!slot || isSubmitting}
         onClick={onConfirm}
       >
-        {isSubmitting ? "Confirming..." : `Book — ${service.name}`}
+        {isSubmitting ? 'Confirming...' : `Book — ${service.name}`}
       </Button>
     </section>
   );

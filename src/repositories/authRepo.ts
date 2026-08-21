@@ -4,15 +4,14 @@
  * Giao tiếp với Backend API qua apiClient cho Google Login, Google Nonce, User Profile, Session, Logout.
  */
 
-import { apiClient, setAccessToken } from "@/models/apiClient";
+import { apiClient, setAccessToken } from '@/models/apiClient';
 import type {
   GoogleLoginNonceResponse,
   GoogleLoginRequest,
   OnboardingStatusResponse,
   TokenResponse,
   UserMeResponse,
-} from "@/models/auth";
-import type { LoginRequest, LoginResponse } from "@/models/dtos";
+} from '@/models/auth';
 
 export const authRepo = {
   /**
@@ -20,7 +19,7 @@ export const authRepo = {
    * @returns Promise chứa mã nonce và thời gian hết hạn
    */
   getGoogleNonce() {
-    return apiClient<GoogleLoginNonceResponse>("/api/auth/google/nonce");
+    return apiClient<GoogleLoginNonceResponse>('/api/auth/google/nonce');
   },
 
   /**
@@ -30,8 +29,8 @@ export const authRepo = {
    * @returns Promise chứa TokenResponse từ Backend
    */
   async loginWithGoogle(input: GoogleLoginRequest) {
-    const token = await apiClient<TokenResponse>("/api/auth/google", {
-      method: "POST",
+    const token = await apiClient<TokenResponse>('/api/auth/google', {
+      method: 'POST',
       data: input,
     });
     setAccessToken(token.accessToken);
@@ -43,7 +42,7 @@ export const authRepo = {
    * @returns Promise chứa thông tin người dùng (`UserMeResponse`)
    */
   getMe() {
-    return apiClient<UserMeResponse>("/api/auth/me");
+    return apiClient<UserMeResponse>('/api/auth/me');
   },
 
   /**
@@ -52,7 +51,7 @@ export const authRepo = {
    * @returns Promise chứa chi tiết các mốc hồ sơ đã hoàn thành
    */
   getOnboardingStatus() {
-    return apiClient<OnboardingStatusResponse>("/api/me/onboarding-status");
+    return apiClient<OnboardingStatusResponse>('/api/me/onboarding-status');
   },
 
   /**
@@ -60,25 +59,6 @@ export const authRepo = {
    * để vô hiệu hóa phiên làm việc, thu hồi Refresh Token và xóa cookie HttpOnly.
    */
   logout() {
-    return apiClient<unknown>("/api/auth/logout", { method: "POST" });
-  },
-
-  /**
-   * Giả lập xử lý đăng nhập bằng email/mật khẩu với độ trễ 300ms (phục vụ môi trường demo).
-   * @param input - Thông tin đăng nhập truyền vào
-   * @returns Promise chứa thông tin user demo và access token mẫu
-   */
-  async login(input: LoginRequest): Promise<LoginResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return {
-      accessToken: "demo-access-token",
-      user: {
-        id: "u-1",
-        name: input.email.split("@")[0] || "Student",
-        email: input.email,
-        role: "mentee",
-      },
-    };
+    return apiClient<unknown>('/api/auth/logout', { method: 'POST' });
   },
 };
-

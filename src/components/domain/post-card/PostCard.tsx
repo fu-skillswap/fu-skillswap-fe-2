@@ -4,7 +4,7 @@
  * Hiển thị tác giả, tiêu đề, nội dung, hình ảnh đính kèm, hashtag, lượt like, bình luận xem trước.
  */
 
-"use client";
+'use client';
 
 import Link from "next/link";
 import type { Post } from "@/models/entities";
@@ -12,7 +12,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { Bookmark, Heart, MessageCircle } from "lucide-react";
 import { usePostCard } from "./usePostCard";
 
-const mascotSrc = "/images/Koko.png";
+const mascotSrc = '/images/Koko.png';
 
 /** Props của PostCard Component */
 interface PostCardProps {
@@ -25,21 +25,21 @@ interface PostCardProps {
 /**
  * Component thẻ bài viết hiển thị trên dòng thời gian Bảng tin.
  */
-export function PostCard({ post, locale = "vi" }: PostCardProps) {
+export function PostCard({ post, locale = 'vi' }: PostCardProps) {
   const { likes, liked, toggleLike } = usePostCard(post.likes);
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   const initials = post.author.name
-    .split(" ")
+    .split(' ')
     .map((part) => part[0])
     .slice(0, 2)
-    .join("");
+    .join('');
   const commentCount = post.commentCount ?? 0;
 
   const handleLikeClick = () => {
     if (!isAuthenticated) {
       showAuthRequiredModal(
-        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tương tác yêu thích bài viết.",
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tương tác yêu thích bài viết.',
       );
       return;
     }
@@ -49,16 +49,14 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
   const handleCommentClick = () => {
     if (!isAuthenticated) {
       showAuthRequiredModal(
-        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.",
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.',
       );
     }
   };
 
   const handleFlagClick = () => {
     if (!isAuthenticated) {
-      showAuthRequiredModal(
-        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để lưu bài viết.",
-      );
+      showAuthRequiredModal('Bạn cần Đăng nhập hoặc Đăng ký tài khoản để lưu bài viết.');
     }
   };
 
@@ -79,19 +77,12 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
         >
           ⋮
         </button>
-        {post.showMascot && (
-          <img className="figma-post-mascot" src={mascotSrc} alt="" />
-        )}
+        {post.showMascot && <img className="figma-post-mascot" src={mascotSrc} alt="" />}
       </header>
-      {post.mediaUrl && (
-        <img className="figma-post-media" src={post.mediaUrl} alt="" />
-      )}
+      {post.mediaUrl && <img className="figma-post-media" src={post.mediaUrl} alt="" />}
       <div className="figma-post-body">
         {post.showTitle !== false && (
-          <Link
-            href={`/${locale}/post-detail/${post.id}`}
-            className="figma-post-title"
-          >
+          <Link href={`/${locale}/post-detail/${post.id}`} className="figma-post-title">
             {post.title}
           </Link>
         )}
@@ -108,11 +99,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
         <button
           type="button"
           onClick={handleLikeClick}
-          className={
-            liked
-              ? "figma-like-button figma-like-button-active"
-              : "figma-like-button"
-          }
+          className={liked ? 'figma-like-button figma-like-button-active' : 'figma-like-button'}
           aria-pressed={liked}
         >
           <Heart aria-hidden="true" fill={liked ? "currentColor" : "none"} />
@@ -147,14 +134,14 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
       <div
         className="figma-post-comment-input"
         onClick={handleCommentClick}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: 'pointer' }}
       >
         <span className="figma-inline-avatar">YO</span>
         <input
           readOnly
           aria-label="Add a comment"
           placeholder="Add a comment..."
-          style={{ cursor: "pointer" }}
+          style={{ cursor: 'pointer' }}
         />
       </div>
     </article>

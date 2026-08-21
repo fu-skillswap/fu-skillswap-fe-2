@@ -4,10 +4,10 @@
  * Khởi tạo và cung cấp `QueryClient` singleton cho ứng dụng phía Client.
  */
 
-"use client";
+'use client';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
 
 /**
  * Provider bọc ứng dụng để sử dụng các tính năng caching và data-fetching của React Query.

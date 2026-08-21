@@ -3,9 +3,9 @@
  * @description Custom hook quản lý trạng thái Thích/Bỏ thích bài viết (Post Like State Hook).
  */
 
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 /**
  * Hook quản lý số lượng like và trạng thái yêu thích của một bài viết.

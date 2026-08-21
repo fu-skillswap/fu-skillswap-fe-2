@@ -12,15 +12,15 @@ import { ChevronLeft } from "lucide-react";
 /** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {
   return name
-    .split(" ")
+    .split(' ')
     .map((part) => part[0])
     .slice(0, 2)
-    .join("");
+    .join('');
 }
 
 /** Định dạng hiển thị mức giá S-Coins */
 function priceLabel(price?: number) {
-  return price ? new Intl.NumberFormat("en-US").format(price) : "—";
+  return price ? new Intl.NumberFormat('en-US').format(price) : '—';
 }
 
 /** Props của MentorDetail Component */
@@ -43,7 +43,7 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
   const handleServiceClick = (service: MentorService) => {
     if (!isAuthenticated) {
       showAuthRequiredModal(
-        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để xem chi tiết dịch vụ tư vấn 1:1 và đặt lịch.",
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để xem chi tiết dịch vụ tư vấn 1:1 và đặt lịch.',
       );
       return;
     }
@@ -52,17 +52,12 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
 
   const handleProtectedTabClick = (featureName: string) => {
     if (!isAuthenticated) {
-      showAuthRequiredModal(
-        `Bạn cần Đăng nhập hoặc Đăng ký tài khoản để truy cập ${featureName}.`,
-      );
+      showAuthRequiredModal(`Bạn cần Đăng nhập hoặc Đăng ký tài khoản để truy cập ${featureName}.`);
     }
   };
 
   return (
-    <section
-      className="figma-mentor-detail"
-      aria-label={`${mentor.name} mentor profile`}
-    >
+    <section className="figma-mentor-detail" aria-label={`${mentor.name} mentor profile`}>
       <button type="button" className="figma-detail-back" onClick={onBack}>
         <ChevronLeft aria-hidden="true" />
         Quay lại danh sách
@@ -84,22 +79,14 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
             <div className="figma-detail-rating">
               <span aria-hidden="true">★★★★★</span>
               <strong>{mentor.rating}</strong>
-              {mentor.reviewCount !== undefined && (
-                <small>({mentor.reviewCount} reviews)</small>
-              )}
+              {mentor.reviewCount !== undefined && <small>({mentor.reviewCount} reviews)</small>}
             </div>
           </div>
           <div className="figma-detail-actions">
-            <button
-              type="button"
-              onClick={() => handleProtectedTabClick("Nhắn tin với Mentor")}
-            >
+            <button type="button" onClick={() => handleProtectedTabClick('Nhắn tin với Mentor')}>
               Nhắn tin
             </button>
-            <button
-              type="button"
-              onClick={() => handleProtectedTabClick("Theo dõi Mentor")}
-            >
+            <button type="button" onClick={() => handleProtectedTabClick('Theo dõi Mentor')}>
               Theo dõi
             </button>
           </div>
@@ -132,30 +119,25 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
         </div>
       </article>
       <nav className="figma-detail-tabs" aria-label="Mentor profile sections">
-        <span className="figma-detail-tab figma-detail-tab-active">
-          Dịch vụ &amp; Lịch dạy
-        </span>
+        <span className="figma-detail-tab figma-detail-tab-active">Dịch vụ &amp; Lịch dạy</span>
         <button
           type="button"
           className="figma-detail-tab"
-          style={{ background: "none", border: "none", cursor: "pointer" }}
-          onClick={() => handleProtectedTabClick("Blog của Mentor")}
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          onClick={() => handleProtectedTabClick('Blog của Mentor')}
         >
           Blog
         </button>
         <button
           type="button"
           className="figma-detail-tab"
-          style={{ background: "none", border: "none", cursor: "pointer" }}
-          onClick={() => handleProtectedTabClick("Khóa học của Mentor")}
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          onClick={() => handleProtectedTabClick('Khóa học của Mentor')}
         >
           Khóa học
         </button>
       </nav>
-      <section
-        className="figma-detail-services"
-        aria-label="One-to-one mentoring services"
-      >
+      <section className="figma-detail-services" aria-label="One-to-one mentoring services">
         <h3>Dịch vụ tư vấn 1:1</h3>
         <div className="figma-detail-service-grid">
           {services.map((service) => (
@@ -166,7 +148,7 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
               key={service.id}
               onClick={() => handleServiceClick(service)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
                   handleServiceClick(service);
                 }

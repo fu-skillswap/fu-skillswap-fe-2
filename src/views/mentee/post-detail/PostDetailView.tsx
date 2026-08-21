@@ -4,13 +4,13 @@
  * Hiển thị nội dung chi tiết bài viết, tác giả, hashtag và khung thảo luận bình luận của cộng đồng.
  */
 
-"use client";
+'use client';
 
-import Link from "next/link";
-import type { Comment, Post } from "@/models/entities";
-import { Button } from "@/components/ui/Button";
-import { useAuth } from "@/providers/AuthProvider";
-import { usePostDetail } from "./usePostDetail";
+import Link from 'next/link';
+import type { Comment, Post } from '@/models/entities';
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/providers/AuthProvider';
+import { usePostDetail } from './usePostDetail';
 
 /** Props của PostDetailView Component */
 interface PostDetailViewProps {
@@ -25,19 +25,17 @@ interface PostDetailViewProps {
 /**
  * Component hiển thị chi tiết bài viết và form bình luận.
  */
-export function PostDetailView({
-  post,
-  initialComments,
-  locale,
-}: PostDetailViewProps) {
-  const { register, errors, serverError, comments, submitComment } =
-    usePostDetail(post.id, initialComments);
+export function PostDetailView({ post, initialComments, locale }: PostDetailViewProps) {
+  const { register, errors, serverError, comments, submitComment } = usePostDetail(
+    post.id,
+    initialComments,
+  );
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   const handleTextareaClick = () => {
     if (!isAuthenticated) {
       showAuthRequiredModal(
-        "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.",
+        'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tham gia bình luận bài viết.',
       );
     }
   };
@@ -73,7 +71,7 @@ export function PostDetailView({
             placeholder="Viết bình luận của bạn..."
             rows={4}
             onClick={handleTextareaClick}
-            {...register("content")}
+            {...register('content')}
           />
           {errors.content && <p className="error">{errors.content.message}</p>}
           {serverError && <p className="error">{serverError}</p>}

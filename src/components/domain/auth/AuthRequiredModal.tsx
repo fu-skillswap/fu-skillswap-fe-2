@@ -3,7 +3,7 @@
  * @description Component Hộp thoại thông báo yêu cầu Đăng nhập dành cho Khách (Guest Mode Auth Modal).
  */
 
-"use client";
+'use client';
 
 import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
@@ -26,18 +26,13 @@ interface AuthRequiredModalProps {
 export function AuthRequiredModal({
   open,
   message,
-  locale = "vi",
+  locale = 'vi',
   onClose,
 }: AuthRequiredModalProps) {
   const loginHref = `/${locale}/login`;
 
   return (
-    <Modal
-      open={open}
-      hideHeader
-      onClose={onClose}
-      className="figma-auth-required-modal"
-    >
+    <Modal open={open} hideHeader onClose={onClose} className="figma-auth-required-modal">
       <div className="figma-auth-modal-content">
         <button
           type="button"
@@ -59,18 +54,10 @@ export function AuthRequiredModal({
         </p>
 
         <div className="figma-auth-modal-actions">
-          <Link
-            href={loginHref}
-            className="figma-auth-modal-btn-login"
-            onClick={onClose}
-          >
+          <Link href={loginHref} className="figma-auth-modal-btn-login" onClick={onClose}>
             Đăng nhập ngay
           </Link>
-          <button
-            type="button"
-            className="figma-auth-modal-btn-close"
-            onClick={onClose}
-          >
+          <button type="button" className="figma-auth-modal-btn-close" onClick={onClose}>
             Bỏ qua / Đóng
           </button>
         </div>

@@ -4,8 +4,8 @@
  * Bọc các Provider toàn cục QueryProvider và AuthProvider cho toàn bộ cây component con.
  */
 
-import { AuthProvider } from "@/providers/AuthProvider";
-import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from '@/providers/AuthProvider';
+import { QueryProvider } from '@/providers/QueryProvider';
 
 /**
  * Component LocaleLayout cấp cao nhất dưới route `/[locale]`.

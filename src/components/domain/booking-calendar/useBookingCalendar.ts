@@ -3,9 +3,9 @@
  * @description Custom hook quản lý trạng thái chọn khung giờ khả dụng trong lịch đặt hẹn (Booking Calendar Hook).
  */
 
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 /**
  * Hook đồng bộ trạng thái khung giờ được chọn với props truyền vào từ ngoài.

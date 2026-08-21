@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import type { Mentor, MentorService } from "@/models/entities";
-import { Modal } from "@/components/ui/Modal";
-import { BookingFlow } from "@/components/domain/booking-flow/BookingFlow";
-import { useMenteeShell } from "@/components/domain/mentee-shell/MenteeShell";
-import { MentorCard } from "@/components/domain/mentor-card/MentorCard";
-import { MentorDetail } from "@/components/domain/mentor-detail/MentorDetail";
-import { useEffect, useMemo, useState } from "react";
-import { useMentorBooking } from "./useMentorBooking";
+import type { Mentor, MentorService } from '@/models/entities';
+import { Modal } from '@/components/ui/Modal';
+import { BookingFlow } from '@/components/domain/booking-flow/BookingFlow';
+import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
+import { MentorCard } from '@/components/domain/mentor-card/MentorCard';
+import { MentorDetail } from '@/components/domain/mentor-detail/MentorDetail';
+import { useEffect, useMemo, useState } from 'react';
+import { useMentorBooking } from './useMentorBooking';
 
 /**
  * @file MentorBookingView.tsx
@@ -18,24 +18,19 @@ import { useMentorBooking } from "./useMentorBooking";
 
 /** Bản đồ từ khóa lĩnh vực phục vụ việc lọc Mentor */
 const categoryKeywords = {
-  PM: ["product"],
-  Tech: ["react", "typescript", "system design"],
-  Design: ["ui/ux", "figma", "ux design", "product design"],
-  Data: ["machine learning", "python"],
-  Marketing: ["marketing", "brand"],
-  Leadership: ["leadership", "team management"],
+  PM: ['product'],
+  Tech: ['react', 'typescript', 'system design'],
+  Design: ['ui/ux', 'figma', 'ux design', 'product design'],
+  Data: ['machine learning', 'python'],
+  Marketing: ['marketing', 'brand'],
+  Leadership: ['leadership', 'team management'],
 } as const;
 
 /** Kiểm tra Mentor có thuộc danh mục kỹ năng tìm kiếm hay không */
-function matchesCategory(
-  mentor: Mentor,
-  category: NonNullable<Mentor["category"]>,
-) {
+function matchesCategory(mentor: Mentor, category: NonNullable<Mentor['category']>) {
   if (mentor.category) return mentor.category === category;
   return mentor.expertise.some((skill) =>
-    categoryKeywords[category].some((keyword) =>
-      skill.toLocaleLowerCase().includes(keyword),
-    ),
+    categoryKeywords[category].some((keyword) => skill.toLocaleLowerCase().includes(keyword)),
   );
 }
 
@@ -56,23 +51,16 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
   const [bookingService, setBookingService] = useState<MentorService>();
   const [slot, setSlot] = useState<string>();
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<Mentor["category"]>();
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<Mentor['category']>();
   const { book, error, isSubmitting } = useMentorBooking();
   const { setHeaderTitle } = useMenteeShell();
-  const categoryOptions = [
-    "PM",
-    "Tech",
-    "Design",
-    "Data",
-    "Marketing",
-    "Leadership",
-  ] as const;
+  const categoryOptions = ['PM', 'Tech', 'Design', 'Data', 'Marketing', 'Leadership'] as const;
   const filteredMentors = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
     return mentors.filter((mentor) => {
       const searchable = [mentor.name, mentor.bio, ...mentor.expertise]
-        .join(" ")
+        .join(' ')
         .toLocaleLowerCase();
       return (
         (!normalizedQuery || searchable.includes(normalizedQuery)) &&
@@ -82,7 +70,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
   }, [category, mentors, query]);
 
   useEffect(() => {
-    setHeaderTitle(detailMentor ? "Hồ sơ Mentor" : undefined);
+    setHeaderTitle(detailMentor ? 'Hồ sơ Mentor' : undefined);
     return () => setHeaderTitle(undefined);
   }, [detailMentor, setHeaderTitle]);
 
@@ -112,10 +100,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
           onBook={(service) => openBooking(detailMentor, service)}
         />
       ) : (
-        <section
-          className="figma-mentor-directory"
-          aria-label="Mentor discovery"
-        >
+        <section className="figma-mentor-directory" aria-label="Mentor discovery">
           <div className="figma-mentor-toolbar">
             <label className="figma-mentor-search">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -129,17 +114,12 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
                 aria-label="Search mentors"
               />
             </label>
-            <div
-              className="figma-filter-chips"
-              aria-label="Filter mentors by category"
-            >
+            <div className="figma-filter-chips" aria-label="Filter mentors by category">
               <button
                 type="button"
                 onClick={() => setCategory(undefined)}
                 className={
-                  category
-                    ? "figma-filter-chip"
-                    : "figma-filter-chip figma-filter-chip-active"
+                  category ? 'figma-filter-chip' : 'figma-filter-chip figma-filter-chip-active'
                 }
               >
                 All
@@ -151,8 +131,8 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
                   onClick={() => setCategory(option)}
                   className={
                     category === option
-                      ? "figma-filter-chip figma-filter-chip-active"
-                      : "figma-filter-chip"
+                      ? 'figma-filter-chip figma-filter-chip-active'
+                      : 'figma-filter-chip'
                   }
                 >
                   {option}
@@ -162,16 +142,12 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
           </div>
           <p className="figma-mentor-count">
             {filteredMentors.length} mentor
-            {filteredMentors.length === 1 ? "" : "s"} found
+            {filteredMentors.length === 1 ? '' : 's'} found
           </p>
           {filteredMentors.length ? (
             <div className="figma-mentor-grid">
               {filteredMentors.map((mentor) => (
-                <MentorCard
-                  mentor={mentor}
-                  key={mentor.id}
-                  onSelect={setDetailMentor}
-                />
+                <MentorCard mentor={mentor} key={mentor.id} onSelect={setDetailMentor} />
               ))}
             </div>
           ) : (

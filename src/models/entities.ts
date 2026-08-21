@@ -6,7 +6,7 @@
  */
 
 /** Vai trò người dùng giao diện (UI Role) */
-export type Role = "mentee" | "mentor" | "admin" | "sysadmin";
+export type Role = 'mentee' | 'mentor' | 'admin' | 'sysadmin';
 
 /** Thực thể Người dùng cơ bản */
 export interface User {
@@ -22,7 +22,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  author: Pick<User, "id" | "name">;
+  author: Pick<User, 'id' | 'name'>;
   tags: string[];
   createdAt: string;
   likes: number;
@@ -44,7 +44,7 @@ export interface Mentor {
   organization?: string;
   reviewCount?: number;
   startingPrice?: number;
-  category?: "PM" | "Tech" | "Design" | "Data" | "Marketing" | "Leadership";
+  category?: 'PM' | 'Tech' | 'Design' | 'Data' | 'Marketing' | 'Leadership';
 }
 
 /** Thực thể Gói Dịch vụ Mentoring do Mentor cung cấp */
@@ -64,7 +64,7 @@ export interface Booking {
   mentorId: string;
   menteeId: string;
   startsAt: string;
-  status: "pending" | "confirmed" | "cancelled";
+  status: 'pending' | 'confirmed' | 'cancelled';
 }
 
 /** Thực thể Bình luận trên bài viết */

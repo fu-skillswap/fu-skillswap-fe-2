@@ -1,41 +1,24 @@
 /**
  * @file LoginView.tsx
  * @description React Component giao diện trang Đăng nhập (Login Page View) sử dụng React Hook Form.
- * Hiển thị form đăng nhập với lựa chọn vai trò (Mentee, Mentor, Admin, SysAdmin),
- * hỗ trợ Đăng nhập bằng Google Identity Services native button, và hiển thị bảng thông tin giới thiệu SkillSwap.
+ * Hiển thị form đăng nhập, hỗ trợ Google Identity Services native button,
+ * và hiển thị bảng thông tin giới thiệu SkillSwap.
  */
 
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
-import { useEffect, useState } from "react";
-import { useLoginLogic } from "./useLoginLogic";
-
-/** Danh sách các vai trò đăng nhập có sẵn trong giao diện */
-const signInRoles = [
-  { id: "mentee", name: "Mentee", description: "Học từ các chuyên gia" },
-  { id: "mentor", name: "Mentor", description: "Chia sẻ kiến thức" },
-  { id: "admin", name: "Admin", description: "Quản lý nền tảng" },
-  { id: "system-admin", name: "System Admin", description: "Quản lý hệ thống" },
-] as const;
+import { Button } from '@/components/ui/Button';
+import { TextField } from '@/components/ui/TextField';
+import { useEffect } from 'react';
+import { useLoginLogic } from './useLoginLogic';
 
 /**
  * Component trang Đăng nhập SkillSwap.
  * @param props.locale - Mã ngôn ngữ hiện tại của route (ví dụ: "vi", "en")
  */
 export function LoginView({ locale }: { locale: string }) {
-  const {
-    form,
-    error,
-    clearError,
-    loading,
-    googleLoading,
-    submit,
-    googleButtonRef,
-  } = useLoginLogic(locale);
-  const [selectedRole, setSelectedRole] =
-    useState<(typeof signInRoles)[number]["id"]>("mentee");
+  const { form, error, clearError, loading, googleLoading, submit, googleButtonRef } =
+    useLoginLogic(locale);
 
   const {
     register,
@@ -63,9 +46,7 @@ export function LoginView({ locale }: { locale: string }) {
           </div>
 
           <div className="figma-login-tabs" aria-label="Authentication mode">
-            <span className="figma-login-tab figma-login-tab-active">
-              Đăng nhập
-            </span>
+            <span className="figma-login-tab figma-login-tab-active">Đăng nhập</span>
             <span className="figma-login-tab">Đăng ký</span>
           </div>
 
@@ -76,7 +57,7 @@ export function LoginView({ locale }: { locale: string }) {
               placeholder="your@email.com"
               autoComplete="email"
               error={errors.email?.message}
-              {...register("email")}
+              {...register('email')}
             />
             <TextField
               label="Mật khẩu"
@@ -84,18 +65,14 @@ export function LoginView({ locale }: { locale: string }) {
               placeholder="••••••••"
               autoComplete="current-password"
               error={errors.password?.message}
-              {...register("password")}
+              {...register('password')}
             />
           </div>
           <span className="figma-login-forgot" aria-disabled="true">
             Quên mật khẩu?
           </span>
-          <Button
-            className="figma-login-submit"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          <Button className="figma-login-submit" type="submit" disabled={loading}>
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
           <div className="figma-login-divider" aria-hidden="true">
             <span />
@@ -125,9 +102,8 @@ export function LoginView({ locale }: { locale: string }) {
             Phát triển sự nghiệp.
           </h2>
           <p>
-            Kết nối với các chuyên gia hàng đầu đã đi qua con đường bạn đang đi.
-            Đặt lịch 1:1, học khóa học và tham gia cộng đồng đang phát triển
-            mạnh mẽ.
+            Kết nối với các chuyên gia hàng đầu đã đi qua con đường bạn đang đi. Đặt lịch 1:1, học
+            khóa học và tham gia cộng đồng đang phát triển mạnh mẽ.
           </p>
           <div className="figma-login-metrics">
             <div>
@@ -150,11 +126,7 @@ export function LoginView({ locale }: { locale: string }) {
         </div>
       </aside>
       {error && (
-        <div
-          className="figma-toast figma-toast-error"
-          role="alert"
-          aria-live="assertive"
-        >
+        <div className="figma-toast figma-toast-error" role="alert" aria-live="assertive">
           <span className="figma-toast-icon" aria-hidden="true">
             !
           </span>
@@ -162,11 +134,7 @@ export function LoginView({ locale }: { locale: string }) {
             <strong>Không thể đăng nhập</strong>
             <p>{error}</p>
           </div>
-          <button
-            type="button"
-            aria-label="Đóng thông báo"
-            onClick={clearError}
-          >
+          <button type="button" aria-label="Đóng thông báo" onClick={clearError}>
             ×
           </button>
         </div>

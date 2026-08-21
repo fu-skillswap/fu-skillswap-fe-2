@@ -4,14 +4,14 @@
  * Chứa Logo thương hiệu và các liên kết điều hướng Bảng tin, Tìm Mentor, Ví S-Coin và Lịch hẹn.
  */
 
-"use client";
+'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { Calendar, Home, Search, Wallet, X } from "lucide-react";
 
-type NavIcon = "home" | "search" | "wallet" | "calendar";
+type NavIcon = 'home' | 'search' | 'wallet' | 'calendar';
 
 /** Helper render Icon tương ứng từ lucide-react cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
@@ -40,19 +40,14 @@ interface DashboardNavigationProps {
 /**
  * Component thanh điều hướng chính ở cạnh trái màn hình Dashboard.
  */
-export function DashboardNavigation({
-  locale,
-  isOpen,
-  onClose,
-}: DashboardNavigationProps) {
+export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNavigationProps) {
   const pathname = usePathname();
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
   const dashboardActive =
-    pathname === dashboardHref ||
-    pathname.startsWith(`/${locale}/post-detail/`);
+    pathname === dashboardHref || pathname.startsWith(`/${locale}/post-detail/`);
   const mentorActive = pathname.startsWith(mentorHref);
 
   const handleProtectedAction = (featureName: string) => {
@@ -96,11 +91,7 @@ export function DashboardNavigation({
         <Link
           href={dashboardHref}
           onClick={onClose}
-          className={
-            dashboardActive
-              ? "figma-nav-link figma-nav-link-active"
-              : "figma-nav-link"
-          }
+          className={dashboardActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
         >
           <Icon name="home" />
           <span>Bảng tin</span>
@@ -108,29 +99,37 @@ export function DashboardNavigation({
         <Link
           href={mentorHref}
           onClick={onClose}
-          className={
-            mentorActive
-              ? "figma-nav-link figma-nav-link-active"
-              : "figma-nav-link"
-          }
+          className={mentorActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
         >
           <Icon name="search" />
           <span>Tìm Mentor</span>
         </Link>
         <button
           type="button"
-          onClick={() => handleProtectedAction("Ví S-Coin")}
+          onClick={() => handleProtectedAction('Ví S-Coin')}
           className="figma-nav-link figma-nav-link-static"
-          style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+          style={{
+            width: '100%',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
         >
           <Icon name="wallet" />
           <span>S-coin</span>
         </button>
         <button
           type="button"
-          onClick={() => handleProtectedAction("Lịch đặt của tôi")}
+          onClick={() => handleProtectedAction('Lịch đặt của tôi')}
           className="figma-nav-link figma-nav-link-static"
-          style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+          style={{
+            width: '100%',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
         >
           <Icon name="calendar" />
           <span>Booking của tôi</span>
@@ -138,9 +137,9 @@ export function DashboardNavigation({
       </nav>
       <button
         type="button"
-        onClick={() => handleProtectedAction("Tạo bài viết mới")}
+        onClick={() => handleProtectedAction('Tạo bài viết mới')}
         className="figma-sidebar-compose"
-        style={{ cursor: "pointer" }}
+        style={{ cursor: 'pointer' }}
       >
         + Bài viết mới
       </button>

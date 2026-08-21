@@ -4,7 +4,7 @@
  * Render giao diện `StudentOnboardingView` để tạo hồ sơ ban đầu.
  */
 
-import { StudentOnboardingView } from "@/views/auth/StudentOnboardingView";
+import { StudentOnboardingView } from '@/views/auth/StudentOnboardingView';
 
 /**
  * Server Component cho trang Onboarding Sinh viên.
