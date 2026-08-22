@@ -8,6 +8,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SelectOption } from "@/components/ui/SelectField";
 import { useMentorRegistration } from "./useMentorRegistration";
@@ -28,12 +29,7 @@ const levelOptions: SelectOption[] = [
   { value: "5", label: "Mức 5" },
 ];
 
-interface MentorRegistrationViewProps {
-  /** Mã locale ngôn ngữ hiện tại */
-  locale: string;
-}
-
-export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) {
+export function MentorRegistrationView({ locale }: { locale: string }) {
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   const {
@@ -45,10 +41,15 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
     isSubmitting,
     isLoading,
     isExistingProfile,
+    isPendingReview,
+    verificationData,
     serverError,
     successMessage,
-    selectedProofFile,
-    setSelectedProofFile,
+    selectedFptuFile,
+    setSelectedFptuFile,
+    selectedExpertiseFiles,
+    onAddExpertiseFiles,
+    onRemoveExpertiseFile,
     fields,
     append,
     remove,
@@ -59,11 +60,19 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
     appendAchievement,
     removeAchievement,
     submitProfile,
+    withdrawProfile,
   } = useMentorRegistration();
 
   const isAvailable = watch("isAvailable");
   const agreeTerms = watch("agreeTerms");
-  const isSubmitDisabled = isSubmitting || !isValid || !agreeTerms || !selectedProofFile;
+  
+  const isFormDisabled = isSubmitting || isPendingReview;
+  const isSubmitDisabled =
+    isFormDisabled ||
+    !isValid ||
+    !agreeTerms ||
+    (!selectedFptuFile && !isExistingProfile) ||
+    selectedExpertiseFiles.length === 0;
 
   if (isLoading) {
     return (
@@ -88,10 +97,39 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
         </p>
       </div>
 
+      {/* DÒNG TRẠNG THÁI HỒ SƠ ĐANG CHỜ DUYỆT */}
+      {isPendingReview && (
+        <div
+          style={{
+            padding: "16px 20px",
+            borderRadius: "12px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            color: "#1e40af",
+            fontWeight: 600,
+            fontSize: "15px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "24px",
+            boxShadow: "0 2px 8px rgba(59, 130, 246, 0.08)",
+          }}
+        >
+          <Clock size={22} color="#2563eb" style={{ flexShrink: 0 }} />
+          <div>
+            <strong style={{ display: "block", fontSize: "14px", color: "#1d4ed8" }}>
+              Hồ sơ đang chờ duyệt
+            </strong>
+            <span style={{ fontSize: "13px", color: "#1e40af" }}>
+              Hồ sơ đang được chờ được duyệt, vui lòng đợi 1-2 ngày.
+            </span>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={submitProfile} className="figma-profile-form">
         {/* SECTION 1: THÔNG TIN CƠ BẢN */}
-        <BasicInfoSection register={register} errors={errors} disabled={isSubmitting} />
+        <BasicInfoSection register={register} errors={errors} disabled={isFormDisabled} />
 
         {/* SECTION 2: DANH MỤC MÔN HỌC & ĐIỂM SỐ */}
         <SubjectResultsSection
@@ -100,7 +138,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           fields={fields}
           append={append}
           remove={remove}
-          disabled={isSubmitting}
+          disabled={isFormDisabled}
         />
 
         {/* SECTION 3: MỨC ĐỘ HỖ TRỢ */}
@@ -108,7 +146,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           control={control}
           errors={errors}
           levelOptions={levelOptions}
-          disabled={isSubmitting}
+          disabled={isFormDisabled}
         />
 
         {/* SECTION 4: DỰ ÁN TIÊU BIỂU */}
@@ -118,7 +156,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           projectFields={projectFields}
           appendProject={appendProject}
           removeProject={removeProject}
-          disabled={isSubmitting}
+          disabled={isFormDisabled}
         />
 
         {/* SECTION 5: HỌC VẤN & GIẢI THƯỞNG NỔI BẬT */}
@@ -128,7 +166,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           achievementFields={achievementFields}
           appendAchievement={appendAchievement}
           removeAchievement={removeAchievement}
-          disabled={isSubmitting}
+          disabled={isFormDisabled}
         />
 
         {/* SECTION 6: CẤU HÌNH ĐẶT LỊCH */}
@@ -136,20 +174,24 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           register={register}
           errors={errors}
           isAvailable={isAvailable}
-          disabled={isSubmitting}
+          disabled={isFormDisabled}
         />
 
-        {/* SECTION 7: TẢI LÊN MINH CHỨNG FPTU */}
+        {/* SECTION 7: TẢI LÊN MINH CHỨNG FPTU & CHỨNG CHỈ CHUYÊN MÔN */}
         <DocumentUploadSection
-          selectedFile={selectedProofFile}
-          onSelectFile={setSelectedProofFile}
-          disabled={isSubmitting}
+          selectedFptuFile={selectedFptuFile}
+          onSelectFptuFile={setSelectedFptuFile}
+          selectedExpertiseFiles={selectedExpertiseFiles}
+          onAddExpertiseFiles={onAddExpertiseFiles}
+          onRemoveExpertiseFile={onRemoveExpertiseFile}
+          verificationData={verificationData}
+          disabled={isFormDisabled}
         />
 
         {/* SECTION 8: XÁC NHẬN ĐIỀU KHOẢN VẬN HÀNH */}
         <fieldset
           className="card mentor-reg-card"
-          disabled={isSubmitting}
+          disabled={isFormDisabled}
           style={{
             border: "1px solid #e2e8f0",
             padding: "16px 20px",
@@ -242,17 +284,36 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           >
             Hủy bỏ
           </Link>
-          <Button
-            type="submit"
-            disabled={isSubmitDisabled}
-            style={{
-              padding: "12px 32px",
-              opacity: isSubmitDisabled ? 0.6 : 1,
-              cursor: isSubmitDisabled ? "not-allowed" : "pointer",
-            }}
-          >
-            {isSubmitting ? "Đang xử lý..." : "Nộp hồ sơ mentor"}
-          </Button>
+          {isPendingReview ? (
+            <Button
+              type="button"
+              onClick={withdrawProfile}
+              style={{
+                padding: "12px 32px",
+                background: "#ea580c",
+                borderColor: "#ea580c",
+                color: "#fff",
+                fontWeight: 700,
+                cursor: "pointer",
+                borderRadius: "10px",
+                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
+              }}
+            >
+              Rút hồ sơ
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={isSubmitDisabled}
+              style={{
+                padding: "12px 32px",
+                opacity: isSubmitDisabled ? 0.5 : 1,
+                cursor: isSubmitDisabled ? "not-allowed" : "pointer",
+              }}
+            >
+              {isSubmitting ? "Đang xử lý..." : "Nộp hồ sơ mentor"}
+            </Button>
+          )}
         </div>
       </form>
 

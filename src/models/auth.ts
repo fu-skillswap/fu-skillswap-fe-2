@@ -264,6 +264,7 @@ export interface CreateMentorProjectRequest {
 /** Response thông tin dự án tiêu biểu từ server */
 export interface MentorProjectResponse {
   id?: string;
+  projectId?: string;
   title: string;
   content: string;
   projectDescription?: string;
@@ -290,6 +291,7 @@ export interface CreateMentorAchievementRequest {
 /** Response thông tin giải thưởng / thành tích từ server */
 export interface MentorAchievementResponse {
   id?: string;
+  achievementId?: string;
   title: string;
   awardDescription?: string;
   achievedAt?: string;
@@ -321,10 +323,89 @@ export interface UploadIntentResponse {
   expiresAt: string;
   requiredHeaders?: Record<string, string>;
   status: string;
+  contentType?: string;
+  documentType?: string;
 }
 
 /** Request payload xác nhận tài liệu minh chứng đã upload (POST /api/me/mentor-verification/documents) */
 export interface ConfirmDocumentRequest {
   documentType: string;
   uploadIntentId: string;
+}
+
+/** Response tiến độ xác thực Mentor (GET /api/me/mentor-verification/progress) */
+export interface MentorVerificationProgressResponse {
+  requestId?: string;
+  applicationStatus?: string;
+  submittedAt?: string;
+  estimatedReviewBy?: string;
+  reviewTargetHours?: number;
+  reviewOverdue?: boolean;
+  submissionSteps?: Array<{
+    code: string;
+    completed: boolean;
+    requiredForSubmission: boolean;
+    requiredForBookingOffer: boolean;
+    actionPath?: string;
+    message?: string;
+  }>;
+  activationSteps?: Array<{
+    code: string;
+    completed: boolean;
+    requiredForSubmission: boolean;
+    requiredForBookingOffer: boolean;
+    actionPath?: string;
+  }>;
+}
+
+/** Phản hồi thông tin 1 tài liệu minh chứng trong hồ sơ xác thực */
+export interface VerificationDocumentResponse {
+  id: string;
+  documentType: 'FPTU_AFFILIATION_PROOF' | 'EXPERTISE_PROOF' | string;
+  status: string;
+  storageKind?: string;
+  originalFilename?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  fileUrl?: string;
+  isActive?: boolean;
+  version?: number;
+  reviewNote?: string;
+  rejectedReason?: string;
+  uploadedAt?: string;
+}
+
+/** Response hồ sơ đăng ký Mentor đầy đủ (GET /api/me/mentor-verification) */
+export interface MentorVerificationResponse {
+  id?: string;
+  status?: string;
+  rejectionReason?: string;
+  revisionCount?: number;
+  submittedAt?: string;
+  estimatedReviewBy?: string;
+  reviewTargetHours?: number;
+  reviewOverdue?: boolean;
+  termsAcceptedAt?: string;
+  termsVersion?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  headline?: string;
+  expertiseDescription?: string;
+  isAvailable?: boolean;
+  phoneNumber?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+  foundationSupportLevel?: number;
+  outputReviewSupportLevel?: number;
+  directionSupportLevel?: number;
+  minimumBookingLeadTimeMinutes?: number;
+  maximumBookingHorizonDays?: number;
+  subjectResults?: Array<{
+    subjectCode: string;
+    subjectName: string;
+    scoreValue: number;
+  }>;
+  documents?: VerificationDocumentResponse[];
+  timeline?: Array<unknown>;
+  profile?: any;
 }

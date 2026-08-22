@@ -6,7 +6,7 @@
 "use client";
 
 import React from "react";
-import type { UseFormRegister, FieldErrors, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove } from "react-hook-form";
+import type { UseFormRegister, FieldErrors, FieldArrayWithId, UseFieldArrayAppend } from "react-hook-form";
 import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSchema";
 
 interface AchievementsSectionProps {
@@ -14,7 +14,7 @@ interface AchievementsSectionProps {
   errors: FieldErrors<MentorProfileFormValues>;
   achievementFields: FieldArrayWithId<MentorProfileFormValues, "achievements", "id">[];
   appendAchievement: UseFieldArrayAppend<MentorProfileFormValues, "achievements">;
-  removeAchievement: UseFieldArrayRemove;
+  removeAchievement: (index: number) => void;
   disabled?: boolean;
 }
 

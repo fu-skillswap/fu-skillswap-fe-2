@@ -12,6 +12,7 @@ import { refreshSession, setAccessToken, setUnauthenticatedHandler } from '@/mod
 import { AuthRequiredModal } from '@/components/domain/auth/AuthRequiredModal';
 import { authRepo } from '@/repositories/authRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
+import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 /** Dữ liệu và các hàm thao tác được cung cấp bởi AuthContext */
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
     setUser(null);
     studentProfileRepo.clearCache();
+    mentorProfileRepo.clearCache();
   };
 
   /**

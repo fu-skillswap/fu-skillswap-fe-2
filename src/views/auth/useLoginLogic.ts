@@ -136,7 +136,7 @@ export function useLoginLogic(locale: string) {
               nonce: loginNonce,
             });
             const onboarding = await completeGoogleLoginRef.current();
-            router.replace(onboardingDestination(locale, onboarding.nextRecommendedAction));
+            router.replace(onboardingDestination(locale, onboarding));
           } catch (reason) {
             setError(messageForGoogleError(reason));
             void configureGoogleButtonRef.current();
