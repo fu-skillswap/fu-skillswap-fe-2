@@ -139,6 +139,10 @@ export const mentorProfileSchema = yup.object().shape({
     .of(mentorAchievementSchema)
     .optional()
     .default([]),
+  agreeTerms: yup
+    .boolean()
+    .oneOf([true], "Bạn phải đồng ý với điều khoản vận hành của SkillSwap để nộp hồ sơ.")
+    .required("Bạn phải đồng ý với điều khoản vận hành của SkillSwap để nộp hồ sơ."),
 });
 
 export type MentorProfileFormValues = yup.InferType<typeof mentorProfileSchema>;

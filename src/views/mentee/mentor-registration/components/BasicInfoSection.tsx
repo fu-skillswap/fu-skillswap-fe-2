@@ -12,12 +12,14 @@ import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSche
 interface BasicInfoSectionProps {
   register: UseFormRegister<MentorProfileFormValues>;
   errors: FieldErrors<MentorProfileFormValues>;
+  disabled?: boolean;
 }
 
-export function BasicInfoSection({ register, errors }: BasicInfoSectionProps) {
+export function BasicInfoSection({ register, errors, disabled }: BasicInfoSectionProps) {
   return (
     <fieldset
       className="card mentor-reg-card"
+      disabled={disabled}
       style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
     >
       <h2 className="mentor-section-title">1. Thông tin cơ bản</h2>

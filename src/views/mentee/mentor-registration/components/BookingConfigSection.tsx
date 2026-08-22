@@ -13,16 +13,19 @@ interface BookingConfigSectionProps {
   register: UseFormRegister<MentorProfileFormValues>;
   errors: FieldErrors<MentorProfileFormValues>;
   isAvailable?: boolean;
+  disabled?: boolean;
 }
 
 export function BookingConfigSection({
   register,
   errors,
   isAvailable,
+  disabled,
 }: BookingConfigSectionProps) {
   return (
     <fieldset
       className="card mentor-reg-card"
+      disabled={disabled}
       style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
     >
       <h2 className="mentor-section-title">6. Thời gian đặt lịch booking</h2>

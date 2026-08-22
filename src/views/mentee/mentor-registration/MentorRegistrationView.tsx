@@ -7,7 +7,7 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { SelectOption } from "@/components/ui/SelectField";
 import { useMentorRegistration } from "./useMentorRegistration";
@@ -17,6 +17,8 @@ import { SupportLevelsSection } from "./components/SupportLevelsSection";
 import { FeaturedProjectsSection } from "./components/FeaturedProjectsSection";
 import { AchievementsSection } from "./components/AchievementsSection";
 import { BookingConfigSection } from "./components/BookingConfigSection";
+import { DocumentUploadSection } from "./components/DocumentUploadSection";
+import { TermsModal } from "./components/TermsModal";
 
 const levelOptions: SelectOption[] = [
   { value: "1", label: "Mức 1" },
@@ -32,16 +34,21 @@ interface MentorRegistrationViewProps {
 }
 
 export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) {
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
   const {
     register,
     control,
     watch,
     errors,
+    isValid,
     isSubmitting,
     isLoading,
     isExistingProfile,
     serverError,
     successMessage,
+    selectedProofFile,
+    setSelectedProofFile,
     fields,
     append,
     remove,
@@ -55,6 +62,8 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
   } = useMentorRegistration();
 
   const isAvailable = watch("isAvailable");
+  const agreeTerms = watch("agreeTerms");
+  const isSubmitDisabled = isSubmitting || !isValid || !agreeTerms || !selectedProofFile;
 
   if (isLoading) {
     return (
@@ -79,41 +88,10 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
         </p>
       </div>
 
-      {serverError && (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "10px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            color: "#ef4444",
-            fontSize: "14px",
-            marginBottom: "20px",
-          }}
-        >
-          {serverError}
-        </div>
-      )}
-
-      {successMessage && (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "10px",
-            background: "#f0fdf4",
-            border: "1px solid #bbf7d0",
-            color: "#16a34a",
-            fontSize: "14px",
-            marginBottom: "20px",
-          }}
-        >
-          {successMessage}
-        </div>
-      )}
 
       <form onSubmit={submitProfile} className="figma-profile-form">
         {/* SECTION 1: THÔNG TIN CƠ BẢN */}
-        <BasicInfoSection register={register} errors={errors} />
+        <BasicInfoSection register={register} errors={errors} disabled={isSubmitting} />
 
         {/* SECTION 2: DANH MỤC MÔN HỌC & ĐIỂM SỐ */}
         <SubjectResultsSection
@@ -122,6 +100,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           fields={fields}
           append={append}
           remove={remove}
+          disabled={isSubmitting}
         />
 
         {/* SECTION 3: MỨC ĐỘ HỖ TRỢ */}
@@ -129,6 +108,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           control={control}
           errors={errors}
           levelOptions={levelOptions}
+          disabled={isSubmitting}
         />
 
         {/* SECTION 4: DỰ ÁN TIÊU BIỂU */}
@@ -138,6 +118,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           projectFields={projectFields}
           appendProject={appendProject}
           removeProject={removeProject}
+          disabled={isSubmitting}
         />
 
         {/* SECTION 5: HỌC VẤN & GIẢI THƯỞNG NỔI BẬT */}
@@ -147,6 +128,7 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           achievementFields={achievementFields}
           appendAchievement={appendAchievement}
           removeAchievement={removeAchievement}
+          disabled={isSubmitting}
         />
 
         {/* SECTION 6: CẤU HÌNH ĐẶT LỊCH */}
@@ -154,7 +136,94 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           register={register}
           errors={errors}
           isAvailable={isAvailable}
+          disabled={isSubmitting}
         />
+
+        {/* SECTION 7: TẢI LÊN MINH CHỨNG FPTU */}
+        <DocumentUploadSection
+          selectedFile={selectedProofFile}
+          onSelectFile={setSelectedProofFile}
+          disabled={isSubmitting}
+        />
+
+        {/* SECTION 8: XÁC NHẬN ĐIỀU KHOẢN VẬN HÀNH */}
+        <fieldset
+          className="card mentor-reg-card"
+          disabled={isSubmitting}
+          style={{
+            border: "1px solid #e2e8f0",
+            padding: "16px 20px",
+            background: "#f8fafc",
+            borderRadius: "12px",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              color: "#1e293b",
+              fontWeight: 500,
+            }}
+          >
+            <input
+              type="checkbox"
+              style={{
+                width: "18px",
+                height: "18px",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                accentColor: "#0095f6",
+              }}
+              {...register("agreeTerms")}
+            />
+            <span>
+              Tôi đồng ý với{" "}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => setShowTermsModal(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#0095f6",
+                  textDecoration: "underline",
+                  fontWeight: 700,
+                  cursor: isSubmitting ? "not-allowed" : "pointer",
+                  padding: 0,
+                  font: "inherit",
+                }}
+              >
+                điều khoản vận hành
+              </button>{" "}
+              của SkillSwap <span className="required-asterisk">*</span>
+            </span>
+          </label>
+          {errors.agreeTerms && (
+            <p className="error" style={{ color: "#ef4444", fontSize: "13px", marginTop: "6px" }}>
+              {errors.agreeTerms.message}
+            </p>
+          )}
+        </fieldset>
+
+        {/* HIỂN THỊ LỖI THẤT BẠI NGAY TRÊN NÚT SUBMIT NẾU CÓ */}
+        {serverError && (
+          <div
+            style={{
+              padding: "12px 16px",
+              borderRadius: "10px",
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#ef4444",
+              fontSize: "14px",
+              marginTop: "16px",
+              fontWeight: 600,
+            }}
+          >
+            {serverError}
+          </div>
+        )}
 
         {/* ACTION BUTTONS */}
         <div className="mentor-actions-row">
@@ -173,15 +242,22 @@ export function MentorRegistrationView({ locale }: MentorRegistrationViewProps) 
           >
             Hủy bỏ
           </Link>
-          <Button type="submit" disabled={isSubmitting} style={{ padding: "12px 32px" }}>
-            {isSubmitting
-              ? "Đang lưu..."
-              : isExistingProfile
-                ? "Lưu cập nhật hồ sơ"
-                : "Hoàn tất đăng ký Mentor"}
+          <Button
+            type="submit"
+            disabled={isSubmitDisabled}
+            style={{
+              padding: "12px 32px",
+              opacity: isSubmitDisabled ? 0.6 : 1,
+              cursor: isSubmitDisabled ? "not-allowed" : "pointer",
+            }}
+          >
+            {isSubmitting ? "Đang xử lý..." : "Nộp hồ sơ mentor"}
           </Button>
         </div>
       </form>
+
+      {/* MODAL POP-UP ĐIỀU KHOẢN VẬN HÀNH */}
+      <TermsModal open={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </main>
   );
 }

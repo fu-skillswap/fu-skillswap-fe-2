@@ -4,14 +4,19 @@
  * Cung cấp các phương thức gọi API GET và PUT /api/me/mentor-profile kèm bộ nhớ tạm (In-memory cache) và deduplication.
  */
 
+import axios from "axios";
 import { apiClient } from "@/models/apiClient";
 import type {
+  ConfirmDocumentRequest,
   CreateMentorAchievementRequest,
   CreateMentorProjectRequest,
+  CreateUploadIntentRequest,
   MentorAchievementResponse,
   MentorProjectResponse,
   MentorProfileResponse,
   SaveMentorProfileRequest,
+  SubmitMentorVerificationRequest,
+  UploadIntentResponse,
 } from "@/models/auth";
 
 let mentorProfilePromise: Promise<MentorProfileResponse> | null = null;
@@ -76,6 +81,79 @@ export const mentorProfileRepo = {
     data: CreateMentorAchievementRequest,
   ): Promise<MentorAchievementResponse> => {
     return apiClient<MentorAchievementResponse>("/api/me/mentor-achievements", {
+      method: "POST",
+      data,
+    });
+  },
+
+  /**
+   * Bước 1: Mở hồ sơ bắt đầu xác thực Mentor (POST `/api/me/mentor-verification/request`).
+   */
+  requestVerification: (): Promise<unknown> => {
+    return apiClient("/api/me/mentor-verification/request", {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Tạo URL upload minh chứng (POST `/api/me/mentor-verification/documents/upload-intents`).
+   * @param data - Payload chứa thông tin file (filename, contentType, sizeBytes)
+   */
+  createUploadIntent: (data: CreateUploadIntentRequest): Promise<UploadIntentResponse> => {
+    return apiClient<UploadIntentResponse>("/api/me/mentor-verification/documents/upload-intents", {
+      method: "POST",
+      data,
+    });
+  },
+
+  /**
+   * Tạo lại URL upload minh chứng khi hết hạn (POST `/api/me/mentor-verification/documents/upload-intents/{uploadIntentId}/retry`).
+   * @param uploadIntentId - Mã định danh lượt upload
+   */
+  retryUploadIntent: (uploadIntentId: string): Promise<UploadIntentResponse> => {
+    return apiClient<UploadIntentResponse>(
+      `/api/me/mentor-verification/documents/upload-intents/${uploadIntentId}/retry`,
+      {
+        method: "POST",
+      },
+    );
+  },
+
+  /**
+   * Tải trực tiếp file minh chứng lên URL đã tạo (Direct S3 / Storage Upload).
+   * @param uploadUrl - Đường dẫn upload nhận từ backend
+   * @param file - Đối tượng File từ máy tính người dùng
+   * @param requiredHeaders - Các header bắt buộc nếu có
+   */
+  uploadFileToUrl: async (
+    uploadUrl: string,
+    file: File,
+    requiredHeaders?: Record<string, string>,
+  ): Promise<void> => {
+    const headers = {
+      "Content-Type": file.type || "application/octet-stream",
+      ...(requiredHeaders || {}),
+    };
+    await axios.put(uploadUrl, file, { headers });
+  },
+
+  /**
+   * Xác nhận tài liệu minh chứng đã tải lên (POST `/api/me/mentor-verification/documents`).
+   * @param data - Payload chứa documentType ("FPTU_AFFILIATION_PROOF") và uploadIntentId
+   */
+  confirmDocument: (data: ConfirmDocumentRequest): Promise<unknown> => {
+    return apiClient("/api/me/mentor-verification/documents", {
+      method: "POST",
+      data,
+    });
+  },
+
+  /**
+   * Bước 3: Nộp hồ sơ xác thực Mentor lên cho Admin duyệt (POST `/api/me/mentor-verification/submit`).
+   * @param data - Payload chứa termsAccepted và submitNote (tùy chọn)
+   */
+  submitVerification: (data: SubmitMentorVerificationRequest): Promise<unknown> => {
+    return apiClient("/api/me/mentor-verification/submit", {
       method: "POST",
       data,
     });

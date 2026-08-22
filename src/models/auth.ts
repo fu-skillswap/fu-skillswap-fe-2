@@ -298,3 +298,33 @@ export interface MentorAchievementResponse {
   demoUrl?: string;
   createdAt?: string;
 }
+
+/** Request payload nộp hồ sơ xác thực Mentor (POST /api/me/mentor-verification/submit) */
+export interface SubmitMentorVerificationRequest {
+  /** Ghi chú khi nộp hồ sơ (Tùy chọn) */
+  submitNote?: string;
+  /** Trạng thái đồng ý với điều khoản vận hành */
+  termsAccepted: boolean;
+}
+
+/** Request payload tạo URL upload minh chứng (POST /api/me/mentor-verification/documents/upload-intents) */
+export interface CreateUploadIntentRequest {
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+/** Response từ API tạo URL upload minh chứng */
+export interface UploadIntentResponse {
+  uploadIntentId: string;
+  uploadUrl: string;
+  expiresAt: string;
+  requiredHeaders?: Record<string, string>;
+  status: string;
+}
+
+/** Request payload xác nhận tài liệu minh chứng đã upload (POST /api/me/mentor-verification/documents) */
+export interface ConfirmDocumentRequest {
+  documentType: string;
+  uploadIntentId: string;
+}

@@ -15,6 +15,7 @@ interface SubjectResultsSectionProps {
   fields: FieldArrayWithId<MentorProfileFormValues, "subjectResults", "id">[];
   append: UseFieldArrayAppend<MentorProfileFormValues, "subjectResults">;
   remove: UseFieldArrayRemove;
+  disabled?: boolean;
 }
 
 export function SubjectResultsSection({
@@ -23,10 +24,12 @@ export function SubjectResultsSection({
   fields,
   append,
   remove,
+  disabled,
 }: SubjectResultsSectionProps) {
   return (
     <fieldset
       className="card mentor-reg-card"
+      disabled={disabled}
       style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
     >
       <h2 className="mentor-section-title">2. Môn học chuyên môn</h2>

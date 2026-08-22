@@ -15,6 +15,7 @@ interface AchievementsSectionProps {
   achievementFields: FieldArrayWithId<MentorProfileFormValues, "achievements", "id">[];
   appendAchievement: UseFieldArrayAppend<MentorProfileFormValues, "achievements">;
   removeAchievement: UseFieldArrayRemove;
+  disabled?: boolean;
 }
 
 export function AchievementsSection({
@@ -23,10 +24,12 @@ export function AchievementsSection({
   achievementFields,
   appendAchievement,
   removeAchievement,
+  disabled,
 }: AchievementsSectionProps) {
   return (
     <fieldset
       className="card mentor-reg-card"
+      disabled={disabled}
       style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
     >
       <h2 className="mentor-section-title">5. Học vấn & Giải thưởng nổi bật (Không bắt buộc)</h2>

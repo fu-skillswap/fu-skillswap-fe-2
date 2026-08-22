@@ -15,6 +15,7 @@ interface FeaturedProjectsSectionProps {
   projectFields: FieldArrayWithId<MentorProfileFormValues, "projects", "id">[];
   appendProject: UseFieldArrayAppend<MentorProfileFormValues, "projects">;
   removeProject: UseFieldArrayRemove;
+  disabled?: boolean;
 }
 
 export function FeaturedProjectsSection({
@@ -23,10 +24,12 @@ export function FeaturedProjectsSection({
   projectFields,
   appendProject,
   removeProject,
+  disabled,
 }: FeaturedProjectsSectionProps) {
   return (
     <fieldset
       className="card mentor-reg-card"
+      disabled={disabled}
       style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
     >
       <h2 className="mentor-section-title">4. Dự án tiêu biểu (Không bắt buộc)</h2>

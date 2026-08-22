@@ -15,16 +15,19 @@ interface SupportLevelsSectionProps {
   control: Control<MentorProfileFormValues>;
   errors: FieldErrors<MentorProfileFormValues>;
   levelOptions: SelectOption[];
+  disabled?: boolean;
 }
 
 export function SupportLevelsSection({
   control,
   errors,
   levelOptions,
+  disabled,
 }: SupportLevelsSectionProps) {
   return (
     <fieldset
       className="card mentor-reg-card"
+      disabled={disabled}
       style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
     >
       <h2 className="mentor-section-title">3. Cấp độ năng lực hỗ trợ (Thang điểm 1 - 5)</h2>
@@ -38,6 +41,7 @@ export function SupportLevelsSection({
               id="foundationSupportLevel"
               label="Kiến thức căn bản (1-5)"
               required
+              disabled={disabled}
               error={errors.foundationSupportLevel?.message}
               placeholder="Chọn mức độ"
               value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
@@ -55,6 +59,7 @@ export function SupportLevelsSection({
               id="outputReviewSupportLevel"
               label="Review Đồ án / Code (1-5)"
               required
+              disabled={disabled}
               error={errors.outputReviewSupportLevel?.message}
               placeholder="Chọn mức độ"
               value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
@@ -72,6 +77,7 @@ export function SupportLevelsSection({
               id="directionSupportLevel"
               label="Định hướng phát triển (1-5)"
               required
+              disabled={disabled}
               error={errors.directionSupportLevel?.message}
               placeholder="Chọn mức độ"
               value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
