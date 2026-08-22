@@ -482,7 +482,7 @@ p {
   line-height: 1.05;
 }
 
-.figma-login-visual-content > p {
+.figma-login-visual-content>p {
   max-width: 430px;
   margin: 21px 0 38px;
   color: #8e8e8e;
@@ -566,7 +566,7 @@ p {
     margin-bottom: 18px;
   }
 
-  .figma-login-visual-content > p {
+  .figma-login-visual-content>p {
     margin: 16px 0 26px;
   }
 }
@@ -617,7 +617,7 @@ p {
   place-items: center;
 }
 
-.figma-login-google > div {
+.figma-login-google>div {
   width: 100%;
   display: grid;
   place-items: center;
@@ -955,13 +955,11 @@ textarea:focus,
   left: 0;
   z-index: 100;
   background-color: #fff;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 18px,
-    #0095f606 18px,
-    #0095f606 19px
-  );
+  background-image: repeating-linear-gradient(-45deg,
+      transparent,
+      transparent 18px,
+      #0095f606 18px,
+      #0095f606 19px);
   border-right: 1px solid var(--figma-border);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1459,7 +1457,7 @@ textarea:focus,
   pointer-events: none;
 }
 
-.figma-feed > * {
+.figma-feed>* {
   position: relative;
   z-index: 1;
 }
@@ -2016,7 +2014,7 @@ textarea:focus,
   font-weight: 900;
 }
 
-.figma-detail-avatar-wrap > span:last-child {
+.figma-detail-avatar-wrap>span:last-child {
   width: 18px;
   height: 18px;
   position: absolute;
@@ -2120,7 +2118,7 @@ textarea:focus,
   font-size: 11px;
 }
 
-.figma-detail-about > p {
+.figma-detail-about>p {
   margin: 0 0 12px;
   color: #555;
   font-size: 13.5px;
@@ -2178,7 +2176,7 @@ textarea:focus,
   content: '';
 }
 
-.figma-detail-services > h3 {
+.figma-detail-services>h3 {
   margin: 0 0 14px;
   color: var(--figma-text);
   font-family: inherit;
@@ -2345,7 +2343,7 @@ textarea:focus,
   box-shadow: 0 18px 50px rgb(24 36 58 / 24%);
 }
 
-.figma-booking-modal > *,
+.figma-booking-modal>*,
 .figma-booking-flow,
 .figma-booking-calendar {
   min-width: 0;
@@ -2459,7 +2457,7 @@ textarea:focus,
   stroke-width: 2;
 }
 
-.figma-booking-service-summary div:nth-child(2) > span {
+.figma-booking-service-summary div:nth-child(2)>span {
   color: var(--figma-blue);
   font-size: 10px;
   font-weight: 700;
@@ -2552,7 +2550,7 @@ textarea:focus,
   align-items: center;
 }
 
-.figma-booking-slot-grid > strong {
+.figma-booking-slot-grid>strong {
   padding-bottom: 2px;
   color: var(--figma-muted);
   font-size: 11px;
@@ -2731,7 +2729,7 @@ textarea:focus,
   font-size: 20px;
 }
 
-.figma-booking-success > p {
+.figma-booking-success>p {
   margin: 0;
   color: var(--figma-muted);
   font-size: 13px;
@@ -2940,7 +2938,7 @@ textarea:focus,
   letter-spacing: -0.7px;
 }
 
-.figma-onboarding-card > p:not(.figma-onboarding-eyebrow) {
+.figma-onboarding-card>p:not(.figma-onboarding-eyebrow) {
   max-width: 430px;
   margin: 0;
   color: #667085;
@@ -2993,7 +2991,7 @@ textarea:focus,
   text-align: left;
 }
 
-.figma-profile-form > p {
+.figma-profile-form>p {
   margin: 0;
   color: #667085;
   font-size: 13px;
@@ -3138,7 +3136,7 @@ textarea:focus,
   font-weight: 900;
 }
 
-.skillswap-not-found-copy > p:not(:first-child) {
+.skillswap-not-found-copy>p:not(:first-child) {
   max-width: 380px;
   margin: 0 0 24px;
   color: #718096;
@@ -3162,7 +3160,7 @@ textarea:focus,
   background: #0088e2;
 }
 
-.skillswap-not-found-card > img {
+.skillswap-not-found-card>img {
   width: min(100%, 330px);
   justify-self: center;
   filter: drop-shadow(0 14px 18px rgb(0 149 246 / 18%));
@@ -3185,11 +3183,11 @@ textarea:focus,
     text-align: center;
   }
 
-  .skillswap-not-found-copy > p:not(:first-child) {
+  .skillswap-not-found-copy>p:not(:first-child) {
     margin-inline: auto;
   }
 
-  .skillswap-not-found-card > img {
+  .skillswap-not-found-card>img {
     width: min(100%, 230px);
     grid-row: 1;
   }
@@ -3808,4 +3806,315 @@ a.figma-auth-modal-btn-login:hover,
   color: #0f172a;
   border-color: #cbd5e1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   GLOBAL ROUNDED DROPDOWNS & FORM INPUT STYLING (SKILLSWAP THEME)
+   ========================================================================== */
+
+select,
+.field select,
+.figma-profile-form select,
+.card select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  height: 44px;
+  padding: 0 40px 0 16px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230095f6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  color: #0f172a;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+select:hover,
+.field select:hover,
+.figma-profile-form select:hover,
+.card select:hover {
+  border-color: var(--figma-blue, #0095f6);
+  background-color: #f8fafc;
+}
+
+select:focus,
+.field select:focus,
+.figma-profile-form select:focus,
+.card select:focus {
+  border-color: var(--figma-blue, #0095f6);
+  box-shadow: 0 0 0 4px rgba(0, 149, 246, 0.15);
+  background-color: #ffffff;
+}
+
+input:disabled,
+.field input:disabled,
+textarea:disabled,
+.field textarea:disabled,
+select:disabled,
+.field select:disabled,
+.figma-profile-form select:disabled,
+.card select:disabled {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* Base input and textarea rounded formatting */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+textarea,
+.field input,
+.field textarea {
+  resize: none;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 10px 14px;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+textarea:focus,
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--figma-blue, #0095f6);
+  box-shadow: 0 0 0 4px rgba(0, 149, 246, 0.15);
+}
+
+/* Field label formatting */
+.field label {
+  display: block;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.field .error {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   RESPONSIVE MENTOR REGISTRATION FORM STYLES
+   ========================================================================== */
+
+.mentor-reg-card {
+  padding: 24px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.mentor-subject-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 12px;
+}
+
+.mentor-section-title {
+  margin: 0 0 8px 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.mentor-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .page-shell.narrow {
+    padding: 20px 16px 40px;
+  }
+
+  .mentor-reg-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .mentor-subject-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .mentor-actions-row {
+    flex-direction: column-reverse;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .mentor-actions-row a,
+  .mentor-actions-row button {
+    width: 100% !important;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   RADIX UI CUSTOM SELECT DROPDOWN STYLING
+   ========================================================================== */
+
+.radix-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.radix-select-trigger:hover {
+  border-color: var(--figma-blue, #0095f6);
+  background-color: #f8fafc;
+}
+
+.radix-select-trigger:focus,
+.radix-select-trigger[data-state="open"] {
+  border-color: var(--figma-blue, #0095f6);
+  box-shadow: 0 0 0 4px rgba(0, 149, 246, 0.15);
+  background-color: #ffffff;
+}
+
+.radix-select-trigger[data-disabled] {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.radix-select-icon {
+  color: var(--figma-blue, #0095f6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.radix-select-trigger[data-state="open"] .radix-select-icon {
+  transform: rotate(180deg);
+}
+
+/* Radix Select Content Popover Container */
+.radix-select-content {
+  z-index: 9999;
+  min-width: var(--radix-select-trigger-width);
+  max-height: 280px;
+  background-color: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  animation-duration: 0.2s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.radix-select-content[data-state="open"] {
+  animation-name: radixSelectFadeIn;
+}
+
+.radix-select-viewport {
+  padding: 6px;
+}
+
+/* Radix Select Individual Item */
+.radix-select-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: #1e293b;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.radix-select-item[data-highlighted] {
+  background-color: var(--figma-blue-light, #ebf5fe);
+  color: var(--figma-blue, #0095f6);
+  font-weight: 600;
+}
+
+.radix-select-item[data-state="checked"] {
+  color: var(--figma-blue, #0095f6);
+  font-weight: 700;
+  background-color: #f0f7ff;
+}
+
+.radix-select-item-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--figma-blue, #0095f6);
+}
+
+@keyframes radixSelectFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.required-asterisk {
+  color: #ef4444;
+  margin-left: 3px;
+  font-weight: 700;
 }

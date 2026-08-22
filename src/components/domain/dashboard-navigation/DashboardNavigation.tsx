@@ -6,45 +6,25 @@
 
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/providers/AuthProvider';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+import { Calendar, Home, Search, Wallet, X } from "lucide-react";
 
 type NavIcon = 'home' | 'search' | 'wallet' | 'calendar';
 
-/** Helper render SVG Icon tương ứng cho sidebar item */
+/** Helper render Icon tương ứng từ lucide-react cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
-  if (name === 'search') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.5" />
-        <path d="m16 16 4.25 4.25" />
-      </svg>
-    );
+  if (name === "search") {
+    return <Search aria-hidden="true" />;
   }
-  if (name === 'wallet') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4.5 7.25h15v11.5h-15z" />
-        <path d="M4.5 10.5h15M15.5 14.25h1" />
-        <path d="M6.5 7.25V5.5h11" />
-      </svg>
-    );
+  if (name === "wallet") {
+    return <Wallet aria-hidden="true" />;
   }
-  if (name === 'calendar') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="4" y="5" width="16" height="15" rx="2" />
-        <path d="M8 3v4M16 3v4M4 10h16" />
-      </svg>
-    );
+  if (name === "calendar") {
+    return <Calendar aria-hidden="true" />;
   }
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m3.5 10 8.5-7 8.5 7v9.25a1.25 1.25 0 0 1-1.25 1.25H4.75a1.25 1.25 0 0 1-1.25-1.25Z" />
-      <path d="M9 20.5v-6h6v6" />
-    </svg>
-  );
+  return <Home aria-hidden="true" />;
 }
 
 /** Props của DashboardNavigation Component */
@@ -80,7 +60,10 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
   };
 
   return (
-    <aside className={`figma-sidebar ${isOpen ? 'figma-sidebar-open' : ''}`}>
+    <aside
+      className={`figma-sidebar ${isOpen ? "figma-sidebar-open" : ""
+        }`}
+    >
       <div className="figma-sidebar-header">
         <Link
           href={dashboardHref}
@@ -100,14 +83,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           onClick={onClose}
           aria-label="Đóng thanh điều hướng"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M18 6 6 18M6 6l12 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
+          <X aria-hidden="true" />
         </button>
       </div>
 
@@ -141,7 +117,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           }}
         >
           <Icon name="wallet" />
-          <span>S-coin Wallet</span>
+          <span>S-coin</span>
         </button>
         <button
           type="button"
@@ -156,7 +132,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           }}
         >
           <Icon name="calendar" />
-          <span>Lịch đặt của tôi</span>
+          <span>Booking của tôi</span>
         </button>
       </nav>
       <button

@@ -17,13 +17,14 @@ import type {
 import {
   studentOnboardingSchema,
   type StudentOnboardingFormValues,
-} from '@/models/schemas/studentProfileSchema';
-import { useAuth } from '@/providers/AuthProvider';
-import { studentProfileRepo } from '@/repositories/studentProfileRepo';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+} from "@/models/schemas/studentProfileSchema";
+import { useAuth } from "@/providers/AuthProvider";
+import { studentProfileRepo } from "@/repositories/studentProfileRepo";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 /**
  * Component hiển thị và xử lý form nhập Hồ sơ Sinh viên (Onboarding Step).
@@ -144,7 +145,7 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
       <main className="figma-onboarding-page">
         <section className="figma-onboarding-card" aria-labelledby="onboarding-title">
           <span className="figma-onboarding-icon" aria-hidden="true">
-            ✓
+            <CheckCircle2 />
           </span>
           <p className="figma-onboarding-eyebrow">ĐĂNG NHẬP THÀNH CÔNG</p>
           <h1 id="onboarding-title">Chào {user?.fullName || 'bạn'}!</h1>

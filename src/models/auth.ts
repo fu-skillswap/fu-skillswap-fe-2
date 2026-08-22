@@ -160,3 +160,171 @@ export interface AuthenticatedUser extends UserMeResponse {
   /** Tương đương publicId để phục vụ việc truy xuất tiện lợi trong UI */
   id: string;
 }
+
+/** Kết quả môn học mà Mentor đảm nhận hướng dẫn kèm điểm số */
+export interface MentorSubjectResult {
+  id?: string;
+  subjectCode: string;
+  subjectName: string;
+  scoreValue: number;
+}
+
+/** Yêu cầu cập nhật Hồ sơ Mentor (PUT `/api/me/mentor-profile`) */
+export interface SaveMentorProfileRequest {
+  /** Tiêu đề ngắn gọn về vai trò / vị trí chuyên môn */
+  headline: string;
+  /** Mô tả chi tiết về kinh nghiệm và kỹ năng chuyên môn */
+  expertiseDescription: string;
+  /** Trạng thái sẵn sàng nhận đặt lịch tư vấn */
+  isAvailable: boolean;
+  /** Danh sách kết quả môn học giảng dạy */
+  subjectResults: MentorSubjectResult[];
+  /** Mức độ hỗ trợ kiến thức căn bản (1-5) */
+  foundationSupportLevel: number;
+  /** Mức độ hỗ trợ review sản phẩm / đồ án (1-5) */
+  outputReviewSupportLevel: number;
+  /** Mức độ hỗ trợ định hướng (1-5) */
+  directionSupportLevel: number;
+  /** Trang GitHub cá nhân (tùy chọn) */
+  githubUrl?: string;
+  /** Trang Portfolio cá nhân (tùy chọn) */
+  portfolioUrl?: string;
+  /** Số điện thoại liên hệ */
+  phoneNumber: string;
+  /** Thời gian báo trước tối thiểu khi đặt lịch (tính bằng phút) */
+  minimumBookingLeadTimeMinutes: number;
+  /** Thời gian mở lịch đặt trước tối đa (tính bằng ngày) */
+  maximumBookingHorizonDays: number;
+  /** Múi giờ đặt lịch (ví dụ: "Asia/Ho_Chi_Minh") */
+  bookingTimezone: string;
+}
+
+/** Phản hồi thông tin Hồ sơ Mentor từ hệ thống (GET / PUT `/api/me/mentor-profile`) */
+export interface MentorProfileResponse {
+  /** Trạng thái hồ sơ đã tồn tại hay chưa */
+  exists: boolean;
+  /** Trạng thái đã hoàn thành các trường thông tin bắt buộc */
+  requiredFieldsCompleted: boolean;
+  /** ID người dùng */
+  userId: string;
+  /** Email người dùng */
+  email: string;
+  /** Tên hiển thị */
+  displayName: string;
+  /** Link ảnh đại diện */
+  avatarUrl?: string | null;
+  /** Trạng thái duyệt Mentor (ACTIVE, PENDING, INACTIVE,...) */
+  mentorStatus: string;
+  /** Tiêu đề chuyên môn */
+  headline: string;
+  /** Mô tả kinh nghiệm chuyên môn */
+  expertiseDescription: string;
+  /** Trạng thái sẵn sàng nhận lịch */
+  isAvailable: boolean;
+  /** Thời điểm tạm dừng đặt lịch (nếu có) */
+  bookingSuspendedUntil?: string | null;
+  /** Điểm phạt hủy lịch muộn */
+  lateCancellationPenaltyPoints?: number;
+  /** Thời điểm xác minh tài khoản */
+  verifiedAt?: string | null;
+  /** Thời gian báo trước tối thiểu (phút) */
+  minimumBookingLeadTimeMinutes: number;
+  /** Hạn đặt trước tối đa (ngày) */
+  maximumBookingHorizonDays: number;
+  /** Múi giờ đặt lịch */
+  bookingTimezone: string;
+  /** Mảng danh sách môn học giảng dạy */
+  subjectResults: MentorSubjectResult[];
+  /** Cấp độ hỗ trợ căn bản (1-5) */
+  foundationSupportLevel: number;
+  /** Cấp độ hỗ trợ review đồ án (1-5) */
+  outputReviewSupportLevel: number;
+  /** Cấp độ hỗ trợ định hướng (1-5) */
+  directionSupportLevel: number;
+  /** Link GitHub */
+  githubUrl?: string | null;
+  /** Link Portfolio */
+  portfolioUrl?: string | null;
+  /** Số điện thoại */
+  phoneNumber?: string | null;
+}
+
+/** Request payload tạo dự án tiêu biểu (POST /api/me/mentor-projects) */
+export interface CreateMentorProjectRequest {
+  /** Tên dự án (Ví dụ: "SWP391 Booking Platform") */
+  title: string;
+  /** Vai trò, công nghệ hoặc điểm nổi bật của dự án */
+  content: string;
+  /** Mô tả ngắn vấn đề, cách làm và kết quả của dự án (Tùy chọn) */
+  projectDescription?: string;
+  /** Đường dẫn Live Demo / Repository (Tùy chọn) */
+  liveDemoUrl?: string;
+}
+
+/** Response thông tin dự án tiêu biểu từ server */
+export interface MentorProjectResponse {
+  id?: string;
+  title: string;
+  content: string;
+  projectDescription?: string;
+  liveDemoUrl?: string;
+  createdAt?: string;
+}
+
+/** Request payload tạo học vấn / giải thưởng (POST /api/me/mentor-achievements) */
+export interface CreateMentorAchievementRequest {
+  /** Tên giải thưởng / thành tích (Ví dụ: "Top 10 Hackathon FPTU") */
+  title: string;
+  /** Mô tả ngắn giải thưởng hoặc thành tích (Tùy chọn) */
+  awardDescription?: string;
+  /** Ngày / thời điểm đạt được (YYYY-MM-DD) (Tùy chọn) */
+  achievedAt?: string;
+  /** Tiêu đề sản phẩm / case study đi kèm thành tích (Tùy chọn) */
+  productHeader?: string;
+  /** Mô tả sản phẩm / case study đi kèm thành tích (Tùy chọn) */
+  productDescription?: string;
+  /** Đường dẫn Demo / Chứng nhận (Tùy chọn) */
+  demoUrl?: string;
+}
+
+/** Response thông tin giải thưởng / thành tích từ server */
+export interface MentorAchievementResponse {
+  id?: string;
+  title: string;
+  awardDescription?: string;
+  achievedAt?: string;
+  productHeader?: string;
+  productDescription?: string;
+  demoUrl?: string;
+  createdAt?: string;
+}
+
+/** Request payload nộp hồ sơ xác thực Mentor (POST /api/me/mentor-verification/submit) */
+export interface SubmitMentorVerificationRequest {
+  /** Ghi chú khi nộp hồ sơ (Tùy chọn) */
+  submitNote?: string;
+  /** Trạng thái đồng ý với điều khoản vận hành */
+  termsAccepted: boolean;
+}
+
+/** Request payload tạo URL upload minh chứng (POST /api/me/mentor-verification/documents/upload-intents) */
+export interface CreateUploadIntentRequest {
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+/** Response từ API tạo URL upload minh chứng */
+export interface UploadIntentResponse {
+  uploadIntentId: string;
+  uploadUrl: string;
+  expiresAt: string;
+  requiredHeaders?: Record<string, string>;
+  status: string;
+}
+
+/** Request payload xác nhận tài liệu minh chứng đã upload (POST /api/me/mentor-verification/documents) */
+export interface ConfirmDocumentRequest {
+  documentType: string;
+  uploadIntentId: string;
+}
