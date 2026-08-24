@@ -67,7 +67,7 @@ function messageForGoogleError(reason: unknown) {
  * @param locale - Mã ngôn ngữ hiện tại (ví dụ: "vi", "en")
  * @returns Đối tượng chứa form state, trạng thái lỗi, cờ loading, hàm submit form và `googleButtonRef`
  */
-export function useLoginLogic(locale: string) {
+export function useLoginLogic(locale: string, adminOnly = false) {
   const router = useRouter();
   const { completeGoogleLogin } = useAuth();
   const completeGoogleLoginRef = useRef(completeGoogleLogin);
@@ -135,8 +135,19 @@ export function useLoginLogic(locale: string) {
               credential,
               nonce: loginNonce,
             });
-            const onboarding = await completeGoogleLoginRef.current();
-            router.replace(onboardingDestination(locale, onboarding.nextRecommendedAction));
+            const { user, onboarding } = await completeGoogleLoginRef.current();
+            const canAccessAdmin = user.roles.some(
+              (role) => role === 'ADMIN' || role === 'SYSTEM_ADMIN',
+            );
+            if (adminOnly && !canAccessAdmin) {
+              setError('Tài khoản này không có quyền truy cập cổng quản trị.');
+              return;
+            }
+            router.replace(
+              adminOnly
+                ? `/${locale}/admin/dashboard`
+                : onboardingDestination(locale, onboarding.nextRecommendedAction),
+            );
           } catch (reason) {
             setError(messageForGoogleError(reason));
             void configureGoogleButtonRef.current();
