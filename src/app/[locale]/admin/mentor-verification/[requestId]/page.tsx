@@ -8,8 +8,8 @@ import { MentorVerificationDetailView } from '@/views/admin/MentorVerificationDe
 export default async function MentorVerificationDetailPage({
   params,
 }: {
-  params: Promise<{ requestId: string }>;
+  params: Promise<{ locale: string; requestId: string }>;
 }) {
-  const { requestId } = await params;
-  return <MentorVerificationDetailView requestId={requestId} />;
+  const { locale, requestId } = await params;
+  return <MentorVerificationDetailView locale={locale} requestId={requestId} />;
 }

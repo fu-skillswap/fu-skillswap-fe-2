@@ -73,7 +73,13 @@ function StatusBadge({ status }: { status: string }) {
   return <span className="mentor-status">{labels[status] ?? status.replaceAll('_', ' ')}</span>;
 }
 
-export function MentorVerificationDetailView({ requestId }: { requestId: string }) {
+export function MentorVerificationDetailView({
+  locale,
+  requestId,
+}: {
+  locale: string;
+  requestId: string;
+}) {
   const { user } = useAuth();
   const [detail, setDetail] = useState<MentorVerificationRequestDetail>();
   const [lock, setLock] = useState<MentorVerificationLock>();
@@ -134,7 +140,7 @@ export function MentorVerificationDetailView({ requestId }: { requestId: string 
     return (
       <main className="mentor-detail-page">
         <p className="mentor-detail-state">{error ?? 'Không tìm thấy hồ sơ.'}</p>
-        <Link href="../">Quay lại danh sách</Link>
+        <Link href={`/${locale}/admin/mentor-verification`}>Quay lại danh sách</Link>
       </main>
     );
 
@@ -208,7 +214,7 @@ export function MentorVerificationDetailView({ requestId }: { requestId: string 
   return (
     <main className="mentor-detail-page">
       <div className="mentor-detail-content">
-        <Link className="mentor-back-link" href="../">
+        <Link className="mentor-back-link" href={`/${locale}/admin/mentor-verification`}>
           <ArrowLeft aria-hidden="true" /> Quay lại danh sách xác minh mentor
         </Link>
         <header className="mentor-detail-heading">
