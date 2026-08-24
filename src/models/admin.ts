@@ -70,7 +70,15 @@ export interface AdminPageResponse<T> {
 }
 
 export type MentorVerificationStatus =
-  'DRAFT' | 'PENDING' | 'NEEDS_REVISION' | 'APPROVED' | 'REJECTED';
+  | 'DRAFT'
+  | 'PENDING'
+  | 'SUBMITTED'
+  | 'PENDING_REVIEW'
+  | 'UNDER_REVIEW'
+  | 'NEEDS_REVISION'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
 
 export interface MentorVerificationRequest {
   requestId: string;
@@ -95,8 +103,14 @@ export interface MentorVerificationRequestsResponse {
 }
 
 export interface MentorVerificationRequestsQuery {
+  status?: MentorVerificationStatus;
+  keyword?: string;
+  submittedFrom?: string;
+  submittedTo?: string;
   page?: number;
   size?: number;
+  sortBy?: string;
+  direction?: 'ASC' | 'DESC';
 }
 
 export interface MentorVerificationDocument {

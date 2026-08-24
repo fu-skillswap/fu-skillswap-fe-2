@@ -10,10 +10,10 @@ import type { MentorVerificationRequest, MentorVerificationStatus } from '@/mode
 import { adminRepo } from '@/repositories/adminRepo';
 import { Bell, LoaderCircle, RefreshCw, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const tabs: Array<{ label: string; value?: MentorVerificationStatus }> = [
-  { label: 'Chờ duyệt', value: 'PENDING' },
+  { label: 'Chờ duyệt', value: 'PENDING_REVIEW' },
   { label: 'Cần bổ sung', value: 'NEEDS_REVISION' },
   { label: 'Đã duyệt', value: 'APPROVED' },
   { label: 'Từ chối', value: 'REJECTED' },
@@ -29,7 +29,19 @@ const statusLabels: Record<string, string> = {
   NEEDS_REVISION: 'Cần bổ sung',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
+  WITHDRAWN: 'Đã rút hồ sơ',
 };
+
+const allRequestStatuses: MentorVerificationStatus[] = [
+  'DRAFT',
+  'PENDING_REVIEW',
+  'NEEDS_REVISION',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN',
+];
+const pageSize = 10;
+const allStatusesBatchSize = 100;
 
 function getErrorMessage(reason: unknown) {
   return reason instanceof ApiClientError
@@ -48,13 +60,46 @@ function getStatusLabel(status: string) {
   return statusLabels[status] ?? status.replaceAll('_', ' ').toLocaleLowerCase('vi-VN');
 }
 
-function isPendingStatus(status: string) {
-  return ['DRAFT', 'PENDING', 'SUBMITTED', 'PENDING_REVIEW', 'UNDER_REVIEW'].includes(status);
-}
-
 function InitialAvatar({ name }: { name: string }) {
   return (
     <span className="mentor-initial-avatar">{name.trim().charAt(0).toUpperCase() || '?'}</span>
+  );
+}
+
+/** Tải toàn bộ trạng thái riêng lẻ vì API không truyền status mặc định chỉ trả hàng chờ duyệt. */
+async function getAllMentorVerificationRequests(keyword: string) {
+  const initialResponses = await Promise.all(
+    allRequestStatuses.map((status) =>
+      adminRepo.getMentorVerificationRequests({
+        status,
+        keyword: keyword || undefined,
+        page: 0,
+        size: allStatusesBatchSize,
+        sortBy: 'updatedAt',
+        direction: 'DESC',
+      }),
+    ),
+  );
+  const remainingResponses = await Promise.all(
+    initialResponses.flatMap((response, statusIndex) =>
+      Array.from({ length: Math.max(response.totalPages - 1, 0) }, (_, pageIndex) =>
+        adminRepo.getMentorVerificationRequests({
+          status: allRequestStatuses[statusIndex],
+          keyword: keyword || undefined,
+          page: pageIndex + 1,
+          size: allStatusesBatchSize,
+          sortBy: 'updatedAt',
+          direction: 'DESC',
+        }),
+      ),
+    ),
+  );
+  const uniqueRequests = new Map<string, MentorVerificationRequest>();
+  [...initialResponses, ...remainingResponses].forEach((response) => {
+    response.content.forEach((request) => uniqueRequests.set(request.requestId, request));
+  });
+  return [...uniqueRequests.values()].sort(
+    (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
   );
 }
 
@@ -63,7 +108,9 @@ export function MentorVerificationView({ locale }: { locale: string }) {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [activeStatus, setActiveStatus] = useState<MentorVerificationStatus | undefined>('PENDING');
+  const [activeStatus, setActiveStatus] = useState<MentorVerificationStatus | undefined>(
+    'PENDING_REVIEW',
+  );
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -71,7 +118,22 @@ export function MentorVerificationView({ locale }: { locale: string }) {
   const loadRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await adminRepo.getMentorVerificationRequests({ page, size: 10 });
+      const keyword = search.trim();
+      if (!activeStatus) {
+        const allRequests = await getAllMentorVerificationRequests(keyword);
+        setRequests(allRequests.slice(page * pageSize, (page + 1) * pageSize));
+        setTotalElements(allRequests.length);
+        setTotalPages(Math.ceil(allRequests.length / pageSize));
+        return;
+      }
+      const data = await adminRepo.getMentorVerificationRequests({
+        status: activeStatus,
+        keyword: keyword || undefined,
+        page,
+        size: pageSize,
+        sortBy: 'updatedAt',
+        direction: 'DESC',
+      });
       setRequests(data.content);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
@@ -80,7 +142,7 @@ export function MentorVerificationView({ locale }: { locale: string }) {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [activeStatus, page, search]);
 
   useEffect(() => {
     void loadRequests();
@@ -91,22 +153,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
     const timer = window.setTimeout(() => setError(undefined), 5000);
     return () => window.clearTimeout(timer);
   }, [error]);
-
-  const filteredRequests = useMemo(() => {
-    const normalizedSearch = search.trim().toLocaleLowerCase('vi-VN');
-    return requests.filter((request) => {
-      const matchesStatus =
-        !activeStatus ||
-        request.status === activeStatus ||
-        (activeStatus === 'PENDING' && isPendingStatus(request.status));
-      const matchesSearch =
-        !normalizedSearch ||
-        request.mentorFullName.toLocaleLowerCase('vi-VN').includes(normalizedSearch) ||
-        request.mentorEmail.toLocaleLowerCase('vi-VN').includes(normalizedSearch) ||
-        request.mentorUserId.toLocaleLowerCase('vi-VN').includes(normalizedSearch);
-      return matchesStatus && matchesSearch;
-    });
-  }, [activeStatus, requests, search]);
 
   return (
     <main className="admin-dashboard mentor-verification-page">
@@ -199,7 +245,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                   }}
                 >
                   {tab.label}
-                  {tab.value === 'PENDING' && totalElements ? ` (${totalElements})` : ''}
                 </button>
               ))}
             </div>
@@ -208,7 +253,10 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                 <Search aria-hidden="true" />
                 <input
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(0);
+                  }}
                   placeholder="Tìm theo tên hoặc email..."
                 />
               </label>
@@ -238,8 +286,8 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                         </span>
                       </td>
                     </tr>
-                  ) : filteredRequests.length ? (
-                    filteredRequests.map((request) => (
+                  ) : requests.length ? (
+                    requests.map((request) => (
                       <tr key={request.requestId}>
                         <td>
                           <div className="mentor-applicant">
@@ -283,8 +331,8 @@ export function MentorVerificationView({ locale }: { locale: string }) {
             </div>
             <footer className="mentor-pagination">
               <span>
-                Hiển thị {filteredRequests.length ? page * 10 + 1 : 0}–
-                {Math.min((page + 1) * 10, totalElements)} trong tổng số {totalElements} hồ sơ
+                Hiển thị {requests.length ? page * pageSize + 1 : 0}–
+                {Math.min((page + 1) * pageSize, totalElements)} trong tổng số {totalElements} hồ sơ
               </span>
               <div>
                 <button
