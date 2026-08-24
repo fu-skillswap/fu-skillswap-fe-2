@@ -182,10 +182,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
           <a href="#reports">▱ Đánh giá &amp; báo cáo</a>
         </nav>
         <div className="admin-sidebar-footer">
-          <p>
-            <i />
-            Trạng thái hệ thống: Hoạt động
-          </p>
           <a href="/" target="_blank" rel="noreferrer">
             ↗ <span>Xem SkillSwap</span>
           </a>

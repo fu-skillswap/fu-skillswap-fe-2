@@ -11,7 +11,6 @@ import { type ReactNode } from 'react';
 import {
   CalendarDays,
   ChartNoAxesCombined,
-  Circle,
   CircleUserRound,
   LayoutDashboard,
   ArrowUpRight,
@@ -114,10 +113,6 @@ export function AdminSidebar({ locale }: { locale: string }) {
         </a>
       </nav>
       <div className="admin-sidebar-footer">
-        <p>
-          <Circle aria-hidden="true" className="admin-status-icon" fill="currentColor" />
-          Trạng thái hệ thống: Hoạt động
-        </p>
         <a href="/" target="_blank" rel="noreferrer">
           <ArrowUpRight aria-hidden="true" className="admin-icon" /> <span>Xem SkillSwap</span>
         </a>
