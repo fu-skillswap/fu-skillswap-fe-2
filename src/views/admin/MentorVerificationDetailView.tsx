@@ -215,7 +215,7 @@ export function MentorVerificationDetailView({
     <main className="mentor-detail-page">
       <div className="mentor-detail-content">
         <Link className="mentor-back-link" href={`/${locale}/admin/mentor-verification`}>
-          <ArrowLeft aria-hidden="true" /> Quay lại danh sách xác minh mentor
+          <ArrowLeft aria-hidden="true" /> Quay lại danh sách
         </Link>
         <header className="mentor-detail-heading">
           <div>
