@@ -4897,12 +4897,18 @@ a.figma-auth-modal-btn-login:hover,
 }
 
 .admin-loading-state {
+  min-width: 0;
+  flex: 1 1 auto;
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
   background: radial-gradient(circle at 50% 38%, rgb(215 226 255 / 78%), transparent 32%), #f8f9ff;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.admin-area-shell > .admin-loading-state {
+  width: 0;
 }
 
 .admin-loading-card {
@@ -5577,6 +5583,118 @@ a.figma-auth-modal-btn-login:hover,
   gap: 9px;
 }
 
+.mentor-revision-dialog {
+  width: min(100%, 560px);
+  display: grid;
+  gap: 12px;
+  padding: 26px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgb(11 28 48 / 30%);
+}
+
+.mentor-revision-dialog header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.mentor-revision-dialog h2 {
+  margin: 0;
+  color: #0b1c30;
+  font-size: 21px;
+}
+
+.mentor-revision-dialog header p {
+  margin: 6px 0 0;
+  color: #585e6c;
+  font-size: 14px;
+}
+
+.mentor-revision-dialog header button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #424752;
+}
+
+.mentor-revision-dialog header button:hover {
+  background: #eff4ff;
+}
+
+.mentor-revision-dialog > label {
+  color: #0b1c30;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mentor-revision-dialog textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #aebbd3;
+  border-radius: 7px;
+  outline: 0;
+  color: #0b1c30;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.mentor-revision-dialog textarea:focus {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgb(0 86 179 / 14%);
+}
+
+.mentor-form-error {
+  margin: -3px 0 0;
+  color: #ba1a1a;
+  font-size: 13px;
+}
+
+.mentor-revision-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.mentor-revision-dialog footer button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 15px;
+  border: 1px solid #aebbd3;
+  border-radius: 6px;
+  background: #fff;
+  color: #003f87;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mentor-revision-dialog footer button.primary {
+  border-color: #0056b3;
+  background: #0056b3;
+  color: #fff;
+}
+
+.mentor-revision-dialog footer button.danger {
+  border-color: #ba1a1a;
+  background: #ba1a1a;
+  color: #fff;
+}
+
+.mentor-revision-dialog footer button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .mentor-document-preview header > div svg {
   color: #004491;
 }
@@ -5682,6 +5800,64 @@ a.figma-auth-modal-btn-login:hover,
 
 .mentor-lock-card dl {
   gap: 16px;
+}
+
+.mentor-lock-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.mentor-lock-actions button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #9baac1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0b4c97;
+  font:
+    600 13px Arial,
+    sans-serif;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.mentor-lock-actions button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mentor-lock-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #eff5ff;
+  border-color: #4c89d5;
+}
+
+.mentor-lock-actions button.danger {
+  border-color: #d17b7b;
+  color: #ba1a1a;
+}
+
+.mentor-lock-actions button.danger:hover:not(:disabled) {
+  background: #fff1f1;
+  border-color: #ba1a1a;
+}
+
+.mentor-lock-actions button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.mentor-lock-action-error {
+  margin: 12px 0 0;
+  color: #ba1a1a;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .mentor-timeline {

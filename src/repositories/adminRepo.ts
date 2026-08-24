@@ -52,6 +52,36 @@ export const adminRepo = {
   getMentorVerificationLock: (requestId: string) =>
     apiClient<MentorVerificationLock>(`/api/admin/mentor-verification/requests/${requestId}/lock`),
 
+  releaseMentorVerificationLock: (requestId: string) =>
+    apiClient<MentorVerificationLock>(
+      `/api/admin/mentor-verification/requests/${requestId}/lock/release`,
+      { method: 'POST' },
+    ),
+
+  refreshMentorVerificationLock: (requestId: string) =>
+    apiClient<MentorVerificationLock>(
+      `/api/admin/mentor-verification/requests/${requestId}/lock/refresh`,
+      { method: 'POST' },
+    ),
+
+  requestMentorRevision: (requestId: string, note: string) =>
+    apiClient<MentorVerificationRequestDetail>(
+      `/api/admin/mentor-verification/requests/${requestId}/request-revision`,
+      { method: 'POST', data: { note } },
+    ),
+
+  rejectMentorVerification: (requestId: string, note: string) =>
+    apiClient<MentorVerificationRequestDetail>(
+      `/api/admin/mentor-verification/requests/${requestId}/reject`,
+      { method: 'POST', data: { note } },
+    ),
+
+  approveMentorVerification: (requestId: string) =>
+    apiClient<MentorVerificationRequestDetail>(
+      `/api/admin/mentor-verification/requests/${requestId}/approve`,
+      { method: 'POST' },
+    ),
+
   assignCase: (caseType: string, caseId: string) =>
     apiClient<unknown>(`/api/admin/cases/${caseType}/${caseId}/assign`, { method: 'POST' }),
 };
