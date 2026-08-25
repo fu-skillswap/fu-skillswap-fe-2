@@ -7,6 +7,7 @@
 
 import { ApiClientError } from '@/models/apiClient';
 import { AdminLoadingState } from '@/components/domain/admin/AdminLoadingState';
+import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import {
   rejectMentorVerificationSchema,
   requestMentorRevisionSchema,
@@ -213,6 +214,14 @@ export function MentorVerificationDetailView({
 
   return (
     <main className="mentor-detail-page">
+      <header className="admin-topbar">
+        <div className="admin-breadcrumb">
+          Quản trị <span>›</span>{' '}
+          <Link href={`/${locale}/admin/mentor-verification`}>Xác minh mentor</Link> <span>›</span>{' '}
+          <b>Chi tiết</b>
+        </div>
+        <AdminTopbarActions />
+      </header>
       <div className="mentor-detail-content">
         <Link className="mentor-back-link" href={`/${locale}/admin/mentor-verification`}>
           <ArrowLeft aria-hidden="true" /> Quay lại danh sách

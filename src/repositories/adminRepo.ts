@@ -11,6 +11,12 @@ import type {
   AdminPageResponse,
   AdminQueueItem,
   AdminQueueItemsQuery,
+  AdminMentorsQuery,
+  AdminMentorsResponse,
+  AdminMentorDetail,
+  AdminUsersQuery,
+  AdminUsersResponse,
+  AdminUserSummary,
   MentorVerificationRequestsQuery,
   MentorVerificationRequestsResponse,
   MentorVerificationLock,
@@ -38,6 +44,30 @@ export const adminRepo = {
     apiClient<AdminPageResponse<AdminQueueItem>>(
       `/api/admin/dashboard/queue-items${queryString(query)}`,
     ),
+
+  getUsers: (query: AdminUsersQuery) =>
+    apiClient<AdminUsersResponse>(`/api/admin/users${queryString(query)}`),
+
+  getMentors: (query: AdminMentorsQuery) =>
+    apiClient<AdminMentorsResponse>(`/api/admin/mentors${queryString(query)}`),
+
+  getMentor: (mentorUserId: string) =>
+    apiClient<AdminMentorDetail>(`/api/admin/mentors/${mentorUserId}`),
+
+  getUserSummary: (userId: string) =>
+    apiClient<AdminUserSummary>(`/api/admin/users/${userId}/summary`),
+
+  banUser: (userId: string, reason: string) =>
+    apiClient<unknown>(`/api/admin/users/${userId}/ban`, {
+      method: 'POST',
+      data: { reason },
+    }),
+
+  unbanUser: (userId: string, reason: string) =>
+    apiClient<unknown>(`/api/admin/users/${userId}/unban`, {
+      method: 'POST',
+      data: { reason },
+    }),
 
   getMentorVerificationRequests: (query: MentorVerificationRequestsQuery) =>
     apiClient<MentorVerificationRequestsResponse>(

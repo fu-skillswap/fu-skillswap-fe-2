@@ -69,6 +69,7 @@ export function AdminSidebar({ locale }: { locale: string }) {
   const pathname = usePathname();
   const dashboardHref = `/${locale}/admin/dashboard`;
   const mentorVerificationHref = `/${locale}/admin/mentor-verification`;
+  const usersHref = `/${locale}/admin/users`;
 
   return (
     <aside className="admin-sidebar admin-shared-sidebar">
@@ -99,10 +100,10 @@ export function AdminSidebar({ locale }: { locale: string }) {
           <Icon name="shield" />
           Xác minh mentor
         </Link>
-        <a href="#users">
+        <Link className={pathname === usersHref ? 'is-active' : ''} href={usersHref}>
           <Icon name="users" />
           Người dùng
-        </a>
+        </Link>
         <a href="#bookings">
           <Icon name="booking" />
           Lịch hẹn
