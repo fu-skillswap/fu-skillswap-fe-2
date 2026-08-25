@@ -5,22 +5,16 @@
 
 'use client';
 
-import React from 'react';
-import type {
-  UseFormRegister,
-  FieldErrors,
-  FieldArrayWithId,
-  UseFieldArrayAppend,
-  UseFieldArrayRemove,
-} from 'react-hook-form';
-import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
+import React from "react";
+import type { UseFormRegister, FieldErrors, FieldArrayWithId, UseFieldArrayAppend } from "react-hook-form";
+import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSchema";
 
 interface FeaturedProjectsSectionProps {
   register: UseFormRegister<MentorProfileFormValues>;
   errors: FieldErrors<MentorProfileFormValues>;
-  projectFields: FieldArrayWithId<MentorProfileFormValues, 'projects', 'id'>[];
-  appendProject: UseFieldArrayAppend<MentorProfileFormValues, 'projects'>;
-  removeProject: UseFieldArrayRemove;
+  projectFields: FieldArrayWithId<MentorProfileFormValues, "projects", "id">[];
+  appendProject: UseFieldArrayAppend<MentorProfileFormValues, "projects">;
+  removeProject: (index: number) => void;
   disabled?: boolean;
 }
 

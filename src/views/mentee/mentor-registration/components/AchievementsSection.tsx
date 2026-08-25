@@ -11,7 +11,6 @@ import type {
   FieldErrors,
   FieldArrayWithId,
   UseFieldArrayAppend,
-  UseFieldArrayRemove,
 } from 'react-hook-form';
 import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
 
@@ -20,7 +19,7 @@ interface AchievementsSectionProps {
   errors: FieldErrors<MentorProfileFormValues>;
   achievementFields: FieldArrayWithId<MentorProfileFormValues, 'achievements', 'id'>[];
   appendAchievement: UseFieldArrayAppend<MentorProfileFormValues, 'achievements'>;
-  removeAchievement: UseFieldArrayRemove;
+  removeAchievement: (index: number) => void;
   disabled?: boolean;
 }
 

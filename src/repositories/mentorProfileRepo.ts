@@ -14,6 +14,8 @@ import type {
   MentorAchievementResponse,
   MentorProjectResponse,
   MentorProfileResponse,
+  MentorVerificationProgressResponse,
+  MentorVerificationResponse,
   SaveMentorProfileRequest,
   SubmitMentorVerificationRequest,
   UploadIntentResponse,
@@ -73,6 +75,40 @@ export const mentorProfileRepo = {
   },
 
   /**
+   * Cập nhật thông tin dự án tiêu biểu (PUT `/api/me/mentor-projects/{projectId}`).
+   * @param projectId - ID dự án tiêu biểu (UUID)
+   * @param data - Payload đối tượng thông tin dự án (`CreateMentorProjectRequest`)
+   * @returns Promise chứa phản hồi dự án (`MentorProjectResponse`)
+   */
+  updateProject: (
+    projectId: string,
+    data: CreateMentorProjectRequest,
+  ): Promise<MentorProjectResponse> => {
+    return apiClient<MentorProjectResponse>(`/api/me/mentor-projects/${projectId}`, {
+      method: "PUT",
+      data,
+    });
+  },
+
+  /**
+   * Lấy danh sách dự án tiêu biểu của tôi (GET `/api/me/mentor-projects`).
+   * @returns Promise chứa danh sách dự án (`MentorProjectResponse[]`)
+   */
+  getProjects: (): Promise<MentorProjectResponse[]> => {
+    return apiClient<MentorProjectResponse[]>("/api/me/mentor-projects");
+  },
+
+  /**
+   * Xóa dự án tiêu biểu (DELETE `/api/me/mentor-projects/{projectId}`).
+   * @param projectId - ID dự án tiêu biểu cần xóa (UUID)
+   */
+  deleteProject: (projectId: string): Promise<unknown> => {
+    return apiClient(`/api/me/mentor-projects/${projectId}`, {
+      method: "DELETE",
+    });
+  },
+
+  /**
    * Tạo học vấn / giải thưởng mới (POST `/api/me/mentor-achievements`).
    * @param data - Đối tượng thông tin giải thưởng (`CreateMentorAchievementRequest`)
    * @returns Promise chứa phản hồi giải thưởng (`MentorAchievementResponse`)
@@ -81,6 +117,40 @@ export const mentorProfileRepo = {
     return apiClient<MentorAchievementResponse>('/api/me/mentor-achievements', {
       method: 'POST',
       data,
+    });
+  },
+
+  /**
+   * Cập nhật học vấn / giải thưởng (PUT `/api/me/mentor-achievements/{achievementId}`).
+   * @param achievementId - ID giải thưởng/học vấn (UUID)
+   * @param data - Đối tượng thông tin giải thưởng (`CreateMentorAchievementRequest`)
+   * @returns Promise chứa phản hồi giải thưởng (`MentorAchievementResponse`)
+   */
+  updateAchievement: (
+    achievementId: string,
+    data: CreateMentorAchievementRequest,
+  ): Promise<MentorAchievementResponse> => {
+    return apiClient<MentorAchievementResponse>(`/api/me/mentor-achievements/${achievementId}`, {
+      method: "PUT",
+      data,
+    });
+  },
+
+  /**
+   * Lấy danh sách học vấn / giải thưởng của tôi (GET `/api/me/mentor-achievements`).
+   * @returns Promise chứa danh sách giải thưởng (`MentorAchievementResponse[]`)
+   */
+  getAchievements: (): Promise<MentorAchievementResponse[]> => {
+    return apiClient<MentorAchievementResponse[]>("/api/me/mentor-achievements");
+  },
+
+  /**
+   * Xóa học vấn / giải thưởng (DELETE `/api/me/mentor-achievements/{achievementId}`).
+   * @param achievementId - ID giải thưởng/học vấn cần xóa (UUID)
+   */
+  deleteAchievement: (achievementId: string): Promise<unknown> => {
+    return apiClient(`/api/me/mentor-achievements/${achievementId}`, {
+      method: "DELETE"
     });
   },
 
@@ -137,7 +207,7 @@ export const mentorProfileRepo = {
 
   /**
    * Xác nhận tài liệu minh chứng đã tải lên (POST `/api/me/mentor-verification/documents`).
-   * @param data - Payload chứa documentType ("FPTU_AFFILIATION_PROOF") và uploadIntentId
+   * @param data - Payload chứa documentType ("FPTU_AFFILIATION_PROOF" hoặc "EXPERTISE_PROOF") và uploadIntentId
    */
   confirmDocument: (data: ConfirmDocumentRequest): Promise<unknown> => {
     return apiClient('/api/me/mentor-verification/documents', {
@@ -155,6 +225,32 @@ export const mentorProfileRepo = {
       method: 'POST',
       data,
     });
+  },
+
+  /**
+   * Rút hồ sơ đăng ký Mentor (POST `/api/me/mentor-verification/withdraw`).
+   * Trạng thái hồ sơ sẽ chuyển về `DRAFT` cho phép tiếp tục chỉnh sửa.
+   */
+  withdrawVerification: (): Promise<unknown> => {
+    return apiClient("/api/me/mentor-verification/withdraw", {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Lấy tiến độ đăng ký mentor (GET `/api/me/mentor-verification/progress`).
+   * @returns Promise chứa dữ liệu tiến độ (`MentorVerificationProgressResponse`)
+   */
+  getVerificationProgress: (): Promise<MentorVerificationProgressResponse> => {
+    return apiClient<MentorVerificationProgressResponse>("/api/me/mentor-verification/progress");
+  },
+
+  /**
+   * Lấy chi tiết hồ sơ đăng ký mentor đã nộp kèm danh sách tài liệu (GET `/api/me/mentor-verification`).
+   * @returns Promise chứa chi tiết hồ sơ đăng ký (`MentorVerificationResponse`)
+   */
+  getVerification: (): Promise<MentorVerificationResponse> => {
+    return apiClient<MentorVerificationResponse>("/api/me/mentor-verification");
   },
 
   /** Xóa cache bộ nhớ tạm (dùng khi Đăng xuất) */

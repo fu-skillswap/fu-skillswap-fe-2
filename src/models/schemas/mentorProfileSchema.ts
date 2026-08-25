@@ -22,6 +22,7 @@ export const mentorSubjectSchema = yup.object().shape({
 });
 
 export const mentorProjectSchema = yup.object().shape({
+  id: yup.string().optional(),
   title: yup.string().trim().required('Tên dự án là bắt buộc.'),
   content: yup.string().trim().required('Vui lòng nhập vai trò hoặc điểm nổi bật của dự án.'),
   projectDescription: yup.string().trim().optional(),
@@ -34,6 +35,7 @@ export const mentorProjectSchema = yup.object().shape({
 });
 
 export const mentorAchievementSchema = yup.object().shape({
+  id: yup.string().optional(),
   title: yup.string().trim().required('Tên giải thưởng / thành tích là bắt buộc.'),
   awardDescription: yup
     .string()
