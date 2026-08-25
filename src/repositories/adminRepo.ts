@@ -5,6 +5,11 @@
 
 import { apiClient } from '@/models/apiClient';
 import type {
+  AdminCaseActivityQuery,
+  AdminCaseActivityResponse,
+  AdminCaseOwnership,
+  AdminBookingsQuery,
+  AdminBookingsResponse,
   AdminDashboardOverviewResponse,
   AdminDashboardQueuesResponse,
   AdminDashboardTimeseriesResponse,
@@ -14,6 +19,9 @@ import type {
   AdminMentorsQuery,
   AdminMentorsResponse,
   AdminMentorDetail,
+  AdminForumReport,
+  AdminForumReportsQuery,
+  AdminForumReportsResponse,
   AdminUsersQuery,
   AdminUsersResponse,
   AdminUserSummary,
@@ -50,6 +58,23 @@ export const adminRepo = {
 
   getMentors: (query: AdminMentorsQuery) =>
     apiClient<AdminMentorsResponse>(`/api/admin/mentors${queryString(query)}`),
+
+  getBookings: (query: AdminBookingsQuery) =>
+    apiClient<AdminBookingsResponse>(`/api/admin/bookings${queryString(query)}`),
+
+  getForumReports: (query: AdminForumReportsQuery) =>
+    apiClient<AdminForumReportsResponse>(`/api/admin/forum/reports${queryString(query)}`),
+
+  getForumReport: (reportId: string) =>
+    apiClient<AdminForumReport>(`/api/admin/forum/reports/${reportId}`),
+
+  getCaseOwnership: (caseType: string, caseId: string) =>
+    apiClient<AdminCaseOwnership>(`/api/admin/cases/${caseType}/${caseId}/ownership`),
+
+  getCaseActivity: (caseType: string, caseId: string, query: AdminCaseActivityQuery) =>
+    apiClient<AdminCaseActivityResponse>(
+      `/api/admin/cases/${caseType}/${caseId}/activity${queryString(query)}`,
+    ),
 
   getMentor: (mentorUserId: string) =>
     apiClient<AdminMentorDetail>(`/api/admin/mentors/${mentorUserId}`),
@@ -113,5 +138,12 @@ export const adminRepo = {
     ),
 
   assignCase: (caseType: string, caseId: string) =>
-    apiClient<unknown>(`/api/admin/cases/${caseType}/${caseId}/assign`, { method: 'POST' }),
+    apiClient<AdminCaseOwnership>(`/api/admin/cases/${caseType}/${caseId}/assign`, {
+      method: 'POST',
+    }),
+
+  unassignCase: (caseType: string, caseId: string) =>
+    apiClient<AdminCaseOwnership>(`/api/admin/cases/${caseType}/${caseId}/unassign`, {
+      method: 'POST',
+    }),
 };

@@ -3873,35 +3873,57 @@ a.figma-auth-modal-btn-login:hover,
   display: flex;
   flex-direction: column;
   padding: 32px 20px 24px;
-  background: #21364c;
-  color: #c9d8ef;
+  background: linear-gradient(180deg, #0759bf 0%, #06489c 100%);
+  color: #e7f1ff;
+  box-shadow: 5px 0 18px rgb(0 58 137 / 12%);
 }
 .admin-brand {
   display: flex;
-  gap: 15px;
+  gap: 13px;
   align-items: center;
-  margin: 0 14px 60px;
+  margin: 0 0 48px;
+  padding: 16px 14px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 10%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 18%);
 }
 .admin-brand img {
-  width: 51px;
-  height: 51px;
-  padding: 7px;
-  border-radius: 6px;
+  width: 54px;
+  height: 54px;
+  padding: 8px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 12px;
   background: #fff;
   object-fit: contain;
+  box-shadow: 0 5px 12px rgb(0 36 96 / 22%);
 }
 .admin-brand strong {
   display: block;
-  color: #dbe8ff;
-  font-size: 22px;
-  font-weight: 500;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 .admin-brand span {
   display: block;
-  margin-top: 4px;
-  font-size: 14px;
-  line-height: 1.65;
+  margin-top: 3px;
+  color: #d8e9ff;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.admin-brand .admin-brand-eyebrow {
+  margin: 0 0 4px;
+  color: #b8dcff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-brand .admin-brand-description {
+  font-size: 13px;
+  font-weight: 500;
 }
 .admin-sidebar nav {
   display: grid;
@@ -3915,13 +3937,14 @@ a.figma-auth-modal-btn-login:hover,
   min-height: 50px;
   padding: 0 16px;
   border-radius: 5px;
-  color: #c9d8ef;
+  color: #e7f1ff;
   font-size: 16px;
 }
 .admin-sidebar nav a:hover,
 .admin-sidebar nav .is-active {
-  background: #1d3d5e;
-  color: #bad6ff;
+  background: rgb(115 194 255 / 24%);
+  color: #fff;
+  box-shadow: inset 3px 0 0 #bde5ff;
 }
 .admin-icon {
   width: 23px;
@@ -3936,14 +3959,14 @@ a.figma-auth-modal-btn-login:hover,
 .admin-sidebar-footer {
   margin-top: auto;
   padding-top: 20px;
-  border-top: 1px solid #466078;
+  border-top: 1px solid rgb(201 230 255 / 32%);
 }
 .admin-sidebar-footer p {
   margin: 0 0 16px;
   padding: 8px 14px;
   border-radius: 4px;
-  background: #344b65;
-  color: #c9d8ef;
+  background: rgb(255 255 255 / 12%);
+  color: #e7f1ff;
   font-size: 14px;
 }
 .admin-sidebar-footer .admin-status-icon {
@@ -3980,7 +4003,7 @@ a.figma-auth-modal-btn-login:hover,
   color: #727784;
 }
 .admin-breadcrumb b {
-  color: #003f87;
+  color: #1268ce;
   font-weight: 500;
 }
 .admin-topbar-actions {
@@ -4016,8 +4039,13 @@ a.figma-auth-modal-btn-login:hover,
 .admin-topbar-actions button {
   border: 0;
   padding: 2px;
-  color: #004491;
+  border-radius: 7px;
+  color: #1268ce;
   background: transparent;
+}
+.admin-topbar-actions button:hover {
+  background: #e3f1ff;
+  color: #0875ef;
 }
 .admin-avatar {
   width: 40px;
@@ -4074,10 +4102,15 @@ a.figma-auth-modal-btn-login:hover,
   color: #003f87;
 }
 .admin-button.primary {
-  border: 1px solid #0056b3;
-  background: #0056b3;
+  border: 1px solid #1677ff;
+  background: #1677ff;
   color: #fff;
 }
+.admin-button.primary:hover:not(:disabled) {
+  border-color: #4096ff;
+  background: #4096ff;
+}
+
 .admin-button:disabled {
   opacity: 0.65;
   cursor: wait;
@@ -5773,6 +5806,311 @@ a.figma-auth-modal-btn-login:hover,
   color: #0b1c30;
 }
 
+.admin-bookings-page {
+  min-width: 0;
+  flex: 1;
+  min-height: 100dvh;
+  background: #f8f9ff;
+  color: #0b1c30;
+}
+
+.admin-bookings-content {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.admin-booking-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-booking-metrics article {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid #cfd7e6;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.admin-booking-metrics i {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #e5eeff;
+  color: #0056b3;
+}
+
+.admin-booking-metrics svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-booking-metrics article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-booking-metrics span {
+  color: #58677c;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-booking-metrics strong {
+  color: #0b1c30;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.admin-booking-metrics article.pending i {
+  background: #fff4dc;
+  color: #b45309;
+}
+
+.admin-booking-metrics article.completed i {
+  background: #d9f8eb;
+  color: #047857;
+}
+
+.admin-booking-metrics article.issues {
+  border-color: #fdba74;
+}
+
+.admin-booking-metrics article.issues i {
+  background: #fff1f1;
+  color: #ba1a1a;
+}
+
+.admin-bookings-table {
+  overflow: hidden;
+  border: 1px solid #b9c1d1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.admin-bookings-toolbar {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #c2c6d4;
+  background: #f8f9ff;
+}
+
+.admin-bookings-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-bookings-search {
+  width: min(100%, 320px);
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid #c2c6d4;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+}
+
+.admin-bookings-search svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.admin-bookings-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-bookings-toolbar > div > button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid #004491;
+  border-radius: 5px;
+  background: #004491;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-bookings-toolbar button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.admin-bookings-toolbar button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.admin-bookings-scroll {
+  overflow-x: auto;
+}
+
+.admin-bookings-table table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+}
+
+.admin-bookings-table th,
+.admin-bookings-table td {
+  padding: 13px 17px;
+  border-bottom: 1px solid #d3d8e2;
+  color: #424752;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-bookings-table th {
+  background: #eff4ff;
+  color: #424752;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-bookings-table tbody tr:hover td {
+  background: #f2f7ff;
+}
+
+.admin-bookings-table td > b,
+.admin-bookings-table td > small,
+.admin-booking-person b,
+.admin-booking-person small {
+  display: block;
+}
+
+.admin-bookings-table td > b,
+.admin-booking-person b {
+  color: #172033;
+  font-weight: 600;
+}
+
+.admin-bookings-table td > small,
+.admin-booking-person small {
+  margin-top: 4px;
+  color: #64748b;
+}
+
+.admin-booking-participants {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-booking-person {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-booking-person img,
+.admin-booking-initial {
+  width: 25px;
+  height: 25px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #d7e2ff;
+  color: #003f87;
+  font-size: 11px;
+  font-weight: 600;
+  object-fit: cover;
+}
+
+.admin-booking-status,
+.admin-booking-payment {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #e5eeff;
+  color: #004491;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-booking-status.completed {
+  background: #d9f8eb;
+  color: #047857;
+}
+
+.admin-booking-status.cancelled,
+.admin-booking-status.rejected,
+.admin-booking-status.expired {
+  background: #ffdad6;
+  color: #93000a;
+}
+
+.admin-booking-status.requested {
+  background: #fff4dc;
+  color: #8a5000;
+}
+
+.admin-booking-issue {
+  display: block;
+  margin-top: 5px;
+  color: #ba1a1a;
+  font-size: 10px;
+}
+
+@media (max-width: 800px) {
+  .admin-bookings-content {
+    padding: 28px 16px 40px;
+  }
+
+  .admin-booking-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-bookings-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-bookings-search {
+    width: 100%;
+  }
+
+  .admin-bookings-toolbar > div {
+    justify-content: space-between;
+  }
+}
+
 .admin-users-content {
   max-width: 1320px;
   margin: 0 auto;
@@ -7276,5 +7614,427 @@ a.figma-auth-modal-btn-login:hover,
   .admin-dashboard-toast {
     top: 16px;
     right: 16px;
+  }
+}
+
+/* Sắc xanh nhạt dùng thống nhất cho các nút thao tác quản trị. */
+.admin-area-shell {
+  --admin-action: #1f7ae0;
+  --admin-action-hover: #398fe9;
+  --admin-action-text: #fff;
+}
+
+.admin-button.primary,
+.admin-users-toolbar-controls > button,
+.admin-bookings-toolbar > div > button,
+.mentor-table-toolbar button,
+.mentor-table-scroll td button,
+.mentor-table-scroll td a,
+.mentor-pagination b,
+.mentor-review-actions .primary,
+.mentor-revision-dialog footer button.primary,
+.mentor-document-preview footer a,
+.admin-users-toolbar .admin-users-tabs button.is-active,
+.admin-users-pagination button.is-active {
+  border-color: var(--admin-action);
+  background: var(--admin-action);
+  color: var(--admin-action-text);
+}
+
+.admin-button.primary:hover:not(:disabled),
+.admin-users-toolbar-controls > button:hover:not(:disabled),
+.admin-bookings-toolbar > div > button:hover:not(:disabled),
+.mentor-table-toolbar button:hover:not(:disabled),
+.mentor-table-scroll td button:hover:not(:disabled),
+.mentor-table-scroll td a:hover,
+.mentor-review-actions .primary:hover:not(:disabled),
+.mentor-revision-dialog footer button.primary:hover:not(:disabled),
+.mentor-document-preview footer a:hover,
+.admin-users-toolbar .admin-users-tabs button.is-active:hover:not(:disabled),
+.admin-users-pagination button.is-active:hover:not(:disabled) {
+  border-color: var(--admin-action-hover);
+  background: var(--admin-action-hover);
+  color: var(--admin-action-text);
+  box-shadow: 0 5px 12px rgb(31 122 224 / 25%);
+}
+
+.admin-users-toolbar .admin-users-tabs button:hover:not(.is-active) {
+  background: #e3f1ff;
+  color: #0875ef;
+}
+
+.admin-reports-page,
+.admin-report-detail-page,
+.admin-report-detail-state {
+  min-width: 0;
+  flex: 1;
+  min-height: 100dvh;
+  background: #f8f9ff;
+  color: #0b1c30;
+}
+
+.admin-reports-content,
+.admin-report-detail-content {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.admin-reports-table {
+  overflow: hidden;
+  border: 1px solid #b9c1d1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.admin-reports-toolbar {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #c2c6d4;
+  background: #f8f9ff;
+}
+
+.admin-reports-toolbar > label {
+  width: min(100%, 420px);
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid #c2c6d4;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+}
+
+.admin-reports-toolbar > label svg,
+.admin-reports-toolbar > div > button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.admin-reports-toolbar input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-reports-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-reports-toolbar > div > button,
+.admin-report-owner-action {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid var(--admin-action);
+  border-radius: 6px;
+  background: var(--admin-action);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-reports-scroll {
+  overflow-x: auto;
+}
+
+.admin-reports-table table {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: collapse;
+}
+
+.admin-reports-table th,
+.admin-reports-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #d3d8e2;
+  color: #424752;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-reports-table th {
+  background: #eff4ff;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-reports-table tbody tr:hover td {
+  background: #f2f7ff;
+}
+
+.admin-reports-table td:first-child {
+  max-width: 320px;
+}
+
+.admin-reports-table b,
+.admin-reports-table small {
+  display: block;
+}
+
+.admin-reports-table b {
+  color: #172033;
+}
+
+.admin-reports-table small {
+  margin-top: 4px;
+  overflow: hidden;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-reports-table td:last-child a {
+  color: #1677ff;
+  font-weight: 700;
+}
+
+.admin-report-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #e3f1ff;
+  color: #1268ce;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-report-status.resolved-action-taken {
+  background: #d9f8eb;
+  color: #047857;
+}
+
+.admin-report-status.resolved-no-action,
+.admin-report-status.dismissed {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.admin-report-detail-state {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: #64748b;
+}
+
+.admin-report-detail-state svg {
+  width: 24px;
+  height: 24px;
+  animation: admin-spinner 1s linear infinite;
+}
+
+.admin-report-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.admin-report-detail-title h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.admin-report-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 20px;
+}
+
+.admin-report-detail-grid > div,
+.admin-report-detail-grid > aside {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.admin-report-card {
+  padding: 20px;
+  border: 1px solid #cfd7e6;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.admin-report-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: #172033;
+  font-size: 16px;
+}
+
+.admin-report-card h2 svg {
+  width: 18px;
+  height: 18px;
+  color: #1677ff;
+}
+
+.admin-report-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.admin-report-fields dt {
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-report-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: 13px;
+}
+
+.admin-report-reason {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.admin-report-reason p,
+.admin-report-content p,
+.admin-report-owner,
+.admin-report-empty {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.admin-report-content {
+  padding: 14px;
+  border-left: 3px solid #7eb5f6;
+  border-radius: 4px;
+  background: #f5f9ff;
+}
+
+.admin-report-content h3 {
+  margin: 0 0 7px;
+  color: #172033;
+  font-size: 14px;
+}
+
+.admin-report-fields.compact {
+  margin-top: 16px;
+}
+
+.admin-report-owner-action {
+  width: 100%;
+  margin-top: 15px;
+}
+
+.admin-report-owner-action:hover:not(:disabled) {
+  border-color: var(--admin-action-hover);
+  background: var(--admin-action-hover);
+}
+
+.admin-report-card > small {
+  display: block;
+  margin-top: 9px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.admin-report-activity {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-report-activity li {
+  display: grid;
+  grid-template-columns: 11px 1fr;
+  gap: 10px;
+}
+
+.admin-report-activity li > span {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #1f7ae0;
+  box-shadow: 0 0 0 3px #e3f1ff;
+}
+
+.admin-report-activity b,
+.admin-report-activity p,
+.admin-report-activity small {
+  display: block;
+}
+
+.admin-report-activity b {
+  color: #172033;
+  font-size: 13px;
+}
+
+.admin-report-activity p {
+  margin: 3px 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.admin-report-activity small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .admin-report-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-reports-content,
+  .admin-report-detail-content {
+    padding: 28px 16px 40px;
+  }
+
+  .admin-reports-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-reports-toolbar > label {
+    width: 100%;
+  }
+
+  .admin-reports-toolbar > div {
+    justify-content: space-between;
+  }
+
+  .admin-report-fields {
+    grid-template-columns: 1fr;
   }
 }

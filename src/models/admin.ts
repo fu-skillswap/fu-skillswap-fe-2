@@ -125,6 +125,141 @@ export interface AdminMentorsQuery {
   size?: number;
 }
 
+export interface AdminBookingAttendance {
+  mentorCheckedInAt: string | null;
+  menteeCheckedInAt: string | null;
+  summary: string | null;
+}
+
+export interface AdminBooking {
+  bookingId: string;
+  actualSessionId: string | null;
+  actualSessionStatus: string | null;
+  mentorUserId: string;
+  mentorDisplayName: string;
+  mentorAvatarUrl: string | null;
+  menteeUserId: string;
+  menteeDisplayName: string;
+  menteeAvatarUrl: string | null;
+  serviceId: string | null;
+  serviceTitle: string | null;
+  serviceDescriptionSnapshot: string | null;
+  serviceDurationSnapshot: number | null;
+  serviceIsFreeSnapshot: boolean;
+  servicePriceScoinSnapshot: number | null;
+  servicePriceWithSurchargeScoin: number | null;
+  bookingStatus: string;
+  paymentStatus: string;
+  settlementStatus: string | null;
+  learningGoalTitle: string | null;
+  mentorResponseNote: string | null;
+  meetingPlatform: string | null;
+  location: string | null;
+  selectedStartTime: string | null;
+  selectedEndTime: string | null;
+  actualStartTime: string | null;
+  actualEndTime: string | null;
+  attendance: AdminBookingAttendance | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  issueType: string | null;
+  issueDescription: string | null;
+  displayState: string | null;
+  nextAction: string | null;
+  actionDeadlineAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminBookingsResponse {
+  content: AdminBooking[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+export interface AdminBookingsQuery {
+  page?: number;
+  size?: number;
+}
+
+export type ForumReportStatus =
+  'OPEN' | 'RESOLVED_NO_ACTION' | 'RESOLVED_ACTION_TAKEN' | 'DISMISSED';
+
+export interface AdminForumReport {
+  reportId: string;
+  targetType: string;
+  targetId: string;
+  targetStatus: string | null;
+  targetTitle: string | null;
+  targetContentPreview: string | null;
+  targetAuthorUserId: string | null;
+  targetAuthorFullName: string | null;
+  reporterUserId: string | null;
+  reporterFullName: string | null;
+  reasonType: string;
+  description: string | null;
+  status: ForumReportStatus;
+  reviewedByUserId: string | null;
+  reviewNote: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminForumReportsResponse {
+  content: AdminForumReport[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+export interface AdminForumReportsQuery {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  status?: ForumReportStatus;
+  targetType?: 'POST' | 'COMMENT';
+}
+
+export interface AdminCaseOwnership {
+  caseType: string;
+  caseId: string;
+  assigned: boolean;
+  assignedAdminUserId: string | null;
+  assignedAdminDisplayName: string | null;
+  assignedAt: string | null;
+}
+
+export interface AdminCaseActivity {
+  eventType: string;
+  occurredAt: string;
+  actorUserId: string | null;
+  actorDisplayName: string | null;
+  title: string;
+  description: string | null;
+  source: string | null;
+}
+
+export interface AdminCaseActivityResponse {
+  content: AdminCaseActivity[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+export interface AdminCaseActivityQuery {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  direction?: 'ASC' | 'DESC';
+}
+
 export interface AdminMentorSubjectResult {
   id: string;
   subjectCode: string;

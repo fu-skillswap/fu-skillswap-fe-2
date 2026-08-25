@@ -70,22 +70,16 @@ export function AdminSidebar({ locale }: { locale: string }) {
   const dashboardHref = `/${locale}/admin/dashboard`;
   const mentorVerificationHref = `/${locale}/admin/mentor-verification`;
   const usersHref = `/${locale}/admin/users`;
+  const bookingsHref = `/${locale}/admin/bookings`;
+  const reportsHref = `/${locale}/admin/reports`;
 
   return (
     <aside className="admin-sidebar admin-shared-sidebar">
       <div className="admin-brand">
         <img src="/images/SkillSwapLogo.png" alt="SkillSwap" />
         <div>
-          <strong>
-            SkillSwap
-            <br />
-            Admin
-          </strong>
-          <span>
-            Academic
-            <br />
-            Management
-          </span>
+          <span className="admin-brand-eyebrow">Cổng quản lý</span>
+          <strong>SkillSwap Admin</strong>
         </div>
       </div>
       <nav aria-label="Điều hướng quản trị">
@@ -104,14 +98,14 @@ export function AdminSidebar({ locale }: { locale: string }) {
           <Icon name="users" />
           Người dùng
         </Link>
-        <a href="#bookings">
+        <Link className={pathname === bookingsHref ? 'is-active' : ''} href={bookingsHref}>
           <Icon name="booking" />
           Lịch hẹn
-        </a>
-        <a href="#reports">
+        </Link>
+        <Link className={pathname === reportsHref ? 'is-active' : ''} href={reportsHref}>
           <Icon name="report" />
           Đánh giá &amp; báo cáo
-        </a>
+        </Link>
       </nav>
       <div className="admin-sidebar-footer">
         <a href="/" target="_blank" rel="noreferrer">
