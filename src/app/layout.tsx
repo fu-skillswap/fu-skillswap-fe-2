@@ -27,7 +27,6 @@ export const metadata: Metadata = {
       },
     ],
     locale: 'vi_VN',
-    emails: 'sample@gmail.com',
     type: 'website',
   },
   icons: {

@@ -9,6 +9,8 @@
 # next.js
 /.next/
 /.next-*-backup/
+/.open-next/
+/.wrangler/
 /out/
 
 # production

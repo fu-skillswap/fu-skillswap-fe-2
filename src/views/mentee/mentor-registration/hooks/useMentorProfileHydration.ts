@@ -21,6 +21,7 @@ export function useMentorProfileHydration(reset: UseFormReset<MentorProfileFormV
   const [verificationData, setVerificationData] = useState<MentorVerificationResponse | null>(null);
 
   const isPendingReview = applicationStatus === "PENDING_REVIEW";
+  const isApproved = applicationStatus === "APPROVED" || verificationData?.status === "APPROVED";
 
   useEffect(() => {
     if (isBootstrapping) return;
@@ -49,7 +50,7 @@ export function useMentorProfileHydration(reset: UseFormReset<MentorProfileFormV
           setVerificationData(verificationDetails);
         }
 
-        const isSubmitted = currentStatus === "PENDING_REVIEW" || Boolean(verificationDetails?.submittedAt);
+        const isSubmitted = currentStatus === "PENDING_REVIEW" || currentStatus === "APPROVED" || Boolean(verificationDetails?.submittedAt);
 
         // Nguồn dữ liệu profile: Ưu tiên profileData từ API mentor-profile, nếu không có mới dùng verificationDetails
         const profileSource: any = profileData?.exists ? profileData : verificationDetails?.profile || verificationDetails || profileData;
@@ -67,11 +68,11 @@ export function useMentorProfileHydration(reset: UseFormReset<MentorProfileFormV
             phoneNumber: profileSource.phoneNumber || "",
             githubUrl: profileSource.githubUrl || "",
             portfolioUrl: profileSource.portfolioUrl || "",
-            foundationSupportLevel: profileSource.foundationSupportLevel || (undefined as any),
-            outputReviewSupportLevel: profileSource.outputReviewSupportLevel || (undefined as any),
-            directionSupportLevel: profileSource.directionSupportLevel || (undefined as any),
-            minimumBookingLeadTimeMinutes: profileSource.minimumBookingLeadTimeMinutes || (undefined as any),
-            maximumBookingHorizonDays: profileSource.maximumBookingHorizonDays || (undefined as any),
+            foundationSupportLevel: profileSource.foundationSupportLevel ?? (undefined as any),
+            outputReviewSupportLevel: profileSource.outputReviewSupportLevel ?? (undefined as any),
+            directionSupportLevel: profileSource.directionSupportLevel ?? (undefined as any),
+            minimumBookingLeadTimeMinutes: profileSource.minimumBookingLeadTimeMinutes ?? (undefined as any),
+            maximumBookingHorizonDays: profileSource.maximumBookingHorizonDays ?? (undefined as any),
             subjectResults:
               profileSource.subjectResults && profileSource.subjectResults.length > 0
                 ? profileSource.subjectResults.map((s: any) => ({
@@ -127,5 +128,7 @@ export function useMentorProfileHydration(reset: UseFormReset<MentorProfileFormV
     setApplicationStatus,
     verificationData,
     isPendingReview,
+    isApproved,
   };
 }
+

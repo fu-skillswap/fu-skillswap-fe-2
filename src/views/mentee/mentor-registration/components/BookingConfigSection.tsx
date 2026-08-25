@@ -3,11 +3,11 @@
  * @description Sub-component hiển thị Phần 6: Thời gian đặt lịch booking trong Hồ sơ Mentor.
  */
 
-"use client";
+'use client';
 
-import React from "react";
-import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSchema";
+import React from 'react';
+import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
 
 interface BookingConfigSectionProps {
   register: UseFormRegister<MentorProfileFormValues>;
@@ -26,7 +26,7 @@ export function BookingConfigSection({
     <fieldset
       className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
+      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
     >
       <h2 className="mentor-section-title">6. Thời gian đặt lịch booking</h2>
 
@@ -34,26 +34,26 @@ export function BookingConfigSection({
         <label
           htmlFor="isAvailable"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
             fontWeight: 700,
-            cursor: "pointer",
-            fontSize: "14px",
+            cursor: 'pointer',
+            fontSize: '14px',
           }}
         >
           <input
             type="checkbox"
             id="isAvailable"
-            style={{ width: "18px", height: "18px" }}
-            {...register("isAvailable")}
+            style={{ width: '18px', height: '18px' }}
+            {...register('isAvailable')}
           />
           <span>
             Tôi sẵn sàng nhận lịch tư vấn từ Mentee <span className="required-asterisk">*</span>
           </span>
         </label>
         {errors.isAvailable && (
-          <p className="error" style={{ marginTop: "4px" }}>
+          <p className="error" style={{ marginTop: '4px' }}>
             {errors.isAvailable.message}
           </p>
         )}
@@ -61,9 +61,9 @@ export function BookingConfigSection({
 
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "14px",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '14px',
         }}
       >
         <div className="field">
@@ -75,7 +75,7 @@ export function BookingConfigSection({
             type="number"
             disabled={!isAvailable}
             placeholder="VD: 120"
-            {...register("minimumBookingLeadTimeMinutes")}
+            {...register('minimumBookingLeadTimeMinutes')}
           />
           {errors.minimumBookingLeadTimeMinutes && (
             <p className="error">{errors.minimumBookingLeadTimeMinutes.message}</p>
@@ -91,7 +91,7 @@ export function BookingConfigSection({
             type="number"
             disabled={!isAvailable}
             placeholder="VD: 30"
-            {...register("maximumBookingHorizonDays")}
+            {...register('maximumBookingHorizonDays')}
           />
           {errors.maximumBookingHorizonDays && (
             <p className="error">{errors.maximumBookingHorizonDays.message}</p>

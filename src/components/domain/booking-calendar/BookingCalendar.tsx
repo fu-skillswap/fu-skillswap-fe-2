@@ -6,8 +6,8 @@
 
 'use client';
 
-import { Calendar } from "lucide-react";
-import { useBookingCalendar } from "./useBookingCalendar";
+import { Calendar } from 'lucide-react';
+import { useBookingCalendar } from './useBookingCalendar';
 
 /** Danh sách các ngày trong tuần mẫu cho lịch đặt */
 const days = [

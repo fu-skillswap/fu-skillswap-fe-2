@@ -3,7 +3,7 @@
  * @description Custom React Hook Facade chính quản lý toàn bộ dữ liệu Màn hình Đăng ký Mentor (kết hợp các sub-hooks sử dụng mentorProfileRepo).
  */
 
-"use client";
+'use client';
 
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -21,12 +21,12 @@ import { useDocumentUpload } from "./hooks/useDocumentUpload";
 import { useMentorProfileHydration } from "./hooks/useMentorProfileHydration";
 
 const defaultValues: MentorProfileFormValues = {
-  headline: "",
-  expertiseDescription: "",
+  headline: '',
+  expertiseDescription: '',
   isAvailable: true,
-  phoneNumber: "",
-  githubUrl: "",
-  portfolioUrl: "",
+  phoneNumber: '',
+  githubUrl: '',
+  portfolioUrl: '',
   foundationSupportLevel: undefined as any,
   outputReviewSupportLevel: undefined as any,
   directionSupportLevel: undefined as any,
@@ -45,7 +45,7 @@ export function useMentorRegistration() {
   // 1. Quản lý React Hook Form
   const form = useForm<MentorProfileFormValues>({
     resolver: yupResolver(mentorProfileSchema) as any,
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues,
   });
 
@@ -67,6 +67,7 @@ export function useMentorRegistration() {
     setApplicationStatus,
     verificationData,
     isPendingReview,
+    isApproved,
   } = useMentorProfileHydration(reset);
 
   // 3. Sub-hook Quản lý State File Minh chứng & Quy trình Upload S3/GCS
@@ -89,6 +90,11 @@ export function useMentorRegistration() {
     setServerError(null);
     setSuccessMessage(null);
 
+    const hasExistingExpertise =
+      (verificationData?.documents?.filter(
+        (d) => d.documentType === 'EXPERTISE_PROOF' && d.isActive !== false,
+      ).length ?? 0) > 0;
+
     if (!selectedFptuFile && !isExistingProfile) {
       const msg = "Vui lòng chọn file minh chứng Sinh viên / Cựu sinh viên FPTU trước khi nộp hồ sơ.";
       setServerError(msg);
@@ -96,7 +102,7 @@ export function useMentorRegistration() {
       return;
     }
 
-    if (!selectedExpertiseFiles || selectedExpertiseFiles.length === 0) {
+    if ((!selectedExpertiseFiles || selectedExpertiseFiles.length === 0) && !hasExistingExpertise && !isExistingProfile) {
       const msg = "Vui lòng chọn ít nhất 1 file chứng minh chuyên môn (EXPERTISE_PROOF).";
       setServerError(msg);
       showWarning(msg);
@@ -196,7 +202,7 @@ export function useMentorRegistration() {
 
       // 5.6. Submit hồ sơ cho admin duyệt
       await mentorProfileRepo.submitVerification({
-        submitNote: "Nộp hồ sơ xác thực Mentor",
+        submitNote: 'Nộp hồ sơ xác thực Mentor',
         termsAccepted: Boolean(values.agreeTerms),
       });
 
@@ -282,7 +288,7 @@ export function useMentorRegistration() {
   // 8. Xử lý Rút Hồ sơ đăng ký Mentor
   const handleWithdraw = async () => {
     const confirmed = await confirmAction({
-      // title: "Rút hồ sơ đăng ký Mentor",
+      title: "Rút hồ sơ đăng ký Mentor",
       message: "Bạn có chắc chắn muốn rút hồ sơ đăng ký làm Mentor không?",
       confirmText: "Rút hồ sơ",
       cancelText: "Hủy bỏ",
@@ -322,6 +328,7 @@ export function useMentorRegistration() {
     isExistingProfile,
     applicationStatus,
     isPendingReview,
+    isApproved,
     verificationData,
     serverError,
     successMessage,
@@ -330,8 +337,6 @@ export function useMentorRegistration() {
     selectedExpertiseFiles,
     onAddExpertiseFiles,
     onRemoveExpertiseFile,
-    selectedProofFile: selectedFptuFile,
-    setSelectedProofFile: setSelectedFptuFile,
     fields: subjectFieldsArray.fields,
     append: subjectFieldsArray.append,
     remove: subjectFieldsArray.remove,
@@ -345,3 +350,4 @@ export function useMentorRegistration() {
     withdrawProfile: handleWithdraw,
   };
 }
+

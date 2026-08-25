@@ -4,7 +4,7 @@
  * Hỗ trợ hiển thị cả file local vừa chọn và danh sách file đã tải lên từ API GET /api/me/mentor-verification.
  */
 
-"use client";
+'use client';
 
 import React, { useRef } from "react";
 import { Upload, FileCheck, X, FileText, Award, GraduationCap, Plus, ExternalLink } from "lucide-react";
@@ -478,7 +478,7 @@ export function DocumentUploadSection({
       </div>
 
       {error && (
-        <p className="error" style={{ color: "#ef4444", fontSize: "13px", margin: 0 }}>
+        <p className="error" style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>
           {error}
         </p>
       )}

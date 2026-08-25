@@ -30,7 +30,10 @@ interface AuthContextValue {
   /** Hàm đóng Modal yêu cầu Đăng nhập */
   closeAuthRequiredModal: () => void;
   /** Hàm hoàn tất quy trình đăng nhập Google và tải lại hồ sơ người dùng */
-  completeGoogleLogin: () => Promise<OnboardingStatusResponse>;
+  completeGoogleLogin: () => Promise<{
+    user: AuthenticatedUser;
+    onboarding: OnboardingStatusResponse;
+  }>;
   /** Hàm chủ động khôi phục phiên làm việc từ Refresh Token */
   restoreSession: () => Promise<void>;
   /** Hàm đăng xuất người dùng và dọn dẹp phiên làm việc */
@@ -82,9 +85,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const completeGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const me = await authRepo.getMe();
-      setUser(toAuthenticatedUser(me));
-      return await authRepo.getOnboardingStatus();
+      const me = toAuthenticatedUser(await authRepo.getMe());
+      const onboarding = await authRepo.getOnboardingStatus();
+      setUser(me);
+      return { user: me, onboarding };
     } finally {
       setIsLoading(false);
     }
