@@ -3,13 +3,13 @@
  * @description Sub-component hiển thị Phần 3: Cấp độ năng lực hỗ trợ trong Hồ sơ Mentor.
  */
 
-"use client";
+'use client';
 
-import React from "react";
-import { Controller } from "react-hook-form";
-import type { Control, FieldErrors } from "react-hook-form";
-import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSchema";
-import { SelectField, SelectOption } from "@/components/ui/SelectField";
+import React from 'react';
+import { Controller } from 'react-hook-form';
+import type { Control, FieldErrors } from 'react-hook-form';
+import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
+import { SelectField, SelectOption } from '@/components/ui/SelectField';
 
 interface SupportLevelsSectionProps {
   control: Control<MentorProfileFormValues>;
@@ -28,11 +28,17 @@ export function SupportLevelsSection({
     <fieldset
       className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
+      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
     >
       <h2 className="mentor-section-title">3. Cấp độ năng lực hỗ trợ (Thang điểm 1 - 5)</h2>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+        }}
+      >
         <Controller
           name="foundationSupportLevel"
           control={control}
@@ -44,7 +50,9 @@ export function SupportLevelsSection({
               disabled={disabled}
               error={errors.foundationSupportLevel?.message}
               placeholder="Chọn mức độ"
-              value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
+              value={
+                field.value !== undefined && field.value !== null ? String(field.value) : undefined
+              }
               onValueChange={(val) => field.onChange(Number(val))}
               options={levelOptions}
             />
@@ -62,7 +70,9 @@ export function SupportLevelsSection({
               disabled={disabled}
               error={errors.outputReviewSupportLevel?.message}
               placeholder="Chọn mức độ"
-              value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
+              value={
+                field.value !== undefined && field.value !== null ? String(field.value) : undefined
+              }
               onValueChange={(val) => field.onChange(Number(val))}
               options={levelOptions}
             />
@@ -80,7 +90,9 @@ export function SupportLevelsSection({
               disabled={disabled}
               error={errors.directionSupportLevel?.message}
               placeholder="Chọn mức độ"
-              value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
+              value={
+                field.value !== undefined && field.value !== null ? String(field.value) : undefined
+              }
               onValueChange={(val) => field.onChange(Number(val))}
               options={levelOptions}
             />

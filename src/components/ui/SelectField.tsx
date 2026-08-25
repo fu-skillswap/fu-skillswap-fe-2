@@ -4,11 +4,11 @@
  * Hỗ trợ bo góc 14px, bóng mịn, tự động định vị popup (floating UI) và animation mượt mà.
  */
 
-"use client";
+'use client';
 
-import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown } from "lucide-react";
-import React from "react";
+import * as SelectPrimitive from '@radix-ui/react-select';
+import { Check, ChevronDown } from 'lucide-react';
+import React from 'react';
 
 export interface SelectOption {
   value: string;
@@ -33,7 +33,7 @@ export function SelectField({
   value,
   onValueChange,
   options,
-  placeholder = "Chọn một tùy chọn",
+  placeholder = 'Chọn một tùy chọn',
   error,
   disabled,
   required,
@@ -53,7 +53,7 @@ export function SelectField({
         <SelectPrimitive.Trigger
           id={id}
           className="radix-select-trigger"
-          aria-label={typeof label === "string" ? label : placeholder}
+          aria-label={typeof label === 'string' ? label : placeholder}
         >
           <SelectPrimitive.Value placeholder={placeholder} />
           <SelectPrimitive.Icon className="radix-select-icon">
@@ -74,9 +74,7 @@ export function SelectField({
                   value={String(option.value)}
                   className="radix-select-item"
                 >
-                  <SelectPrimitive.ItemText>
-                    {option.label}
-                  </SelectPrimitive.ItemText>
+                  <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
                   <SelectPrimitive.ItemIndicator className="radix-select-item-indicator">
                     <Check size={16} />
                   </SelectPrimitive.ItemIndicator>

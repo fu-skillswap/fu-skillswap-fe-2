@@ -4,10 +4,10 @@
  * Hiển thị tiểu sử, danh sách kỹ năng chuyên môn, chỉ số đánh giá và các gói dịch vụ tư vấn 1:1.
  */
 
-import type { Mentor, MentorService } from "@/models/entities";
-import { getMentorServices } from "@/data/demoMentorServices";
-import { useAuth } from "@/providers/AuthProvider";
-import { ChevronLeft } from "lucide-react";
+import type { Mentor, MentorService } from '@/models/entities';
+import { getMentorServices } from '@/data/demoMentorServices';
+import { useAuth } from '@/providers/AuthProvider';
+import { ChevronLeft } from 'lucide-react';
 
 /** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {

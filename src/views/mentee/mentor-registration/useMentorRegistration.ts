@@ -3,28 +3,28 @@
  * @description Custom React Hook quản lý dữ liệu biểu mẫu Đăng ký / Cập nhật Hồ sơ Mentor (React Hook Form & Yup).
  */
 
-"use client";
+'use client';
 
-import type { SaveMentorProfileRequest } from "@/models/auth";
+import type { SaveMentorProfileRequest } from '@/models/auth';
 
-import { ApiClientError } from "@/models/apiClient";
+import { ApiClientError } from '@/models/apiClient';
 
 import {
   mentorProfileSchema,
   type MentorProfileFormValues,
-} from "@/models/schemas/mentorProfileSchema";
-import { mentorProfileRepo } from "@/repositories/mentorProfileRepo";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+} from '@/models/schemas/mentorProfileSchema';
+import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useEffect, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 
 const defaultValues: MentorProfileFormValues = {
-  headline: "",
-  expertiseDescription: "",
+  headline: '',
+  expertiseDescription: '',
   isAvailable: true,
-  phoneNumber: "",
-  githubUrl: "",
-  portfolioUrl: "",
+  phoneNumber: '',
+  githubUrl: '',
+  portfolioUrl: '',
   foundationSupportLevel: undefined as any,
   outputReviewSupportLevel: undefined as any,
   directionSupportLevel: undefined as any,
@@ -45,7 +45,7 @@ export function useMentorRegistration() {
 
   const form = useForm<MentorProfileFormValues>({
     resolver: yupResolver(mentorProfileSchema) as any,
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues,
   });
 
@@ -60,17 +60,17 @@ export function useMentorRegistration() {
 
   const subjectFieldsArray = useFieldArray({
     control,
-    name: "subjectResults",
+    name: 'subjectResults',
   });
 
   const projectFieldsArray = useFieldArray({
     control,
-    name: "projects",
+    name: 'projects',
   });
 
   const achievementFieldsArray = useFieldArray({
     control,
-    name: "achievements",
+    name: 'achievements',
   });
 
   /** Nạp dữ liệu Hồ sơ Mentor cũ (nếu có) khi component được mount */
@@ -85,19 +85,18 @@ export function useMentorRegistration() {
         if (profile && profile.exists) {
           setIsExistingProfile(true);
           reset({
-            headline: profile.headline || "",
-            expertiseDescription: profile.expertiseDescription || "",
+            headline: profile.headline || '',
+            expertiseDescription: profile.expertiseDescription || '',
             isAvailable: profile.isAvailable ?? true,
-            phoneNumber: profile.phoneNumber || "",
-            githubUrl: profile.githubUrl || "",
-            portfolioUrl: profile.portfolioUrl || "",
+            phoneNumber: profile.phoneNumber || '',
+            githubUrl: profile.githubUrl || '',
+            portfolioUrl: profile.portfolioUrl || '',
             foundationSupportLevel: profile.foundationSupportLevel || (undefined as any),
             outputReviewSupportLevel: profile.outputReviewSupportLevel || (undefined as any),
             directionSupportLevel: profile.directionSupportLevel || (undefined as any),
             minimumBookingLeadTimeMinutes:
               profile.minimumBookingLeadTimeMinutes || (undefined as any),
-            maximumBookingHorizonDays:
-              profile.maximumBookingHorizonDays || (undefined as any),
+            maximumBookingHorizonDays: profile.maximumBookingHorizonDays || (undefined as any),
             subjectResults:
               profile.subjectResults && profile.subjectResults.length > 0
                 ? profile.subjectResults.map((s) => ({
@@ -143,7 +142,9 @@ export function useMentorRegistration() {
     setSuccessMessage(null);
 
     if (!selectedProofFile) {
-      setServerError("Vui lòng chọn file minh chứng Sinh viên / Cựu sinh viên FPTU trước khi nộp hồ sơ.");
+      setServerError(
+        'Vui lòng chọn file minh chứng Sinh viên / Cựu sinh viên FPTU trước khi nộp hồ sơ.',
+      );
       return;
     }
 
@@ -168,7 +169,7 @@ export function useMentorRegistration() {
         directionSupportLevel: Number(values.directionSupportLevel),
         minimumBookingLeadTimeMinutes: Number(values.minimumBookingLeadTimeMinutes),
         maximumBookingHorizonDays: Number(values.maximumBookingHorizonDays),
-        bookingTimezone: "Asia/Ho_Chi_Minh",
+        bookingTimezone: 'Asia/Ho_Chi_Minh',
         subjectResults: (values.subjectResults || []).map((s) => ({
           subjectCode: s.subjectCode,
           subjectName: s.subjectName,
@@ -207,7 +208,7 @@ export function useMentorRegistration() {
       // 5. Upload & Xác nhận file minh chứng FPTU
       const uploadIntent = await mentorProfileRepo.createUploadIntent({
         filename: selectedProofFile.name,
-        contentType: selectedProofFile.type || "application/octet-stream",
+        contentType: selectedProofFile.type || 'application/octet-stream',
         sizeBytes: selectedProofFile.size,
       });
 
@@ -218,25 +219,23 @@ export function useMentorRegistration() {
       );
 
       await mentorProfileRepo.confirmDocument({
-        documentType: "FPTU_AFFILIATION_PROOF",
+        documentType: 'FPTU_AFFILIATION_PROOF',
         uploadIntentId: uploadIntent.uploadIntentId,
       });
 
       // 6. Nộp hồ sơ mentor lên cho admin duyệt (POST /api/me/mentor-verification/submit)
       await mentorProfileRepo.submitVerification({
-        submitNote: "Nộp hồ sơ xác thực Mentor",
+        submitNote: 'Nộp hồ sơ xác thực Mentor',
         termsAccepted: Boolean(values.agreeTerms),
       });
 
       setIsExistingProfile(true);
-      setSuccessMessage(
-        "Nộp hồ sơ Mentor thành công! Hồ sơ của bạn đã được gửi cho Admin duyệt.",
-      );
+      setSuccessMessage('Nộp hồ sơ Mentor thành công! Hồ sơ của bạn đã được gửi cho Admin duyệt.');
     } catch (err) {
       if (err instanceof ApiClientError) {
-        setServerError(err.message || "Lỗi nộp hồ sơ từ máy chủ.");
+        setServerError(err.message || 'Lỗi nộp hồ sơ từ máy chủ.');
       } else {
-        setServerError("Có lỗi xảy ra trong quá trình kết nối máy chủ.");
+        setServerError('Có lỗi xảy ra trong quá trình kết nối máy chủ.');
       }
     }
   };

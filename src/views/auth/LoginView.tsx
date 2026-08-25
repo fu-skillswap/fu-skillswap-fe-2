@@ -16,9 +16,9 @@ import { useLoginLogic } from './useLoginLogic';
  * Component trang Đăng nhập SkillSwap.
  * @param props.locale - Mã ngôn ngữ hiện tại của route (ví dụ: "vi", "en")
  */
-export function LoginView({ locale }: { locale: string }) {
+export function LoginView({ locale, adminOnly = false }: { locale: string; adminOnly?: boolean }) {
   const { form, error, clearError, loading, googleLoading, submit, googleButtonRef } =
-    useLoginLogic(locale);
+    useLoginLogic(locale, adminOnly);
 
   const {
     register,
@@ -42,13 +42,21 @@ export function LoginView({ locale }: { locale: string }) {
               alt="SkillSwap"
               className="figma-login-logo-text"
             />
-            <p>Kết nối - Học hỏi - Phát triển.</p>
+            <p>{adminOnly ? 'Cổng quản trị SkillSwap' : 'Kết nối - Học hỏi - Phát triển.'}</p>
           </div>
 
-          <div className="figma-login-tabs" aria-label="Authentication mode">
-            <span className="figma-login-tab figma-login-tab-active">Đăng nhập</span>
-            <span className="figma-login-tab">Đăng ký</span>
-          </div>
+          {adminOnly ? (
+            <div className="figma-login-admin-heading">
+              <span>ADMIN PORTAL</span>
+              <h1>Đăng nhập quản trị</h1>
+              <p>Chỉ tài khoản ADMIN hoặc SYSTEM_ADMIN được phép truy cập.</p>
+            </div>
+          ) : (
+            <div className="figma-login-tabs" aria-label="Authentication mode">
+              <span className="figma-login-tab figma-login-tab-active">Đăng nhập</span>
+              <span className="figma-login-tab">Đăng ký</span>
+            </div>
+          )}
 
           <div className="figma-login-fields">
             <TextField
@@ -82,9 +90,11 @@ export function LoginView({ locale }: { locale: string }) {
           <div className="figma-login-google" aria-busy={googleLoading}>
             <div ref={googleButtonRef} />
           </div>
-          <p className="figma-login-signup">
-            Chưa có tài khoản? <span>Đăng ký</span>
-          </p>
+          {!adminOnly && (
+            <p className="figma-login-signup">
+              Chưa có tài khoản? <span>Đăng ký</span>
+            </p>
+          )}
         </form>
       </section>
 

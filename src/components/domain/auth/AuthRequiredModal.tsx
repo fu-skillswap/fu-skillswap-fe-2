@@ -5,9 +5,9 @@
 
 'use client';
 
-import { Modal } from "@/components/ui/Modal";
-import Link from "next/link";
-import { Lock, X } from "lucide-react";
+import { Modal } from '@/components/ui/Modal';
+import Link from 'next/link';
+import { Lock, X } from 'lucide-react';
 
 interface AuthRequiredModalProps {
   /** Trạng thái bật/tắt modal */
@@ -49,8 +49,7 @@ export function AuthRequiredModal({
 
         <h3>Yêu cầu xác thực tài khoản</h3>
         <p>
-          {message ||
-            "Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tiếp tục sử dụng tính năng này."}
+          {message || 'Bạn cần Đăng nhập hoặc Đăng ký tài khoản để tiếp tục sử dụng tính năng này.'}
         </p>
 
         <div className="figma-auth-modal-actions">

@@ -6,22 +6,22 @@
 
 'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAuth } from "@/providers/AuthProvider";
-import { Calendar, Home, Search, Wallet, X } from "lucide-react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
+import { Calendar, Home, Search, Wallet, X } from 'lucide-react';
 
 type NavIcon = 'home' | 'search' | 'wallet' | 'calendar';
 
 /** Helper render Icon tương ứng từ lucide-react cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
-  if (name === "search") {
+  if (name === 'search') {
     return <Search aria-hidden="true" />;
   }
-  if (name === "wallet") {
+  if (name === 'wallet') {
     return <Wallet aria-hidden="true" />;
   }
-  if (name === "calendar") {
+  if (name === 'calendar') {
     return <Calendar aria-hidden="true" />;
   }
   return <Home aria-hidden="true" />;
@@ -60,10 +60,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
   };
 
   return (
-    <aside
-      className={`figma-sidebar ${isOpen ? "figma-sidebar-open" : ""
-        }`}
-    >
+    <aside className={`figma-sidebar ${isOpen ? 'figma-sidebar-open' : ''}`}>
       <div className="figma-sidebar-header">
         <Link
           href={dashboardHref}

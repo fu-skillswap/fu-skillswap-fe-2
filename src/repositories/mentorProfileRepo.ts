@@ -4,8 +4,8 @@
  * Cung cấp các phương thức gọi API GET và PUT /api/me/mentor-profile kèm bộ nhớ tạm (In-memory cache) và deduplication.
  */
 
-import axios from "axios";
-import { apiClient } from "@/models/apiClient";
+import axios from 'axios';
+import { apiClient } from '@/models/apiClient';
 import type {
   ConfirmDocumentRequest,
   CreateMentorAchievementRequest,
@@ -17,7 +17,7 @@ import type {
   SaveMentorProfileRequest,
   SubmitMentorVerificationRequest,
   UploadIntentResponse,
-} from "@/models/auth";
+} from '@/models/auth';
 
 let mentorProfilePromise: Promise<MentorProfileResponse> | null = null;
 let cachedMentorProfile: MentorProfileResponse | null = null;
@@ -34,7 +34,7 @@ export const mentorProfileRepo = {
       return Promise.resolve(cachedMentorProfile);
     }
     if (!mentorProfilePromise || forceRefresh) {
-      mentorProfilePromise = apiClient<MentorProfileResponse>("/api/me/mentor-profile")
+      mentorProfilePromise = apiClient<MentorProfileResponse>('/api/me/mentor-profile')
         .then((data) => {
           cachedMentorProfile = data;
           return data;
@@ -52,8 +52,8 @@ export const mentorProfileRepo = {
    * @returns Promise chứa phản hồi Hồ sơ Mentor (`MentorProfileResponse`)
    */
   save: async (data: SaveMentorProfileRequest): Promise<MentorProfileResponse> => {
-    const updated = await apiClient<MentorProfileResponse>("/api/me/mentor-profile", {
-      method: "PUT",
+    const updated = await apiClient<MentorProfileResponse>('/api/me/mentor-profile', {
+      method: 'PUT',
       data,
     });
     cachedMentorProfile = updated;
@@ -66,8 +66,8 @@ export const mentorProfileRepo = {
    * @returns Promise chứa phản hồi dự án (`MentorProjectResponse`)
    */
   createProject: (data: CreateMentorProjectRequest): Promise<MentorProjectResponse> => {
-    return apiClient<MentorProjectResponse>("/api/me/mentor-projects", {
-      method: "POST",
+    return apiClient<MentorProjectResponse>('/api/me/mentor-projects', {
+      method: 'POST',
       data,
     });
   },
@@ -77,11 +77,9 @@ export const mentorProfileRepo = {
    * @param data - Đối tượng thông tin giải thưởng (`CreateMentorAchievementRequest`)
    * @returns Promise chứa phản hồi giải thưởng (`MentorAchievementResponse`)
    */
-  createAchievement: (
-    data: CreateMentorAchievementRequest,
-  ): Promise<MentorAchievementResponse> => {
-    return apiClient<MentorAchievementResponse>("/api/me/mentor-achievements", {
-      method: "POST",
+  createAchievement: (data: CreateMentorAchievementRequest): Promise<MentorAchievementResponse> => {
+    return apiClient<MentorAchievementResponse>('/api/me/mentor-achievements', {
+      method: 'POST',
       data,
     });
   },
@@ -90,8 +88,8 @@ export const mentorProfileRepo = {
    * Bước 1: Mở hồ sơ bắt đầu xác thực Mentor (POST `/api/me/mentor-verification/request`).
    */
   requestVerification: (): Promise<unknown> => {
-    return apiClient("/api/me/mentor-verification/request", {
-      method: "POST",
+    return apiClient('/api/me/mentor-verification/request', {
+      method: 'POST',
     });
   },
 
@@ -100,8 +98,8 @@ export const mentorProfileRepo = {
    * @param data - Payload chứa thông tin file (filename, contentType, sizeBytes)
    */
   createUploadIntent: (data: CreateUploadIntentRequest): Promise<UploadIntentResponse> => {
-    return apiClient<UploadIntentResponse>("/api/me/mentor-verification/documents/upload-intents", {
-      method: "POST",
+    return apiClient<UploadIntentResponse>('/api/me/mentor-verification/documents/upload-intents', {
+      method: 'POST',
       data,
     });
   },
@@ -114,7 +112,7 @@ export const mentorProfileRepo = {
     return apiClient<UploadIntentResponse>(
       `/api/me/mentor-verification/documents/upload-intents/${uploadIntentId}/retry`,
       {
-        method: "POST",
+        method: 'POST',
       },
     );
   },
@@ -131,7 +129,7 @@ export const mentorProfileRepo = {
     requiredHeaders?: Record<string, string>,
   ): Promise<void> => {
     const headers = {
-      "Content-Type": file.type || "application/octet-stream",
+      'Content-Type': file.type || 'application/octet-stream',
       ...(requiredHeaders || {}),
     };
     await axios.put(uploadUrl, file, { headers });
@@ -142,8 +140,8 @@ export const mentorProfileRepo = {
    * @param data - Payload chứa documentType ("FPTU_AFFILIATION_PROOF") và uploadIntentId
    */
   confirmDocument: (data: ConfirmDocumentRequest): Promise<unknown> => {
-    return apiClient("/api/me/mentor-verification/documents", {
-      method: "POST",
+    return apiClient('/api/me/mentor-verification/documents', {
+      method: 'POST',
       data,
     });
   },
@@ -153,8 +151,8 @@ export const mentorProfileRepo = {
    * @param data - Payload chứa termsAccepted và submitNote (tùy chọn)
    */
   submitVerification: (data: SubmitMentorVerificationRequest): Promise<unknown> => {
-    return apiClient("/api/me/mentor-verification/submit", {
-      method: "POST",
+    return apiClient('/api/me/mentor-verification/submit', {
+      method: 'POST',
       data,
     });
   },

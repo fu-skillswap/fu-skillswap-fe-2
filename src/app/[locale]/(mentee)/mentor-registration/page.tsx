@@ -3,7 +3,7 @@
  * @description Route Đăng ký / Chỉnh sửa Hồ sơ Mentor (`/[locale]/mentor-registration`).
  */
 
-import { MentorRegistrationView } from "@/views/mentee/mentor-registration/MentorRegistrationView";
+import { MentorRegistrationView } from '@/views/mentee/mentor-registration/MentorRegistrationView';
 
 export default async function MentorRegistrationPage({
   params,

@@ -1,13 +1,13 @@
 'use client';
 
-import type { AuthenticatedUser, StudentProfileResponse, UserMeResponse } from "@/models/auth";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/providers/AuthProvider";
-import { authRepo } from "@/repositories/authRepo";
-import { studentProfileRepo } from "@/repositories/studentProfileRepo";
-import { BookOpen, ChevronDown, LogOut, User } from "lucide-react";
+import type { AuthenticatedUser, StudentProfileResponse, UserMeResponse } from '@/models/auth';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/providers/AuthProvider';
+import { authRepo } from '@/repositories/authRepo';
+import { studentProfileRepo } from '@/repositories/studentProfileRepo';
+import { BookOpen, ChevronDown, LogOut, User } from 'lucide-react';
 
 const prototypeProfile: {
   initials: string;
@@ -69,7 +69,7 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
       studentProfileRepo
         .get()
         .then((sp) => setStudentProfile(sp))
-        .catch(() => { });
+        .catch(() => {});
     }
   }, [isAuthenticated]);
 
@@ -79,7 +79,7 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
       authRepo
         .getMe()
         .then((me) => setFetchedUser(me))
-        .catch(() => { });
+        .catch(() => {});
     }
   }, [isAuthenticated, user, authUser]);
 
@@ -123,7 +123,7 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
     try {
       await logout();
     } catch {
-      await authRepo.logout().catch(() => { });
+      await authRepo.logout().catch(() => {});
     } finally {
       router.push(`/${locale}/login`);
     }
@@ -196,40 +196,33 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
                 <small>{profile.role}</small>
               </span>
               <ChevronDown
-                className={`figma-chevron ${isProfileOpen ? "figma-chevron-open" : ""}`}
+                className={`figma-chevron ${isProfileOpen ? 'figma-chevron-open' : ''}`}
                 aria-hidden="true"
               />
             </button>
 
             {isProfileOpen && (
-              <section
-                className="figma-profile-dropdown"
-                aria-label="User profile menu"
-              >
+              <section className="figma-profile-dropdown" aria-label="User profile menu">
                 <div className="figma-profile-dropdown-actions">
-                  <button
-                    type="button"
-                    className="figma-profile-menu-item"
-                    onClick={openProfile}
-                  >
+                  <button type="button" className="figma-profile-menu-item" onClick={openProfile}>
                     <User aria-hidden="true" />
                     Hồ sơ của tôi
                   </button>
-                  {(activeUser?.roles?.includes("MENTEE") ||
-                    profile.role === "Mentee" ||
+                  {(activeUser?.roles?.includes('MENTEE') ||
+                    profile.role === 'Mentee' ||
                     !activeUser?.roles?.length) && (
-                      <button
-                        type="button"
-                        className="figma-profile-menu-item"
-                        onClick={() => {
-                          setIsProfileOpen(false);
-                          router.push(`/${locale}/mentor-registration`);
-                        }}
-                      >
-                        <BookOpen aria-hidden="true" />
-                        Đăng ký làm Mentor
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="figma-profile-menu-item"
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        router.push(`/${locale}/mentor-registration`);
+                      }}
+                    >
+                      <BookOpen aria-hidden="true" />
+                      Đăng ký làm Mentor
+                    </button>
+                  )}
                 </div>
                 <button
                   type="button"

@@ -3,17 +3,23 @@
  * @description Sub-component hiển thị Phần 2: Môn học chuyên môn trong Hồ sơ Mentor.
  */
 
-"use client";
+'use client';
 
-import React from "react";
-import type { UseFormRegister, FieldErrors, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove } from "react-hook-form";
-import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSchema";
+import React from 'react';
+import type {
+  UseFormRegister,
+  FieldErrors,
+  FieldArrayWithId,
+  UseFieldArrayAppend,
+  UseFieldArrayRemove,
+} from 'react-hook-form';
+import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
 
 interface SubjectResultsSectionProps {
   register: UseFormRegister<MentorProfileFormValues>;
   errors: FieldErrors<MentorProfileFormValues>;
-  fields: FieldArrayWithId<MentorProfileFormValues, "subjectResults", "id">[];
-  append: UseFieldArrayAppend<MentorProfileFormValues, "subjectResults">;
+  fields: FieldArrayWithId<MentorProfileFormValues, 'subjectResults', 'id'>[];
+  append: UseFieldArrayAppend<MentorProfileFormValues, 'subjectResults'>;
   remove: UseFieldArrayRemove;
   disabled?: boolean;
 }
@@ -30,13 +36,14 @@ export function SubjectResultsSection({
     <fieldset
       className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
+      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
     >
       <h2 className="mentor-section-title">2. Môn học chuyên môn</h2>
 
       {fields.length === 0 && (
-        <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-          Chưa có môn học nào được đăng ký (không bắt buộc). Nhấn nút bên dưới để thêm môn học nếu muốn.
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+          Chưa có môn học nào được đăng ký (không bắt buộc). Nhấn nút bên dưới để thêm môn học nếu
+          muốn.
         </p>
       )}
 
@@ -44,25 +51,25 @@ export function SubjectResultsSection({
         <div
           key={field.id}
           style={{
-            padding: "14px",
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
-            background: "#f8fafc",
-            display: "grid",
-            gap: "12px",
+            padding: '14px',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            background: '#f8fafc',
+            display: 'grid',
+            gap: '12px',
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <strong style={{ fontSize: "13px", color: "#334155" }}>Môn học #{index + 1}</strong>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '13px', color: '#334155' }}>Môn học #{index + 1}</strong>
             <button
               type="button"
               onClick={() => remove(index)}
               style={{
-                border: "none",
-                background: "transparent",
-                color: "#ef4444",
-                cursor: "pointer",
-                fontSize: "12px",
+                border: 'none',
+                background: 'transparent',
+                color: '#ef4444',
+                cursor: 'pointer',
+                fontSize: '12px',
                 fontWeight: 700,
               }}
             >
@@ -70,7 +77,13 @@ export function SubjectResultsSection({
             </button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '12px',
+            }}
+          >
             <div className="field">
               <label htmlFor={`subjectCode-${index}`}>
                 Mã môn học <span className="required-asterisk">*</span>
@@ -118,25 +131,23 @@ export function SubjectResultsSection({
         </div>
       ))}
 
-      {errors.subjectResults && typeof errors.subjectResults.message === "string" && (
+      {errors.subjectResults && typeof errors.subjectResults.message === 'string' && (
         <p className="error">{errors.subjectResults.message}</p>
       )}
 
       <button
         type="button"
-        onClick={() =>
-          append({ subjectCode: "", subjectName: "", scoreValue: undefined as any })
-        }
+        onClick={() => append({ subjectCode: '', subjectName: '', scoreValue: undefined as any })}
         style={{
-          justifySelf: "start",
-          padding: "8px 16px",
-          borderRadius: "10px",
-          border: "1px dashed #0095f6",
-          background: "#ebf5fe",
-          color: "#0095f6",
+          justifySelf: 'start',
+          padding: '8px 16px',
+          borderRadius: '10px',
+          border: '1px dashed #0095f6',
+          background: '#ebf5fe',
+          color: '#0095f6',
           fontWeight: 700,
-          fontSize: "13px",
-          cursor: "pointer",
+          fontSize: '13px',
+          cursor: 'pointer',
         }}
       >
         + Thêm môn học hướng dẫn

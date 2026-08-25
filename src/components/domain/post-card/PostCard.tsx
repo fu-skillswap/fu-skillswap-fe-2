@@ -6,11 +6,11 @@
 
 'use client';
 
-import Link from "next/link";
-import type { Post } from "@/models/entities";
-import { useAuth } from "@/providers/AuthProvider";
-import { Bookmark, Heart, MessageCircle } from "lucide-react";
-import { usePostCard } from "./usePostCard";
+import Link from 'next/link';
+import type { Post } from '@/models/entities';
+import { useAuth } from '@/providers/AuthProvider';
+import { Bookmark, Heart, MessageCircle } from 'lucide-react';
+import { usePostCard } from './usePostCard';
 
 const mascotSrc = '/images/Koko.png';
 
@@ -102,7 +102,7 @@ export function PostCard({ post, locale = 'vi' }: PostCardProps) {
           className={liked ? 'figma-like-button figma-like-button-active' : 'figma-like-button'}
           aria-pressed={liked}
         >
-          <Heart aria-hidden="true" fill={liked ? "currentColor" : "none"} />
+          <Heart aria-hidden="true" fill={liked ? 'currentColor' : 'none'} />
           <span>{likes}</span>
         </button>
         <Link

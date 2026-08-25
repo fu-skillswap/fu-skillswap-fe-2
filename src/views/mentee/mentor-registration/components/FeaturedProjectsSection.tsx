@@ -3,17 +3,23 @@
  * @description Sub-component hiển thị Phần 4: Dự án tiêu biểu trong Hồ sơ Mentor.
  */
 
-"use client";
+'use client';
 
-import React from "react";
-import type { UseFormRegister, FieldErrors, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove } from "react-hook-form";
-import type { MentorProfileFormValues } from "@/models/schemas/mentorProfileSchema";
+import React from 'react';
+import type {
+  UseFormRegister,
+  FieldErrors,
+  FieldArrayWithId,
+  UseFieldArrayAppend,
+  UseFieldArrayRemove,
+} from 'react-hook-form';
+import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
 
 interface FeaturedProjectsSectionProps {
   register: UseFormRegister<MentorProfileFormValues>;
   errors: FieldErrors<MentorProfileFormValues>;
-  projectFields: FieldArrayWithId<MentorProfileFormValues, "projects", "id">[];
-  appendProject: UseFieldArrayAppend<MentorProfileFormValues, "projects">;
+  projectFields: FieldArrayWithId<MentorProfileFormValues, 'projects', 'id'>[];
+  appendProject: UseFieldArrayAppend<MentorProfileFormValues, 'projects'>;
   removeProject: UseFieldArrayRemove;
   disabled?: boolean;
 }
@@ -30,13 +36,14 @@ export function FeaturedProjectsSection({
     <fieldset
       className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: "1px solid #e2e8f0", display: "grid", gap: "16px" }}
+      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
     >
       <h2 className="mentor-section-title">4. Dự án tiêu biểu (Không bắt buộc)</h2>
 
       {projectFields.length === 0 && (
-        <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-          Chưa có dự án nào được thêm. Nhấn nút bên dưới để thêm dự án thực tế nổi bật của bạn nếu muốn.
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+          Chưa có dự án nào được thêm. Nhấn nút bên dưới để thêm dự án thực tế nổi bật của bạn nếu
+          muốn.
         </p>
       )}
 
@@ -44,25 +51,25 @@ export function FeaturedProjectsSection({
         <div
           key={field.id}
           style={{
-            padding: "14px",
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
-            background: "#f8fafc",
-            display: "grid",
-            gap: "12px",
+            padding: '14px',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            background: '#f8fafc',
+            display: 'grid',
+            gap: '12px',
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <strong style={{ fontSize: "13px", color: "#334155" }}>Dự án #{index + 1}</strong>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '13px', color: '#334155' }}>Dự án #{index + 1}</strong>
             <button
               type="button"
               onClick={() => removeProject(index)}
               style={{
-                border: "none",
-                background: "transparent",
-                color: "#ef4444",
-                cursor: "pointer",
-                fontSize: "12px",
+                border: 'none',
+                background: 'transparent',
+                color: '#ef4444',
+                cursor: 'pointer',
+                fontSize: '12px',
                 fontWeight: 700,
               }}
             >
@@ -105,7 +112,7 @@ export function FeaturedProjectsSection({
             <textarea
               id={`projectDescription-${index}`}
               rows={3}
-              style={{ resize: "none" }}
+              style={{ resize: 'none' }}
               placeholder="Mô tả ngắn gọn kết quả dự án..."
               {...register(`projects.${index}.projectDescription`)}
             />
@@ -133,18 +140,18 @@ export function FeaturedProjectsSection({
       <button
         type="button"
         onClick={() =>
-          appendProject({ title: "", content: "", projectDescription: "", liveDemoUrl: "" })
+          appendProject({ title: '', content: '', projectDescription: '', liveDemoUrl: '' })
         }
         style={{
-          justifySelf: "start",
-          padding: "8px 16px",
-          borderRadius: "10px",
-          border: "1px dashed #0095f6",
-          background: "#ebf5fe",
-          color: "#0095f6",
+          justifySelf: 'start',
+          padding: '8px 16px',
+          borderRadius: '10px',
+          border: '1px dashed #0095f6',
+          background: '#ebf5fe',
+          color: '#0095f6',
           fontWeight: 700,
-          fontSize: "13px",
-          cursor: "pointer",
+          fontSize: '13px',
+          cursor: 'pointer',
         }}
       >
         + Thêm dự án tiêu biểu
