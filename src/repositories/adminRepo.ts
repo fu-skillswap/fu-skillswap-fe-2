@@ -19,6 +19,9 @@ import type {
   AdminMentorsQuery,
   AdminMentorsResponse,
   AdminMentorDetail,
+  AdminNotificationsQuery,
+  AdminNotificationsResponse,
+  AdminUnreadNotificationCount,
   AdminForumReport,
   AdminForumReportsQuery,
   AdminForumReportsResponse,
@@ -67,6 +70,18 @@ export const adminRepo = {
 
   getForumReport: (reportId: string) =>
     apiClient<AdminForumReport>(`/api/admin/forum/reports/${reportId}`),
+
+  getNotifications: (query: AdminNotificationsQuery) =>
+    apiClient<AdminNotificationsResponse>(`/api/me/notifications${queryString(query)}`),
+
+  getUnreadNotificationCount: () =>
+    apiClient<AdminUnreadNotificationCount>('/api/me/notifications/unread-count'),
+
+  markNotificationAsRead: (notificationId: string) =>
+    apiClient<unknown>(`/api/me/notifications/${notificationId}/read`, { method: 'PATCH' }),
+
+  markAllNotificationsAsRead: () =>
+    apiClient<unknown>('/api/me/notifications/read-all', { method: 'PATCH' }),
 
   getCaseOwnership: (caseType: string, caseId: string) =>
     apiClient<AdminCaseOwnership>(`/api/admin/cases/${caseType}/${caseId}/ownership`),

@@ -9,15 +9,7 @@ import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions
 import { ApiClientError } from '@/models/apiClient';
 import type { AdminForumReport, ForumReportStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  LoaderCircle,
-  RefreshCw,
-  Search,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, RefreshCw, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -234,9 +226,7 @@ function StateRow({ message }: { message: string }) {
   return (
     <tr>
       <td colSpan={6} className="admin-users-state">
-        <span>
-          <LoaderCircle aria-hidden="true" /> {message}
-        </span>
+        <span>{message}</span>
       </td>
     </tr>
   );

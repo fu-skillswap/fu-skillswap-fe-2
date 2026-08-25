@@ -4047,6 +4047,115 @@ a.figma-auth-modal-btn-login:hover,
   background: #e3f1ff;
   color: #0875ef;
 }
+.admin-notifications {
+  position: relative;
+}
+.admin-notifications > button {
+  position: relative;
+}
+.admin-notifications > button > b {
+  min-width: 17px;
+  height: 17px;
+  position: absolute;
+  top: -7px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border: 2px solid #f8f9ff;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
+.admin-notification-panel {
+  width: min(380px, calc(100vw - 28px));
+  max-height: min(560px, calc(100dvh - 110px));
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 13px);
+  right: -90px;
+  overflow: auto;
+  border: 1px solid #cfd7e6;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(15 55 110 / 20%);
+}
+.admin-notification-panel header {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.admin-notification-panel header div {
+  display: grid;
+  gap: 2px;
+}
+.admin-notification-panel header strong {
+  color: #172033;
+  font-size: 14px;
+}
+.admin-notification-panel header span {
+  color: #64748b;
+  font-size: 11px;
+}
+.admin-notification-panel header button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+}
+.admin-notification-panel header button:disabled {
+  opacity: 0.4;
+}
+.admin-notification-panel > p {
+  margin: 0;
+  padding: 24px 16px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+.admin-notification-panel > div > button {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid #edf0f5;
+  border-radius: 0;
+  background: #fff;
+  color: #172033;
+  text-align: left;
+}
+.admin-notification-panel > div > button.is-unread {
+  background: #eff6ff;
+}
+.admin-notification-panel > div > button:hover {
+  background: #e3f1ff;
+}
+.admin-notification-panel > div > button strong,
+.admin-notification-panel > div > button span,
+.admin-notification-panel > div > button small {
+  display: block;
+}
+.admin-notification-panel > div > button strong {
+  font-size: 13px;
+}
+.admin-notification-panel > div > button span {
+  overflow: hidden;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-notification-panel > div > button small {
+  color: #94a3b8;
+  font-size: 10px;
+}
 .admin-avatar {
   width: 40px;
   height: 40px;

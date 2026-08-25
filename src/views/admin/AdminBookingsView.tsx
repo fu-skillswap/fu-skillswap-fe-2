@@ -15,7 +15,6 @@ import {
   ChevronRight,
   CircleAlert,
   ClipboardList,
-  LoaderCircle,
   RefreshCw,
   Search,
   X,
@@ -301,9 +300,7 @@ function BookingStateRow({ message }: { message: string }) {
   return (
     <tr>
       <td colSpan={6} className="admin-users-state">
-        <span>
-          <LoaderCircle aria-hidden="true" /> {message}
-        </span>
+        <span>{message}</span>
       </td>
     </tr>
   );

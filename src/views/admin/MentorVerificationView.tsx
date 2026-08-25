@@ -6,9 +6,10 @@
 'use client';
 
 import { ApiClientError } from '@/models/apiClient';
+import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { MentorVerificationRequest, MentorVerificationStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { Bell, LoaderCircle, RefreshCw, Search, Settings, X } from 'lucide-react';
+import { RefreshCw, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -195,19 +196,7 @@ export function MentorVerificationView({ locale }: { locale: string }) {
           <div className="admin-breadcrumb">
             Quản trị <span>›</span> <b>Xác minh mentor</b>
           </div>
-          <div className="admin-topbar-actions">
-            <label>
-              <Search aria-hidden="true" />
-              <input aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
-            </label>
-            <button aria-label="Thông báo" type="button">
-              <Bell aria-hidden="true" />
-            </button>
-            <button aria-label="Cài đặt" type="button">
-              <Settings aria-hidden="true" />
-            </button>
-            <div className="admin-avatar">A</div>
-          </div>
+          <AdminTopbarActions />
         </header>
         <div className="mentor-verification-content">
           <section className="mentor-verification-heading">
@@ -276,10 +265,7 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="mentor-table-state">
-                        <span className="mentor-inline-loading">
-                          <LoaderCircle aria-hidden="true" />
-                          Đang tải danh sách hồ sơ...
-                        </span>
+                        <span className="mentor-inline-loading">Đang tải danh sách hồ sơ...</span>
                       </td>
                     </tr>
                   ) : requests.length ? (

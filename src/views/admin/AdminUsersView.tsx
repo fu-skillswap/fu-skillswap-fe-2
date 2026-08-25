@@ -9,7 +9,7 @@ import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions
 import { ApiClientError } from '@/models/apiClient';
 import type { AdminMentor, AdminUser } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { ChevronLeft, ChevronRight, LoaderCircle, RefreshCw, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -337,9 +337,7 @@ function LoadingRow({ message }: { message: string }) {
   return (
     <tr>
       <td colSpan={6} className="admin-users-state">
-        <span>
-          <LoaderCircle aria-hidden="true" /> {message}
-        </span>
+        <span>{message}</span>
       </td>
     </tr>
   );

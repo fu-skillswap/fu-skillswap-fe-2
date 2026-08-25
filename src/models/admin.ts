@@ -260,6 +260,39 @@ export interface AdminCaseActivityQuery {
   direction?: 'ASC' | 'DESC';
 }
 
+export interface AdminNotification {
+  notificationId: string;
+  type: string;
+  title: string;
+  message: string;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+  deepLink: string | null;
+  actionType: string | null;
+  read: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminNotificationsResponse {
+  items: AdminNotification[];
+  nextCursor: string | null;
+  prevCursor: string | null;
+  hasNext: boolean;
+  hasPrev: boolean;
+  limit: number;
+}
+
+export interface AdminNotificationsQuery {
+  unreadOnly?: boolean;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface AdminUnreadNotificationCount {
+  unreadCount: number;
+}
+
 export interface AdminMentorSubjectResult {
   id: string;
   subjectCode: string;

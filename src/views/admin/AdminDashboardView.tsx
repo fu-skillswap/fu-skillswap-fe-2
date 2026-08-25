@@ -6,6 +6,7 @@
 'use client';
 
 import { ApiClientError } from '@/models/apiClient';
+import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type {
   AdminDashboardOverviewResponse,
   AdminQueueCardResponse,
@@ -282,21 +283,7 @@ export function AdminDashboardView() {
           <div className="admin-breadcrumb">
             Quản trị <span>›</span> <b>Tổng quan</b>
           </div>
-          <div className="admin-topbar-actions">
-            <label>
-              <Icon name="search" />
-              <input aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
-            </label>
-            <button aria-label="Notifications" type="button">
-              <Icon name="bell" />
-            </button>
-            <button aria-label="Settings" type="button">
-              <Icon name="settings" />
-            </button>
-            <div className="admin-avatar" aria-label="Admin profile">
-              A
-            </div>
-          </div>
+          <AdminTopbarActions />
         </header>
         <div className="admin-page-content">
           <section className="admin-page-heading">
