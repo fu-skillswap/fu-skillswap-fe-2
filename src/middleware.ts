@@ -18,6 +18,9 @@ const supportedLocales = ['vi', 'en'];
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname === '/favicon.ico') {
+    return NextResponse.rewrite(new URL('/images/SkillSwapLogo.png', request.url));
+  }
   if (pathname.startsWith('/_next') || pathname.includes('.')) return NextResponse.next();
   const hasLocale = supportedLocales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),

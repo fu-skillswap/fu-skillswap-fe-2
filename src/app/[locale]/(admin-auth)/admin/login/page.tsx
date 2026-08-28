@@ -1,6 +1,6 @@
 /**
  * @file page.tsx
- * @description Route đăng nhập dành riêng cho cổng quản trị.
+ * @description Route đăng nhập dành riêng cho cổng quản trị, không đi qua AdminGuard.
  */
 
 import { LoginView } from '@/views/auth/LoginView';

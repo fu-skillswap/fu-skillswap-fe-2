@@ -5,9 +5,10 @@
  */
 
 import type { Mentor, MentorService } from '@/models/entities';
-import { getMentorServices } from '@/data/demoMentorServices';
+import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { useAuth } from '@/providers/AuthProvider';
 import { ChevronLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 /** Tạo chữ cái đầu tên cho avatar */
 function initials(name: string) {
@@ -37,8 +38,34 @@ interface MentorDetailProps {
  * Component hiển thị hồ sơ chi tiết Mentor kèm các gói dịch vụ tư vấn.
  */
 export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
-  const services = getMentorServices(mentor);
+  const [services, setServices] = useState<MentorService[]>([]);
+  const [servicesError, setServicesError] = useState<string>();
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
+  useEffect(() => {
+    let isMounted = true;
+    void mentorDiscoveryRepo
+      .getDetail(mentor.id)
+      .then((detail) => {
+        if (!isMounted) return;
+        setServices(
+          detail.services
+            .filter((service) => service.isActive)
+            .map((service) => ({
+              id: service.serviceId,
+              mentorId: service.mentorUserId,
+              name: service.title,
+              description: service.description,
+              durationMinutes: service.durationMinutes,
+              priceScoins: service.priceScoin ?? undefined,
+            })),
+        );
+      })
+      .catch(() => isMounted && setServicesError('Không thể tải dịch vụ của mentor.'));
+    return () => {
+      isMounted = false;
+    };
+  }, [mentor.id]);
 
   const handleServiceClick = (service: MentorService) => {
     if (!isAuthenticated) {
@@ -140,6 +167,10 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
       <section className="figma-detail-services" aria-label="One-to-one mentoring services">
         <h3>Dịch vụ tư vấn 1:1</h3>
         <div className="figma-detail-service-grid">
+          {servicesError ? <p className="error">{servicesError}</p> : null}
+          {!servicesError && !services.length ? (
+            <p>Mentor chưa có dịch vụ đang hoạt động.</p>
+          ) : null}
           {services.map((service) => (
             <article
               className="figma-detail-service-card"

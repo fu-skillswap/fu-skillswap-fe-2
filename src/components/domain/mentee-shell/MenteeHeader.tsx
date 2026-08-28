@@ -2,12 +2,13 @@
 
 import type { AuthenticatedUser, StudentProfileResponse, UserMeResponse } from '@/models/auth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import { authRepo } from '@/repositories/authRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
-import { BookOpen, ChevronDown, LogOut, User } from 'lucide-react';
+import { NotificationMenu } from '@/components/domain/notifications/NotificationMenu';
+import { BookOpen, ChevronDown, LogOut, Menu, MessageSquare, User } from 'lucide-react';
 
 const prototypeProfile: {
   initials: string;
@@ -35,6 +36,7 @@ function initialsFor(name: string) {
 }
 
 function roleLabel(roles?: AuthenticatedUser['roles']) {
+  if (roles?.includes('MENTOR')) return 'Mentor';
   const role = roles?.[0];
   if (!role || role === 'MENTEE') return 'Mentee';
   return role === 'SYSTEM_ADMIN' ? 'System Admin' : role.charAt(0) + role.slice(1).toLowerCase();
@@ -57,6 +59,7 @@ interface MenteeHeaderProps {
  */
 export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { logout, user: authUser, isAuthenticated } = useAuth();
   const [fetchedUser, setFetchedUser] = useState<UserMeResponse | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileResponse | null>(null);
@@ -134,6 +137,9 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
     router.push(`/${locale}/profile`);
   };
 
+  const isMentor = activeUser?.roles.includes('MENTOR');
+  const isMentorDashboard = pathname.startsWith(`/${locale}/mentor/dashboard`);
+
   return (
     <header className="figma-topbar">
       <div className="figma-topbar-left">
@@ -143,32 +149,20 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
           onClick={onToggleSidebar}
           aria-label="Bật/Tắt thanh điều hướng"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
+          <Menu className="w-5 h-5" aria-hidden="true" />
         </button>
         <h1>{title}</h1>
       </div>
       <div className="figma-topbar-actions" aria-label="Account actions">
         {!isGuest && (
           <>
-            <button type="button" className="figma-icon-button" aria-label="Notifications">
-              <svg className="figma-bell" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              <span className="figma-notification-dot" aria-hidden="true" />
-            </button>
-            <button type="button" className="figma-icon-button" aria-label="Messages">
-              <span className="figma-message" aria-hidden="true" />
+            <NotificationMenu />
+            <button
+              type="button"
+              className="figma-icon-button mentor-chat-button"
+              aria-label="Messages"
+            >
+              <MessageSquare aria-hidden="true" />
             </button>
           </>
         )}
@@ -204,6 +198,23 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
             {isProfileOpen && (
               <section className="figma-profile-dropdown" aria-label="User profile menu">
                 <div className="figma-profile-dropdown-actions">
+                  {isMentor && (
+                    <button
+                      type="button"
+                      className="figma-profile-menu-item"
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        router.push(
+                          isMentorDashboard
+                            ? `/${locale}/dashboard`
+                            : `/${locale}/mentor/dashboard`,
+                        );
+                      }}
+                    >
+                      <BookOpen aria-hidden="true" />
+                      {isMentorDashboard ? 'Chuyển sang Mentee' : 'Chuyển sang Mentor'}
+                    </button>
+                  )}
                   <button type="button" className="figma-profile-menu-item" onClick={openProfile}>
                     <User aria-hidden="true" />
                     Hồ sơ của tôi

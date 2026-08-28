@@ -6,10 +6,12 @@
 'use client';
 
 import { ApiClientError } from '@/models/apiClient';
-import type { AdminNotification } from '@/models/admin';
-import { adminRepo } from '@/repositories/adminRepo';
-import { Bell, CheckCheck, Search, Settings } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import type { Notification } from '@/models/notification';
+import { useAuth } from '@/providers/AuthProvider';
+import { notificationRepo } from '@/repositories/notificationRepo';
+import { Bell, CheckCheck, LogOut, Search, Settings, UserRound } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -19,15 +21,20 @@ function formatDate(value: string) {
 }
 
 export function AdminTopbarActions() {
+  const { locale } = useParams<{ locale: string }>();
+  const router = useRouter();
+  const { logout, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [items, setItems] = useState<AdminNotification[]>([]);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [items, setItems] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const loadUnreadCount = useCallback(async () => {
     try {
-      const result = await adminRepo.getUnreadNotificationCount();
+      const result = await notificationRepo.getUnreadCount();
       setUnreadCount(result.unreadCount);
     } catch {
       // Lỗi polling không nên làm gián đoạn thao tác quản trị.
@@ -38,7 +45,7 @@ export function AdminTopbarActions() {
     setLoading(true);
     setError(undefined);
     try {
-      const result = await adminRepo.getNotifications({ limit: 10 });
+      const result = await notificationRepo.getNotifications({ limit: 10 });
       setItems(result.items);
       setUnreadCount(result.items.filter((item) => !item.read).length);
     } catch (reason) {
@@ -54,10 +61,40 @@ export function AdminTopbarActions() {
     return () => window.clearInterval(interval);
   }, [loadUnreadCount]);
 
-  const markRead = async (notification: AdminNotification) => {
+  useEffect(() => {
+    const closeMenu = (event: MouseEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) setIsProfileOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsProfileOpen(false);
+    };
+    document.addEventListener('mousedown', closeMenu);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeMenu);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, []);
+
+  const initials = user?.fullName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+
+  const handleLogout = async () => {
+    setIsProfileOpen(false);
+    await logout();
+    router.replace(`/${locale}/admin/login`);
+  };
+
+  const markRead = async (notification: Notification) => {
     if (notification.read) return;
     try {
-      await adminRepo.markNotificationAsRead(notification.notificationId);
+      await notificationRepo.markAsRead(notification.notificationId);
       setItems((current) =>
         current.map((item) =>
           item.notificationId === notification.notificationId ? { ...item, read: true } : item,
@@ -71,7 +108,7 @@ export function AdminTopbarActions() {
 
   const markAllRead = async () => {
     try {
-      await adminRepo.markAllNotificationsAsRead();
+      await notificationRepo.markAllAsRead();
       setItems((current) => current.map((item) => ({ ...item, read: true })));
       setUnreadCount(0);
     } catch (reason) {
@@ -144,6 +181,41 @@ export function AdminTopbarActions() {
       </button>
       <div className="admin-avatar" aria-label="Hồ sơ quản trị viên">
         A
+      </div>
+      <div className="admin-profile-menu" ref={profileMenuRef}>
+        <button
+          type="button"
+          className="admin-avatar"
+          aria-label="Hồ sơ quản trị viên"
+          aria-expanded={isProfileOpen}
+          onClick={() => setIsProfileOpen((current) => !current)}
+        >
+          {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials || 'A'}
+        </button>
+        {isProfileOpen && (
+          <section className="admin-profile-menu-panel" aria-label="Tùy chọn hồ sơ">
+            <div>
+              <strong>{user?.fullName || 'Quản trị viên'}</strong>
+              <span>{user?.email}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsProfileOpen(false);
+                router.push(`/${locale}/admin/profile`);
+              }}
+            >
+              <UserRound aria-hidden="true" /> Xem hồ sơ
+            </button>
+            <button
+              type="button"
+              className="admin-profile-logout"
+              onClick={() => void handleLogout()}
+            >
+              <LogOut aria-hidden="true" /> Đăng xuất
+            </button>
+          </section>
+        )}
       </div>
     </div>
   );

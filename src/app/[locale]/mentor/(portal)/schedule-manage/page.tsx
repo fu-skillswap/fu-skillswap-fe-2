@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @description Route Quản lý lịch rảnh Mentor (`/[locale]/mentor/schedule-manage`).
- * Render giao diện `ScheduleManageView`.
+ * Render giao diện `ScheduleManageView` trong không gian MentorShell.
  */
 
 import { ScheduleManageView } from '@/views/mentor/schedule-manage/ScheduleManageView';

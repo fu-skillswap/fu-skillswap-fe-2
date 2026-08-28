@@ -128,6 +128,71 @@ export interface StudentProfileResponse {
 
 export type BackendRole = 'MENTEE' | 'MENTOR' | 'ADMIN' | 'SYSTEM_ADMIN';
 
+/** Ràng buộc tạo dịch vụ mentoring do nền tảng cấu hình. */
+export interface MentorServiceConstraintsResponse {
+  allowedDurationMinutes: number[];
+  minimumPriceScoinPerMinute: number;
+  maximumPriceScoinPerMinute: number;
+}
+
+/** Payload tạo dịch vụ mentoring 1-1. */
+export interface CreateMentorServiceRequest {
+  title: string;
+  description: string;
+  expectedOutcome: string;
+  durationMinutes: number;
+  isFree: boolean;
+  priceScoin: number;
+  maintainPostSessionChat?: boolean;
+  deliveryMode?: 'ONE_TO_ONE';
+}
+
+/** Dịch vụ do mentor sở hữu, dùng trong trang quản lý. */
+export interface MentorServiceManagementResponse {
+  serviceId: string;
+  mentorUserId: string;
+  title: string;
+  description: string;
+  expectedOutcome: string;
+  durationMinutes: number;
+  isFree: boolean;
+  basePriceScoin: number | null;
+  publicPriceScoin: number | null;
+  estimatedMentorPayoutScoin: number | null;
+  isActive: boolean;
+  maintainPostSessionChat: boolean;
+  deliveryMode: 'ONE_TO_ONE';
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Payload đổi trạng thái hiển thị/nhận booking của một dịch vụ. */
+export interface MentorServiceActiveRequest {
+  isActive: boolean;
+  expectedVersion: number;
+  rejectPendingBookings?: boolean;
+  pendingRejectionToken?: string;
+}
+
+/** Dịch vụ công khai trong hồ sơ mentor, dùng để mentee chọn trước khi đặt lịch. */
+export interface MentorServiceResponse {
+  serviceId: string;
+  mentorUserId: string;
+  title: string;
+  description: string;
+  expectedOutcome: string;
+  durationMinutes: number;
+  isFree: boolean;
+  priceScoin: number | null;
+  isActive: boolean;
+}
+
+/** Phần dữ liệu cần thiết để hiển thị dịch vụ trên hồ sơ mentor công khai. */
+export interface MentorDiscoveryDetailResponse {
+  services: MentorServiceResponse[];
+}
+
 /** Phản hồi thông tin cá nhân người dùng (`/api/auth/me`) */
 export interface UserMeResponse {
   publicId: string;

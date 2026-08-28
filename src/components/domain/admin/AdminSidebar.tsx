@@ -72,6 +72,7 @@ export function AdminSidebar({ locale }: { locale: string }) {
   const usersHref = `/${locale}/admin/users`;
   const bookingsHref = `/${locale}/admin/bookings`;
   const reportsHref = `/${locale}/admin/reports`;
+  const profileHref = `/${locale}/admin/profile`;
 
   return (
     <aside className="admin-sidebar admin-shared-sidebar">
@@ -111,9 +112,9 @@ export function AdminSidebar({ locale }: { locale: string }) {
         <a href="/" target="_blank" rel="noreferrer">
           <ArrowUpRight aria-hidden="true" className="admin-icon" /> <span>Xem SkillSwap</span>
         </a>
-        <a href="#profile">
+        <Link className={pathname === profileHref ? 'is-active' : ''} href={profileHref}>
           <CircleUserRound aria-hidden="true" className="admin-icon" /> <span>Hồ sơ</span>
-        </a>
+        </Link>
       </div>
     </aside>
   );

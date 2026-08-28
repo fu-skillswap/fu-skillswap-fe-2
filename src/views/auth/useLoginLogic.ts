@@ -146,7 +146,9 @@ export function useLoginLogic(locale: string, adminOnly = false) {
             router.replace(
               adminOnly
                 ? `/${locale}/admin/dashboard`
-                : onboardingDestination(locale, onboarding.nextRecommendedAction),
+                : user.roles.includes('MENTOR')
+                  ? `/${locale}/mentor/dashboard`
+                  : onboardingDestination(locale, onboarding.nextRecommendedAction),
             );
           } catch (reason) {
             setError(messageForGoogleError(reason));
