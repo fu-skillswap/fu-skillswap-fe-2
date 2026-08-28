@@ -1,29 +1,29 @@
 /**
- * @file TextField.tsx
- * @description Component Ô nhập liệu văn bản dùng chung (Reusable UI Input Field Component).
+ * @file TextArea.tsx
+ * @description TextArea component primitive with FormField integration.
  */
 
-import React, { type InputHTMLAttributes } from 'react';
+import React, { type TextareaHTMLAttributes } from 'react';
 
-export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: React.ReactNode;
   error?: string;
   helperText?: string;
 }
 
-export function TextField({ label, error, helperText, id, name, className = '', ...props }: TextFieldProps) {
+export function TextArea({ label, error, helperText, id, name, className = '', ...props }: TextAreaProps) {
   const fieldId = id ?? name;
-  const inputEl = (
-    <input
+  const textareaEl = (
+    <textarea
       id={fieldId}
       name={name}
-      className={`ui-input ${error ? 'ui-input-error' : ''} ${className}`.trim()}
+      className={`ui-textarea ${error ? 'ui-textarea-error' : ''} ${className}`.trim()}
       {...props}
     />
   );
 
   if (!label && !error && !helperText) {
-    return inputEl;
+    return textareaEl;
   }
 
   return (
@@ -34,7 +34,7 @@ export function TextField({ label, error, helperText, id, name, className = '', 
           {props.required && <span className="ui-required-asterisk">*</span>}
         </label>
       )}
-      {inputEl}
+      {textareaEl}
       {helperText && !error && <p className="ui-form-helper">{helperText}</p>}
       {error && <p className="ui-form-error">{error}</p>}
     </div>

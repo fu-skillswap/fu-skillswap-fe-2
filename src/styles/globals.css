@@ -11600,6 +11600,486 @@ textarea:focus,
   color: #183153;
 }
 
+/* Mentor scheduling calendar */
+.mentor-app .mentor-schedule-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.mentor-app .mentor-schedule-actions,
+.mentor-app .mentor-schedule-tabs,
+.mentor-app .mentor-schedule-calendar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mentor-app .mentor-schedule-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mentor-app .mentor-schedule-actions button,
+.mentor-app .mentor-schedule-calendar-navigation button,
+.mentor-app .mentor-schedule-tabs button,
+.mentor-app .mentor-schedule-calendar-state button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #c8e6fd;
+  border-radius: 8px;
+  background: #fff;
+  color: #1674b8;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mentor-app .mentor-schedule-actions button:hover,
+.mentor-app .mentor-schedule-actions button:focus-visible,
+.mentor-app .mentor-schedule-calendar-navigation button:hover,
+.mentor-app .mentor-schedule-calendar-navigation button:focus-visible,
+.mentor-app .mentor-schedule-tabs button:hover,
+.mentor-app .mentor-schedule-tabs button:focus-visible,
+.mentor-app .mentor-schedule-calendar-state button:hover,
+.mentor-app .mentor-schedule-calendar-state button:focus-visible {
+  border-color: #0095f6;
+  background: #eaf5ff;
+  outline: none;
+}
+
+.mentor-app .mentor-schedule-actions svg,
+.mentor-app .mentor-schedule-calendar-navigation svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mentor-app .mentor-schedule-tabs {
+  width: fit-content;
+  margin-top: 22px;
+  padding: 3px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.mentor-app .mentor-schedule-tabs button {
+  min-height: 32px;
+  border-color: transparent;
+  color: #64748b;
+}
+
+.mentor-app .mentor-schedule-tabs button.is-active {
+  border-color: #c8e6fd;
+  background: #fff;
+  color: #0077c8;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
+}
+
+.mentor-app .mentor-schedule-calendar-card {
+  position: relative;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.mentor-app .mentor-schedule-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 18px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.mentor-app .mentor-schedule-calendar-navigation button {
+  min-width: 36px;
+  padding: 0 8px;
+}
+
+.mentor-app .mentor-schedule-calendar-navigation .mentor-schedule-today-button {
+  min-width: auto;
+}
+
+.mentor-app .mentor-schedule-calendar-period {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.mentor-app .mentor-schedule-calendar-period strong {
+  color: #172033;
+  font-size: 15px;
+}
+
+.mentor-app .mentor-schedule-calendar-period span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.mentor-app .mentor-schedule-calendar-scroll {
+  max-height: 610px;
+  overflow: auto;
+}
+
+.mentor-app .mentor-schedule-calendar-content {
+  position: relative;
+}
+
+.mentor-app .mentor-schedule-calendar-grid {
+  position: relative;
+  min-width: 890px;
+  display: grid;
+  grid-template-columns: 62px repeat(7, minmax(112px, 1fr));
+  background: #fff;
+}
+
+.mentor-app .mentor-schedule-calendar-corner,
+.mentor-app .mentor-schedule-calendar-day {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 57px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.mentor-app .mentor-schedule-calendar-day {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  border-left: 1px solid #eef2f7;
+}
+
+.mentor-app .mentor-schedule-calendar-day span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mentor-app .mentor-schedule-calendar-day strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.mentor-app .mentor-schedule-calendar-row {
+  display: contents;
+}
+
+.mentor-app .mentor-schedule-calendar-time,
+.mentor-app .mentor-schedule-calendar-hour {
+  min-height: 60px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.mentor-app .mentor-schedule-calendar-time {
+  padding: 8px 8px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: right;
+}
+
+.mentor-app .mentor-schedule-calendar-hour {
+  border-left: 1px solid #eef2f7;
+  background: linear-gradient(#fff, #fcfdff);
+}
+
+.mentor-app .mentor-schedule-calendar-event-layer {
+  position: absolute;
+  inset: 57px 0 0;
+  display: grid;
+  grid-template-columns: 62px repeat(7, minmax(112px, 1fr));
+  pointer-events: none;
+}
+
+.mentor-app .mentor-schedule-calendar-event-column {
+  position: relative;
+}
+
+.mentor-app .mentor-schedule-calendar-event {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border: 1px solid #9ed9ff;
+  border-radius: 8px;
+  background: #eaf6ff;
+  color: #075985;
+  box-shadow: 0 1px 3px rgb(2 132 199 / 12%);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.mentor-app .mentor-schedule-calendar-event:hover {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgb(2 132 199 / 22%);
+}
+
+.mentor-app .mentor-schedule-calendar-event strong,
+.mentor-app .mentor-schedule-calendar-event span,
+.mentor-app .mentor-schedule-calendar-event small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.mentor-app .mentor-schedule-calendar-event strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0369a1;
+}
+
+.mentor-app .mentor-schedule-calendar-event span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.mentor-app .mentor-schedule-calendar-event small.event-service {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #0284c7;
+}
+
+.mentor-app .mentor-schedule-calendar-event small.event-note {
+  font-size: 10px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.mentor-app .mentor-schedule-calendar-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 9px;
+  padding: 34px 20px;
+  background: rgb(255 255 255 / 94%);
+  color: #64748b;
+  text-align: center;
+}
+
+.mentor-app .mentor-schedule-calendar-state strong {
+  color: #334155;
+  font-size: 14px;
+}
+
+.mentor-app .mentor-schedule-calendar-empty button,
+.mentor-app .mentor-schedule-calendar-state button {
+  margin-top: 3px;
+}
+
+.mentor-app .mentor-schedule-calendar-skeleton {
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  padding: 24px 20px;
+}
+
+.mentor-app .mentor-schedule-calendar-skeleton span {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: mentor-schedule-shimmer 1.4s infinite;
+}
+
+.mentor-app .mentor-schedule-calendar-schema-note {
+  color: #7c5b17;
+  background: #fffbeb;
+}
+
+.mentor-app .mentor-schedule-recurring-placeholder {
+  display: grid;
+  min-height: 170px;
+  margin-top: 14px;
+  place-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.mentor-app .mentor-schedule-settings-drawer {
+  width: min(440px, 100vw);
+  min-height: 100%;
+  margin-left: auto;
+  border-radius: 0;
+}
+
+.mentor-app .mentor-schedule-settings-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.mentor-app .mentor-schedule-settings-list > div {
+  display: grid;
+  gap: 5px;
+  padding: 16px 22px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.mentor-app .mentor-schedule-settings-list dt {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mentor-app .mentor-schedule-settings-list dd {
+  margin: 0;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mentor-app .mentor-schedule-google-connected {
+  color: #047857;
+}
+
+.mentor-app .mentor-schedule-settings-readonly {
+  margin: 0;
+  padding: 16px 22px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.mentor-app .mentor-availability-slot-modal {
+  width: min(580px, calc(100vw - 32px));
+}
+
+.mentor-app .mentor-availability-slot-form {
+  display: grid;
+  gap: 18px;
+  padding: 4px 22px 22px;
+}
+
+.mentor-app .mentor-availability-time-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mentor-app .mentor-availability-service-options {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mentor-app .mentor-availability-service-options legend {
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mentor-app .mentor-availability-service-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.mentor-app .mentor-availability-service-options input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: #0095f6;
+}
+
+.mentor-app .mentor-availability-service-options label > span {
+  display: grid;
+  gap: 2px;
+}
+
+.mentor-app .mentor-availability-service-options strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.mentor-app .mentor-availability-service-options small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.mentor-app .mentor-availability-form-error {
+  margin: -3px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b42318;
+  background: #fff5f5;
+  font-size: 13px;
+}
+
+.mentor-app .mentor-availability-helper {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.mentor-app .mentor-availability-no-services {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  padding: 8px 22px 22px;
+}
+
+.mentor-app .mentor-availability-no-services p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+@keyframes mentor-schedule-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .mentor-app .mentor-schedule-section-heading,
+  .mentor-app .mentor-schedule-calendar-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mentor-app .mentor-schedule-actions {
+    justify-content: flex-start;
+  }
+
+  .mentor-app .mentor-schedule-calendar-period {
+    justify-items: start;
+  }
+
+  .mentor-app .mentor-availability-time-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 .mentor-service-status-toast-icon {
   width: 28px;
   height: 28px;
@@ -11834,3 +12314,614 @@ textarea:focus,
     text-align: left;
   }
 }
+
+.mentor-schedule-settings-drawer {
+  gap: 10px !important;
+}
+
+.mentor-schedule-settings-drawer .modal-header h2 {
+  color: #0369a1;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.mentor-schedule-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.mentor-schedule-tabs button {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.mentor-schedule-tabs button:hover {
+  color: #0f172a;
+}
+
+.mentor-schedule-tabs button.is-active,
+.mentor-schedule-tabs button[aria-selected="true"] {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ==========================================================================
+   SKILLSWAP UI FOUNDATION TOKENS & PRIMITIVES
+   ========================================================================== */
+
+:root {
+  /* Semantic Tokens */
+  --ui-primary: #0284c7;
+  --ui-primary-hover: #0369a1;
+  --ui-primary-soft: #f0f9ff;
+  --ui-primary-border: #bae6fd;
+
+  --ui-text: #0f172a;
+  --ui-text-secondary: #475569;
+  --ui-text-muted: #64748b;
+  --ui-text-disabled: #94a3b8;
+
+  --ui-border: #e2e8f0;
+  --ui-border-strong: #cbd5e1;
+
+  --ui-surface: #ffffff;
+  --ui-surface-subtle: #f8fafc;
+
+  --ui-danger: #dc2626;
+  --ui-danger-soft: #fef2f2;
+  --ui-warning: #d97706;
+  --ui-warning-soft: #fffbeb;
+  --ui-success: #16a34a;
+  --ui-success-soft: #f0fdf4;
+
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-full: 9999px;
+
+  --ui-height-sm: 32px;
+  --ui-height-md: 38px;
+  --ui-height-lg: 44px;
+}
+
+/* --- BUTTON PRIMITIVES --- */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  border-radius: var(--ui-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease-in-out;
+  outline: none;
+}
+
+.ui-btn-sm {
+  height: var(--ui-height-sm);
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.ui-btn-md {
+  height: var(--ui-height-md);
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+.ui-btn-lg {
+  height: var(--ui-height-lg);
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+.ui-btn-primary {
+  background: var(--ui-primary);
+  color: #ffffff;
+  border-color: var(--ui-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.ui-btn-primary:hover:not(:disabled) {
+  background: var(--ui-primary-hover);
+  border-color: var(--ui-primary-hover);
+}
+
+.ui-btn-secondary {
+  background: #f1f5f9;
+  color: var(--ui-text);
+  border-color: #e2e8f0;
+}
+.ui-btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.ui-btn-outline {
+  background: #ffffff;
+  color: var(--ui-text-secondary);
+  border-color: var(--ui-border-strong);
+}
+.ui-btn-outline:hover:not(:disabled) {
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text);
+  border-color: #94a3b8;
+}
+
+.ui-btn-ghost {
+  background: transparent;
+  color: var(--ui-text-secondary);
+  border-color: transparent;
+}
+.ui-btn-ghost:hover:not(:disabled) {
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text);
+}
+
+.ui-btn-destructive {
+  background: var(--ui-danger);
+  color: #ffffff;
+  border-color: var(--ui-danger);
+}
+.ui-btn-destructive:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-btn:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+.ui-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ui-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+.ui-btn-icon-sm { width: var(--ui-height-sm); height: var(--ui-height-sm); }
+.ui-btn-icon-md { width: var(--ui-height-md); height: var(--ui-height-md); }
+.ui-btn-icon-lg { width: var(--ui-height-lg); height: var(--ui-height-lg); }
+
+/* --- FORM FIELDS & INPUTS --- */
+.ui-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.ui-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ui-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ui-required-asterisk {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.ui-input,
+.ui-textarea {
+  width: 100%;
+  border-radius: var(--ui-radius-md);
+  border: 1px solid var(--ui-border);
+  background: #ffffff;
+  color: var(--ui-text);
+  padding: 0 12px;
+  font-size: 13px;
+  transition: all 0.15s ease-in-out;
+  outline: none;
+}
+.ui-input {
+  height: var(--ui-height-md);
+}
+.ui-textarea {
+  padding: 8px 12px;
+  resize: vertical;
+}
+
+.ui-input:focus,
+.ui-textarea:focus {
+  border-color: var(--ui-primary);
+  box-shadow: 0 0 0 3px var(--ui-primary-border);
+}
+
+.ui-input-error,
+.ui-textarea-error {
+  border-color: var(--ui-danger) !important;
+}
+
+.ui-form-helper {
+  font-size: 11px;
+  color: var(--ui-text-muted);
+  margin: 0;
+}
+
+.ui-form-error {
+  font-size: 11px;
+  color: var(--ui-danger);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* --- CHECKBOX --- */
+.ui-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.ui-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.ui-checkbox-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--ui-border-strong);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
+.ui-checkbox-check {
+  width: 12px;
+  height: 12px;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+.ui-checkbox-input:checked + .ui-checkbox-box {
+  background: var(--ui-primary);
+  border-color: var(--ui-primary);
+}
+.ui-checkbox-input:checked + .ui-checkbox-box .ui-checkbox-check {
+  opacity: 1;
+}
+.ui-checkbox-input:focus-visible + .ui-checkbox-box {
+  box-shadow: 0 0 0 3px var(--ui-primary-border);
+}
+
+/* --- RADIO GROUP --- */
+.ui-radio-group {
+  display: flex;
+  gap: 24px;
+}
+.ui-radio-group-vertical {
+  flex-direction: column;
+  gap: 8px;
+}
+.ui-radio-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ui-text);
+  user-select: none;
+}
+.ui-radio-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.ui-radio-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ui-border-strong);
+  background: #ffffff;
+  position: relative;
+  transition: all 0.15s ease-in-out;
+}
+.ui-radio-input:checked + .ui-radio-dot {
+  border-color: var(--ui-primary);
+}
+.ui-radio-input:checked + .ui-radio-dot::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ui-primary);
+}
+
+/* --- TABS --- */
+.ui-tabs-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+}
+.ui-tab-button {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text-muted);
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease-in-out;
+}
+.ui-tab-button:hover {
+  color: var(--ui-text);
+}
+.ui-tab-button.ui-tab-active,
+.ui-tab-button[aria-selected="true"] {
+  background: #ffffff;
+  color: var(--ui-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* --- TOGGLE GROUP (WEEKDAYS CHIPS) --- */
+.ui-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ui-toggle-chip {
+  height: 36px;
+  min-width: 42px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--ui-radius-md);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+.ui-toggle-chip:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+.ui-toggle-chip-selected,
+.ui-toggle-chip[aria-checked="true"] {
+  background: var(--ui-primary);
+  border-color: var(--ui-primary);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.2);
+}
+
+/* --- SELECTABLE ROW --- */
+.ui-selectable-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--ui-radius-lg);
+  border: 1px solid var(--ui-border);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+.ui-selectable-row:hover {
+  border-color: var(--ui-border-strong);
+  background: var(--ui-surface-subtle);
+}
+.ui-selectable-row-selected {
+  background: var(--ui-primary-soft);
+  border-color: var(--ui-primary-border);
+  box-shadow: 0 0 0 1px var(--ui-primary-border);
+}
+.ui-selectable-row-content {
+  flex: 1;
+  min-width: 0;
+}
+.ui-selectable-row-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ui-text);
+}
+.ui-selectable-row-desc {
+  font-size: 11px;
+  color: var(--ui-text-muted);
+  margin-top: 2px;
+}
+
+/* --- BADGE --- */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--ui-radius-full);
+  font-size: 11px;
+  font-weight: 600;
+}
+.ui-badge-neutral { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.ui-badge-success { background: var(--ui-success-soft); color: #15803d; border: 1px solid #bbf7d0; }
+.ui-badge-warning { background: var(--ui-warning-soft); color: #b45309; border: 1px solid #fef3c7; }
+.ui-badge-danger  { background: var(--ui-danger-soft); color: #b91c1c; border: 1px solid #fecaca; }
+.ui-badge-info    { background: var(--ui-primary-soft); color: #0369a1; border: 1px solid var(--ui-primary-border); }
+
+/* ==========================================================================
+   MENTOR SCHEDULE MANAGE PAGE LAYOUT & COMPOSITION
+   ========================================================================== */
+
+.schedule-page-wrapper {
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 24px;
+  width: 100%;
+}
+
+.schedule-section {
+  width: 100%;
+}
+
+.schedule-section + .schedule-section,
+.margin-top-32 {
+  margin-top: 40px;
+}
+
+.schedule-section-header,
+.mentor-schedule-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.schedule-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.schedule-section-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.mentor-schedule-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Service Grid */
+.schedule-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 320px));
+  gap: 20px;
+  width: 100%;
+}
+
+.schedule-service-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+.schedule-service-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.service-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.service-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f0f9ff;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.service-info-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.service-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.service-card-meta {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 3px;
+  margin-bottom: 0;
+}
+
+.service-card-bottom {
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.service-price-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0284c7;
+}
+
+@media (max-width: 768px) {
+  .schedule-section-header,
+  .mentor-schedule-section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .mentor-schedule-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .schedule-services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+

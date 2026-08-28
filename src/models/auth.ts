@@ -135,6 +135,206 @@ export interface MentorServiceConstraintsResponse {
   maximumPriceScoinPerMinute: number;
 }
 
+/** Current mentor booking policy. */
+export interface MentorBookingPolicyResponse {
+  minimumBookingLeadTimeMinutes: number;
+  maximumBookingHorizonDays: number;
+  timezone: string;
+  version: number;
+}
+
+/** Request payload for PATCH /api/me/mentor-booking-policy. */
+export interface UpdateMentorBookingPolicyRequest {
+  minimumBookingLeadTimeMinutes?: number;
+  maximumBookingHorizonDays?: number;
+  timezone?: string;
+  expectedVersion: number;
+}
+
+/** Platform constraints used when managing mentor availability slots. */
+export interface MentorSchedulingConstraintsResponse {
+  maximumAvailabilityQueryDays: number;
+  maximumParentSlotDurationMinutes: number;
+}
+
+/** Current mentor Google Calendar connection and synchronization state. */
+export interface GoogleCalendarStatusResponse {
+  connected: boolean;
+  syncEnabled: boolean;
+  email: string | null;
+  grantedScopes: string[];
+  needsReconnect: boolean;
+  lastSyncStatus: string | null;
+  lastSyncAt: string | null;
+  lastSyncErrorCode: string | null;
+  lastSyncErrorMessage: string | null;
+}
+
+export type WeekdayEnum =
+  | 'MONDAY'
+  | 'TUESDAY'
+  | 'WEDNESDAY'
+  | 'THURSDAY'
+  | 'FRIDAY'
+  | 'SATURDAY'
+  | 'SUNDAY';
+
+export interface LocalTimeObject {
+  hour: number;
+  minute: number;
+  second?: number;
+  nano?: number;
+}
+
+export type LocalTime = string | LocalTimeObject;
+
+export interface AvailabilityTemplateBlockedOccurrenceResponse {
+  date: string;
+  reason?: string | null;
+  slotId?: string | null;
+}
+
+export interface AvailabilityTemplateResponse {
+  templateId: string;
+  startTime: LocalTime;
+  endTime: LocalTime;
+  weekdays: WeekdayEnum[];
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  timezone: string;
+  note?: string | null;
+  configuredStatus: 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | string;
+  effectiveStatus: 'ACTIVE' | 'PAUSED' | 'EXPIRED' | 'ARCHIVED' | string;
+  configVersion: number;
+  services: AvailabilitySlotServiceBasicResponse[];
+  generationBlockedReason?: string | null;
+  skippedDates?: string[] | null;
+  blockedOccurrences?: AvailabilityTemplateBlockedOccurrenceResponse[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CursorPageResponseAvailabilityTemplateResponse {
+  items: AvailabilityTemplateResponse[];
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+  hasNext: boolean;
+  hasPrev: boolean;
+  limit: number;
+}
+
+export interface CreateAvailabilityTemplateRequest {
+  startTime: LocalTime;
+  endTime: LocalTime;
+  weekdays: WeekdayEnum[];
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  serviceIds: string[];
+  note?: string;
+}
+
+export interface UpdateAvailabilityTemplateRequest {
+  startTime: LocalTime;
+  endTime: LocalTime;
+  weekdays: WeekdayEnum[];
+  effectiveFrom?: string;
+  effectiveTo?: string | null;
+  serviceIds: string[];
+  expectedVersion: number;
+  note?: string;
+  rejectPendingBookings?: boolean;
+}
+
+export interface AvailabilityTemplateVersionRequest {
+  expectedVersion: number;
+  rejectPendingBookings?: boolean;
+}
+
+/** Direct availability-slot read query, limited to the published backend parameters. */
+export interface AvailabilitySlotsQuery {
+  isActive?: boolean;
+  fromDate?: string;
+  toDate?: string;
+}
+
+/** Capability state for a slot mutation when bookings may be affected. */
+export interface SlotMutationCapabilityResponse {
+  mode: 'ALLOWED' | 'REQUIRES_PENDING_REJECTION' | 'BLOCKED_BY_LOCKING_BOOKING' | string;
+  restrictionCode?: string | null;
+  affectedPendingBookingCount: number;
+}
+
+/** Basic mentor service bound to an availability slot. */
+export interface AvailabilitySlotServiceBasicResponse {
+  serviceId: string;
+  title: string;
+  durationMinutes: number;
+  isFree: boolean;
+  priceScoin?: number | null;
+  bindingRemoval?: SlotMutationCapabilityResponse | null;
+}
+
+/** Availability slot returned by GET /api/me/availability-slots. */
+export interface MentorManagedAvailabilitySlotResponse {
+  slotId: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
+  isActive: boolean;
+  note?: string | null;
+  services: AvailabilitySlotServiceBasicResponse[];
+  version: number;
+  pendingBookingCount: number;
+  lockingBookingCount: number;
+  hasLockingBooking: boolean;
+  timeMutation?: SlotMutationCapabilityResponse | null;
+  deactivation?: SlotMutationCapabilityResponse | null;
+  canEditNote: boolean;
+}
+
+/** The unwrapped data payload of GET /api/me/availability-slots. */
+export type AvailabilitySlotsResponse = MentorManagedAvailabilitySlotResponse[];
+
+/** Expected optimistic-lock version of a recurring availability template. */
+export interface ExpectedTemplateVersionRequest {
+  templateId: string;
+  expectedVersion: number;
+}
+
+/** Payload for POST /api/me/availability-slots. Datetimes must be UTC whole-minute ISO instants. */
+export interface CreateAvailabilitySlotRequest {
+  startAt: string;
+  endAt: string;
+  serviceIds: string[];
+  note?: string;
+  replaceGeneratedOccurrences?: boolean;
+  rejectPendingBookings?: boolean;
+  expectedTemplateVersions?: ExpectedTemplateVersionRequest[];
+  legacyJavaBridge?: boolean;
+}
+
+/** Payload for PUT /api/me/availability-slots/{slotId}. */
+export interface UpdateAvailabilitySlotRequest {
+  startAt: string;
+  endAt: string;
+  serviceIds: string[];
+  expectedVersion: number;
+  note?: string;
+  rejectPendingBookings?: boolean;
+  pendingRejectionToken?: string;
+  replaceGeneratedOccurrences?: boolean;
+  expectedTemplateVersions?: ExpectedTemplateVersionRequest[];
+  legacyJavaBridge?: boolean;
+}
+
+/** Payload for POST /api/me/availability-slots/{slotId}/deactivate. */
+export interface DeactivateAvailabilitySlotRequest {
+  expectedVersion: number;
+  rejectPendingBookings?: boolean;
+  pendingRejectionToken?: string;
+  expectedTemplateVersion?: number;
+}
+
 /** Payload tạo dịch vụ mentoring 1-1. */
 export interface CreateMentorServiceRequest {
   title: string;
