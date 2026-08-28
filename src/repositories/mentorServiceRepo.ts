@@ -9,6 +9,7 @@ import type {
   MentorServiceActiveRequest,
   MentorServiceConstraintsResponse,
   MentorServiceManagementResponse,
+  UpdateMentorServiceRequest,
 } from '@/models/auth';
 
 /** Các thao tác API cho service 1-1 của mentor. */
@@ -20,6 +21,18 @@ export const mentorServiceRepo = {
     const query = isActive === undefined ? '' : `?isActive=${isActive}`;
     return apiClient<MentorServiceManagementResponse[]>(`/api/me/mentor-services${query}`);
   },
+
+  getById: (serviceId: string): Promise<MentorServiceManagementResponse> =>
+    apiClient<MentorServiceManagementResponse>(`/api/me/mentor-services/${serviceId}`),
+
+  update: (
+    serviceId: string,
+    data: UpdateMentorServiceRequest,
+  ): Promise<MentorServiceManagementResponse> =>
+    apiClient<MentorServiceManagementResponse>(`/api/me/mentor-services/${serviceId}`, {
+      method: 'PUT',
+      data,
+    }),
 
   create: (data: CreateMentorServiceRequest): Promise<MentorServiceManagementResponse> =>
     apiClient<MentorServiceManagementResponse>('/api/me/mentor-services', {

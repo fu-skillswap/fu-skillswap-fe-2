@@ -175,6 +175,17 @@ export interface MentorServiceActiveRequest {
   pendingRejectionToken?: string;
 }
 
+/** Payload cập nhật nội dung và pricing của một dịch vụ mentoring. */
+export interface UpdateMentorServiceRequest {
+  title: string;
+  description: string;
+  expectedOutcome: string;
+  isFree: boolean;
+  priceScoin: number;
+  maintainPostSessionChat?: boolean;
+  expectedVersion: number;
+}
+
 /** Dịch vụ công khai trong hồ sơ mentor, dùng để mentee chọn trước khi đặt lịch. */
 export interface MentorServiceResponse {
   serviceId: string;

@@ -18,6 +18,7 @@ import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
 import { showError } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { BookOpen, CheckCircle2, Compass, FileText, Plus, Target, X } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -75,6 +76,8 @@ function showServiceStatusSuccess(isActive: boolean) {
 }
 
 export function ScheduleManageView() {
+  const { locale } = useParams<{ locale: string }>();
+  const router = useRouter();
   const [services, setServices] = useState<MentorServiceManagementResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -242,6 +245,15 @@ export function ScheduleManageView() {
                 <div
                   key={service.serviceId}
                   className={`schedule-service-card ${service.isActive ? 'card-active' : 'card-inactive'}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push(`/${locale}/mentor/services/${service.serviceId}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      router.push(`/${locale}/mentor/services/${service.serviceId}`);
+                    }
+                  }}
                 >
                   <div className="service-card-top">
                     <div className="service-icon-box">{getServiceIcon(service.title)}</div>
@@ -260,7 +272,10 @@ export function ScheduleManageView() {
                       type="button"
                       disabled={isToggling}
                       className={`ios-toggle-switch ${service.isActive ? 'switch-on' : 'switch-off'}`}
-                      onClick={() => setPendingStatusChange(service)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setPendingStatusChange(service);
+                      }}
                       aria-label={`Toggle ${service.title}`}
                     >
                       <span className="ios-toggle-thumb" />

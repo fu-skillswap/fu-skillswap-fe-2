@@ -17,6 +17,8 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
   let title = 'Bảng điều khiển Mentor';
   if (pathname.includes('/my-courses')) {
     title = 'Khóa học của tôi';
+  } else if (pathname.includes('/mentor/services/')) {
+    title = 'Chi tiết dịch vụ';
   } else if (pathname.includes('/schedule-manage')) {
     title = 'Dịch vụ & Lịch dạy';
   }
