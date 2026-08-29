@@ -198,42 +198,10 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
             {isProfileOpen && (
               <section className="figma-profile-dropdown" aria-label="User profile menu">
                 <div className="figma-profile-dropdown-actions">
-                  {isMentor && (
-                    <button
-                      type="button"
-                      className="figma-profile-menu-item"
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        router.push(
-                          isMentorDashboard
-                            ? `/${locale}/dashboard`
-                            : `/${locale}/mentor/dashboard`,
-                        );
-                      }}
-                    >
-                      <BookOpen aria-hidden="true" />
-                      {isMentorDashboard ? 'Chuyển sang Mentee' : 'Chuyển sang Mentor'}
-                    </button>
-                  )}
                   <button type="button" className="figma-profile-menu-item" onClick={openProfile}>
                     <User aria-hidden="true" />
                     Hồ sơ của tôi
                   </button>
-                  {(activeUser?.roles?.includes('MENTEE') ||
-                    profile.role === 'Mentee' ||
-                    !activeUser?.roles?.length) && (
-                    <button
-                      type="button"
-                      className="figma-profile-menu-item"
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        router.push(`/${locale}/mentor-registration`);
-                      }}
-                    >
-                      <BookOpen aria-hidden="true" />
-                      Đăng ký làm Mentor
-                    </button>
-                  )}
                 </div>
                 <button
                   type="button"

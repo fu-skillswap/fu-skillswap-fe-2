@@ -36,12 +36,15 @@ export interface Post {
 /** Thực thể Chuyên gia / Mentor hỗ trợ kỹ năng */
 export interface Mentor {
   id: string;
+  mentorUserId?: string;
   name: string;
   expertise: string[];
   bio: string;
-  rating: number;
+  rating: number | null;
+  avatarUrl?: string | null;
   headline?: string;
   organization?: string;
+  isVerified?: boolean;
   reviewCount?: number;
   startingPrice?: number;
   category?: 'PM' | 'Tech' | 'Design' | 'Data' | 'Marketing' | 'Leadership';

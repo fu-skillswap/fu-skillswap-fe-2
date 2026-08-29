@@ -11,37 +11,56 @@ import { usePathname } from 'next/navigation';
 import {
   BookOpen,
   Calendar,
-  CalendarDays,
   FileText,
   GraduationCap,
+  Home,
   LayoutDashboard,
-  Plus,
+  Search,
   Settings,
   Wallet,
+  X,
 } from 'lucide-react';
 
-export function MentorNavigation({ locale }: { locale: string }) {
+interface MentorNavigationProps {
+  locale: string;
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationProps) {
   const pathname = usePathname();
+  const feedHref = `/${locale}/dashboard`;
+  const bookingHref = `/${locale}/mentor-booking`;
   const dashboardHref = `/${locale}/mentor/dashboard`;
   const scheduleHref = `/${locale}/mentor/schedule-manage`;
   const coursesHref = `/${locale}/mentor/my-courses`;
 
   return (
-    <aside className="figma-sidebar mentor-sidebar">
+    <aside className={`figma-sidebar mentor-sidebar ${isOpen ? 'figma-sidebar-open' : ''}`}>
       <div className="figma-sidebar-header">
-        <Link href={dashboardHref} className="figma-brand" aria-label="SkillSwap Mentor">
+        <Link href={dashboardHref} onClick={onClose} className="figma-brand" aria-label="SkillSwap Mentor">
           <img
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
             className="figma-brand-logo-text"
           />
         </Link>
+        <button
+          type="button"
+          className="figma-sidebar-close-btn"
+          onClick={onClose}
+          aria-label="Đóng thanh điều hướng"
+        >
+          <X aria-hidden="true" />
+        </button>
       </div>
 
       <nav className="figma-navigation" aria-label="Điều hướng Mentor">
-        {/* 1. Tổng quan */}
+        {/* Phần giống Mentee */}
+
         <Link
           href={dashboardHref}
+          onClick={onClose}
           className={
             pathname === dashboardHref || pathname.includes('/mentor/dashboard')
               ? 'figma-nav-link figma-nav-link-active'
@@ -52,9 +71,39 @@ export function MentorNavigation({ locale }: { locale: string }) {
           <span>Tổng quan</span>
         </Link>
 
-        {/* 2. Dịch vụ & Lịch dạy */}
+
+        <Link
+          href={feedHref}
+          onClick={onClose}
+          className={
+            pathname === feedHref || pathname.includes('/posts')
+              ? 'figma-nav-link figma-nav-link-active'
+              : 'figma-nav-link'
+          }
+        >
+          <Home className="w-5 h-5" aria-hidden="true" />
+          <span>Bảng tin</span>
+        </Link>
+
+        <Link
+          href={bookingHref}
+          onClick={onClose}
+          className={
+            pathname.includes('/mentor-booking')
+              ? 'figma-nav-link figma-nav-link-active'
+              : 'figma-nav-link'
+          }
+        >
+          <Search className="w-5 h-5" aria-hidden="true" />
+          <span>Tìm Mentor</span>
+        </Link>
+
+        {/* Phần dành riêng cho Mentor */}
+
+
         <Link
           href={scheduleHref}
+          onClick={onClose}
           className={
             pathname.includes('/mentor/schedule-manage')
               ? 'figma-nav-link figma-nav-link-active'
@@ -65,21 +114,19 @@ export function MentorNavigation({ locale }: { locale: string }) {
           <span>Dịch vụ & Lịch dạy</span>
         </Link>
 
-        {/* 3. Lịch đặt */}
         <button type="button" className="figma-nav-link mentor-nav-link-unavailable" tabIndex={-1}>
           <Calendar className="w-5 h-5" aria-hidden="true" />
           <span>Lịch đặt</span>
         </button>
 
-        {/* 4. Bài viết của tôi */}
         <button type="button" className="figma-nav-link mentor-nav-link-unavailable" tabIndex={-1}>
           <FileText className="w-5 h-5" aria-hidden="true" />
           <span>Bài viết của tôi</span>
         </button>
 
-        {/* 5. Khóa học của tôi */}
         <Link
           href={coursesHref}
+          onClick={onClose}
           className={
             pathname.includes('/mentor/my-courses')
               ? 'figma-nav-link figma-nav-link-active'
@@ -90,10 +137,9 @@ export function MentorNavigation({ locale }: { locale: string }) {
           <span>Khóa học của tôi</span>
         </Link>
 
-        {/* 6. Ví */}
         <button type="button" className="figma-nav-link mentor-nav-link-unavailable" tabIndex={-1}>
           <Wallet className="w-5 h-5" aria-hidden="true" />
-          <span>Ví</span>
+          <span>Ví S-coins</span>
         </button>
       </nav>
 

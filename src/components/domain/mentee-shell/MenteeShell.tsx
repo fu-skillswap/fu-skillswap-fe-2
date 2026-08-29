@@ -9,6 +9,7 @@
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { DashboardNavigation } from '@/components/domain/dashboard-navigation/DashboardNavigation';
+import { MentorNavigation } from '@/components/domain/mentor-shell/MentorNavigation';
 import { MenteeHeader } from '@/components/domain/mentee-shell/MenteeHeader';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -23,7 +24,16 @@ type MenteeShellContextValue = {
   closeSidebar: () => void;
 };
 
-const MenteeShellContext = createContext<MenteeShellContextValue | undefined>(undefined);
+export const MenteeShellContext = createContext<MenteeShellContextValue | undefined>(undefined);
+
+const SIDEBAR_STORAGE_KEY = 'SS_SIDEBAR_OPEN';
+
+function getInitialSidebarOpen(): boolean {
+  if (typeof window === 'undefined') return true;
+  if (window.innerWidth <= 1024) return false;
+  const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+  return saved !== null ? saved === 'true' : true;
+}
 
 /** Helper tự động xác định tiêu đề hiển thị mặc định theo path */
 function routeTitle(pathname: string) {
@@ -36,8 +46,14 @@ function routeTitle(pathname: string) {
 /** Hook tùy chỉnh tiêu đề Topbar dành cho các component con nằm trong MenteeShell */
 export function useMenteeShell() {
   const context = useContext(MenteeShellContext);
-  if (!context) throw new Error('useMenteeShell must be used inside MenteeShell');
-  return context;
+  return (
+    context ?? {
+      setHeaderTitle: () => {},
+      isSidebarOpen: true,
+      toggleSidebar: () => {},
+      closeSidebar: () => {},
+    }
+  );
 }
 
 /**
@@ -47,11 +63,35 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
   const pathname = usePathname();
   const { user } = useAuth();
   const [headerTitle, setHeaderTitle] = useState<string>();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth <= 1024) {
+        setIsSidebarOpen(false);
+      } else {
+        const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+        setIsSidebarOpen(saved !== null ? saved === 'true' : true);
+      }
+    }
+  }, []);
 
   const title = headerTitle ?? routeTitle(pathname);
+  const isMentor = user?.roles?.includes('MENTOR');
 
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined' && window.innerWidth > 1024) {
+        try {
+          localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+        } catch {
+          // Ignore quota/access errors
+        }
+      }
+      return next;
+    });
+  };
   const closeSidebar = () => setIsSidebarOpen(false);
 
   const contextValue = useMemo(
@@ -64,15 +104,19 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
     [isSidebarOpen],
   );
 
-  /** Tự động đóng sidebar và reset tiêu đề khi thay đổi trang */
+  /** Tự động đóng sidebar trên mobile và reset tiêu đề khi thay đổi trang */
   useEffect(() => {
     setHeaderTitle(undefined);
-    setIsSidebarOpen(false);
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      setIsSidebarOpen(false);
+    }
   }, [pathname]);
 
   return (
     <MenteeShellContext.Provider value={contextValue}>
-      <div className={`figma-app ${isSidebarOpen ? 'figma-app-sidebar-open' : ''}`}>
+      <div
+        className={`figma-app ${isSidebarOpen ? 'figma-app-sidebar-open' : 'figma-app-sidebar-closed'}`}
+      >
         {/* Backdrop che mờ màn hình khi mở Sidebar trên thiết bị di động */}
         <div
           className={`figma-sidebar-backdrop ${isSidebarOpen ? 'figma-sidebar-backdrop-open' : ''}`}
@@ -80,7 +124,11 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
           aria-hidden="true"
         />
 
-        <DashboardNavigation locale={locale} isOpen={isSidebarOpen} onClose={closeSidebar} />
+        {isMentor ? (
+          <MentorNavigation locale={locale} isOpen={isSidebarOpen} onClose={closeSidebar} />
+        ) : (
+          <DashboardNavigation locale={locale} isOpen={isSidebarOpen} onClose={closeSidebar} />
+        )}
 
         <div className="figma-content-pane">
           <MenteeHeader title={title} locale={locale} user={user} onToggleSidebar={toggleSidebar} />

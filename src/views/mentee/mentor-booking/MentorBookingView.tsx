@@ -6,13 +6,14 @@ import { BookingFlow } from '@/components/domain/booking-flow/BookingFlow';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { MentorCard } from '@/components/domain/mentor-card/MentorCard';
 import { MentorDetail } from '@/components/domain/mentor-detail/MentorDetail';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMentorBooking } from './useMentorBooking';
+import { mentorRepo } from '@/repositories/mentorRepo';
 
 /**
  * @file MentorBookingView.tsx
  * @description React Component màn hình Danh sách & Đặt lịch Mentor (Mentor Discovery & Booking Page View).
- * Cung cấp ô tìm kiếm, bộ lọc danh mục (PM, Tech, Design, Data, Marketing, Leadership),
+ * Cung cấp ô tìm kiếm (gọi API GET /api/mentors?keyword=...), bộ lọc danh mục,
  * xem hồ sơ chi tiết Mentor và bật Modal quy trình Đặt lịch tư vấn 1:1.
  */
 
@@ -53,21 +54,52 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<Mentor['category']>();
+  const [mentorList, setMentorList] = useState<Mentor[]>(mentors);
+  const [isLoading, setIsLoading] = useState(false);
+  const isInitialMountRef = useRef(true);
+
   const { book, error, isSubmitting } = useMentorBooking();
   const { setHeaderTitle } = useMenteeShell();
   const categoryOptions = ['PM', 'Tech', 'Design', 'Data', 'Marketing', 'Leadership'] as const;
+
+  // Cập nhật danh sách từ prop ban đầu khi mentors prop thay đổi
+  useEffect(() => {
+    setMentorList(mentors);
+  }, [mentors]);
+
+  // Gọi API backend GET /api/mentors với param keyword khi ô tìm kiếm thay đổi
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      setIsLoading(true);
+      mentorRepo
+        .list({ keyword: query.trim() || undefined })
+        .then((data) => {
+          if (isMounted) setMentorList(data);
+        })
+        .catch(() => {
+          if (isMounted) setMentorList([]);
+        })
+        .finally(() => {
+          if (isMounted) setIsLoading(false);
+        });
+    }, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
   const filteredMentors = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
-    return mentors.filter((mentor) => {
-      const searchable = [mentor.name, mentor.bio, ...mentor.expertise]
-        .join(' ')
-        .toLocaleLowerCase();
-      return (
-        (!normalizedQuery || searchable.includes(normalizedQuery)) &&
-        (!category || matchesCategory(mentor, category))
-      );
-    });
-  }, [category, mentors, query]);
+    if (!category) return mentorList;
+    return mentorList.filter((mentor) => matchesCategory(mentor, category));
+  }, [category, mentorList]);
 
   useEffect(() => {
     setHeaderTitle(detailMentor ? 'Hồ sơ Mentor' : undefined);
@@ -96,6 +128,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
       {detailMentor ? (
         <MentorDetail
           mentor={detailMentor}
+          mentorUserId={detailMentor.mentorUserId || detailMentor.id}
           onBack={() => setDetailMentor(undefined)}
           onBook={(service) => openBooking(detailMentor, service)}
         />
@@ -140,11 +173,15 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
               ))}
             </div>
           </div>
-          <p className="figma-mentor-count">
-            {filteredMentors.length} mentor
-            {filteredMentors.length === 1 ? '' : 's'} found
-          </p>
-          {filteredMentors.length ? (
+          {!isLoading && (
+            <p className="figma-mentor-count">
+              {filteredMentors.length} mentor
+              {filteredMentors.length === 1 ? '' : 's'} found
+            </p>
+          )}
+          {isLoading ? (
+            <p className="figma-mentor-empty">Searching mentors...</p>
+          ) : filteredMentors.length ? (
             <div className="figma-mentor-grid">
               {filteredMentors.map((mentor) => (
                 <MentorCard mentor={mentor} key={mentor.id} onSelect={setDetailMentor} />
