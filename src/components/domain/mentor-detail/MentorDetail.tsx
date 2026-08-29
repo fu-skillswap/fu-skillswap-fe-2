@@ -6,6 +6,7 @@
 
 import type { Mentor, MentorService } from '@/models/entities';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
+import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
 import { useAuth } from '@/providers/AuthProvider';
 import { ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -21,13 +22,16 @@ function initials(name: string) {
 
 /** Định dạng hiển thị mức giá S-Coins */
 function priceLabel(price?: number) {
+  if (price === 0) return '0';
   return price ? new Intl.NumberFormat('en-US').format(price) : '—';
 }
 
 /** Props của MentorDetail Component */
 interface MentorDetailProps {
-  /** Chi tiết đối tượng Mentor */
+  /** Chi tiết đối tượng Mentor ban đầu */
   mentor: Mentor;
+  /** Mã mentorUserId được chọn từ danh sách mentors */
+  mentorUserId?: string;
   /** Callback quay lại danh sách Mentor */
   onBack: () => void;
   /** Callback khi Mentee chọn một gói dịch vụ để đặt lịch */
@@ -35,37 +39,90 @@ interface MentorDetailProps {
 }
 
 /**
- * Component hiển thị hồ sơ chi tiết Mentor kèm các gói dịch vụ tư vấn.
+ * Component hiển thị hồ sơ chi tiết Mentor (gọi API GET /api/mentors/{mentorUserId}) kèm các gói dịch vụ tư vấn.
  */
-export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
+export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDetailProps) {
+  const targetUserId = mentorUserId || mentor.mentorUserId || mentor.id;
+  const [currentMentor, setCurrentMentor] = useState<Mentor>(mentor);
   const [services, setServices] = useState<MentorService[]>([]);
   const [servicesError, setServicesError] = useState<string>();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
+
 
   useEffect(() => {
     let isMounted = true;
+    if (!targetUserId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setServicesError(undefined);
+
     void mentorDiscoveryRepo
-      .getDetail(mentor.id)
-      .then((detail) => {
+      .getDetail(targetUserId)
+      .then((detail: any) => {
         if (!isMounted) return;
-        setServices(
-          detail.services
-            .filter((service) => service.isActive)
-            .map((service) => ({
-              id: service.serviceId,
-              mentorId: service.mentorUserId,
-              name: service.title,
-              description: service.description,
-              durationMinutes: service.durationMinutes,
-              priceScoins: service.priceScoin ?? undefined,
-            })),
-        );
+        if (detail) {
+          const apiMentorData = detail.mentor || detail;
+          const mappedMentor = mapApiMentorToEntity(apiMentorData);
+          if (mappedMentor.id || mappedMentor.name !== 'Mentor') {
+            setCurrentMentor((prev) => ({
+              ...prev,
+              ...mappedMentor,
+              name: mappedMentor.name !== 'Mentor' ? mappedMentor.name : prev.name,
+              headline: mappedMentor.headline ?? prev.headline,
+              bio: mappedMentor.bio || prev.bio,
+              expertise: mappedMentor.expertise.length ? mappedMentor.expertise : prev.expertise,
+              avatarUrl: mappedMentor.avatarUrl ?? prev.avatarUrl,
+              rating: mappedMentor.rating,
+              reviewCount: mappedMentor.reviewCount ?? prev.reviewCount,
+            }));
+          }
+        }
+        const rawServices = Array.isArray(detail?.services)
+          ? detail.services
+          : Array.isArray(detail?.mentor?.services)
+            ? detail.mentor.services
+            : Array.isArray(detail?.data?.services)
+              ? detail.data.services
+              : Array.isArray(detail)
+                ? detail
+                : [];
+        if (Array.isArray(rawServices)) {
+          setServices(
+            rawServices
+              .filter((service: any) => service && service.isActive !== false)
+              .map((service: any) => ({
+                id: String(service.serviceId || service.id || service.publicId || Math.random()),
+                mentorId: String(service.mentorUserId || service.mentorId || targetUserId),
+                name: String(service.title || service.name || service.serviceName || 'Dịch vụ tư vấn'),
+                description: String(service.description || service.details || service.expectedOutcome || ''),
+                durationMinutes: Number(service.durationMinutes || service.duration || 30),
+                priceScoins:
+                  typeof service.priceScoin === 'number'
+                    ? service.priceScoin
+                    : typeof service.priceScoins === 'number'
+                      ? service.priceScoins
+                      : typeof service.price === 'number'
+                        ? service.price
+                        : undefined,
+                completedCount: typeof service.completedCount === 'number' ? service.completedCount : undefined,
+              })),
+          );
+        }
       })
-      .catch(() => isMounted && setServicesError('Không thể tải dịch vụ của mentor.'));
+      .catch(() => {
+        if (isMounted) setServicesError('Không thể tải hồ sơ chi tiết của mentor.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
     return () => {
       isMounted = false;
     };
-  }, [mentor.id]);
+  }, [targetUserId]);
 
   const handleServiceClick = (service: MentorService) => {
     if (!isAuthenticated) {
@@ -84,7 +141,7 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
   };
 
   return (
-    <section className="figma-mentor-detail" aria-label={`${mentor.name} mentor profile`}>
+    <section className="figma-mentor-detail" aria-label={`${currentMentor.name} mentor profile`}>
       <button type="button" className="figma-detail-back" onClick={onBack}>
         <ChevronLeft aria-hidden="true" />
         Quay lại danh sách
@@ -92,21 +149,30 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
       <article className="figma-detail-profile-card">
         <div className="figma-detail-intro">
           <div className="figma-detail-avatar-wrap">
-            <span className="figma-detail-avatar">{initials(mentor.name)}</span>
+            {currentMentor.avatarUrl ? (
+              <img
+                src={currentMentor.avatarUrl}
+                alt={currentMentor.name}
+                className="figma-detail-avatar"
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <span className="figma-detail-avatar">{initials(currentMentor.name)}</span>
+            )}
             <span aria-hidden="true" />
           </div>
           <div className="figma-detail-identity">
-            <h2>{mentor.name}</h2>
-            {mentor.headline && (
+            <h2>{currentMentor.name}</h2>
+            {currentMentor.headline && (
               <p className="figma-detail-headline">
-                {mentor.headline}
-                {mentor.organization && <> @ {mentor.organization}</>}
+                {currentMentor.headline}
+                {currentMentor.organization && <> @ {currentMentor.organization}</>}
               </p>
             )}
             <div className="figma-detail-rating">
               <span aria-hidden="true">★★★★★</span>
-              <strong>{mentor.rating}</strong>
-              {mentor.reviewCount !== undefined && <small>({mentor.reviewCount} reviews)</small>}
+              <strong>{currentMentor.rating !== null && currentMentor.rating !== undefined ? currentMentor.rating : '--'}</strong>
+              {currentMentor.reviewCount !== undefined && <small>({currentMentor.reviewCount} reviews)</small>}
             </div>
           </div>
           <div className="figma-detail-actions">
@@ -128,7 +194,7 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
             <span>Khóa học</span>
           </div>
           <div>
-            <strong>{mentor.rating} ★</strong>
+            <strong>{currentMentor.rating !== null && currentMentor.rating !== undefined ? `${currentMentor.rating} ★` : '--'}</strong>
             <span>Đánh giá</span>
           </div>
           <div>
@@ -137,9 +203,9 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
           </div>
         </div>
         <div className="figma-detail-about">
-          <p>{mentor.bio}</p>
+          <p>{currentMentor.bio}</p>
           <div className="figma-detail-skills">
-            {mentor.expertise.map((skill) => (
+            {currentMentor.expertise.map((skill) => (
               <span key={skill}>{skill}</span>
             ))}
           </div>
@@ -167,8 +233,11 @@ export function MentorDetail({ mentor, onBack, onBook }: MentorDetailProps) {
       <section className="figma-detail-services" aria-label="One-to-one mentoring services">
         <h3>Dịch vụ tư vấn 1:1</h3>
         <div className="figma-detail-service-grid">
-          {servicesError ? <p className="error">{servicesError}</p> : null}
-          {!servicesError && !services.length ? (
+          {isLoading ? (
+            <p>Đang tải danh sách dịch vụ...</p>
+          ) : servicesError ? (
+            <p className="error">{servicesError}</p>
+          ) : !services.length ? (
             <p>Mentor chưa có dịch vụ đang hoạt động.</p>
           ) : null}
           {services.map((service) => (

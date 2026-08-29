@@ -143,13 +143,16 @@ export function useLoginLogic(locale: string, adminOnly = false) {
               setError('Tài khoản này không có quyền truy cập cổng quản trị.');
               return;
             }
-            router.replace(
-              adminOnly
-                ? `/${locale}/admin/dashboard`
-                : user.roles.includes('MENTOR')
-                  ? `/${locale}/mentor/dashboard`
-                  : onboardingDestination(locale, onboarding.nextRecommendedAction),
-            );
+            if (adminOnly) {
+              router.replace(`/${locale}/admin/dashboard`);
+              return;
+            }
+            // Always check MENTOR role first from GET /api/auth/me response
+            if (user.roles.includes('MENTOR')) {
+              router.replace(`/${locale}/mentor/dashboard`);
+              return;
+            }
+            router.replace(onboardingDestination(locale, onboarding.nextRecommendedAction));
           } catch (reason) {
             setError(messageForGoogleError(reason));
             void configureGoogleButtonRef.current();
@@ -172,9 +175,16 @@ export function useLoginLogic(locale: string, adminOnly = false) {
     } finally {
       setGoogleLoading(false);
     }
-  }, [locale, router]);
+  }, [locale, router, adminOnly]);
 
   configureGoogleButtonRef.current = configureGoogleButton;
+
+  const { isAuthenticated, user: authUser } = useAuth();
+  useEffect(() => {
+    if (isAuthenticated && authUser?.roles?.includes('MENTOR') && !adminOnly) {
+      router.replace(`/${locale}/mentor/dashboard`);
+    }
+  }, [isAuthenticated, authUser, locale, router, adminOnly]);
 
   useEffect(() => {
     void configureGoogleButton();

@@ -274,6 +274,31 @@ export interface AvailabilitySlotServiceBasicResponse {
   bindingRemoval?: SlotMutationCapabilityResponse | null;
 }
 
+/** Service info attached to public availability slots (GET /api/mentors/{mentorUserId}/availability-slots). */
+export interface PublicSlotServiceInfo {
+  serviceId: string;
+  title: string;
+  durationMinutes: number;
+  isFree: boolean;
+  priceScoin: number;
+  bindingRemoval?: {
+    mode?: string;
+    restrictionCode?: string;
+    affectedPendingBookingCount?: number;
+  } | null;
+}
+
+/** Public availability slot returned by GET /api/mentors/{mentorUserId}/availability-slots. */
+export interface PublicAvailabilitySlotResponse {
+  slotId: string;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  pendingRequestCount?: number;
+  acceptedSlotCount?: number;
+  services: PublicSlotServiceInfo[];
+}
+
 /** Availability slot returned by GET /api/me/availability-slots. */
 export interface MentorManagedAvailabilitySlotResponse {
   slotId: string;
@@ -399,9 +424,38 @@ export interface MentorServiceResponse {
   isActive: boolean;
 }
 
-/** Phần dữ liệu cần thiết để hiển thị dịch vụ trên hồ sơ mentor công khai. */
+/** Phần dữ liệu phản hồi hồ sơ mentor công khai (`GET /api/mentors/{mentorUserId}`). */
 export interface MentorDiscoveryDetailResponse {
+  mentorUserId?: string;
+  mentor?: any;
+  identity?: {
+    mentorUserId?: string;
+    displayName?: string;
+    avatarUrl?: string | null;
+    headline?: string;
+    isVerified?: boolean;
+  };
+  mentoring?: {
+    expertiseDescription?: string;
+  };
+  evidence?: {
+    campusName?: string;
+    specializationName?: string;
+    programName?: string;
+  };
+  displayName?: string;
+  name?: string;
+  avatarUrl?: string | null;
+  headline?: string;
+  bio?: string;
+  expertise?: string[];
+  organization?: string;
+  rating?: number;
+  reviewCount?: number;
+  startingPrice?: number;
+  category?: 'PM' | 'Tech' | 'Design' | 'Data' | 'Marketing' | 'Leadership';
   services: MentorServiceResponse[];
+  [key: string]: any;
 }
 
 /** Phản hồi thông tin cá nhân người dùng (`/api/auth/me`) */
@@ -523,6 +577,16 @@ export interface MentorProfileResponse {
   portfolioUrl?: string | null;
   /** Số điện thoại */
   phoneNumber?: string | null;
+  /** Điểm đánh giá trung bình */
+  ratingAverage?: number | null;
+  /** Số lượt đánh giá */
+  reviewCount?: number;
+  /** Số buổi tư vấn đã hoàn thành */
+  completedSessions?: number;
+  /** Danh sách dự án nổi bật */
+  featuredProjects?: MentorProjectResponse[];
+  /** Danh sách thành tích & giải thưởng */
+  achievements?: MentorAchievementResponse[];
 }
 
 /** Request payload tạo dự án tiêu biểu (POST /api/me/mentor-projects) */
