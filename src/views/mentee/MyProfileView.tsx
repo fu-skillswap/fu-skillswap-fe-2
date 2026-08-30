@@ -25,7 +25,9 @@ import { authRepo } from '@/repositories/authRepo';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Award, Briefcase, Calendar, ExternalLink, Globe, Phone, Plus, Star, Trash2, Edit3, Code, BookOpen, Target } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { Award, Briefcase, Calendar, ExternalLink, Globe, Phone, Plus, Star, Trash2, Edit3, Code, BookOpen, Target, UserCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -67,6 +69,8 @@ function profileRequest(
  * Component xem và chỉnh sửa thông tin Hồ sơ cá nhân người dùng.
  */
 export function MyProfileView() {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'vi';
   const { setHeaderTitle } = useMenteeShell();
   const [profile, setProfile] = useState<StudentProfileResponse>();
   const [mentorProfile, setMentorProfile] = useState<MentorProfileResponse>();
@@ -418,16 +422,35 @@ export function MyProfileView() {
           <span className="figma-my-profile-avatar">
             {avatarUrl ? <img src={avatarUrl} alt="" /> : initials(displayName)}
           </span>
-          <button
-            type="button"
-            className="figma-my-profile-edit"
-            onClick={() => {
-              setEditing((current) => !current);
-              setError(undefined);
-            }}
-          >
-            {editing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="figma-my-profile-edit"
+              onClick={() => {
+                setEditing((current) => !current);
+                setError(undefined);
+              }}
+            >
+              {editing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}
+            </button>
+            {!isMentor && (
+              <Link
+                href={`/${locale}/mentor-registration`}
+                className="figma-my-profile-edit"
+                style={{
+                  background: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  borderColor: 'var(--primary-border)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  textDecoration: 'none',
+                }}
+              >
+                <UserCheck className="w-4 h-4" /> Đăng ký làm mentor
+              </Link>
+            )}
+          </div>
           {!editing ? (
             <>
               <h2>{displayName}</h2>

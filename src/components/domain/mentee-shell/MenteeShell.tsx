@@ -38,6 +38,7 @@ function getInitialSidebarOpen(): boolean {
 /** Helper tự động xác định tiêu đề hiển thị mặc định theo path */
 function routeTitle(pathname: string) {
   if (pathname.endsWith('/profile')) return 'Hồ sơ của tôi';
+  if (pathname.includes('/my-bookings')) return 'Booking của tôi';
   if (pathname.includes('/mentor-booking')) return 'Tìm Mentor';
   if (pathname.includes('/post-detail/')) return 'Chi tiết bài viết';
   return 'Bảng tin';

@@ -11,12 +11,12 @@ export const studentOnboardingSchema = yup.object().shape({
   displayName: yup.string().trim().optional(),
   campusId: yup.string().required('Vui lòng chọn cơ sở / campus.'),
   programId: yup.string().required('Vui lòng chọn ngành đào tạo.'),
-  specializationId: yup.string().required('Vui lòng chọn chuyên ngành.'),
+  specializationId: yup.string().optional().nullable(),
   semester: yup
     .number()
     .typeError('Học kỳ phải là số.')
     .required('Vui lòng chọn học kỳ.')
-    .min(1, 'Học kỳ từ 1 trở lên.'),
+    .min(0, 'Học kỳ từ 0 trở lên.'),
   intakeYear: yup
     .number()
     .typeError('Năm nhập học phải là số.')

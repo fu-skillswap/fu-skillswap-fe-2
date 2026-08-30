@@ -44,33 +44,49 @@ export const studentProfileRepo = {
    * Truy xuất danh sách các Cơ sở / Campus đại học (`/api/campuses`).
    * @returns Promise chứa mảng danh sách Campus (`CampusResponse[]`)
    */
-  getCampuses: () => apiClient<CampusResponse[]>('/api/campuses'),
+  getCampuses: async (): Promise<CampusResponse[]> => {
+    const res = await apiClient<any>('/api/campuses');
+    return Array.isArray(res) ? res : res?.data || res?.items || res?.content || [];
+  },
 
   /**
    * Truy xuất danh sách tất cả các Chương trình / Ngành đào tạo (`/api/academic-programs`).
    * @returns Promise chứa mảng danh sách Ngành đào tạo (`AcademicProgramResponse[]`)
    */
-  getPrograms: () => apiClient<AcademicProgramResponse[]>('/api/academic-programs'),
+  getPrograms: async (): Promise<AcademicProgramResponse[]> => {
+    const res = await apiClient<any>('/api/academic-programs');
+    return Array.isArray(res) ? res : res?.data || res?.items || res?.content || [];
+  },
 
   /**
    * Truy xuất danh sách các Chuyên ngành hẹp thuộc về một Ngành đào tạo cụ thể.
    * @param programId - ID của ngành đào tạo
    * @returns Promise chứa mảng danh sách Chuyên ngành (`SpecializationResponse[]`)
    */
-  getSpecializations: (programId: string) =>
-    apiClient<SpecializationResponse[]>(`/api/academic-programs/${programId}/specializations`),
+  getSpecializations: async (programId: string): Promise<SpecializationResponse[]> => {
+    const res = await apiClient<any>(`/api/academic-programs/${programId}/specializations`);
+    return Array.isArray(res) ? res : res?.data || res?.items || res?.content || [];
+  },
 
   /**
-   * Lưu hoặc cập nhật hồ sơ học thuật của tôi (PUT `/api/me/student-profile`).
+   * Lưu hoặc cập nhật hồ sơ học thuật của tôi (PUT hoặc POST `/api/me/student-profile`).
    * Cập nhật ngay bộ nhớ tạm sau khi lưu thành công.
    * @param profile - Đối tượng dữ liệu hồ sơ sinh viên (`StudentProfileRequest`)
    * @returns Promise chứa dữ liệu Hồ sơ sinh viên đã cập nhật (`StudentProfileResponse`)
    */
   save: async (profile: StudentProfileRequest): Promise<StudentProfileResponse> => {
-    const updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
-      method: 'PUT',
-      data: profile,
-    });
+    let updated: StudentProfileResponse;
+    try {
+      updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
+        method: 'PUT',
+        data: profile,
+      });
+    } catch {
+      updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
+        method: 'POST',
+        data: profile,
+      });
+    }
     cachedProfile = updated;
     return updated;
   },

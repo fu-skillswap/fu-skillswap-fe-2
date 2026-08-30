@@ -46,9 +46,11 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
 
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
+  const bookingsHref = `/${locale}/my-bookings`;
   const dashboardActive =
     pathname === dashboardHref || pathname.startsWith(`/${locale}/post-detail/`);
   const mentorActive = pathname.startsWith(mentorHref);
+  const bookingsActive = pathname.startsWith(bookingsHref);
 
   const handleProtectedAction = (featureName: string) => {
     if (onClose) onClose();
@@ -116,21 +118,14 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           <Icon name="wallet" />
           <span>S-coin</span>
         </button>
-        <button
-          type="button"
-          onClick={() => handleProtectedAction('Lịch đặt của tôi')}
-          className="figma-nav-link figma-nav-link-static"
-          style={{
-            width: '100%',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
+        <Link
+          href={bookingsHref}
+          onClick={onClose}
+          className={bookingsActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
         >
           <Icon name="calendar" />
           <span>Booking của tôi</span>
-        </button>
+        </Link>
       </nav>
       <button
         type="button"
