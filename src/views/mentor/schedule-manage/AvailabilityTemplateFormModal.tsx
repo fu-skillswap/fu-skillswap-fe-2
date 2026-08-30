@@ -1,11 +1,12 @@
 /**
  * @file AvailabilityTemplateFormModal.tsx
- * @description Modal form for creating and updating Weekly Availability Templates using SkillSwap UI Foundation primitives.
+ * @description Modal form with explicit spacious vertical layout matching reference mockup.
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
+import { FileText, Users } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
@@ -21,12 +22,7 @@ import type {
   UpdateAvailabilityTemplateRequest,
   WeekdayEnum,
 } from '@/models/auth';
-import {
-  ALL_WEEKDAYS,
-  WEEKDAY_SHORT_LABELS,
-  formatLocalTime,
-  parseLocalTimeToObject,
-} from './mentorTemplateHelpers';
+import { ALL_WEEKDAYS, WEEKDAY_SHORT_LABELS, formatLocalTime } from './mentorTemplateHelpers';
 
 interface AvailabilityTemplateFormModalProps {
   open: boolean;
@@ -36,10 +32,7 @@ interface AvailabilityTemplateFormModalProps {
   staleNotice: string | null;
   onClose: () => void;
   onSubmitCreate: (data: CreateAvailabilityTemplateRequest) => Promise<void>;
-  onSubmitUpdate: (
-    templateId: string,
-    data: UpdateAvailabilityTemplateRequest,
-  ) => Promise<void>;
+  onSubmitUpdate: (templateId: string, data: UpdateAvailabilityTemplateRequest) => Promise<void>;
 }
 
 export function AvailabilityTemplateFormModal({
@@ -143,18 +136,21 @@ export function AvailabilityTemplateFormModal({
     e.preventDefault();
     if (!validate() || isSubmitting) return;
 
-    const formattedStartTime = parseLocalTimeToObject(startTime);
-    const formattedEndTime = parseLocalTimeToObject(endTime);
+    const formattedStartTime = `${startTime}:00`;
+    const formattedEndTime = `${endTime}:00`;
+    const effectiveToPayload =
+      effectiveType === 'UNTIL_DATE' && effectiveTo.trim() ? effectiveTo.trim() : undefined;
+    const notePayload = note.trim() || undefined;
 
     if (isEdit && template) {
       const payload: UpdateAvailabilityTemplateRequest = {
         startTime: formattedStartTime,
         endTime: formattedEndTime,
         weekdays: selectedWeekdays,
-        effectiveFrom,
-        effectiveTo: effectiveType === 'UNTIL_DATE' ? effectiveTo : null,
+        effectiveFrom: effectiveFrom || undefined,
+        effectiveTo: effectiveToPayload,
         serviceIds: selectedServiceIds,
-        note: note.trim() || undefined,
+        note: notePayload,
         expectedVersion: template.configVersion,
       };
       await onSubmitUpdate(template.templateId, payload);
@@ -164,9 +160,9 @@ export function AvailabilityTemplateFormModal({
         endTime: formattedEndTime,
         weekdays: selectedWeekdays,
         effectiveFrom,
-        effectiveTo: effectiveType === 'UNTIL_DATE' ? effectiveTo : null,
+        effectiveTo: effectiveToPayload,
         serviceIds: selectedServiceIds,
-        note: note.trim() || undefined,
+        note: notePayload,
       };
       await onSubmitCreate(payload);
     }
@@ -177,6 +173,14 @@ export function AvailabilityTemplateFormModal({
     label: WEEKDAY_SHORT_LABELS[d],
   }));
 
+  const getServiceIcon = (title: string) => {
+    const lower = title.toLowerCase();
+    if (lower.includes('cv') || lower.includes('career') || lower.includes('review')) {
+      return <FileText className="w-4 h-4 text-slate-700" />;
+    }
+    return <Users className="w-4 h-4 text-slate-700" />;
+  };
+
   return (
     <Modal
       open={open}
@@ -184,69 +188,75 @@ export function AvailabilityTemplateFormModal({
       onClose={() => !isSubmitting && onClose()}
       className="mentor-availability-slot-modal"
     >
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        {staleNotice && (
-          <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-medium">
-            {staleNotice}
-          </div>
-        )}
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="template-modal-form-content">
+          {staleNotice && (
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-medium mb-2">
+              {staleNotice}
+            </div>
+          )}
 
-        {/* Ngày trong tuần */}
-        <FormField label="Ngày trong tuần" required error={errors.weekdays}>
-          <ToggleGroup
-            options={weekdayOptions}
-            value={selectedWeekdays}
-            onChange={(val) => setSelectedWeekdays(val as WeekdayEnum[])}
-          />
-        </FormField>
-
-        {/* Khung giờ 2 cột bằng nhau */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Bắt đầu" htmlFor="tpl-start-time" required error={errors.startTime}>
-            <TextField
-              id="tpl-start-time"
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="font-semibold text-gray-800"
+          {/* Ngày trong tuần */}
+          <FormField label="Ngày trong tuần" required error={errors.weekdays}>
+            <ToggleGroup
+              options={weekdayOptions}
+              value={selectedWeekdays}
+              onChange={(val) => setSelectedWeekdays(val as WeekdayEnum[])}
             />
           </FormField>
 
-          <FormField label="Kết thúc" htmlFor="tpl-end-time" required error={errors.endTime}>
-            <TextField
-              id="tpl-end-time"
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="font-semibold text-gray-800"
-            />
-          </FormField>
-        </div>
+          {/* Khung giờ 2 cột bằng nhau */}
+          <div className="template-modal-grid-2">
+            <FormField label="Bắt đầu" htmlFor="tpl-start-time" required error={errors.startTime}>
+              <TextField
+                id="tpl-start-time"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="font-medium text-slate-900"
+              />
+            </FormField>
 
-        {/* Dịch vụ áp dụng */}
-        <FormField label="Dịch vụ áp dụng" required error={errors.services}>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {activeServices.map((service) => {
-              const isSelected = selectedServiceIds.includes(service.serviceId);
-              const priceText = service.isFree
-                ? 'Miễn phí'
-                : `${new Intl.NumberFormat('vi-VN').format(service.publicPriceScoin ?? 0)} S-coins`;
-              return (
-                <SelectableRow
-                  key={service.serviceId}
-                  selected={isSelected}
-                  onSelect={() => toggleService(service.serviceId)}
-                  title={service.title}
-                  description={`${service.durationMinutes} phút · ${priceText}`}
-                />
-              );
-            })}
+            <FormField label="Kết thúc" htmlFor="tpl-end-time" required error={errors.endTime}>
+              <TextField
+                id="tpl-end-time"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="font-medium text-slate-900"
+              />
+            </FormField>
           </div>
-        </FormField>
 
-        {/* Effective Dates */}
-        <div className="space-y-3 pt-2 border-t border-slate-100">
-          <FormField label="Áp dụng từ" htmlFor="tpl-effective-from" required error={errors.effectiveFrom}>
+          {/* Dịch vụ áp dụng */}
+          <FormField label="Dịch vụ áp dụng" required error={errors.services}>
+            <div className="template-modal-services-list">
+              {activeServices.map((service) => {
+                const isSelected = selectedServiceIds.includes(service.serviceId);
+                const priceText = service.isFree
+                  ? 'Miễn phí'
+                  : `${new Intl.NumberFormat('vi-VN').format(service.publicPriceScoin ?? 0)} SCoin`;
+                return (
+                  <SelectableRow
+                    key={service.serviceId}
+                    selected={isSelected}
+                    onSelect={() => toggleService(service.serviceId)}
+                    icon={getServiceIcon(service.title)}
+                    title={service.title}
+                    description={`${service.durationMinutes} phút · ${priceText}`}
+                  />
+                );
+              })}
+            </div>
+          </FormField>
+
+          {/* Effective Dates */}
+          <FormField
+            label="Áp dụng từ"
+            htmlFor="tpl-effective-from"
+            required
+            error={errors.effectiveFrom}
+          >
             <TextField
               id="tpl-effective-from"
               type="date"
@@ -256,7 +266,7 @@ export function AvailabilityTemplateFormModal({
           </FormField>
 
           <FormField label="Thời hạn kết thúc">
-            <div className="space-y-2">
+            <div className="flex flex-col gap-3">
               <RadioGroup
                 name="effectiveType"
                 value={effectiveType}
@@ -268,22 +278,22 @@ export function AvailabilityTemplateFormModal({
               />
 
               {effectiveType === 'UNTIL_DATE' && (
-                <div className="pt-1">
-                  <TextField
-                    type="date"
-                    value={effectiveTo}
-                    min={effectiveFrom}
-                    onChange={(e) => setEffectiveTo(e.target.value)}
-                    error={errors.effectiveTo}
-                  />
+                <div className="pt-1.5 pb-2">
+                  <FormField label="Ngày kết thúc" required error={errors.effectiveTo}>
+                    <TextField
+                      type="date"
+                      value={effectiveTo}
+                      min={effectiveFrom}
+                      onChange={(e) => setEffectiveTo(e.target.value)}
+                      error={errors.effectiveTo}
+                    />
+                  </FormField>
                 </div>
               )}
             </div>
           </FormField>
-        </div>
 
-        {/* Note */}
-        <div className="pt-2 border-t border-slate-100">
+          {/* Note */}
           <FormField label="Ghi chú" htmlFor="tpl-note" error={errors.note}>
             <TextArea
               id="tpl-note"
@@ -297,22 +307,17 @@ export function AvailabilityTemplateFormModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="form-modal-footer pt-4 border-t border-slate-200 flex justify-end gap-2">
+        <div className="form-modal-footer pt-5 mt-6 border-t border-slate-100 flex justify-end gap-3">
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="md"
             disabled={isSubmitting}
             onClick={onClose}
           >
             Hủy
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            loading={isSubmitting}
-          >
+          <Button type="submit" variant="primary" size="md" loading={isSubmitting}>
             {isEdit ? 'Lưu thay đổi' : 'Tạo lịch hàng tuần'}
           </Button>
         </div>

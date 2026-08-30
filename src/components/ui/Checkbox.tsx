@@ -27,7 +27,12 @@ export function Checkbox({ label, id, name, className = '', disabled, ...props }
       />
       <span className="ui-checkbox-box" aria-hidden="true">
         <svg className="ui-checkbox-check" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-          <path d="M2.5 7L5.5 10L11.5 3.5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M2.5 7L5.5 10L11.5 3.5"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </span>
       {label && <span className="ui-checkbox-label">{label}</span>}

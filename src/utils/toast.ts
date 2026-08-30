@@ -3,14 +3,14 @@
  * @description Utility quản lý hiển thị Toast thông báo và Hộp thoại xác nhận (Confirm Modal) dùng chung cho toàn bộ ứng dụng SkillSwap.
  */
 
-import toast from "react-hot-toast";
+import toast from 'react-hot-toast';
 
 export interface ConfirmOptions {
   title?: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: "danger" | "warning" | "info";
+  variant?: 'danger' | 'warning' | 'info';
 }
 
 let confirmHandler: ((options: ConfirmOptions) => Promise<boolean>) | null = null;
@@ -25,7 +25,7 @@ export const registerConfirmHandler = (handler: (options: ConfirmOptions) => Pro
  * @returns Promise<boolean> (trả về true nếu người dùng chọn Đồng ý/Xác nhận, false nếu chọn Hủy)
  */
 export const confirmAction = (options: ConfirmOptions | string): Promise<boolean> => {
-  const opts: ConfirmOptions = typeof options === "string" ? { message: options } : options;
+  const opts: ConfirmOptions = typeof options === 'string' ? { message: options } : options;
   if (confirmHandler) {
     return confirmHandler(opts);
   }
@@ -49,12 +49,12 @@ export const showError = (message: string) => {
 /** Hiển thị Toast thông báo Cảnh báo */
 export const showWarning = (message: string) => {
   toast(message, {
-    icon: "⚠️",
+    icon: '⚠️',
     duration: 4500,
     style: {
-      background: "#fefce8",
-      border: "1px solid #fef08a",
-      color: "#ca8a04",
+      background: '#fefce8',
+      border: '1px solid #fef08a',
+      color: '#ca8a04',
       fontWeight: 600,
     },
   });
@@ -63,12 +63,12 @@ export const showWarning = (message: string) => {
 /** Hiển thị Toast thông báo Thông tin */
 export const showInfo = (message: string) => {
   toast(message, {
-    icon: "ℹ️",
+    icon: 'ℹ️',
     duration: 4000,
     style: {
-      background: "#eff6ff",
-      border: "1px solid #bfdbfe",
-      color: "#2563eb",
+      background: '#eff6ff',
+      border: '1px solid #bfdbfe',
+      color: '#2563eb',
       fontWeight: 600,
     },
   });

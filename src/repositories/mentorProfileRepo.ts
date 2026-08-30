@@ -85,7 +85,7 @@ export const mentorProfileRepo = {
     data: CreateMentorProjectRequest,
   ): Promise<MentorProjectResponse> => {
     return apiClient<MentorProjectResponse>(`/api/me/mentor-projects/${projectId}`, {
-      method: "PUT",
+      method: 'PUT',
       data,
     });
   },
@@ -95,7 +95,7 @@ export const mentorProfileRepo = {
    * @returns Promise chứa danh sách dự án (`MentorProjectResponse[]`)
    */
   getProjects: (): Promise<MentorProjectResponse[]> => {
-    return apiClient<MentorProjectResponse[]>("/api/me/mentor-projects");
+    return apiClient<MentorProjectResponse[]>('/api/me/mentor-projects');
   },
 
   /**
@@ -104,7 +104,7 @@ export const mentorProfileRepo = {
    */
   deleteProject: (projectId: string): Promise<unknown> => {
     return apiClient(`/api/me/mentor-projects/${projectId}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 
@@ -131,7 +131,7 @@ export const mentorProfileRepo = {
     data: CreateMentorAchievementRequest,
   ): Promise<MentorAchievementResponse> => {
     return apiClient<MentorAchievementResponse>(`/api/me/mentor-achievements/${achievementId}`, {
-      method: "PUT",
+      method: 'PUT',
       data,
     });
   },
@@ -141,7 +141,7 @@ export const mentorProfileRepo = {
    * @returns Promise chứa danh sách giải thưởng (`MentorAchievementResponse[]`)
    */
   getAchievements: (): Promise<MentorAchievementResponse[]> => {
-    return apiClient<MentorAchievementResponse[]>("/api/me/mentor-achievements");
+    return apiClient<MentorAchievementResponse[]>('/api/me/mentor-achievements');
   },
 
   /**
@@ -150,7 +150,7 @@ export const mentorProfileRepo = {
    */
   deleteAchievement: (achievementId: string): Promise<unknown> => {
     return apiClient(`/api/me/mentor-achievements/${achievementId}`, {
-      method: "DELETE"
+      method: 'DELETE',
     });
   },
 
@@ -232,8 +232,8 @@ export const mentorProfileRepo = {
    * Trạng thái hồ sơ sẽ chuyển về `DRAFT` cho phép tiếp tục chỉnh sửa.
    */
   withdrawVerification: (): Promise<unknown> => {
-    return apiClient("/api/me/mentor-verification/withdraw", {
-      method: "POST",
+    return apiClient('/api/me/mentor-verification/withdraw', {
+      method: 'POST',
     });
   },
 
@@ -242,7 +242,7 @@ export const mentorProfileRepo = {
    * @returns Promise chứa dữ liệu tiến độ (`MentorVerificationProgressResponse`)
    */
   getVerificationProgress: (): Promise<MentorVerificationProgressResponse> => {
-    return apiClient<MentorVerificationProgressResponse>("/api/me/mentor-verification/progress");
+    return apiClient<MentorVerificationProgressResponse>('/api/me/mentor-verification/progress');
   },
 
   /**
@@ -250,7 +250,7 @@ export const mentorProfileRepo = {
    * @returns Promise chứa chi tiết hồ sơ đăng ký (`MentorVerificationResponse`)
    */
   getVerification: (): Promise<MentorVerificationResponse> => {
-    return apiClient<MentorVerificationResponse>("/api/me/mentor-verification");
+    return apiClient<MentorVerificationResponse>('/api/me/mentor-verification');
   },
 
   /** Xóa cache bộ nhớ tạm (dùng khi Đăng xuất) */

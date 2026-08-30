@@ -41,8 +41,9 @@ export function SubjectResultsSection({
       <h2 className="mentor-section-title">2. Môn học chuyên môn</h2>
 
       {fields.length === 0 && (
-        <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-          Môn học chuyên môn không bắt buộc. Nếu bạn chọn thêm môn học hướng dẫn, vui lòng điền đầy đủ Mã môn, Tên môn và Điểm số.
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+          Môn học chuyên môn không bắt buộc. Nếu bạn chọn thêm môn học hướng dẫn, vui lòng điền đầy
+          đủ Mã môn, Tên môn và Điểm số.
         </p>
       )}
 

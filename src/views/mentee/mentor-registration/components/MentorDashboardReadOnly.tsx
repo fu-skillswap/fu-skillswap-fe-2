@@ -90,7 +90,15 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
         </div>
 
         <div>
-          <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>
+          <label
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#64748b',
+              display: 'block',
+              marginBottom: '4px',
+            }}
+          >
             TIÊU ĐỀ VỊ TRÍ / CHUYÊN MÔN
           </label>
           <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>
@@ -99,7 +107,15 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
         </div>
 
         <div>
-          <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>
+          <label
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#64748b',
+              display: 'block',
+              marginBottom: '4px',
+            }}
+          >
             MÔ TẢ KINH NGHIỆM CHUYÊN MÔN
           </label>
           <div
@@ -118,12 +134,32 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginTop: '4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '10px 14px', borderRadius: '10px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '12px',
+            marginTop: '4px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: '#f8fafc',
+              padding: '10px 14px',
+              borderRadius: '10px',
+            }}
+          >
             <Phone size={16} color="#64748b" />
             <div>
-              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Số điện thoại</span>
-              <strong style={{ fontSize: '13px', color: '#0f172a' }}>{phoneNumber || 'Chưa cung cấp'}</strong>
+              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
+                Số điện thoại
+              </span>
+              <strong style={{ fontSize: '13px', color: '#0f172a' }}>
+                {phoneNumber || 'Chưa cung cấp'}
+              </strong>
             </div>
           </div>
 
@@ -146,7 +182,15 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
               <GitBranch size={16} color="#334155" />
               <div>
                 <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>GitHub</span>
-                <strong style={{ fontSize: '13px', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <strong
+                  style={{
+                    fontSize: '13px',
+                    color: '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
                   {githubUrl.replace('https://', '')} <ExternalLink size={12} />
                 </strong>
               </div>
@@ -171,8 +215,18 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             >
               <Globe size={16} color="#0284c7" />
               <div>
-                <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Portfolio</span>
-                <strong style={{ fontSize: '13px', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
+                  Portfolio
+                </span>
+                <strong
+                  style={{
+                    fontSize: '13px',
+                    color: '#0284c7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
                   {portfolioUrl.replace('https://', '')} <ExternalLink size={12} />
                 </strong>
               </div>
@@ -213,14 +267,24 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
               2. Môn học nhận hướng dẫn ({subjectResults.length})
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Danh mục môn học và điểm số đã duyệt</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              Danh mục môn học và điểm số đã duyệt
+            </span>
           </div>
         </div>
 
         {subjectResults.length === 0 ? (
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Chưa đăng ký môn học hướng dẫn nào.</p>
+          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+            Chưa đăng ký môn học hướng dẫn nào.
+          </p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '12px',
+            }}
+          >
             {subjectResults.map((sub, idx) => (
               <div
                 key={idx}
@@ -249,7 +313,9 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
                   >
                     {sub.subjectCode}
                   </span>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{sub.subjectName}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                    {sub.subjectName}
+                  </div>
                 </div>
                 <div
                   style={{
@@ -301,13 +367,30 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
               3. Cấp độ năng lực hỗ trợ (Thang 1 - 5)
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Đánh giá khả năng đồng hành cùng Mentee</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              Đánh giá khả năng đồng hành cùng Mentee
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-          <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+          }}
+        >
+          <div
+            style={{
+              padding: '14px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <span
+              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+            >
               Kiến thức căn bản
             </span>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#7c3aed' }}>
@@ -315,8 +398,17 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             </div>
           </div>
 
-          <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+          <div
+            style={{
+              padding: '14px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <span
+              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+            >
               Review Đồ án / Code
             </span>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>
@@ -324,8 +416,17 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             </div>
           </div>
 
-          <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+          <div
+            style={{
+              padding: '14px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <span
+              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+            >
               Định hướng phát triển
             </span>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>
@@ -367,13 +468,30 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
               4. Cấu hình thời gian booking
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Quy định nhận lịch tư vấn từ Mentee</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              Quy định nhận lịch tư vấn từ Mentee
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-          <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '14px',
+          }}
+        >
+          <div
+            style={{
+              padding: '14px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <span
+              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+            >
               Trạng thái nhận lịch
             </span>
             <span
@@ -394,17 +512,37 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             </span>
           </div>
 
-          <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+          <div
+            style={{
+              padding: '14px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <span
+              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+            >
               Báo trước tối thiểu
             </span>
             <strong style={{ fontSize: '15px', color: '#0f172a' }}>
-              {minimumBookingLeadTimeMinutes ? `${minimumBookingLeadTimeMinutes} phút` : 'Chưa thiết lập'}
+              {minimumBookingLeadTimeMinutes
+                ? `${minimumBookingLeadTimeMinutes} phút`
+                : 'Chưa thiết lập'}
             </strong>
           </div>
 
-          <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+          <div
+            style={{
+              padding: '14px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <span
+              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+            >
               Hạn mở lịch tối đa
             </span>
             <strong style={{ fontSize: '15px', color: '#0f172a' }}>
@@ -446,7 +584,9 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
               5. Tài liệu minh chứng đã xác thực
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Đã qua quy trình kiểm duyệt chính thức</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              Đã qua quy trình kiểm duyệt chính thức
+            </span>
           </div>
         </div>
 

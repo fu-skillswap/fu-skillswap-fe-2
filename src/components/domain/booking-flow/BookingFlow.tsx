@@ -30,10 +30,23 @@ function priceLabel(price?: number) {
 function slotLabel(slot?: string, slotObj?: any) {
   if (slotObj?.startTime) {
     const d = new Date(slotObj.startTime);
-    const startStr = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const startStr = d.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
     const endD = slotObj.endTime ? new Date(slotObj.endTime) : d;
-    const endStr = endD.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-    const dateStr = d.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const endStr = endD.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const dateStr = d.toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
     return `${startStr} - ${endStr}, ${dateStr}`;
   }
   if (!slot) return 'Chưa chọn khung giờ';
@@ -113,7 +126,7 @@ export function BookingFlow({
   const [candidateSegments, setCandidateSegments] = useState<CandidateSegmentResponse[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(true);
   const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
-  
+
   // Trạng thái bật/tắt Pop-up Modal xác nhận nhập tiêu đề & mô tả
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [learningGoalTitle, setLearningGoalTitle] = useState('');
@@ -166,14 +179,18 @@ export function BookingFlow({
 
     const rawStartAt = selectedSlotObj.startTime || selectedSlotObj.startAt || slot;
     const rawEndAt = selectedSlotObj.endTime || selectedSlotObj.endAt || slot;
-    const slotId = selectedSlotObj.slotId || selectedSlotObj.segmentId || selectedSlotObj.candidateId || slot;
+    const slotId =
+      selectedSlotObj.slotId || selectedSlotObj.segmentId || selectedSlotObj.candidateId || slot;
 
     const payload: CreateBookingRequest = {
       slotId,
       serviceId: service.id,
       startAt: formatIso8601(rawStartAt),
-      learningGoalTitle: learningGoalTitle.trim() || 'Review lộ trình học Spring Boot và chuẩn bị phỏng vấn intern',
-      learningGoalDescription: learningGoalDescription.trim() || 'Em muốn được góp ý CV backend, định hướng học PRJ301 và cách làm project REST API với PostgreSQL.',
+      learningGoalTitle:
+        learningGoalTitle.trim() || 'Review lộ trình học Spring Boot và chuẩn bị phỏng vấn intern',
+      learningGoalDescription:
+        learningGoalDescription.trim() ||
+        'Em muốn được góp ý CV backend, định hướng học PRJ301 và cách làm project REST API với PostgreSQL.',
     };
 
     if (onConfirmWithPayload) {
@@ -192,9 +209,18 @@ export function BookingFlow({
         </span>
         <h2>Tạo yêu cầu đặt lịch thành công!</h2>
         <p>
-          Yêu cầu đặt lịch của bạn đã được gửi ở trạng thái <strong>PENDING</strong>. Mentor sẽ phản hồi lại thông báo đặt lịch của bạn.
+          Yêu cầu đặt lịch của bạn đã được gửi ở trạng thái <strong>PENDING</strong>. Mentor sẽ phản
+          hồi lại thông báo đặt lịch của bạn.
         </p>
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '12px',
+            marginTop: '20px',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
           <Link
             href={`/${locale}/my-bookings`}
             className="ui-btn ui-btn-primary"
@@ -235,11 +261,7 @@ export function BookingFlow({
       {/* Tóm tắt thông tin Mentor */}
       <article className="figma-booking-mentor-summary">
         {mentor.avatarUrl ? (
-          <img
-            src={mentor.avatarUrl}
-            alt={mentor.name}
-            className="figma-booking-mentor-avatar"
-          />
+          <img src={mentor.avatarUrl} alt={mentor.name} className="figma-booking-mentor-avatar" />
         ) : (
           <span className="figma-booking-mentor-avatar" aria-hidden="true">
             {initials(mentor.name)}
@@ -264,13 +286,20 @@ export function BookingFlow({
         onSelectSlot={(candidateObj, slotTimeStr) => {
           setSelectedSlotObj(candidateObj);
           onSlotChange(
-            candidateObj.segmentId || candidateObj.candidateId || candidateObj.slotId || slotTimeStr,
+            candidateObj.segmentId ||
+              candidateObj.candidateId ||
+              candidateObj.slotId ||
+              slotTimeStr,
             candidateObj,
           );
         }}
       />
 
-      <section className="figma-booking-summary" aria-label="Booking summary" style={{ marginTop: '16px' }}>
+      <section
+        className="figma-booking-summary"
+        aria-label="Booking summary"
+        style={{ marginTop: '16px' }}
+      >
         <h3>Tóm tắt lịch đặt</h3>
         <dl>
           <div>

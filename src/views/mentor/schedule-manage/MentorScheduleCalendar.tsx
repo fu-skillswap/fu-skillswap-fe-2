@@ -1,11 +1,12 @@
 /**
  * @file MentorScheduleCalendar.tsx
- * @description Calendar tuần read-only cho lịch dạy của Mentor.
+ * @description Calendar tuần cho lịch dạy của Mentor thiết kế chuẩn theo reference.
  */
 
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import type { MentorCalendarEvent } from './mentorScheduleCalendarData';
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
@@ -48,6 +49,12 @@ function formatWeekRange(weekStart: Date) {
 
 function formatHour(hour: number) {
   return `${String(hour).padStart(2, '0')}:00`;
+}
+
+function formatSlotTime(minutes: number) {
+  const h = String(Math.floor(minutes / 60) % 24).padStart(2, '0');
+  const m = String(minutes % 60).padStart(2, '0');
+  return `${h}:${m}`;
 }
 
 interface ZonedDateTimeParts {
@@ -106,6 +113,15 @@ export function MentorScheduleCalendar({
   onUnavailableAction,
   onSelectSlot,
 }: MentorScheduleCalendarProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      // Scroll to 06:00 by default (6 hours * 60px = 360px)
+      scrollRef.current.scrollTop = 360;
+    }
+  }, []);
+
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   let eventSegments: Array<{
     dayIndex: number;
@@ -123,37 +139,69 @@ export function MentorScheduleCalendar({
     <div className="mentor-schedule-calendar-card">
       <header className="mentor-schedule-calendar-toolbar">
         <div className="mentor-schedule-calendar-navigation">
-          <button type="button" aria-label="Tuần trước" onClick={onPreviousWeek}>
+          <button
+            type="button"
+            className="mentor-schedule-nav-btn"
+            aria-label="Tuần trước"
+            onClick={onPreviousWeek}
+          >
             <ChevronLeft aria-hidden="true" />
           </button>
           <button type="button" className="mentor-schedule-today-button" onClick={onToday}>
             Hôm nay
           </button>
-          <button type="button" aria-label="Tuần sau" onClick={onNextWeek}>
+          <button
+            type="button"
+            className="mentor-schedule-nav-btn"
+            aria-label="Tuần sau"
+            onClick={onNextWeek}
+          >
             <ChevronRight aria-hidden="true" />
           </button>
         </div>
-        <div className="mentor-schedule-calendar-period">
-          <strong>{formatWeekRange(weekStart)}</strong>
-          <span>{timezone}</span>
+
+        <div className="mentor-schedule-calendar-period-group">
+          <div className="mentor-schedule-calendar-period">
+            <strong>{formatWeekRange(weekStart)}</strong>
+            <span>{timezone}</span>
+          </div>
+          <button type="button" className="mentor-schedule-icon-btn" aria-label="Xem lịch">
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+          </button>
+          <div className="mentor-schedule-dropdown">
+            <button
+              type="button"
+              className="mentor-schedule-dropdown-btn"
+              aria-label="Chọn chế độ hiển thị"
+            >
+              <span>Tuần</span>
+              <ChevronDown className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="mentor-schedule-calendar-content">
-        <div className="mentor-schedule-calendar-scroll">
+        <div className="mentor-schedule-calendar-scroll" ref={scrollRef}>
           <div className="mentor-schedule-calendar-grid" aria-label="Lịch dạy theo tuần">
             <div className="mentor-schedule-calendar-corner" />
-            {days.map((day) => (
-              <div key={day.toISOString()} className="mentor-schedule-calendar-day">
-                <span>
-                  {new Intl.DateTimeFormat('en-US', {
-                    timeZone: 'UTC',
-                    weekday: 'long',
-                  }).format(day)}
-                </span>
-                <strong>{formatDate(day)}</strong>
-              </div>
-            ))}
+            {days.map((day) => {
+              const isWeekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+              const weekdayName = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'UTC',
+                weekday: 'long',
+              }).format(day);
+
+              return (
+                <div
+                  key={day.toISOString()}
+                  className={`mentor-schedule-calendar-day ${isWeekend ? 'is-weekend' : ''}`}
+                >
+                  <span className="weekday-name">{weekdayName}</span>
+                  <strong className="day-date">{formatDate(day)}</strong>
+                </div>
+              );
+            })}
 
             {HOURS.map((hour) => (
               <div className="mentor-schedule-calendar-row" key={hour}>
@@ -177,21 +225,27 @@ export function MentorScheduleCalendar({
                     .map((segment) => {
                       const durationMinutes = segment.endMinutes - segment.startMinutes;
                       const HOUR_HEIGHT = 60;
-                      const calculatedHeight = Math.max(28, (durationMinutes / 60) * HOUR_HEIGHT - 4);
-                      const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 2;
-                      const isShortSlot = calculatedHeight < 40;
+                      const calculatedHeight = Math.max(
+                        32,
+                        (durationMinutes / 60) * HOUR_HEIGHT - 6,
+                      );
+                      const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 3;
+                      const startTimeStr = formatSlotTime(segment.startMinutes);
+                      const endTimeStr = formatSlotTime(segment.endMinutes);
 
                       return (
                         <article
-                          className={`mentor-schedule-calendar-event event-availability ${isShortSlot ? 'event-short' : ''}`}
+                          className={`mentor-schedule-calendar-event event-availability event-${segment.event.status}`}
                           key={`${segment.event.id}-${dayIndex}`}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => onSelectSlot?.(segment.event.id)}
+                          role={segment.event.source === 'slot' ? 'button' : undefined}
+                          tabIndex={segment.event.source === 'slot' ? 0 : undefined}
+                          onClick={() =>
+                            segment.event.source === 'slot' && onSelectSlot?.(segment.event.id)
+                          }
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              onSelectSlot?.(segment.event.id);
+                              if (segment.event.source === 'slot') onSelectSlot?.(segment.event.id);
                             }
                           }}
                           style={{
@@ -199,21 +253,9 @@ export function MentorScheduleCalendar({
                             top: `${calculatedTop}px`,
                           }}
                         >
-                          <div className="event-title-time flex flex-wrap items-baseline gap-x-1">
-                            <strong>Lịch rảnh</strong>
-                            <span>
-                              {formatHour(Math.floor(segment.startMinutes / 60))} –{' '}
-                              {String(segment.endMinutes % 60).padStart(2, '0') === '00'
-                                ? formatHour(Math.floor(segment.endMinutes / 60) % 24)
-                                : `${String(Math.floor(segment.endMinutes / 60) % 24).padStart(2, '0')}:${String(segment.endMinutes % 60).padStart(2, '0')}`}
-                            </span>
+                          <div className="event-time font-bold">
+                            {startTimeStr} – {endTimeStr}
                           </div>
-                          {segment.event.serviceTitle && (
-                            <small className="event-service">{segment.event.serviceTitle}</small>
-                          )}
-                          {segment.event.note && (
-                            <small className="event-note">{segment.event.note}</small>
-                          )}
                         </article>
                       );
                     })}
@@ -250,6 +292,30 @@ export function MentorScheduleCalendar({
           </div>
         ) : null}
       </div>
+
+      {/* Legend footer matching reference spec */}
+      <footer className="mentor-schedule-calendar-legend">
+        <div className="legend-item">
+          <span className="legend-box legend-box-available" aria-hidden="true" />
+          <span>Khung giờ rảnh, chờ mentee đặt</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-box legend-box-booked" aria-hidden="true" />
+          <span>Khung giờ đã có mentee đặt</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-box legend-box-ongoing" aria-hidden="true" />
+          <span>Khung giờ đang diễn ra</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-box legend-box-past" aria-hidden="true" />
+          <span>Khung giờ đã diễn ra</span>
+        </div>
+        <div className="legend-item legend-info">
+          <Info className="legend-info-icon" aria-hidden="true" />
+          <span>Mentee có thể đặt lịch trong các khung giờ mentor đã mở.</span>
+        </div>
+      </footer>
     </div>
   );
 }

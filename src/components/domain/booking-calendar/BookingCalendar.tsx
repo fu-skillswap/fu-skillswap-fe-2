@@ -178,14 +178,43 @@ export function BookingCalendar({
   }, [displaySegments]);
 
   return (
-    <section className="gcal-booking-wrapper" aria-label="Pick a Time Slot - Google Calendar View" style={{ background: '#fff', border: '1px solid var(--figma-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <section
+      className="gcal-booking-wrapper"
+      aria-label="Pick a Time Slot - Google Calendar View"
+      style={{
+        background: '#fff',
+        border: '1px solid var(--figma-border)',
+        borderRadius: '16px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+      }}
+    >
       {/* Top Header Controls (Nút chuyển tuần & Thông tin ngày) */}
-      <div className="gcal-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="gcal-nav-buttons" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div
+        className="gcal-header-bar"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        <div
+          className="gcal-nav-buttons"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
           <button
             type="button"
             onClick={() => changeWeek(weekOffset - 1)}
-            style={{ width: '36px', height: '36px', borderRadius: '8px', border: '1px solid var(--figma-border)', background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--figma-text)' }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              border: '1px solid var(--figma-border)',
+              background: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--figma-text)',
+            }}
             title="Tuần trước"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -193,36 +222,90 @@ export function BookingCalendar({
           <button
             type="button"
             onClick={() => changeWeek(0)}
-            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--figma-blue)', background: '#fff', color: 'var(--figma-blue)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid var(--figma-blue)',
+              background: '#fff',
+              color: 'var(--figma-blue)',
+              fontWeight: '600',
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
           >
             Hôm nay
           </button>
           <button
             type="button"
             onClick={() => changeWeek(weekOffset + 1)}
-            style={{ width: '36px', height: '36px', borderRadius: '8px', border: '1px solid var(--figma-border)', background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--figma-text)' }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              border: '1px solid var(--figma-border)',
+              background: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--figma-text)',
+            }}
             title="Tuần sau"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
           {isLoading && (
-            <span style={{ fontSize: '13px', color: 'var(--figma-blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
+            <span
+              style={{
+                fontSize: '13px',
+                color: 'var(--figma-blue)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginLeft: '8px',
+              }}
+            >
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải candidate segments…
             </span>
           )}
         </div>
 
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>{dateRangeHeader}</div>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>
+            {dateRangeHeader}
+          </div>
           <div style={{ fontSize: '12px', color: 'var(--figma-muted)' }}>Asia/Ho_Chi_Minh</div>
         </div>
       </div>
 
       {/* Grid Google Calendar Tuần (Hiển thị các candidate segment theo vị trí & trạng thái rảnh / bị khóa) */}
-      <div className="gcal-grid-scroll" style={{ width: '100%', overflowX: 'auto', border: '1px solid var(--figma-border)', borderRadius: '12px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '55px repeat(7, minmax(0, 1fr))', width: '100%', minWidth: '680px', background: '#fff' }}>
+      <div
+        className="gcal-grid-scroll"
+        style={{
+          width: '100%',
+          overflowX: 'auto',
+          border: '1px solid var(--figma-border)',
+          borderRadius: '12px',
+        }}
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '55px repeat(7, minmax(0, 1fr))',
+            width: '100%',
+            minWidth: '680px',
+            background: '#fff',
+          }}
+        >
           {/* Header hàng 1: Cột trống + 7 cột Ngày */}
-          <div style={{ padding: '8px 4px', borderBottom: '1px solid var(--figma-border)', borderRight: '1px solid var(--figma-border)', background: '#f8fafc' }} />
+          <div
+            style={{
+              padding: '8px 4px',
+              borderBottom: '1px solid var(--figma-border)',
+              borderRight: '1px solid var(--figma-border)',
+              background: '#f8fafc',
+            }}
+          />
           {weekDays.map((day) => (
             <div
               key={day.dateStr}
@@ -234,8 +317,21 @@ export function BookingCalendar({
                 background: '#f8fafc',
               }}
             >
-              <div style={{ fontSize: '11px', color: 'var(--figma-muted)', fontWeight: '600', textTransform: 'uppercase' }}>{day.shortLabel}</div>
-              <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginTop: '1px' }}>{day.dayMonth}</div>
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--figma-muted)',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {day.shortLabel}
+              </div>
+              <div
+                style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginTop: '1px' }}
+              >
+                {day.dayMonth}
+              </div>
             </div>
           ))}
 
@@ -292,7 +388,9 @@ export function BookingCalendar({
                 {/* Thẻ Candidate Segment Lịch Rảnh / Blocked */}
                 {daySegments.map((segmentItem, idx) => {
                   const startD = new Date(segmentItem.startTime);
-                  const endD = segmentItem.endTime ? new Date(segmentItem.endTime) : new Date(startD.getTime() + 60 * 60 * 1000);
+                  const endD = segmentItem.endTime
+                    ? new Date(segmentItem.endTime)
+                    : new Date(startD.getTime() + 60 * 60 * 1000);
 
                   const startHours = startD.getHours() + startD.getMinutes() / 60;
                   const endHours = endD.getHours() + endD.getMinutes() / 60;
@@ -309,9 +407,9 @@ export function BookingCalendar({
                     segmentItem.isSelectable === false ||
                     Boolean(
                       segmentItem.blockedByAcceptedBooking ||
-                        segmentItem.blockedBySameService ||
-                        segmentItem.blockedByDifferentService ||
-                        segmentItem.isBlocked,
+                      segmentItem.blockedBySameService ||
+                      segmentItem.blockedByDifferentService ||
+                      segmentItem.isBlocked,
                     );
 
                   const blockedReasonText =
@@ -333,7 +431,8 @@ export function BookingCalendar({
                       value === `${day.dateStr}T${startTimeStr}` ||
                       value === segmentItem.startTime);
 
-                  const serviceTitle = segmentItem.title || selectedServiceName || 'Mentoring Session';
+                  const serviceTitle =
+                    segmentItem.title || selectedServiceName || 'Mentoring Session';
 
                   return (
                     <button
@@ -362,23 +461,19 @@ export function BookingCalendar({
                         border: isBlocked
                           ? '1px dashed #cbd5e1'
                           : isSelected
-                          ? '2px solid var(--figma-blue)'
-                          : '1px solid #93c5fd',
+                            ? '2px solid var(--figma-blue)'
+                            : '1px solid #93c5fd',
                         background: isBlocked
                           ? '#f1f5f9'
                           : isSelected
-                          ? 'var(--figma-blue)'
-                          : '#eff6ff',
-                        color: isBlocked
-                          ? '#64748b'
-                          : isSelected
-                          ? '#ffffff'
-                          : '#0369a1',
+                            ? 'var(--figma-blue)'
+                            : '#eff6ff',
+                        color: isBlocked ? '#64748b' : isSelected ? '#ffffff' : '#0369a1',
                         boxShadow: isBlocked
                           ? 'none'
                           : isSelected
-                          ? '0 6px 16px rgba(0,149,246,0.4)'
-                          : '0 2px 6px rgba(147,197,253,0.3)',
+                            ? '0 6px 16px rgba(0,149,246,0.4)'
+                            : '0 2px 6px rgba(147,197,253,0.3)',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',

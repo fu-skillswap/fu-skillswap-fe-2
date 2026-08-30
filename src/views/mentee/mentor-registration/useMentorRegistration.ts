@@ -5,20 +5,20 @@
 
 'use client';
 
-import { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { ApiClientError } from "@/models/apiClient";
-import type { SaveMentorProfileRequest } from "@/models/auth";
+import { useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ApiClientError } from '@/models/apiClient';
+import type { SaveMentorProfileRequest } from '@/models/auth';
 import {
   mentorProfileSchema,
   type MentorProfileFormValues,
-} from "@/models/schemas/mentorProfileSchema";
-import { mentorProfileRepo } from "@/repositories/mentorProfileRepo";
-import { confirmAction, showSuccess, showError, showWarning } from "@/utils/toast";
+} from '@/models/schemas/mentorProfileSchema';
+import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
+import { confirmAction, showSuccess, showError, showWarning } from '@/utils/toast';
 
-import { useDocumentUpload } from "./hooks/useDocumentUpload";
-import { useMentorProfileHydration } from "./hooks/useMentorProfileHydration";
+import { useDocumentUpload } from './hooks/useDocumentUpload';
+import { useMentorProfileHydration } from './hooks/useMentorProfileHydration';
 
 const defaultValues: MentorProfileFormValues = {
   headline: '',
@@ -81,9 +81,9 @@ export function useMentorRegistration() {
   } = useDocumentUpload();
 
   // 4. Quản lý các Field Array (Môn học, Dự án, Giải thưởng)
-  const subjectFieldsArray = useFieldArray({ control, name: "subjectResults" });
-  const projectFieldsArray = useFieldArray({ control, name: "projects" });
-  const achievementFieldsArray = useFieldArray({ control, name: "achievements" });
+  const subjectFieldsArray = useFieldArray({ control, name: 'subjectResults' });
+  const projectFieldsArray = useFieldArray({ control, name: 'projects' });
+  const achievementFieldsArray = useFieldArray({ control, name: 'achievements' });
 
   // 5. Quy trình Submit biểu mẫu
   const onSubmit = async (values: MentorProfileFormValues) => {
@@ -96,21 +96,26 @@ export function useMentorRegistration() {
       ).length ?? 0) > 0;
 
     if (!selectedFptuFile && !isExistingProfile) {
-      const msg = "Vui lòng chọn file minh chứng Sinh viên / Cựu sinh viên FPTU trước khi nộp hồ sơ.";
+      const msg =
+        'Vui lòng chọn file minh chứng Sinh viên / Cựu sinh viên FPTU trước khi nộp hồ sơ.';
       setServerError(msg);
       showWarning(msg);
       return;
     }
 
-    if ((!selectedExpertiseFiles || selectedExpertiseFiles.length === 0) && !hasExistingExpertise && !isExistingProfile) {
-      const msg = "Vui lòng chọn ít nhất 1 file chứng minh chuyên môn (EXPERTISE_PROOF).";
+    if (
+      (!selectedExpertiseFiles || selectedExpertiseFiles.length === 0) &&
+      !hasExistingExpertise &&
+      !isExistingProfile
+    ) {
+      const msg = 'Vui lòng chọn ít nhất 1 file chứng minh chuyên môn (EXPERTISE_PROOF).';
       setServerError(msg);
       showWarning(msg);
       return;
     }
 
     if (selectedExpertiseFiles.length > 3) {
-      const msg = "Bạn chỉ được tải lên tối đa 3 file chứng minh chuyên môn.";
+      const msg = 'Bạn chỉ được tải lên tối đa 3 file chứng minh chuyên môn.';
       setServerError(msg);
       showWarning(msg);
       return;
@@ -137,7 +142,7 @@ export function useMentorRegistration() {
         directionSupportLevel: Number(values.directionSupportLevel),
         minimumBookingLeadTimeMinutes: Number(values.minimumBookingLeadTimeMinutes),
         maximumBookingHorizonDays: Number(values.maximumBookingHorizonDays),
-        bookingTimezone: "Asia/Ho_Chi_Minh",
+        bookingTimezone: 'Asia/Ho_Chi_Minh',
         subjectResults: (values.subjectResults || [])
           .filter(
             (s) =>
@@ -206,15 +211,15 @@ export function useMentorRegistration() {
         termsAccepted: Boolean(values.agreeTerms),
       });
 
-      const successMsg = "Nộp hồ sơ Mentor thành công! Hồ sơ của bạn đã được gửi cho Admin duyệt.";
+      const successMsg = 'Nộp hồ sơ Mentor thành công! Hồ sơ của bạn đã được gửi cho Admin duyệt.';
       setIsExistingProfile(true);
-      setApplicationStatus("PENDING_REVIEW");
+      setApplicationStatus('PENDING_REVIEW');
       setSuccessMessage(successMsg);
       showSuccess(successMsg);
     } catch (err) {
-      let errMsg = "Có lỗi xảy ra trong quá trình kết nối máy chủ.";
+      let errMsg = 'Có lỗi xảy ra trong quá trình kết nối máy chủ.';
       if (err instanceof ApiClientError) {
-        errMsg = err.message || "Lỗi nộp hồ sơ từ máy chủ.";
+        errMsg = err.message || 'Lỗi nộp hồ sơ từ máy chủ.';
       }
       setServerError(errMsg);
       showError(errMsg);
@@ -224,30 +229,34 @@ export function useMentorRegistration() {
   // 6. Xử lý Xóa Dự án tiêu biểu
   const handleRemoveProject = async (index: number) => {
     const confirmed = await confirmAction({
-      title: "Xóa dự án tiêu biểu",
-      message: "Bạn có chắc chắn muốn xóa dự án tiêu biểu này khỏi hệ thống không? Thao tác này không thể hoàn tác.",
-      confirmText: "Xóa ngay",
-      cancelText: "Hủy bỏ",
-      variant: "danger",
+      title: 'Xóa dự án tiêu biểu',
+      message:
+        'Bạn có chắc chắn muốn xóa dự án tiêu biểu này khỏi hệ thống không? Thao tác này không thể hoàn tác.',
+      confirmText: 'Xóa ngay',
+      cancelText: 'Hủy bỏ',
+      variant: 'danger',
     });
     if (!confirmed) return;
 
-    const currentProjects = form.getValues("projects");
+    const currentProjects = form.getValues('projects');
     const target = currentProjects?.[index];
     const projectId = (target as any)?.projectId || target?.id;
 
     if (projectId) {
       try {
         await mentorProfileRepo.deleteProject(projectId);
-        showSuccess("Xóa dự án tiêu biểu thành công.");
+        showSuccess('Xóa dự án tiêu biểu thành công.');
       } catch (err) {
-        const errMsg = err instanceof ApiClientError ? err.message || "Xóa dự án thất bại." : "Không thể xóa dự án trên máy chủ.";
+        const errMsg =
+          err instanceof ApiClientError
+            ? err.message || 'Xóa dự án thất bại.'
+            : 'Không thể xóa dự án trên máy chủ.';
         setServerError(errMsg);
         showError(errMsg);
         return;
       }
     } else {
-      showSuccess("Đã xóa dự án.");
+      showSuccess('Đã xóa dự án.');
     }
 
     projectFieldsArray.remove(index);
@@ -256,30 +265,34 @@ export function useMentorRegistration() {
   // 7. Xử lý Xóa Học vấn / Giải thưởng
   const handleRemoveAchievement = async (index: number) => {
     const confirmed = await confirmAction({
-      title: "Xóa học vấn / giải thưởng",
-      message: "Bạn có chắc chắn muốn xóa học vấn / giải thưởng này khỏi hệ thống không? Thao tác này không thể hoàn tác.",
-      confirmText: "Xóa ngay",
-      cancelText: "Hủy bỏ",
-      variant: "danger",
+      title: 'Xóa học vấn / giải thưởng',
+      message:
+        'Bạn có chắc chắn muốn xóa học vấn / giải thưởng này khỏi hệ thống không? Thao tác này không thể hoàn tác.',
+      confirmText: 'Xóa ngay',
+      cancelText: 'Hủy bỏ',
+      variant: 'danger',
     });
     if (!confirmed) return;
 
-    const currentAchievements = form.getValues("achievements");
+    const currentAchievements = form.getValues('achievements');
     const target = currentAchievements?.[index];
     const achievementId = (target as any)?.achievementId || target?.id;
 
     if (achievementId) {
       try {
         await mentorProfileRepo.deleteAchievement(achievementId);
-        showSuccess("Xóa học vấn/giải thưởng thành công.");
+        showSuccess('Xóa học vấn/giải thưởng thành công.');
       } catch (err) {
-        const errMsg = err instanceof ApiClientError ? err.message || "Xóa giải thưởng thất bại." : "Không thể xóa giải thưởng trên máy chủ.";
+        const errMsg =
+          err instanceof ApiClientError
+            ? err.message || 'Xóa giải thưởng thất bại.'
+            : 'Không thể xóa giải thưởng trên máy chủ.';
         setServerError(errMsg);
         showError(errMsg);
         return;
       }
     } else {
-      showSuccess("Đã xóa học vấn/giải thưởng.");
+      showSuccess('Đã xóa học vấn/giải thưởng.');
     }
 
     achievementFieldsArray.remove(index);
@@ -288,11 +301,11 @@ export function useMentorRegistration() {
   // 8. Xử lý Rút Hồ sơ đăng ký Mentor
   const handleWithdraw = async () => {
     const confirmed = await confirmAction({
-      title: "Rút hồ sơ đăng ký Mentor",
-      message: "Bạn có chắc chắn muốn rút hồ sơ đăng ký làm Mentor không?",
-      confirmText: "Rút hồ sơ",
-      cancelText: "Hủy bỏ",
-      variant: "warning",
+      title: 'Rút hồ sơ đăng ký Mentor',
+      message: 'Bạn có chắc chắn muốn rút hồ sơ đăng ký làm Mentor không?',
+      confirmText: 'Rút hồ sơ',
+      cancelText: 'Hủy bỏ',
+      variant: 'warning',
     });
     if (!confirmed) return;
 
@@ -300,16 +313,17 @@ export function useMentorRegistration() {
       await mentorProfileRepo.withdrawVerification();
 
       const progress = await mentorProfileRepo.getVerificationProgress().catch(() => null);
-      const newStatus = progress?.applicationStatus || "DRAFT";
+      const newStatus = progress?.applicationStatus || 'DRAFT';
 
       setApplicationStatus(newStatus);
-      const msg = "Đã rút hồ sơ đăng ký thành công. Hồ sơ hiện đã trở về trạng thái DRAFT để bạn chỉnh sửa.";
+      const msg =
+        'Đã rút hồ sơ đăng ký thành công. Hồ sơ hiện đã trở về trạng thái DRAFT để bạn chỉnh sửa.';
       setSuccessMessage(msg);
       showSuccess(msg);
     } catch (err) {
-      let errMsg = "Không thể rút hồ sơ vào lúc này.";
+      let errMsg = 'Không thể rút hồ sơ vào lúc này.';
       if (err instanceof ApiClientError) {
-        errMsg = err.message || "Lỗi rút hồ sơ từ máy chủ.";
+        errMsg = err.message || 'Lỗi rút hồ sơ từ máy chủ.';
       }
       setServerError(errMsg);
       showError(errMsg);
@@ -350,4 +364,3 @@ export function useMentorRegistration() {
     withdrawProfile: handleWithdraw,
   };
 }
-

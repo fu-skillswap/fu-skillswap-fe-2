@@ -3,10 +3,10 @@
  * @description Sub-hook quản lý State chọn file minh chứng và quy trình Upload S3/GCS qua mentorProfileRepo.
  */
 
-"use client";
+'use client';
 
-import { useState } from "react";
-import { mentorProfileRepo } from "@/repositories/mentorProfileRepo";
+import { useState } from 'react';
+import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
 
 export function useDocumentUpload() {
   const [selectedFptuFile, setSelectedFptuFile] = useState<File | null>(null);
@@ -35,7 +35,7 @@ export function useDocumentUpload() {
       try {
         const fptuIntent = await mentorProfileRepo.createUploadIntent({
           filename: selectedFptuFile.name,
-          contentType: selectedFptuFile.type || "application/octet-stream",
+          contentType: selectedFptuFile.type || 'application/octet-stream',
           sizeBytes: selectedFptuFile.size,
         });
 
@@ -46,11 +46,11 @@ export function useDocumentUpload() {
         );
 
         await mentorProfileRepo.confirmDocument({
-          documentType: "FPTU_AFFILIATION_PROOF",
+          documentType: 'FPTU_AFFILIATION_PROOF',
           uploadIntentId: fptuIntent.uploadIntentId,
         });
       } catch (fptuErr) {
-        console.warn("Bỏ qua lỗi file FPTU nếu đã có file active:", fptuErr);
+        console.warn('Bỏ qua lỗi file FPTU nếu đã có file active:', fptuErr);
       }
     }
 
@@ -60,7 +60,7 @@ export function useDocumentUpload() {
         try {
           const expIntent = await mentorProfileRepo.createUploadIntent({
             filename: expFile.name,
-            contentType: expFile.type || "application/octet-stream",
+            contentType: expFile.type || 'application/octet-stream',
             sizeBytes: expFile.size,
           });
 
@@ -71,11 +71,11 @@ export function useDocumentUpload() {
           );
 
           await mentorProfileRepo.confirmDocument({
-            documentType: "EXPERTISE_PROOF",
+            documentType: 'EXPERTISE_PROOF',
             uploadIntentId: expIntent.uploadIntentId,
           });
         } catch (expErr) {
-          console.warn("Lỗi upload file minh chứng chuyên môn:", expErr);
+          console.warn('Lỗi upload file minh chứng chuyên môn:', expErr);
         }
       }
     }

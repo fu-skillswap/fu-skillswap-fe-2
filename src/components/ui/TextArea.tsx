@@ -11,7 +11,15 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   helperText?: string;
 }
 
-export function TextArea({ label, error, helperText, id, name, className = '', ...props }: TextAreaProps) {
+export function TextArea({
+  label,
+  error,
+  helperText,
+  id,
+  name,
+  className = '',
+  ...props
+}: TextAreaProps) {
   const fieldId = id ?? name;
   const textareaEl = (
     <textarea

@@ -78,7 +78,8 @@ export function MentorCoursesView() {
             <span className="mentor-courses-badge">{services.length} Khóa học</span>
           </div>
           <p>
-            Quản lý các dịch vụ tư vấn 1:1, tùy chỉnh thời lượng, nội dung và mức phí S-coin của bạn.
+            Quản lý các dịch vụ tư vấn 1:1, tùy chỉnh thời lượng, nội dung và mức phí S-coin của
+            bạn.
           </p>
         </div>
         <button
@@ -119,9 +120,7 @@ export function MentorCoursesView() {
           </div>
           <div className="mentor-stat-info">
             <strong className="mentor-stat-number">{services.length}</strong>
-            <span className="mentor-stat-label">
-              Khóa học ({activeCount} đang hoạt động)
-            </span>
+            <span className="mentor-stat-label">Khóa học ({activeCount} đang hoạt động)</span>
           </div>
         </div>
       </div>
@@ -150,9 +149,7 @@ export function MentorCoursesView() {
                   <div className="mentor-course-heading">
                     <h2>{service.title}</h2>
                     <span
-                      className={`mentor-status-tag ${
-                        service.isActive ? 'active' : 'inactive'
-                      }`}
+                      className={`mentor-status-tag ${service.isActive ? 'active' : 'inactive'}`}
                     >
                       {service.isActive ? 'Đã đăng' : 'Tạm dừng'}
                     </span>
@@ -284,7 +281,11 @@ export function MentorCoursesView() {
               <label className="form-label" htmlFor="course-duration">
                 Thời lượng tư vấn <span className="text-red-500">*</span>
               </label>
-              <select id="course-duration" className="form-select" {...form.register('durationMinutes')}>
+              <select
+                id="course-duration"
+                className="form-select"
+                {...form.register('durationMinutes')}
+              >
                 <option value="">Chọn thời lượng</option>
                 {constraints?.allowedDurationMinutes.map((mins) => (
                   <option key={mins} value={mins}>
@@ -293,7 +294,9 @@ export function MentorCoursesView() {
                 ))}
               </select>
               {form.formState.errors.durationMinutes && (
-                <span className="form-error-msg">{form.formState.errors.durationMinutes.message}</span>
+                <span className="form-error-msg">
+                  {form.formState.errors.durationMinutes.message}
+                </span>
               )}
             </div>
 
@@ -331,11 +334,7 @@ export function MentorCoursesView() {
           </div>
 
           <div className="form-modal-footer">
-            <button
-              type="button"
-              className="btn-modal-cancel"
-              onClick={() => setOpenModal(false)}
-            >
+            <button type="button" className="btn-modal-cancel" onClick={() => setOpenModal(false)}>
               Hủy bỏ
             </button>
             <Button type="submit" disabled={isSaving} className="btn-modal-submit">
