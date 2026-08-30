@@ -1,6 +1,6 @@
 /**
  * @file SelectableRow.tsx
- * @description Card-style Selection Item primitive for SkillSwap UI Foundation.
+ * @description Card-style Selection Item primitive matching reference modal mockup.
  */
 
 import React from 'react';
@@ -11,6 +11,7 @@ export interface SelectableRowProps {
   onSelect: () => void;
   title: React.ReactNode;
   description?: React.ReactNode;
+  icon?: React.ReactNode;
   badge?: React.ReactNode;
   disabled?: boolean;
   className?: string;
@@ -21,6 +22,7 @@ export function SelectableRow({
   onSelect,
   title,
   description,
+  icon,
   badge,
   disabled,
   className = '',
@@ -42,6 +44,7 @@ export function SelectableRow({
       <div className="ui-selectable-row-control">
         <Checkbox checked={selected} onChange={() => {}} disabled={disabled} tabIndex={-1} />
       </div>
+      {icon && <div className="ui-selectable-row-icon-box">{icon}</div>}
       <div className="ui-selectable-row-content">
         <div className="ui-selectable-row-title-bar">
           <span className="ui-selectable-row-title">{title}</span>

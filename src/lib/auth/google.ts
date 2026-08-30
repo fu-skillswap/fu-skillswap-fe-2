@@ -37,3 +37,20 @@ export function onboardingDestination(
 
   return `/${locale}/dashboard`;
 }
+
+/**
+ * Lấy URL redirectUri dùng cho luồng Google Calendar OAuth PKCE flow.
+ * Ưu tiên biến môi trường NEXT_PUBLIC_GOOGLE_CALENDAR_REDIRECT_URI nếu được cấu hình.
+ *
+ * @param locale - Mã ngôn ngữ hiện tại (ví dụ: "vi", "en")
+ * @returns URL hoàn chỉnh của callback Google Calendar
+ */
+export function getGoogleCalendarRedirectUri(locale: string): string {
+  if (process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_REDIRECT_URI) {
+    return process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_REDIRECT_URI;
+  }
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/${locale}/mentor/google-calendar/callback`;
+  }
+  return `/${locale}/mentor/google-calendar/callback`;
+}

@@ -170,14 +170,20 @@ export interface GoogleCalendarStatusResponse {
   lastSyncErrorMessage: string | null;
 }
 
+export interface GoogleAuthorizationContextResponse {
+  state: string;
+  expiresAt: string;
+}
+
+export interface GoogleCalendarConnectRequest {
+  authorizationCode: string;
+  redirectUri: string;
+  codeVerifier: string;
+  state: string;
+}
+
 export type WeekdayEnum =
-  | 'MONDAY'
-  | 'TUESDAY'
-  | 'WEDNESDAY'
-  | 'THURSDAY'
-  | 'FRIDAY'
-  | 'SATURDAY'
-  | 'SUNDAY';
+  'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
 export interface LocalTimeObject {
   hour: number;
@@ -224,21 +230,21 @@ export interface CursorPageResponseAvailabilityTemplateResponse {
 }
 
 export interface CreateAvailabilityTemplateRequest {
-  startTime: LocalTime;
-  endTime: LocalTime;
+  startTime: string;
+  endTime: string;
   weekdays: WeekdayEnum[];
   effectiveFrom: string;
-  effectiveTo?: string | null;
+  effectiveTo?: string;
   serviceIds: string[];
   note?: string;
 }
 
 export interface UpdateAvailabilityTemplateRequest {
-  startTime: LocalTime;
-  endTime: LocalTime;
+  startTime: string;
+  endTime: string;
   weekdays: WeekdayEnum[];
   effectiveFrom?: string;
-  effectiveTo?: string | null;
+  effectiveTo?: string;
   serviceIds: string[];
   expectedVersion: number;
   note?: string;
@@ -246,6 +252,11 @@ export interface UpdateAvailabilityTemplateRequest {
 }
 
 export interface AvailabilityTemplateVersionRequest {
+  expectedVersion: number;
+  rejectPendingBookings?: boolean;
+}
+
+export interface AvailabilityTemplateExceptionRequest {
   expectedVersion: number;
   rejectPendingBookings?: boolean;
 }

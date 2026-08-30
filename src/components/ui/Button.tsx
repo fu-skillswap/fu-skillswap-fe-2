@@ -30,7 +30,7 @@ export function Button({
 
   return (
     <button
-      className={`button ui-btn ${variantClass} ${sizeClass} ${loadingClass} ${className}`.trim()}
+      className={`ui-btn ${variantClass} ${sizeClass} ${loadingClass} ${className}`.trim()}
       disabled={disabled || loading}
       {...props}
     >

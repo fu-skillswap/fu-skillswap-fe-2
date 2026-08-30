@@ -9,11 +9,16 @@
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Tabs } from '@/components/ui/Tabs';
+import { Badge } from '@/components/ui/Badge';
+import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
+import { getGoogleCalendarRedirectUri } from '@/lib/auth/google';
+import { formatDateVi } from './mentorTemplateHelpers';
 import { ApiClientError } from '@/models/apiClient';
 import type {
   AvailabilityTemplateResponse,
   CreateAvailabilityTemplateRequest,
   DeactivateAvailabilitySlotRequest,
+  GoogleAuthorizationContextResponse,
   MentorManagedAvailabilitySlotResponse,
   MentorServiceManagementResponse,
   UpdateAvailabilitySlotRequest,
@@ -39,12 +44,18 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import {
   AlertTriangle,
   BookOpen,
+  Calendar,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   Compass,
   FileText,
+  Globe,
+  Lock,
   Plus,
+  RefreshCw,
   Settings,
+  ShieldCheck,
   Target,
   X,
 } from 'lucide-react';
@@ -397,6 +408,16 @@ export function ScheduleManageView() {
     setIsTemplateFormOpen(true);
   };
 
+  const formatApiClientError = (reason: ApiClientError) => {
+    if (reason.data && Array.isArray(reason.data) && reason.data.length > 0) {
+      const details = reason.data
+        .map((d) => (d.field ? `${d.field}: ${d.message}` : d.message))
+        .join('; ');
+      return `${reason.message} (${details})`;
+    }
+    return reason.message;
+  };
+
   const onSubmitCreateTemplate = async (data: CreateAvailabilityTemplateRequest) => {
     setIsSubmittingTemplate(true);
     setTemplateStaleNotice(null);
@@ -408,7 +429,8 @@ export function ScheduleManageView() {
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
-        showError(reason.message);
+        showError(formatApiClientError(reason));
+        console.error('Create template error:', reason);
       } else {
         showError('Không thể tạo mẫu lịch lặp. Vui lòng thử lại.');
       }
@@ -445,7 +467,8 @@ export function ScheduleManageView() {
             showError('Mẫu lịch này không còn tồn tại hoặc đã bị lưu trữ.');
           }
         } else {
-          showError(reason.message);
+          showError(formatApiClientError(reason));
+          console.error('Update template error:', reason);
         }
       } else {
         showError('Không thể cập nhật mẫu lịch lặp. Vui lòng thử lại.');
@@ -521,6 +544,118 @@ export function ScheduleManageView() {
     }
   };
 
+  const [isSubmittingException, setIsSubmittingException] = useState<boolean>(false);
+
+  const handleSkipTemplateDate = async (
+    templateId: string,
+    occurrenceDate: string,
+    expectedVersion: number,
+  ) => {
+    setIsSubmittingException(true);
+    try {
+      const updatedTemplate = await mentorSchedulingRepo.addTemplateException(
+        templateId,
+        occurrenceDate,
+        { expectedVersion },
+      );
+      showSuccess('Đã bỏ qua ngày đã chọn.');
+      setSelectedTemplateForDetail(updatedTemplate);
+      await reloadTemplates();
+      await reloadScheduling();
+    } catch (reason) {
+      if (reason instanceof ApiClientError) {
+        if (reason.status === 409) {
+          try {
+            const fresh = await mentorSchedulingRepo.getAvailabilityTemplate(templateId);
+            setSelectedTemplateForDetail(fresh);
+          } catch {
+            // ignore
+          }
+          await reloadTemplates();
+          showError(
+            'Lịch lặp này vừa được thay đổi ở nơi khác. Dữ liệu mới nhất đã được tải lại. Vui lòng kiểm tra trước khi thử lại.',
+          );
+        } else if (reason.status === 404) {
+          setSelectedTemplateForDetail(null);
+          await reloadTemplates();
+          showError('Lịch lặp này không còn tồn tại.');
+        } else if (reason.status === 429) {
+          const retryAfterSeconds = reason.retryAfterSeconds ?? 0;
+          if (retryAfterSeconds > 0) {
+            setAvailabilityRetryUntil(Date.now() + retryAfterSeconds * 1000);
+          }
+          showError(
+            retryAfterSeconds > 0
+              ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
+              : reason.message,
+          );
+        } else {
+          showError(reason.message);
+        }
+      } else {
+        showError('Không thể bỏ qua ngày đã chọn. Vui lòng thử lại.');
+      }
+      throw reason;
+    } finally {
+      setIsSubmittingException(false);
+    }
+  };
+
+  const handleRestoreTemplateDate = async (
+    templateId: string,
+    occurrenceDate: string,
+    expectedVersion: number,
+  ) => {
+    setIsSubmittingException(true);
+    try {
+      const updatedTemplate = await mentorSchedulingRepo.restoreTemplateException(
+        templateId,
+        occurrenceDate,
+        { expectedVersion },
+      );
+      showSuccess('Đã khôi phục ngày.');
+      setSelectedTemplateForDetail(updatedTemplate);
+      await reloadTemplates();
+      await reloadScheduling();
+    } catch (reason) {
+      if (reason instanceof ApiClientError) {
+        if (reason.status === 409) {
+          try {
+            const fresh = await mentorSchedulingRepo.getAvailabilityTemplate(templateId);
+            setSelectedTemplateForDetail(fresh);
+          } catch {
+            // ignore
+          }
+          await reloadTemplates();
+          showError(
+            'Lịch lặp này vừa được thay đổi ở nơi khác. Dữ liệu mới nhất đã được tải lại. Vui lòng kiểm tra trước khi thử lại.',
+          );
+        } else if (reason.status === 404) {
+          setSelectedTemplateForDetail(null);
+          await reloadTemplates();
+          showError('Lịch lặp này không còn tồn tại.');
+        } else if (reason.status === 429) {
+          const retryAfterSeconds = reason.retryAfterSeconds ?? 0;
+          if (retryAfterSeconds > 0) {
+            setAvailabilityRetryUntil(Date.now() + retryAfterSeconds * 1000);
+          }
+          showError(
+            retryAfterSeconds > 0
+              ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
+              : reason.message,
+          );
+        } else {
+          showError(reason.message);
+        }
+      } else {
+        showError('Không thể khôi phục ngày đã chọn. Vui lòng thử lại.');
+      }
+      throw reason;
+    } finally {
+      setIsSubmittingException(false);
+    }
+  };
+
   // Fetch danh sách dịch vụ từ API backend
   const loadServices = async () => {
     try {
@@ -574,6 +709,82 @@ export function ScheduleManageView() {
       }
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const [isInitiatingGoogleOAuth, setIsInitiatingGoogleOAuth] = useState(false);
+  const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [cannotDisconnectNotice, setCannotDisconnectNotice] = useState<string | null>(null);
+
+  const handleInitiateGoogleOAuth = async () => {
+    setIsInitiatingGoogleOAuth(true);
+    try {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const redirectUri = getGoogleCalendarRedirectUri(locale);
+
+      const context = await mentorSchedulingRepo.getGoogleCalendarAuthorizationContext(
+        redirectUri,
+        codeChallenge,
+      );
+
+      sessionStorage.setItem('skillswap.googleCalendar.pkceVerifier', codeVerifier);
+      sessionStorage.setItem('skillswap.googleCalendar.state', context.state);
+      sessionStorage.setItem('skillswap.googleCalendar.redirectUri', redirectUri);
+
+      const clientId =
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+        '1009522721292-e7fb6m9h3h62svo27d2s1f7jh5rdeoff.apps.googleusercontent.com';
+      const scope =
+        'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
+
+      const googleAuthUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=${encodeURIComponent(context.state)}&` +
+        `code_challenge=${encodeURIComponent(codeChallenge)}&` +
+        `code_challenge_method=S256&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+
+      window.location.href = googleAuthUrl;
+    } catch (reason) {
+      setIsInitiatingGoogleOAuth(false);
+      if (reason instanceof ApiClientError) {
+        showError(reason.message);
+      } else {
+        showError('Không thể khởi tạo kết nối Google Calendar. Vui lòng thử lại.');
+      }
+    }
+  };
+
+  const handleConfirmDisconnectGoogleCalendar = async () => {
+    setIsDisconnecting(true);
+    try {
+      await mentorSchedulingRepo.disconnectGoogleCalendar();
+      setIsDisconnectModalOpen(false);
+      showSuccess('Đã ngắt kết nối Google Calendar.');
+      await reloadScheduling();
+    } catch (reason) {
+      setIsDisconnectModalOpen(false);
+      if (
+        reason instanceof ApiClientError &&
+        (reason.status === 409 || reason.code === 'CAL_4403')
+      ) {
+        setCannotDisconnectNotice(
+          'Bạn vẫn còn lịch đã thanh toán trong tương lai đang sử dụng Google Calendar.',
+        );
+      } else if (reason instanceof ApiClientError) {
+        showError(reason.message);
+      } else {
+        showError('Không thể ngắt kết nối Google Calendar.');
+      }
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -1329,7 +1540,7 @@ export function ScheduleManageView() {
 
       <Modal
         open={isScheduleSettingsOpen}
-        title="Cài đặt lịch"
+        hideHeader
         onClose={() => {
           if (!isSavingPolicy) {
             if (bookingPolicy) {
@@ -1339,210 +1550,354 @@ export function ScheduleManageView() {
             setIsScheduleSettingsOpen(false);
           }
         }}
-        className="mentor-schedule-settings-drawer"
+        className="mentor-schedule-settings-modal"
       >
-        <form onSubmit={handleSaveBookingPolicy} noValidate className="space-y-4 -mt-2">
-          {policyStaleNotice && (
-            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-medium">
-              {policyStaleNotice}
-            </div>
-          )}
-
-          {policyFormErrors.root && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-medium">
-              {policyFormErrors.root}
-            </div>
-          )}
-
-          {/* Section: Quy tắc đặt lịch */}
-          <div className="space-y-3">
-            <div>
-              <h3 className="text-base font-bold text-sky-800">Quy tắc đặt lịch</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Quản lý cách mentee có thể đặt lịch với bạn.
-              </p>
-            </div>
-
-            <div className="space-y-3 pt-1">
-              <div className="form-field-group">
-                <label className="form-label text-xs font-semibold text-gray-700" htmlFor="policy-timezone">
-                  Múi giờ
-                </label>
-                <input
-                  id="policy-timezone"
-                  type="text"
-                  readOnly
-                  value={timezone}
-                  className="form-input bg-gray-100 cursor-not-allowed font-medium text-gray-700 text-sm"
-                />
-                <small className="text-[11px] text-gray-500">
-                  Múi giờ của Booking Policy được dùng làm chuẩn cho tất cả lịch rảnh.
-                </small>
-              </div>
-
-              <div className="form-field-group">
-                <label className="form-label text-xs font-semibold text-gray-700" htmlFor="policy-lead-time">
-                  Thời gian đặt trước tối thiểu <span style={{ color: '#ef4444', fontWeight: 'bold', marginLeft: '3px' }}>*</span>
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                  <div style={{ position: 'relative', flex: 1 }}>
-                    <input
-                      id="policy-lead-time"
-                      type="number"
-                      min={0}
-                      value={leadTimeInput}
-                      onChange={(e) => setLeadTimeInput(e.target.value)}
-                      className="form-input"
-                      style={{ width: '100%', paddingRight: '48px' }}
-                    />
-                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: 500, color: '#64748b', pointerEvents: 'none' }}>
-                      phút
-                    </span>
-                  </div>
-                  {Number(leadTimeInput) >= 60 && (
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#0369a1', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', padding: '6px 10px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-                      ≈ {(Number(leadTimeInput) / 60).toFixed(1)} giờ
-                    </span>
-                  )}
-                </div>
-                <small className="text-[11px] text-gray-500">
-                  Mentee cần đặt lịch trước ít nhất khoảng thời gian này.
-                </small>
-                {policyFormErrors.leadTime && (
-                  <span className="form-error-msg">{policyFormErrors.leadTime}</span>
-                )}
-              </div>
-
-              <div className="form-field-group">
-                <label className="form-label text-xs font-semibold text-gray-700" htmlFor="policy-horizon">
-                  Cho phép đặt trước tối đa <span style={{ color: '#ef4444', fontWeight: 'bold', marginLeft: '3px' }}>*</span>
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <input
-                    id="policy-horizon"
-                    type="number"
-                    min={1}
-                    value={horizonInput}
-                    onChange={(e) => setHorizonInput(e.target.value)}
-                    className="form-input"
-                    style={{ width: '100%', paddingRight: '48px' }}
-                  />
-                  <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: 500, color: '#64748b', pointerEvents: 'none' }}>
-                    ngày
-                  </span>
-                </div>
-                <small className="text-[11px] text-gray-500">
-                  Mentee chỉ có thể đặt lịch trong khoảng thời gian này.
-                </small>
-                {policyFormErrors.horizon && (
-                  <span className="form-error-msg">{policyFormErrors.horizon}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Google Calendar */}
-          <div className="pt-3 border-t border-gray-200 space-y-2">
-            <h3 className="text-base font-bold text-sky-800">Google Calendar</h3>
-
-            {!googleCalendarStatus ? (
-              <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500">
-                Đang tải trạng thái Google Calendar...
-              </div>
-            ) : googleCalendarStatus.connected ? (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg space-y-1">
-                <div className="flex items-center justify-between text-xs font-semibold text-emerald-900">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>Đã kết nối</span>
-                  </div>
-                  {googleCalendarStatus.needsReconnect && (
-                    <span className="text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[11px] font-medium">
-                      Cần kết nối lại
-                    </span>
-                  )}
-                </div>
-                {googleCalendarStatus.email && (
-                  <p className="text-xs text-emerald-700 font-medium pl-3.5">
-                    {googleCalendarStatus.email}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                  <span className="w-2 h-2 rounded-full bg-slate-400" />
-                  <span>Chưa kết nối</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Bạn vẫn có thể mở lịch và nhận booking bình thường mà không cần kết nối Google Calendar.
-                </p>
-
-                {/* Google Official Button Styling */}
-                <button
-                  type="button"
-                  disabled
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    width: '100%',
-                    padding: '9px 14px',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    color: '#475569',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '8px',
-                    cursor: 'not-allowed',
-                    opacity: 0.85,
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                  }}
-                  title="Tính năng kết nối Google OAuth sẽ được thiết lập ở bước tiếp theo"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px', flexShrink: 0 }}
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                  </svg>
-                  <span>Kết nối Google Calendar (Sẽ thiết lập sau)</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="form-modal-footer pt-3 border-t border-gray-200 flex justify-end gap-2">
+        <div style={{ width: '100%', fontFamily: 'inherit' }}>
+          {/* Modal Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Cài đặt lịch</h2>
             <button
               type="button"
-              className="btn-modal-cancel"
-              disabled={isSavingPolicy}
               onClick={() => {
-                if (bookingPolicy) {
-                  setLeadTimeInput(String(bookingPolicy.minimumBookingLeadTimeMinutes));
-                  setHorizonInput(String(bookingPolicy.maximumBookingHorizonDays));
+                if (!isSavingPolicy) {
+                  if (bookingPolicy) {
+                    setLeadTimeInput(String(bookingPolicy.minimumBookingLeadTimeMinutes));
+                    setHorizonInput(String(bookingPolicy.maximumBookingHorizonDays));
+                  }
+                  setIsScheduleSettingsOpen(false);
                 }
-                setIsScheduleSettingsOpen(false);
               }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                padding: '4px',
+                cursor: 'pointer',
+                color: '#0f172a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                outline: 'none',
+              }}
+              aria-label="Đóng"
             >
-              Hủy
+              <X style={{ width: '22px', height: '22px', color: '#0f172a' }} />
             </button>
-            <Button
-              type="submit"
-              className="btn-modal-submit bg-sky-600 hover:bg-sky-700 text-white"
-              disabled={!isPolicyDirty || isSavingPolicy || Boolean(policyRetryUntil)}
-            >
-              {isSavingPolicy ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </Button>
           </div>
-        </form>
+
+          <form onSubmit={handleSaveBookingPolicy} noValidate>
+            {policyStaleNotice && (
+              <div style={{ padding: '12px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', borderRadius: '12px', fontSize: '13px', marginBottom: '16px' }}>
+                {policyStaleNotice}
+              </div>
+            )}
+
+            {policyFormErrors.root && (
+              <div style={{ padding: '12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '12px', fontSize: '13px', marginBottom: '16px' }}>
+                {policyFormErrors.root}
+              </div>
+            )}
+
+            {/* Main Content Grid: Left Column (Rules) & Right Column (Google Calendar Card) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '28px', alignItems: 'stretch' }}>
+              {/* Left Column: Quy tắc đặt lịch */}
+              <div>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Quy tắc đặt lịch</h3>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 20px' }}>
+                  Quản lý cách mentee có thể đặt lịch với bạn.
+                </p>
+
+                {/* Field 1: Múi giờ */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label htmlFor="policy-timezone" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                    Múi giờ
+                  </label>
+                  <div style={{ width: '100%', height: '44px', padding: '0 14px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: 500, color: '#1e293b' }}>
+                      <Globe style={{ width: '18px', height: '18px', color: '#475569' }} />
+                      <span>{timezone || 'Asia/Ho_Chi_Minh'}</span>
+                    </div>
+                    <ChevronDown style={{ width: '16px', height: '16px', color: '#64748b' }} />
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px', margin: '6px 0 0' }}>
+                    Múi giờ của Booking Policy được dùng làm chuẩn cho tất cả lịch rảnh.
+                  </p>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #f1f5f9', margin: '20px 0' }} />
+
+                {/* Field 2: Thời gian đặt trước tối thiểu */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label htmlFor="policy-lead-time" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                    Thời gian đặt trước tối thiểu <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input
+                        id="policy-lead-time"
+                        type="number"
+                        min={0}
+                        value={leadTimeInput}
+                        onChange={(e) => setLeadTimeInput(e.target.value)}
+                        style={{ width: '100%', height: '44px', paddingLeft: '14px', paddingRight: '48px', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#0f172a', outline: 'none' }}
+                      />
+                      <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#94a3b8', pointerEvents: 'none' }}>
+                        phút
+                      </span>
+                    </div>
+                    {Number(leadTimeInput) >= 0 && (
+                      <span style={{ height: '44px', padding: '0 14px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', color: '#0284c7', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                        ≈ {(Number(leadTimeInput) / 60).toFixed(1)} giờ
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '6px 0 0' }}>
+                    Mentee cần đặt lịch trước ít nhất khoảng thời gian này.
+                  </p>
+                  {policyFormErrors.leadTime && (
+                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#ef4444', margin: '4px 0 0' }}>{policyFormErrors.leadTime}</p>
+                  )}
+                </div>
+
+                {/* Field 3: Cho phép đặt trước tối đa */}
+                <div style={{ marginBottom: '10px' }}>
+                  <label htmlFor="policy-horizon" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                    Cho phép đặt trước tối đa <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      id="policy-horizon"
+                      type="number"
+                      min={1}
+                      value={horizonInput}
+                      onChange={(e) => setHorizonInput(e.target.value)}
+                      style={{ width: '100%', height: '44px', paddingLeft: '14px', paddingRight: '48px', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#0f172a', outline: 'none' }}
+                    />
+                    <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#94a3b8', pointerEvents: 'none' }}>
+                      ngày
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '6px 0 0' }}>
+                    Mentee chỉ có thể đặt lịch trong khoảng thời gian này.
+                  </p>
+                  {policyFormErrors.horizon && (
+                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#ef4444', margin: '4px 0 0' }}>{policyFormErrors.horizon}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Google Calendar Card */}
+              <div style={{ backgroundColor: '#f4f8ff', border: '1px solid #e2edff', borderRadius: '18px', padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  {/* Google Calendar Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>
+                    <Calendar style={{ width: '22px', height: '22px', color: '#1a73e8' }} />
+                    <span>Google Calendar</span>
+                  </div>
+
+                  {/* Calendar Illustration Box */}
+                  <div style={{ position: 'relative', width: '100%', padding: '16px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {/* Sparkle Star 1 */}
+                    <svg width="14" height="14" viewBox="0 0 24 24" style={{ position: 'absolute', left: '32px', top: '8px', width: '14px', height: '14px', color: '#7dd3fc', fill: 'currentColor' }}>
+                      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                    </svg>
+                    {/* Sparkle Star 2 */}
+                    <svg width="12" height="12" viewBox="0 0 24 24" style={{ position: 'absolute', right: '28px', top: '24px', width: '12px', height: '12px', color: '#7dd3fc', fill: 'currentColor' }}>
+                      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                    </svg>
+                    
+                    {/* Floating White Calendar Card */}
+                    <div style={{ position: 'relative', width: '130px', height: '96px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 20px rgba(0, 112, 243, 0.12)', border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                      {/* Binders */}
+                      <div style={{ position: 'absolute', top: '3px', left: '0', right: '0', display: 'flex', justifyContent: 'space-around', padding: '0 20px', zIndex: 10 }}>
+                        <div style={{ width: '6px', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+                        <div style={{ width: '6px', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+                        <div style={{ width: '6px', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+                      </div>
+                      {/* Blue Top Banner */}
+                      <div style={{ height: '26px', backgroundColor: '#1a73e8', width: '100%' }} />
+                      {/* Dots Grid */}
+                      <div style={{ padding: '10px 12px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', alignItems: 'center', justifyItems: 'center', flex: 1 }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                      </div>
+                      {/* Blue Checkmark Badge */}
+                      <div style={{ position: 'absolute', bottom: '6px', right: '6px', width: '26px', height: '26px', backgroundColor: '#1a73e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #ffffff', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status & Connection Button */}
+                  {!googleCalendarStatus ? (
+                    <div style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: '12px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>
+                      Đang tải trạng thái...
+                    </div>
+                  ) : !googleCalendarStatus.connected ? (
+                    <div style={{ textAlign: 'center' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: '10px 0 4px' }}>Chưa kết nối</h4>
+                      <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.5, margin: '0 0 16px' }}>
+                        Kết nối để đồng bộ lịch cá nhân và hỗ trợ tránh trùng lịch.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={isInitiatingGoogleOAuth}
+                        onClick={handleInitiateGoogleOAuth}
+                        style={{
+                          width: '100%',
+                          height: '44px',
+                          backgroundColor: '#1a73e8',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(26,115,232,0.25)',
+                        }}
+                      >
+                        <div style={{ width: '22px', height: '22px', backgroundColor: '#ffffff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" style={{ width: '14px', height: '14px' }}>
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                          </svg>
+                        </div>
+                        <span>{isInitiatingGoogleOAuth ? 'Đang kết nối...' : 'Kết nối Google Calendar'}</span>
+                      </button>
+                    </div>
+                  ) : googleCalendarStatus.needsReconnect ? (
+                    <div style={{ textAlign: 'center' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#b45309', margin: '10px 0 4px' }}>Cần kết nối lại</h4>
+                      {googleCalendarStatus.email && (
+                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', margin: '0 0 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {googleCalendarStatus.email}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        disabled={isInitiatingGoogleOAuth}
+                        onClick={handleInitiateGoogleOAuth}
+                        style={{
+                          width: '100%',
+                          height: '44px',
+                          backgroundColor: '#1a73e8',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {isInitiatingGoogleOAuth ? 'Đang xử lý...' : 'Kết nối lại'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#047857', margin: '10px 0 4px' }}>Đã kết nối</h4>
+                      {googleCalendarStatus.email && (
+                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', margin: '0 0 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {googleCalendarStatus.email}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setIsDisconnectModalOpen(true)}
+                        style={{
+                          width: '100%',
+                          height: '40px',
+                          backgroundColor: '#ffffff',
+                          color: '#334155',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '12px',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Ngắt kết nối
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Feature List (Bottom) */}
+                <div style={{ borderTop: '1px solid #dbeafe', paddingTop: '14px', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', fontWeight: 500, color: '#334155' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <RefreshCw style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }} />
+                    <span>Đồng bộ tự động lịch rảnh</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <ShieldCheck style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }} />
+                    <span>Tránh trùng lịch hiệu quả</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Lock style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }} />
+                    <span>Dữ liệu an toàn và bảo mật</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px', marginTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                disabled={isSavingPolicy}
+                onClick={() => {
+                  if (bookingPolicy) {
+                    setLeadTimeInput(String(bookingPolicy.minimumBookingLeadTimeMinutes));
+                    setHorizonInput(String(bookingPolicy.maximumBookingHorizonDays));
+                  }
+                  setIsScheduleSettingsOpen(false);
+                }}
+                style={{
+                  height: '40px',
+                  padding: '0 22px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={!isPolicyDirty || isSavingPolicy || Boolean(policyRetryUntil)}
+                style={{
+                  height: '40px',
+                  padding: '0 22px',
+                  backgroundColor: (!isPolicyDirty || isSavingPolicy) ? '#94a3b8' : '#1a73e8',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: (!isPolicyDirty || isSavingPolicy) ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 4px rgba(26,115,232,0.2)',
+                }}
+              >
+                {isSavingPolicy ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </form>
+        </div>
       </Modal>
 
       {/* Modal "+ Thêm dịch vụ" */}
@@ -2029,8 +2384,11 @@ export function ScheduleManageView() {
       <AvailabilityTemplateDetailModal
         open={selectedTemplateForDetail !== null}
         template={selectedTemplateForDetail}
+        isSubmittingException={isSubmittingException}
         onClose={() => setSelectedTemplateForDetail(null)}
         onOpenEdit={handleOpenEditTemplate}
+        onSubmitSkipDate={handleSkipTemplateDate}
+        onSubmitRestoreDate={handleRestoreTemplateDate}
       />
 
       {/* Modal Confirm Tạm dừng / Tiếp tục / Lưu trữ Lịch lặp */}
@@ -2092,6 +2450,66 @@ export function ScheduleManageView() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Modal Confirm Ngắt kết nối Google Calendar */}
+      <Modal
+        open={isDisconnectModalOpen}
+        title="Ngắt kết nối Google Calendar?"
+        onClose={() => !isDisconnecting && setIsDisconnectModalOpen(false)}
+        className="mentor-availability-slot-modal"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            SkillSwap sẽ ngừng đồng bộ Google Calendar cho các lịch mới.
+          </p>
+
+          <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isDisconnecting}
+              onClick={() => setIsDisconnectModalOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              loading={isDisconnecting}
+              onClick={handleConfirmDisconnectGoogleCalendar}
+            >
+              Ngắt kết nối
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Thông báo CAL_4403 (Chưa thể ngắt kết nối) */}
+      <Modal
+        open={Boolean(cannotDisconnectNotice)}
+        title="Chưa thể ngắt Google Calendar"
+        onClose={() => setCannotDisconnectNotice(null)}
+        className="mentor-availability-slot-modal"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {cannotDisconnectNotice}
+          </p>
+
+          <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end">
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setCannotDisconnectNotice(null)}
+            >
+              Đã hiểu
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

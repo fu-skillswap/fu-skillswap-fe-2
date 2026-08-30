@@ -3,7 +3,7 @@
  * @description Helper functions for Availability Templates formatting and parsing.
  */
 
-import type { LocalTime, WeekdayEnum } from '@/models/auth';
+import type { AvailabilityTemplateResponse, LocalTime, WeekdayEnum } from '@/models/auth';
 
 /** Helper to format LocalTime object or string to HH:mm string. */
 export function formatLocalTime(time: LocalTime | null | undefined): string {
@@ -18,17 +18,6 @@ export function formatLocalTime(time: LocalTime | null | undefined): string {
   const hour = String(time.hour ?? 0).padStart(2, '0');
   const minute = String(time.minute ?? 0).padStart(2, '0');
   return `${hour}:${minute}`;
-}
-
-/** Converts HH:mm input string to LocalTime object { hour, minute, second: 0, nano: 0 } */
-export function parseLocalTimeToObject(timeStr: string) {
-  const [h, m] = timeStr.split(':').map(Number);
-  return {
-    hour: Number.isNaN(h) ? 0 : h,
-    minute: Number.isNaN(m) ? 0 : m,
-    second: 0,
-    nano: 0,
-  };
 }
 
 export const WEEKDAY_LABELS: Record<WeekdayEnum, string> = {
@@ -75,4 +64,41 @@ export function formatDateVi(dateStr?: string | null): string {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
   return dateStr;
+}
+
+/** Validates if a YYYY-MM-DD date is valid for a given template */
+export function validateOccurrenceDateForTemplate(
+  occurrenceDate: string,
+  template: AvailabilityTemplateResponse,
+): string | null {
+  if (!occurrenceDate) {
+    return 'Vui lòng chọn ngày cần bỏ qua.';
+  }
+
+  // Check effective range
+  if (template.effectiveFrom && occurrenceDate < template.effectiveFrom) {
+    return `Ngày cần bỏ qua phải từ ngày ${formatDateVi(template.effectiveFrom)} trở đi.`;
+  }
+  if (template.effectiveTo && occurrenceDate > template.effectiveTo) {
+    return `Ngày cần bỏ qua phải trước hoặc bằng ngày ${formatDateVi(template.effectiveTo)}.`;
+  }
+
+  // Check weekday
+  const dateObj = new Date(occurrenceDate + 'T00:00:00');
+  const dayIndex = dateObj.getDay();
+  const dayMap: Record<number, WeekdayEnum> = {
+    0: 'SUNDAY',
+    1: 'MONDAY',
+    2: 'TUESDAY',
+    3: 'WEDNESDAY',
+    4: 'THURSDAY',
+    5: 'FRIDAY',
+    6: 'SATURDAY',
+  };
+  const targetWeekday = dayMap[dayIndex];
+  if (!template.weekdays.includes(targetWeekday)) {
+    return 'Ngày này không thuộc lịch lặp đã chọn.';
+  }
+
+  return null;
 }

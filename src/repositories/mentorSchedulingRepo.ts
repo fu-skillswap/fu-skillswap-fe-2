@@ -7,12 +7,15 @@ import { apiClient } from '@/models/apiClient';
 import type {
   AvailabilitySlotsQuery,
   AvailabilitySlotsResponse,
+  AvailabilityTemplateExceptionRequest,
   AvailabilityTemplateResponse,
   AvailabilityTemplateVersionRequest,
   CreateAvailabilitySlotRequest,
   CreateAvailabilityTemplateRequest,
   CursorPageResponseAvailabilityTemplateResponse,
   DeactivateAvailabilitySlotRequest,
+  GoogleAuthorizationContextResponse,
+  GoogleCalendarConnectRequest,
   GoogleCalendarStatusResponse,
   MentorManagedAvailabilitySlotResponse,
   MentorBookingPolicyResponse,
@@ -49,6 +52,29 @@ export const mentorSchedulingRepo = {
 
   getGoogleCalendarStatus: (): Promise<GoogleCalendarStatusResponse> =>
     apiClient<GoogleCalendarStatusResponse>('/api/me/google-calendar/status'),
+
+  getGoogleCalendarAuthorizationContext: (
+    redirectUri: string,
+    codeChallenge: string,
+  ): Promise<GoogleAuthorizationContextResponse> => {
+    const params = new URLSearchParams({ redirectUri, codeChallenge });
+    return apiClient<GoogleAuthorizationContextResponse>(
+      `/api/me/google-calendar/authorization-context?${params.toString()}`,
+    );
+  },
+
+  connectGoogleCalendar: (
+    data: GoogleCalendarConnectRequest,
+  ): Promise<GoogleCalendarStatusResponse> =>
+    apiClient<GoogleCalendarStatusResponse>('/api/me/google-calendar/connect', {
+      method: 'POST',
+      data,
+    }),
+
+  disconnectGoogleCalendar: (): Promise<GoogleCalendarStatusResponse> =>
+    apiClient<GoogleCalendarStatusResponse>('/api/me/google-calendar/disconnect', {
+      method: 'POST',
+    }),
 
   listAvailabilitySlots: (query: AvailabilitySlotsQuery = {}): Promise<AvailabilitySlotsResponse> =>
     apiClient<AvailabilitySlotsResponse>(`/api/me/availability-slots${queryString(query)}`),
@@ -141,4 +167,30 @@ export const mentorSchedulingRepo = {
       method: 'POST',
       data,
     }),
+
+  addTemplateException: (
+    templateId: string,
+    occurrenceDate: string,
+    data: AvailabilityTemplateExceptionRequest,
+  ): Promise<AvailabilityTemplateResponse> =>
+    apiClient<AvailabilityTemplateResponse>(
+      `/api/me/availability-templates/${templateId}/exceptions/${occurrenceDate}`,
+      {
+        method: 'PUT',
+        data,
+      },
+    ),
+
+  restoreTemplateException: (
+    templateId: string,
+    occurrenceDate: string,
+    data: AvailabilityTemplateVersionRequest,
+  ): Promise<AvailabilityTemplateResponse> =>
+    apiClient<AvailabilityTemplateResponse>(
+      `/api/me/availability-templates/${templateId}/exceptions/${occurrenceDate}/restore`,
+      {
+        method: 'POST',
+        data,
+      },
+    ),
 };
