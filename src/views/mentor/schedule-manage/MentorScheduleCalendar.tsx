@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Clock, Info } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { MentorCalendarEvent } from './mentorScheduleCalendarData';
 
@@ -55,14 +55,6 @@ function formatSlotTime(minutes: number) {
   const h = String(Math.floor(minutes / 60) % 24).padStart(2, '0');
   const m = String(minutes % 60).padStart(2, '0');
   return `${h}:${m}`;
-}
-
-function formatSlotDuration(durationMinutes: number) {
-  const hours = Math.floor(durationMinutes / 60);
-  const mins = durationMinutes % 60;
-  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
-  if (hours > 0) return `${hours}h`;
-  return `${mins}m`;
 }
 
 interface ZonedDateTimeParts {
@@ -155,11 +147,7 @@ export function MentorScheduleCalendar({
           >
             <ChevronLeft aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            className="mentor-schedule-today-button"
-            onClick={onToday}
-          >
+          <button type="button" className="mentor-schedule-today-button" onClick={onToday}>
             Hôm nay
           </button>
           <button
@@ -177,11 +165,7 @@ export function MentorScheduleCalendar({
             <strong>{formatWeekRange(weekStart)}</strong>
             <span>{timezone}</span>
           </div>
-          <button
-            type="button"
-            className="mentor-schedule-icon-btn"
-            aria-label="Xem lịch"
-          >
+          <button type="button" className="mentor-schedule-icon-btn" aria-label="Xem lịch">
             <Calendar className="w-4 h-4" aria-hidden="true" />
           </button>
           <div className="mentor-schedule-dropdown">
@@ -241,24 +225,27 @@ export function MentorScheduleCalendar({
                     .map((segment) => {
                       const durationMinutes = segment.endMinutes - segment.startMinutes;
                       const HOUR_HEIGHT = 60;
-                      const calculatedHeight = Math.max(32, (durationMinutes / 60) * HOUR_HEIGHT - 6);
+                      const calculatedHeight = Math.max(
+                        32,
+                        (durationMinutes / 60) * HOUR_HEIGHT - 6,
+                      );
                       const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 3;
-                      const isLongSlot = durationMinutes > 75;
-
                       const startTimeStr = formatSlotTime(segment.startMinutes);
                       const endTimeStr = formatSlotTime(segment.endMinutes);
 
                       return (
                         <article
-                          className="mentor-schedule-calendar-event event-availability"
+                          className={`mentor-schedule-calendar-event event-availability event-${segment.event.status}`}
                           key={`${segment.event.id}-${dayIndex}`}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => onSelectSlot?.(segment.event.id)}
+                          role={segment.event.source === 'slot' ? 'button' : undefined}
+                          tabIndex={segment.event.source === 'slot' ? 0 : undefined}
+                          onClick={() =>
+                            segment.event.source === 'slot' && onSelectSlot?.(segment.event.id)
+                          }
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              onSelectSlot?.(segment.event.id);
+                              if (segment.event.source === 'slot') onSelectSlot?.(segment.event.id);
                             }
                           }}
                           style={{
@@ -268,27 +255,6 @@ export function MentorScheduleCalendar({
                         >
                           <div className="event-time font-bold">
                             {startTimeStr} – {endTimeStr}
-                          </div>
-
-                          {segment.event.serviceTitle && (
-                            <div className="event-service-title">
-                              {segment.event.serviceTitle}
-                            </div>
-                          )}
-
-                          {isLongSlot && (
-                            <>
-                              <div className="event-divider" />
-                              <div className="event-duration-row">
-                                <Clock className="event-clock-icon" aria-hidden="true" />
-                                <span>{formatSlotDuration(durationMinutes)}</span>
-                              </div>
-                            </>
-                          )}
-
-                          <div className="event-status-row">
-                            <span className="status-dot">●</span>
-                            <span className="status-text">Đang mở</span>
                           </div>
                         </article>
                       );
@@ -331,15 +297,19 @@ export function MentorScheduleCalendar({
       <footer className="mentor-schedule-calendar-legend">
         <div className="legend-item">
           <span className="legend-box legend-box-available" aria-hidden="true" />
-          <span>Lịch rảnh (mentor đã mở)</span>
+          <span>Khung giờ rảnh, chờ mentee đặt</span>
         </div>
         <div className="legend-item">
           <span className="legend-box legend-box-booked" aria-hidden="true" />
-          <span>Đã có mentee đặt</span>
+          <span>Khung giờ đã có mentee đặt</span>
         </div>
         <div className="legend-item">
-          <span className="legend-box legend-box-unavailable" aria-hidden="true" />
-          <span>Không khả dụng</span>
+          <span className="legend-box legend-box-ongoing" aria-hidden="true" />
+          <span>Khung giờ đang diễn ra</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-box legend-box-past" aria-hidden="true" />
+          <span>Khung giờ đã diễn ra</span>
         </div>
         <div className="legend-item legend-info">
           <Info className="legend-info-icon" aria-hidden="true" />

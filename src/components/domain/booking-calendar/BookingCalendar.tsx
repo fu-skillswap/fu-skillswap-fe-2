@@ -177,14 +177,43 @@ export function BookingCalendar({
   }, [filteredSlots]);
 
   return (
-    <section className="gcal-booking-wrapper" aria-label="Pick a Time Slot - Google Calendar View" style={{ background: '#fff', border: '1px solid var(--figma-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <section
+      className="gcal-booking-wrapper"
+      aria-label="Pick a Time Slot - Google Calendar View"
+      style={{
+        background: '#fff',
+        border: '1px solid var(--figma-border)',
+        borderRadius: '16px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+      }}
+    >
       {/* Top Header Controls (Nút chuyển tuần & Thông tin ngày) */}
-      <div className="gcal-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="gcal-nav-buttons" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div
+        className="gcal-header-bar"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        <div
+          className="gcal-nav-buttons"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
           <button
             type="button"
             onClick={() => changeWeek(weekOffset - 1)}
-            style={{ width: '36px', height: '36px', borderRadius: '8px', border: '1px solid var(--figma-border)', background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--figma-text)' }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              border: '1px solid var(--figma-border)',
+              background: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--figma-text)',
+            }}
             title="Tuần trước"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -192,36 +221,90 @@ export function BookingCalendar({
           <button
             type="button"
             onClick={() => changeWeek(0)}
-            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--figma-blue)', background: '#fff', color: 'var(--figma-blue)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid var(--figma-blue)',
+              background: '#fff',
+              color: 'var(--figma-blue)',
+              fontWeight: '600',
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
           >
             Hôm nay
           </button>
           <button
             type="button"
             onClick={() => changeWeek(weekOffset + 1)}
-            style={{ width: '36px', height: '36px', borderRadius: '8px', border: '1px solid var(--figma-border)', background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--figma-text)' }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              border: '1px solid var(--figma-border)',
+              background: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--figma-text)',
+            }}
             title="Tuần sau"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
           {isLoading && (
-            <span style={{ fontSize: '13px', color: 'var(--figma-blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
+            <span
+              style={{
+                fontSize: '13px',
+                color: 'var(--figma-blue)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginLeft: '8px',
+              }}
+            >
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải lịch…
             </span>
           )}
         </div>
 
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>{dateRangeHeader}</div>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>
+            {dateRangeHeader}
+          </div>
           <div style={{ fontSize: '12px', color: 'var(--figma-muted)' }}>Asia/Ho_Chi_Minh</div>
         </div>
       </div>
 
       {/* Grid Google Calendar Tuần (Hiển thị thẻ sự kiện theo vị trí & thời lượng chính xác) */}
-      <div className="gcal-grid-scroll" style={{ width: '100%', overflowX: 'auto', border: '1px solid var(--figma-border)', borderRadius: '12px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '55px repeat(7, minmax(0, 1fr))', width: '100%', minWidth: '680px', background: '#fff' }}>
+      <div
+        className="gcal-grid-scroll"
+        style={{
+          width: '100%',
+          overflowX: 'auto',
+          border: '1px solid var(--figma-border)',
+          borderRadius: '12px',
+        }}
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '55px repeat(7, minmax(0, 1fr))',
+            width: '100%',
+            minWidth: '680px',
+            background: '#fff',
+          }}
+        >
           {/* Header hàng 1: Cột trống + 7 cột Ngày */}
-          <div style={{ padding: '8px 4px', borderBottom: '1px solid var(--figma-border)', borderRight: '1px solid var(--figma-border)', background: '#f8fafc' }} />
+          <div
+            style={{
+              padding: '8px 4px',
+              borderBottom: '1px solid var(--figma-border)',
+              borderRight: '1px solid var(--figma-border)',
+              background: '#f8fafc',
+            }}
+          />
           {weekDays.map((day) => (
             <div
               key={day.dateStr}
@@ -233,8 +316,21 @@ export function BookingCalendar({
                 background: '#f8fafc',
               }}
             >
-              <div style={{ fontSize: '11px', color: 'var(--figma-muted)', fontWeight: '600', textTransform: 'uppercase' }}>{day.shortLabel}</div>
-              <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginTop: '1px' }}>{day.dayMonth}</div>
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--figma-muted)',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {day.shortLabel}
+              </div>
+              <div
+                style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginTop: '1px' }}
+              >
+                {day.dayMonth}
+              </div>
             </div>
           ))}
 
@@ -291,7 +387,9 @@ export function BookingCalendar({
                 {/* Các Thẻ Event Lịch Rảnh (Google Calendar Event Blocks) được vẽ đè lên theo toạ độ tuyệt đối */}
                 {daySlots.map((slotItem) => {
                   const startD = new Date(slotItem.startTime);
-                  const endD = slotItem.endTime ? new Date(slotItem.endTime) : new Date(startD.getTime() + 60 * 60 * 1000);
+                  const endD = slotItem.endTime
+                    ? new Date(slotItem.endTime)
+                    : new Date(startD.getTime() + 60 * 60 * 1000);
 
                   const startHours = startD.getHours() + startD.getMinutes() / 60;
                   const endHours = endD.getHours() + endD.getMinutes() / 60;
@@ -341,9 +439,23 @@ export function BookingCalendar({
                         justifyContent: 'flex-start',
                       }}
                     >
-                      <div style={{ fontSize: '11px', fontWeight: '700', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '3px', lineHeight: '1.2' }}>
-                        <span style={{ fontSize: '10px', opacity: isSelected ? 0.9 : 0.8 }}>Lịch rảnh</span>
-                        <span>{startTimeStr}–{endTimeStr}</span>
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          gap: '3px',
+                          lineHeight: '1.2',
+                        }}
+                      >
+                        <span style={{ fontSize: '10px', opacity: isSelected ? 0.9 : 0.8 }}>
+                          Lịch rảnh
+                        </span>
+                        <span>
+                          {startTimeStr}–{endTimeStr}
+                        </span>
                       </div>
                       <div
                         style={{

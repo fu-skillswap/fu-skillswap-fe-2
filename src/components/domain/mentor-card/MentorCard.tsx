@@ -70,12 +70,16 @@ export function MentorCard({ mentor, onSelect }: MentorCardProps) {
             </span>
           )}
         </h2>
-        <p>{mentor.headline ?? (mentor.expertise[0] ? `${mentor.expertise[0]} mentor` : 'Mentor')}</p>
+        <p>
+          {mentor.headline ?? (mentor.expertise[0] ? `${mentor.expertise[0]} mentor` : 'Mentor')}
+        </p>
         {mentor.organization && <strong>@ {mentor.organization}</strong>}
       </div>
       <div className="figma-mentor-rating">
         <span aria-hidden="true">★</span>
-        <strong>{mentor.rating !== null && mentor.rating !== undefined ? mentor.rating : '--'}</strong>
+        <strong>
+          {mentor.rating !== null && mentor.rating !== undefined ? mentor.rating : '--'}
+        </strong>
         {mentor.reviewCount !== undefined && <small>({mentor.reviewCount})</small>}
       </div>
       {mentor.expertise.length > 0 && (

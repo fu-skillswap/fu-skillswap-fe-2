@@ -85,7 +85,9 @@ export function BookingFlow({
 }: BookingFlowProps) {
   const [slots, setSlots] = useState<PublicAvailabilitySlotResponse[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(true);
-  const [selectedSlotObj, setSelectedSlotObj] = useState<PublicAvailabilitySlotResponse | null>(null);
+  const [selectedSlotObj, setSelectedSlotObj] = useState<PublicAvailabilitySlotResponse | null>(
+    null,
+  );
 
   // Tải danh sách availability-slots công khai từ Backend API GET /api/mentors/{mentorUserId}/availability-slots
   useEffect(() => {

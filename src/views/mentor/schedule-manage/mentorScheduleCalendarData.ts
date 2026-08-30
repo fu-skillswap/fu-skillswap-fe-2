@@ -3,13 +3,23 @@
  * @description Chuẩn hóa availability-slot DTO sang event dùng cho calendar Mentor.
  */
 
-import type { AvailabilitySlotsResponse } from '@/models/auth';
+import type {
+  AvailabilitySlotsResponse,
+  AvailabilityTemplateResponse,
+  WeekdayEnum,
+} from '@/models/auth';
+import { localDateTimeToUtcIso } from './mentorScheduleDateTime';
+import { formatLocalTime } from './mentorTemplateHelpers';
+
+export type MentorCalendarEventStatus = 'available' | 'booked' | 'ongoing' | 'past';
 
 export interface MentorCalendarEvent {
   id: string;
   start: Date;
   end: Date;
   type: 'availability';
+  status: MentorCalendarEventStatus;
+  source: 'slot' | 'template';
   note?: string;
   serviceTitle?: string;
 }
@@ -21,6 +31,29 @@ export interface MentorScheduleCalendarData {
 }
 
 const invalidPayloadMessage = 'Không thể đọc dữ liệu lịch từ máy chủ.';
+
+const WEEKDAYS: WeekdayEnum[] = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+];
+
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setUTCDate(result.getUTCDate() + days);
+  return result;
+}
+
+function getEventStatus(start: Date, end: Date, isBooked: boolean): MentorCalendarEventStatus {
+  const now = Date.now();
+  if (end.getTime() <= now) return 'past';
+  if (start.getTime() <= now) return 'ongoing';
+  return isBooked ? 'booked' : 'available';
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -125,10 +158,78 @@ export function toMentorScheduleCalendarData(
       start,
       end,
       type: 'availability',
+      status: getEventStatus(
+        start,
+        end,
+        (slot.pendingBookingCount as number) > 0 || (slot.lockingBookingCount as number) > 0,
+      ),
+      source: 'slot',
       note: noteStr || undefined,
       serviceTitle,
     });
   }
 
   return { events, isEmpty: false };
+}
+
+/** Projects active weekly templates into a concrete week and merges them with generated slots. */
+export function mergeAvailabilityTemplatesIntoCalendar(
+  slotEvents: MentorCalendarEvent[],
+  templates: AvailabilityTemplateResponse[],
+  weekStart: Date,
+): MentorCalendarEvent[] {
+  const occupiedTimes = new Set(
+    slotEvents.map((event) => `${event.start.getTime()}-${event.end.getTime()}`),
+  );
+  const templateEvents: MentorCalendarEvent[] = [];
+
+  templates.forEach((template) => {
+    if (template.effectiveStatus !== 'ACTIVE' || template.configuredStatus !== 'ACTIVE') return;
+
+    WEEKDAYS.forEach((weekday, dayIndex) => {
+      if (!template.weekdays.includes(weekday)) return;
+
+      const date = addDays(weekStart, dayIndex).toISOString().slice(0, 10);
+      const isOutsideEffectiveRange =
+        date < template.effectiveFrom ||
+        Boolean(template.effectiveTo && date > template.effectiveTo);
+      const isSkipped =
+        template.skippedDates?.includes(date) ||
+        template.blockedOccurrences?.some((occurrence) => occurrence.date === date);
+      if (isOutsideEffectiveRange || isSkipped) return;
+
+      try {
+        const start = new Date(
+          localDateTimeToUtcIso(
+            { date, time: formatLocalTime(template.startTime) },
+            template.timezone,
+          ),
+        );
+        const end = new Date(
+          localDateTimeToUtcIso(
+            { date, time: formatLocalTime(template.endTime) },
+            template.timezone,
+          ),
+        );
+        const timeKey = `${start.getTime()}-${end.getTime()}`;
+        if (end <= start || occupiedTimes.has(timeKey)) return;
+
+        occupiedTimes.add(timeKey);
+        templateEvents.push({
+          id: `template-${template.templateId}-${date}`,
+          start,
+          end,
+          type: 'availability',
+          status: getEventStatus(start, end, false),
+          source: 'template',
+          note: template.note?.trim() || undefined,
+          serviceTitle: template.services[0]?.title,
+        });
+      } catch {
+        // Ignore a template occurrence whose local time is invalid in its configured timezone.
+      }
+    });
+  });
+
+  return [...slotEvents, ...templateEvents];
 }

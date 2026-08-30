@@ -45,6 +45,8 @@ export function mapApiMentorToEntity(raw: any): Mentor {
   const identity = raw.identity || raw.mentor?.identity || {};
   const mentoring = raw.mentoring || raw.mentor?.mentoring || {};
   const evidence = raw.evidence || raw.mentor?.evidence || {};
+  const education = evidence.education || {};
+  const reputation = raw.reputation || raw.mentor?.reputation || {};
 
   const mentorUserId = String(
     identity.mentorUserId ||
@@ -100,10 +102,10 @@ export function mapApiMentorToEntity(raw: any): Mentor {
   );
 
   let expertise: string[] = [];
-  if (evidence.specializationName || evidence.programName) {
-    if (evidence.specializationName) expertise.push(String(evidence.specializationName));
-    if (evidence.programName && evidence.programName !== evidence.specializationName) {
-      expertise.push(String(evidence.programName));
+  if (education.specializationName || education.programName) {
+    if (education.specializationName) expertise.push(String(education.specializationName));
+    if (education.programName && education.programName !== education.specializationName) {
+      expertise.push(String(education.programName));
     }
   } else if (raw.mentor?.evidence?.specializationName || raw.mentor?.evidence?.programName) {
     const me = raw.mentor.evidence;
@@ -134,6 +136,8 @@ export function mapApiMentorToEntity(raw: any): Mentor {
   }
 
   const organization =
+    education.campusName ||
+    education.programName ||
     evidence.campusName ||
     evidence.programName ||
     raw.organization ||
@@ -143,6 +147,7 @@ export function mapApiMentorToEntity(raw: any): Mentor {
     undefined;
 
   const rawRating =
+    reputation.ratingAverage ??
     raw.ratingAverage ??
     raw.rating ??
     raw.averageRating ??
@@ -155,6 +160,7 @@ export function mapApiMentorToEntity(raw: any): Mentor {
   const rating = typeof rawRating === 'number' ? rawRating : null;
 
   const rawReviewCount =
+    reputation.reviewCount ??
     raw.reviewCount ??
     raw.totalReviews ??
     raw.mentor?.reviewCount ??
@@ -269,4 +275,3 @@ export const mentorRepo = {
     return bookings;
   },
 };
-

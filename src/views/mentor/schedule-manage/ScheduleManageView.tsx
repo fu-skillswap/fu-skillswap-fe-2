@@ -48,6 +48,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
+  Clock,
   Compass,
   FileText,
   Globe,
@@ -64,7 +65,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { MentorScheduleCalendar } from './MentorScheduleCalendar';
-import { toMentorScheduleCalendarData } from './mentorScheduleCalendarData';
+import {
+  mergeAvailabilityTemplatesIntoCalendar,
+  toMentorScheduleCalendarData,
+} from './mentorScheduleCalendarData';
 import { localDateTimeToUtcIso } from './mentorScheduleDateTime';
 import { useMentorSchedulingRead } from './useMentorSchedulingRead';
 
@@ -233,7 +237,12 @@ export function ScheduleManageView() {
   const timezone =
     bookingPolicy?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
   const calendarData = toMentorScheduleCalendarData(availabilitySlots);
-  const isAvailabilityResponseEmpty = calendarData.isEmpty;
+  const calendarEvents = mergeAvailabilityTemplatesIntoCalendar(
+    calendarData.events,
+    templates,
+    weekStart,
+  );
+  const isAvailabilityResponseEmpty = calendarData.isEmpty && calendarEvents.length === 0;
   const canCreateAvailability = Boolean(bookingPolicy);
   const activeOneToOneServices = services.filter(
     (service) => service.isActive && service.deliveryMode === 'ONE_TO_ONE',
@@ -304,8 +313,8 @@ export function ScheduleManageView() {
 
   const isPolicyDirty = Boolean(
     bookingPolicy &&
-      (Number(leadTimeInput) !== bookingPolicy.minimumBookingLeadTimeMinutes ||
-        Number(horizonInput) !== bookingPolicy.maximumBookingHorizonDays),
+    (Number(leadTimeInput) !== bookingPolicy.minimumBookingLeadTimeMinutes ||
+      Number(horizonInput) !== bookingPolicy.maximumBookingHorizonDays),
   );
 
   const handleSaveBookingPolicy = async (e: React.FormEvent) => {
@@ -1058,7 +1067,10 @@ export function ScheduleManageView() {
 
           setSelectedSlotId(freshSlot.slotId);
 
-          if (reason.code?.includes('PENDING') || reason.message.toLowerCase().includes('pending')) {
+          if (
+            reason.code?.includes('PENDING') ||
+            reason.message.toLowerCase().includes('pending')
+          ) {
             setPendingRejectionConfirm({
               type: 'update',
               token: reason.data?.[0]?.rejectedValue as string | undefined,
@@ -1162,7 +1174,10 @@ export function ScheduleManageView() {
             return;
           }
 
-          if (reason.code?.includes('PENDING') || reason.message.toLowerCase().includes('pending')) {
+          if (
+            reason.code?.includes('PENDING') ||
+            reason.message.toLowerCase().includes('pending')
+          ) {
             setPendingRejectionConfirm({
               type: 'deactivate',
               token: reason.data?.[0]?.rejectedValue as string | undefined,
@@ -1171,7 +1186,9 @@ export function ScheduleManageView() {
           }
 
           setSelectedSlotId(freshSlot.slotId);
-          showError('Lịch này vừa có thay đổi từ nơi khác. Vui lòng kiểm tra lại thông tin mới nhất.');
+          showError(
+            'Lịch này vừa có thay đổi từ nơi khác. Vui lòng kiểm tra lại thông tin mới nhất.',
+          );
           await reloadScheduling();
         } else if (reason.status === 404) {
           setIsDeactivateModalOpen(false);
@@ -1211,8 +1228,19 @@ export function ScheduleManageView() {
     }
   };
 
-  const selectedSlotStart = selectedSlot ? getLocalDateTimeParts(selectedSlot.startAt, timezone) : null;
+  const selectedSlotStart = selectedSlot
+    ? getLocalDateTimeParts(selectedSlot.startAt, timezone)
+    : null;
   const selectedSlotEnd = selectedSlot ? getLocalDateTimeParts(selectedSlot.endAt, timezone) : null;
+  const selectedSlotDurationMinutes = selectedSlot
+    ? Math.max(
+        0,
+        Math.round(
+          (new Date(selectedSlot.endAt).getTime() - new Date(selectedSlot.startAt).getTime()) /
+            60000,
+        ),
+      )
+    : 0;
 
   return (
     <div className="schedule-page-wrapper">
@@ -1350,14 +1378,14 @@ export function ScheduleManageView() {
           <MentorScheduleCalendar
             weekStart={weekStart}
             timezone={timezone}
-            events={calendarData.events}
-            isLoading={isSchedulingLoading}
-            error={availabilityError ?? calendarData.error}
+            events={calendarEvents}
+            isLoading={isSchedulingLoading || isTemplatesLoading}
+            error={availabilityError ?? templatesError ?? calendarData.error}
             isAvailabilityResponseEmpty={isAvailabilityResponseEmpty}
             onPreviousWeek={() => setWeekStart((current) => addDays(current, -7))}
             onNextWeek={() => setWeekStart((current) => addDays(current, 7))}
             onToday={() => setWeekStart(startOfWeek(new Date()))}
-            onRetry={() => void reloadScheduling()}
+            onRetry={() => void Promise.all([reloadScheduling(), reloadTemplates()])}
             onUnavailableAction={openAvailabilityModal}
             onSelectSlot={handleSelectSlot}
           />
@@ -1371,10 +1399,8 @@ export function ScheduleManageView() {
             onLoadMore={loadMoreTemplates}
             onOpenCreate={handleOpenCreateTemplate}
             onOpenDetail={(tpl) => setSelectedTemplateForDetail(tpl)}
-            onOpenEdit={handleOpenEditTemplate}
             onPause={(tpl) => setPendingTemplateActionConfirm({ type: 'pause', template: tpl })}
             onResume={(tpl) => setPendingTemplateActionConfirm({ type: 'resume', template: tpl })}
-            onArchive={(tpl) => setPendingTemplateActionConfirm({ type: 'archive', template: tpl })}
           />
         )}
       </section>
@@ -1554,8 +1580,17 @@ export function ScheduleManageView() {
       >
         <div style={{ width: '100%', fontFamily: 'inherit' }}>
           {/* Modal Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Cài đặt lịch</h2>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '16px',
+            }}
+          >
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+              Cài đặt lịch
+            </h2>
             <button
               type="button"
               onClick={() => {
@@ -1587,39 +1622,106 @@ export function ScheduleManageView() {
 
           <form onSubmit={handleSaveBookingPolicy} noValidate>
             {policyStaleNotice && (
-              <div style={{ padding: '12px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', borderRadius: '12px', fontSize: '13px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  padding: '12px',
+                  backgroundColor: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  color: '#92400e',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  marginBottom: '16px',
+                }}
+              >
                 {policyStaleNotice}
               </div>
             )}
 
             {policyFormErrors.root && (
-              <div style={{ padding: '12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '12px', fontSize: '13px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  padding: '12px',
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#dc2626',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  marginBottom: '16px',
+                }}
+              >
                 {policyFormErrors.root}
               </div>
             )}
 
             {/* Main Content Grid: Left Column (Rules) & Right Column (Google Calendar Card) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '28px', alignItems: 'stretch' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 340px',
+                gap: '28px',
+                alignItems: 'stretch',
+              }}
+            >
               {/* Left Column: Quy tắc đặt lịch */}
               <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Quy tắc đặt lịch</h3>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  Quy tắc đặt lịch
+                </h3>
                 <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 20px' }}>
                   Quản lý cách mentee có thể đặt lịch với bạn.
                 </p>
 
                 {/* Field 1: Múi giờ */}
                 <div style={{ marginBottom: '20px' }}>
-                  <label htmlFor="policy-timezone" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
+                  <label
+                    htmlFor="policy-timezone"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      marginBottom: '6px',
+                      display: 'block',
+                    }}
+                  >
                     Múi giờ
                   </label>
-                  <div style={{ width: '100%', height: '44px', padding: '0 14px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: 500, color: '#1e293b' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      padding: '0 14px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: '#1e293b',
+                      }}
+                    >
                       <Globe style={{ width: '18px', height: '18px', color: '#475569' }} />
                       <span>{timezone || 'Asia/Ho_Chi_Minh'}</span>
                     </div>
                     <ChevronDown style={{ width: '16px', height: '16px', color: '#64748b' }} />
                   </div>
-                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px', margin: '6px 0 0' }}>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: '#94a3b8',
+                      marginTop: '6px',
+                      margin: '6px 0 0',
+                    }}
+                  >
                     Múi giờ của Booking Policy được dùng làm chuẩn cho tất cả lịch rảnh.
                   </p>
                 </div>
@@ -1628,10 +1730,22 @@ export function ScheduleManageView() {
 
                 {/* Field 2: Thời gian đặt trước tối thiểu */}
                 <div style={{ marginBottom: '20px' }}>
-                  <label htmlFor="policy-lead-time" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                    Thời gian đặt trước tối thiểu <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+                  <label
+                    htmlFor="policy-lead-time"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      marginBottom: '6px',
+                      display: 'block',
+                    }}
+                  >
+                    Thời gian đặt trước tối thiểu{' '}
+                    <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}
+                  >
                     <div style={{ position: 'relative', flex: 1 }}>
                       <input
                         id="policy-lead-time"
@@ -1639,14 +1753,50 @@ export function ScheduleManageView() {
                         min={0}
                         value={leadTimeInput}
                         onChange={(e) => setLeadTimeInput(e.target.value)}
-                        style={{ width: '100%', height: '44px', paddingLeft: '14px', paddingRight: '48px', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#0f172a', outline: 'none' }}
+                        style={{
+                          width: '100%',
+                          height: '44px',
+                          paddingLeft: '14px',
+                          paddingRight: '48px',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#0f172a',
+                          outline: 'none',
+                        }}
                       />
-                      <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#94a3b8', pointerEvents: 'none' }}>
+                      <span
+                        style={{
+                          position: 'absolute',
+                          right: '14px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          fontSize: '13px',
+                          color: '#94a3b8',
+                          pointerEvents: 'none',
+                        }}
+                      >
                         phút
                       </span>
                     </div>
                     {Number(leadTimeInput) >= 0 && (
-                      <span style={{ height: '44px', padding: '0 14px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', color: '#0284c7', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                      <span
+                        style={{
+                          height: '44px',
+                          padding: '0 14px',
+                          backgroundColor: '#f0f9ff',
+                          border: '1px solid #bae6fd',
+                          borderRadius: '12px',
+                          color: '#119cf7',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         ≈ {(Number(leadTimeInput) / 60).toFixed(1)} giờ
                       </span>
                     )}
@@ -1655,14 +1805,33 @@ export function ScheduleManageView() {
                     Mentee cần đặt lịch trước ít nhất khoảng thời gian này.
                   </p>
                   {policyFormErrors.leadTime && (
-                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#ef4444', margin: '4px 0 0' }}>{policyFormErrors.leadTime}</p>
+                    <p
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#ef4444',
+                        margin: '4px 0 0',
+                      }}
+                    >
+                      {policyFormErrors.leadTime}
+                    </p>
                   )}
                 </div>
 
                 {/* Field 3: Cho phép đặt trước tối đa */}
                 <div style={{ marginBottom: '10px' }}>
-                  <label htmlFor="policy-horizon" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px', display: 'block' }}>
-                    Cho phép đặt trước tối đa <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+                  <label
+                    htmlFor="policy-horizon"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      marginBottom: '6px',
+                      display: 'block',
+                    }}
+                  >
+                    Cho phép đặt trước tối đa{' '}
+                    <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
                   </label>
                   <div style={{ position: 'relative', width: '100%' }}>
                     <input
@@ -1671,9 +1840,31 @@ export function ScheduleManageView() {
                       min={1}
                       value={horizonInput}
                       onChange={(e) => setHorizonInput(e.target.value)}
-                      style={{ width: '100%', height: '44px', paddingLeft: '14px', paddingRight: '48px', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#0f172a', outline: 'none' }}
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        paddingLeft: '14px',
+                        paddingRight: '48px',
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        outline: 'none',
+                      }}
                     />
-                    <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#94a3b8', pointerEvents: 'none' }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: '14px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        fontSize: '13px',
+                        color: '#94a3b8',
+                        pointerEvents: 'none',
+                      }}
+                    >
                       ngày
                     </span>
                   </div>
@@ -1681,53 +1872,239 @@ export function ScheduleManageView() {
                     Mentee chỉ có thể đặt lịch trong khoảng thời gian này.
                   </p>
                   {policyFormErrors.horizon && (
-                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#ef4444', margin: '4px 0 0' }}>{policyFormErrors.horizon}</p>
+                    <p
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#ef4444',
+                        margin: '4px 0 0',
+                      }}
+                    >
+                      {policyFormErrors.horizon}
+                    </p>
                   )}
                 </div>
               </div>
 
               {/* Right Column: Google Calendar Card */}
-              <div style={{ backgroundColor: '#f4f8ff', border: '1px solid #e2edff', borderRadius: '18px', padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div
+                style={{
+                  backgroundColor: '#f4f8ff',
+                  border: '1px solid #e2edff',
+                  borderRadius: '18px',
+                  padding: '22px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <div>
                   {/* Google Calendar Header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: '#0f172a',
+                      marginBottom: '12px',
+                    }}
+                  >
                     <Calendar style={{ width: '22px', height: '22px', color: '#1a73e8' }} />
                     <span>Google Calendar</span>
                   </div>
 
                   {/* Calendar Illustration Box */}
-                  <div style={{ position: 'relative', width: '100%', padding: '16px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      padding: '16px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     {/* Sparkle Star 1 */}
-                    <svg width="14" height="14" viewBox="0 0 24 24" style={{ position: 'absolute', left: '32px', top: '8px', width: '14px', height: '14px', color: '#7dd3fc', fill: 'currentColor' }}>
-                      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      style={{
+                        position: 'absolute',
+                        left: '32px',
+                        top: '8px',
+                        width: '14px',
+                        height: '14px',
+                        color: '#7dd3fc',
+                        fill: 'currentColor',
+                      }}
+                    >
+                      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                     </svg>
                     {/* Sparkle Star 2 */}
-                    <svg width="12" height="12" viewBox="0 0 24 24" style={{ position: 'absolute', right: '28px', top: '24px', width: '12px', height: '12px', color: '#7dd3fc', fill: 'currentColor' }}>
-                      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      style={{
+                        position: 'absolute',
+                        right: '28px',
+                        top: '24px',
+                        width: '12px',
+                        height: '12px',
+                        color: '#7dd3fc',
+                        fill: 'currentColor',
+                      }}
+                    >
+                      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                     </svg>
-                    
+
                     {/* Floating White Calendar Card */}
-                    <div style={{ position: 'relative', width: '130px', height: '96px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 20px rgba(0, 112, 243, 0.12)', border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '130px',
+                        height: '96px',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 20px rgba(0, 112, 243, 0.12)',
+                        border: '1px solid #e2e8f0',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
+                    >
                       {/* Binders */}
-                      <div style={{ position: 'absolute', top: '3px', left: '0', right: '0', display: 'flex', justifyContent: 'space-around', padding: '0 20px', zIndex: 10 }}>
-                        <div style={{ width: '6px', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                        <div style={{ width: '6px', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
-                        <div style={{ width: '6px', height: '8px', backgroundColor: '#cbd5e1', borderRadius: '3px' }} />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '3px',
+                          left: '0',
+                          right: '0',
+                          display: 'flex',
+                          justifyContent: 'space-around',
+                          padding: '0 20px',
+                          zIndex: 10,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '8px',
+                            backgroundColor: '#cbd5e1',
+                            borderRadius: '3px',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '8px',
+                            backgroundColor: '#cbd5e1',
+                            borderRadius: '3px',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '8px',
+                            backgroundColor: '#cbd5e1',
+                            borderRadius: '3px',
+                          }}
+                        />
                       </div>
                       {/* Blue Top Banner */}
                       <div style={{ height: '26px', backgroundColor: '#1a73e8', width: '100%' }} />
                       {/* Dots Grid */}
-                      <div style={{ padding: '10px 12px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', alignItems: 'center', justifyItems: 'center', flex: 1 }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#93c5fd' }} />
+                      <div
+                        style={{
+                          padding: '10px 12px',
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(4, 1fr)',
+                          gap: '8px',
+                          alignItems: 'center',
+                          justifyItems: 'center',
+                          flex: 1,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#93c5fd',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#93c5fd',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#93c5fd',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#93c5fd',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#93c5fd',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#93c5fd',
+                          }}
+                        />
                       </div>
                       {/* Blue Checkmark Badge */}
-                      <div style={{ position: 'absolute', bottom: '6px', right: '6px', width: '26px', height: '26px', backgroundColor: '#1a73e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #ffffff', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: '6px',
+                          right: '6px',
+                          width: '26px',
+                          height: '26px',
+                          backgroundColor: '#1a73e8',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '2px solid #ffffff',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                        }}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ width: '14px', height: '14px' }}
+                        >
                           <path d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -1736,13 +2113,38 @@ export function ScheduleManageView() {
 
                   {/* Status & Connection Button */}
                   {!googleCalendarStatus ? (
-                    <div style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: '12px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>
+                    <div
+                      style={{
+                        padding: '12px',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                        fontSize: '13px',
+                        color: '#64748b',
+                      }}
+                    >
                       Đang tải trạng thái...
                     </div>
                   ) : !googleCalendarStatus.connected ? (
                     <div style={{ textAlign: 'center' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: '10px 0 4px' }}>Chưa kết nối</h4>
-                      <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.5, margin: '0 0 16px' }}>
+                      <h4
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: 700,
+                          color: '#0f172a',
+                          margin: '10px 0 4px',
+                        }}
+                      >
+                        Chưa kết nối
+                      </h4>
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: '#64748b',
+                          lineHeight: 1.5,
+                          margin: '0 0 16px',
+                        }}
+                      >
                         Kết nối để đồng bộ lịch cá nhân và hỗ trợ tránh trùng lịch.
                       </p>
                       <button
@@ -1766,22 +2168,75 @@ export function ScheduleManageView() {
                           boxShadow: '0 2px 6px rgba(26,115,232,0.25)',
                         }}
                       >
-                        <div style={{ width: '22px', height: '22px', backgroundColor: '#ffffff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" style={{ width: '14px', height: '14px' }}>
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        <div
+                          style={{
+                            width: '22px',
+                            height: '22px',
+                            backgroundColor: '#ffffff',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            style={{ width: '14px', height: '14px' }}
+                          >
+                            <path
+                              fill="#4285F4"
+                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            />
+                            <path
+                              fill="#34A853"
+                              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            />
+                            <path
+                              fill="#FBBC05"
+                              d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"
+                            />
+                            <path
+                              fill="#EA4335"
+                              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                            />
                           </svg>
                         </div>
-                        <span>{isInitiatingGoogleOAuth ? 'Đang kết nối...' : 'Kết nối Google Calendar'}</span>
+                        <span>
+                          {isInitiatingGoogleOAuth ? 'Đang kết nối...' : 'Kết nối Google Calendar'}
+                        </span>
                       </button>
                     </div>
                   ) : googleCalendarStatus.needsReconnect ? (
                     <div style={{ textAlign: 'center' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#b45309', margin: '10px 0 4px' }}>Cần kết nối lại</h4>
+                      <h4
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: 700,
+                          color: '#b45309',
+                          margin: '10px 0 4px',
+                        }}
+                      >
+                        Cần kết nối lại
+                      </h4>
                       {googleCalendarStatus.email && (
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', margin: '0 0 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            backgroundColor: '#ffffff',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            margin: '0 0 10px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {googleCalendarStatus.email}
                         </p>
                       )}
@@ -1806,9 +2261,32 @@ export function ScheduleManageView() {
                     </div>
                   ) : (
                     <div style={{ textAlign: 'center' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#047857', margin: '10px 0 4px' }}>Đã kết nối</h4>
+                      <h4
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: 700,
+                          color: '#047857',
+                          margin: '10px 0 4px',
+                        }}
+                      >
+                        Đã kết nối
+                      </h4>
                       {googleCalendarStatus.email && (
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#334155', backgroundColor: '#ffffff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', margin: '0 0 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            backgroundColor: '#ffffff',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            margin: '0 0 10px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {googleCalendarStatus.email}
                         </p>
                       )}
@@ -1834,17 +2312,35 @@ export function ScheduleManageView() {
                 </div>
 
                 {/* Feature List (Bottom) */}
-                <div style={{ borderTop: '1px solid #dbeafe', paddingTop: '14px', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', fontWeight: 500, color: '#334155' }}>
+                <div
+                  style={{
+                    borderTop: '1px solid #dbeafe',
+                    paddingTop: '14px',
+                    marginTop: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: '#334155',
+                  }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <RefreshCw style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }} />
+                    <RefreshCw
+                      style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }}
+                    />
                     <span>Đồng bộ tự động lịch rảnh</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <ShieldCheck style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }} />
+                    <ShieldCheck
+                      style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }}
+                    />
                     <span>Tránh trùng lịch hiệu quả</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Lock style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }} />
+                    <Lock
+                      style={{ width: '16px', height: '16px', color: '#1a73e8', flexShrink: 0 }}
+                    />
                     <span>Dữ liệu an toàn và bảo mật</span>
                   </div>
                 </div>
@@ -1852,7 +2348,17 @@ export function ScheduleManageView() {
             </div>
 
             {/* Modal Footer */}
-            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px', marginTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
+            <div
+              style={{
+                borderTop: '1px solid #f1f5f9',
+                paddingTop: '16px',
+                marginTop: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: '12px',
+              }}
+            >
               <button
                 type="button"
                 disabled={isSavingPolicy}
@@ -1883,13 +2389,13 @@ export function ScheduleManageView() {
                 style={{
                   height: '40px',
                   padding: '0 22px',
-                  backgroundColor: (!isPolicyDirty || isSavingPolicy) ? '#94a3b8' : '#1a73e8',
+                  backgroundColor: !isPolicyDirty || isSavingPolicy ? '#94a3b8' : '#1a73e8',
                   border: 'none',
                   borderRadius: '12px',
                   color: '#ffffff',
                   fontSize: '13px',
                   fontWeight: 600,
-                  cursor: (!isPolicyDirty || isSavingPolicy) ? 'not-allowed' : 'pointer',
+                  cursor: !isPolicyDirty || isSavingPolicy ? 'not-allowed' : 'pointer',
                   boxShadow: '0 2px 4px rgba(26,115,232,0.2)',
                 }}
               >
@@ -2028,82 +2534,152 @@ export function ScheduleManageView() {
       <Modal
         open={isDetailModalOpen && Boolean(selectedSlot)}
         title="Chi tiết lịch rảnh"
+        hideHeader
         onClose={() => {
           setIsDetailModalOpen(false);
           setSelectedSlotId(null);
         }}
-        className="mentor-availability-slot-modal"
+        className="availability-detail-modal"
       >
         {selectedSlot && (
-          <div className="mentor-slot-detail-modal-content space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                Lịch rảnh
-              </span>
-              <span className="text-xs text-gray-500">{selectedSlot.timezone}</span>
-            </div>
+          <div className="availability-detail-content">
+            <header className="availability-detail-header">
+              <h2>Chi tiết lịch rảnh</h2>
+              <button
+                type="button"
+                className="availability-detail-close"
+                aria-label="Đóng"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedSlotId(null);
+                }}
+              >
+                <X aria-hidden="true" />
+              </button>
+            </header>
 
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-gray-500 font-medium">Ngày: </span>
-                <strong className="text-gray-900">
-                  {selectedSlotStart?.date.split('-').reverse().join('/')}
-                </strong>
-              </div>
-              <div>
-                <span className="text-gray-500 font-medium">Thời gian: </span>
-                <strong className="text-gray-900">
-                  {selectedSlotStart?.time} – {selectedSlotEnd?.time}
-                </strong>
-              </div>
-              <div>
-                <span className="text-gray-500 font-medium">Dịch vụ: </span>
-                <span className="text-gray-900 font-medium">
-                  {selectedSlot.services.map((s) => s.title).join(', ') || 'Chưa gắn dịch vụ'}
+            <section className="availability-detail-summary" aria-label="Thông tin lịch rảnh">
+              <div className="availability-detail-info-item">
+                <span className="availability-detail-info-icon" aria-hidden="true">
+                  <Calendar />
                 </span>
+                <div>
+                  <span className="availability-detail-info-label">Ngày</span>
+                  <strong>{selectedSlotStart?.date.split('-').reverse().join('/')}</strong>
+                </div>
               </div>
-              <div>
-                <span className="text-gray-500 font-medium">Ghi chú: </span>
-                <span className="text-gray-700 italic">
-                  {selectedSlot.note?.trim() ? selectedSlot.note : 'Không có ghi chú'}
+
+              <div className="availability-detail-info-item">
+                <span className="availability-detail-info-icon" aria-hidden="true">
+                  <Clock />
                 </span>
+                <div>
+                  <span className="availability-detail-info-label">Thời gian</span>
+                  <div className="availability-detail-time-value">
+                    <strong>
+                      {selectedSlotStart?.time} – {selectedSlotEnd?.time}
+                    </strong>
+                    {selectedSlotDurationMinutes > 0 && (
+                      <span className="availability-detail-duration">
+                        {Math.floor(selectedSlotDurationMinutes / 60) > 0 &&
+                          `${Math.floor(selectedSlotDurationMinutes / 60)} giờ `}
+                        {selectedSlotDurationMinutes % 60 > 0 &&
+                          `${selectedSlotDurationMinutes % 60} phút`}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+
+              <div className="availability-detail-info-item">
+                <span className="availability-detail-info-icon" aria-hidden="true">
+                  <Globe />
+                </span>
+                <div>
+                  <span className="availability-detail-info-label">Múi giờ</span>
+                  <strong>{selectedSlot.timezone}</strong>
+                </div>
+              </div>
+
+              <div className="availability-detail-info-item">
+                <span className="availability-detail-info-icon" aria-hidden="true">
+                  <FileText />
+                </span>
+                <div>
+                  <span className="availability-detail-info-label">Ghi chú</span>
+                  <strong>{selectedSlot.note?.trim() || 'Không có ghi chú'}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section className="availability-detail-services">
+              <div className="availability-detail-services-heading">
+                <h3>Dịch vụ có thể đặt trong khung giờ này</h3>
+                <span>{selectedSlot.services.length} dịch vụ</span>
+              </div>
+
+              {selectedSlot.services.length > 0 ? (
+                <div className="availability-detail-service-list">
+                  {selectedSlot.services.map((service) => (
+                    <div className="availability-detail-service-row" key={service.serviceId}>
+                      <strong>{service.title}</strong>
+                      <div className="availability-detail-service-meta">
+                        <span>{service.durationMinutes} phút</span>
+                        {(service.isFree || service.priceScoin != null) && <i aria-hidden="true" />}
+                        {service.isFree ? (
+                          <span>Miễn phí</span>
+                        ) : service.priceScoin != null ? (
+                          <span>
+                            {new Intl.NumberFormat('vi-VN').format(service.priceScoin)} S-coins
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="availability-detail-empty">
+                  Chưa có dịch vụ nào được áp dụng cho khung giờ này.
+                </p>
+              )}
+            </section>
 
             {selectedSlot.pendingBookingCount > 0 && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-medium flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <div className="availability-detail-notice is-warning">
+                <AlertTriangle aria-hidden="true" />
                 <span>{selectedSlot.pendingBookingCount} yêu cầu đang chờ</span>
               </div>
             )}
 
             {selectedSlot.hasLockingBooking && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs font-medium flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              <div className="availability-detail-notice is-info">
+                <AlertTriangle aria-hidden="true" />
                 <span>Khung giờ đang bị khóa bởi booking</span>
               </div>
             )}
 
             {selectedSlot.timeMutation?.mode && selectedSlot.timeMutation.mode !== 'ALLOWED' && (
-              <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
-                Hạn chế đổi giờ: {selectedSlot.timeMutation.restrictionCode || 'Khung giờ đang có booking'}
+              <p className="availability-detail-restriction">
+                Hạn chế đổi giờ:{' '}
+                {selectedSlot.timeMutation.restrictionCode || 'Khung giờ đang có booking'}
               </p>
             )}
 
-            <div className="form-modal-footer pt-4 border-t border-gray-100 flex gap-2 justify-end">
-              <button
+            <footer className="availability-detail-footer">
+              <Button
                 type="button"
-                className="btn-modal-cancel text-red-600 border-red-200 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="outline"
+                size="lg"
                 disabled={!canDeactivate}
                 title={deactivationReason || undefined}
                 onClick={handleOpenDeactivateModal}
               >
                 Thu hồi lịch rảnh
-              </button>
-              <Button type="button" className="btn-modal-submit" onClick={handleOpenEditModal}>
+              </Button>
+              <Button type="button" size="lg" onClick={handleOpenEditModal}>
                 Chỉnh sửa
               </Button>
-            </div>
+            </footer>
           </div>
         )}
       </Modal>
@@ -2341,7 +2917,8 @@ export function ScheduleManageView() {
             <div>
               <p className="font-semibold mb-1">Cảnh báo yêu cầu đặt lịch đang chờ</p>
               <p className="text-xs">
-                Khung giờ này đang có yêu cầu đặt lịch chờ xác nhận. Nếu tiếp tục thao tác, các yêu cầu liên quan sẽ bị tự động từ chối.
+                Khung giờ này đang có yêu cầu đặt lịch chờ xác nhận. Nếu tiếp tục thao tác, các yêu
+                cầu liên quan sẽ bị tự động từ chối.
               </p>
             </div>
           </div>
@@ -2387,6 +2964,18 @@ export function ScheduleManageView() {
         isSubmittingException={isSubmittingException}
         onClose={() => setSelectedTemplateForDetail(null)}
         onOpenEdit={handleOpenEditTemplate}
+        onPause={(template) => {
+          setSelectedTemplateForDetail(null);
+          setPendingTemplateActionConfirm({ type: 'pause', template });
+        }}
+        onResume={(template) => {
+          setSelectedTemplateForDetail(null);
+          setPendingTemplateActionConfirm({ type: 'resume', template });
+        }}
+        onArchive={(template) => {
+          setSelectedTemplateForDetail(null);
+          setPendingTemplateActionConfirm({ type: 'archive', template });
+        }}
         onSubmitSkipDate={handleSkipTemplateDate}
         onSubmitRestoreDate={handleRestoreTemplateDate}
       />
@@ -2495,9 +3084,7 @@ export function ScheduleManageView() {
         className="mentor-availability-slot-modal"
       >
         <div className="space-y-4">
-          <p className="text-xs text-slate-600 leading-relaxed">
-            {cannotDisconnectNotice}
-          </p>
+          <p className="text-xs text-slate-600 leading-relaxed">{cannotDisconnectNotice}</p>
 
           <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end">
             <Button

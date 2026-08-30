@@ -107,7 +107,8 @@ export function GoogleCalendarCallbackView() {
           } else if (reason.status === 400 || reason.code === 'AUTH_1006') {
             setStatus('EXPIRED');
             setErrorMessage(
-              reason.message || 'Phiên kết nối Google Calendar không còn hợp lệ. Vui lòng kết nối lại.',
+              reason.message ||
+                'Phiên kết nối Google Calendar không còn hợp lệ. Vui lòng kết nối lại.',
             );
           } else {
             setStatus('ERROR');
@@ -171,7 +172,12 @@ export function GoogleCalendarCallbackView() {
               <p className="text-xs text-slate-600 leading-relaxed">{errorMessage}</p>
             </div>
             <div className="pt-2">
-              <Button variant="outline" size="sm" className="w-full" onClick={handleReturnToSettings}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleReturnToSettings}
+              >
                 Quay lại cài đặt lịch
               </Button>
             </div>
@@ -189,7 +195,12 @@ export function GoogleCalendarCallbackView() {
               <p className="text-xs text-slate-600 leading-relaxed">{errorMessage}</p>
             </div>
             <div className="pt-2 flex flex-col gap-2">
-              <Button variant="primary" size="sm" className="w-full" onClick={handleReturnToSettings}>
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full"
+                onClick={handleReturnToSettings}
+              >
                 Thử kết nối lại
               </Button>
             </div>
@@ -207,10 +218,20 @@ export function GoogleCalendarCallbackView() {
               <p className="text-xs text-slate-600 leading-relaxed">{errorMessage}</p>
             </div>
             <div className="pt-2 flex flex-col gap-2">
-              <Button variant="primary" size="sm" className="w-full" onClick={handleGoToVerification}>
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full"
+                onClick={handleGoToVerification}
+              >
                 Xem trạng thái xác minh
               </Button>
-              <Button variant="outline" size="sm" className="w-full" onClick={handleReturnToSettings}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleReturnToSettings}
+              >
                 Quay lại cài đặt lịch
               </Button>
             </div>
@@ -228,7 +249,12 @@ export function GoogleCalendarCallbackView() {
               <p className="text-xs text-slate-600 leading-relaxed">{errorMessage}</p>
             </div>
             <div className="pt-2">
-              <Button variant="outline" size="sm" className="w-full" onClick={handleReturnToSettings}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleReturnToSettings}
+              >
                 Quay lại cài đặt lịch
               </Button>
             </div>

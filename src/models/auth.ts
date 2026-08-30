@@ -437,36 +437,76 @@ export interface MentorServiceResponse {
 
 /** Phần dữ liệu phản hồi hồ sơ mentor công khai (`GET /api/mentors/{mentorUserId}`). */
 export interface MentorDiscoveryDetailResponse {
-  mentorUserId?: string;
-  mentor?: any;
-  identity?: {
+  identity: {
     mentorUserId?: string;
     displayName?: string;
     avatarUrl?: string | null;
     headline?: string;
     isVerified?: boolean;
+    verifiedAt?: string | null;
   };
-  mentoring?: {
+  mentoring: {
+    bio?: string;
     expertiseDescription?: string;
   };
-  evidence?: {
-    campusName?: string;
-    specializationName?: string;
-    programName?: string;
+  evidence: {
+    featuredProjects?: MentorProjectResponse[];
+    achievements?: MentorAchievementResponse[];
+    portfolioUrl?: string | null;
+    githubUrl?: string | null;
+    education?: {
+      campusName?: string;
+      specializationName?: string;
+      programName?: string;
+    };
   };
-  displayName?: string;
-  name?: string;
-  avatarUrl?: string | null;
-  headline?: string;
-  bio?: string;
-  expertise?: string[];
-  organization?: string;
-  rating?: number;
-  reviewCount?: number;
-  startingPrice?: number;
-  category?: 'PM' | 'Tech' | 'Design' | 'Data' | 'Marketing' | 'Leadership';
+  reputation: {
+    ratingState?: 'NO_REVIEWS' | 'RATED';
+    ratingAverage?: number | null;
+    reviewCount?: number;
+    completedSessions?: number;
+  };
   services: MentorServiceResponse[];
-  [key: string]: any;
+  availability?: {
+    isAvailable?: boolean;
+    suspendedUntil?: string | null;
+    canRequestBooking?: boolean;
+  };
+}
+
+/** Một đánh giá công khai của mentor (`GET /api/mentors/{mentorUserId}/reviews`). */
+export interface MentorReviewResponse {
+  reviewId: string;
+  reviewerUserId: string;
+  reviewerDisplayName: string;
+  reviewerAvatarUrl?: string | null;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+}
+
+/** Trang đánh giá công khai của mentor. */
+export interface MentorReviewPageResponse {
+  content: MentorReviewResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+/** Tác giả blog công khai được trả về trong danh sách theo dõi. */
+export interface BlogFollowMentorResponse {
+  id: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  authorType: 'MENTOR' | 'PLATFORM';
+}
+
+/** Danh sách chủ đề và mentor mà người dùng hiện tại đang theo dõi. */
+export interface BlogFollowResponse {
+  categories: unknown[];
+  mentors: BlogFollowMentorResponse[];
 }
 
 /** Phản hồi thông tin cá nhân người dùng (`/api/auth/me`) */
@@ -620,6 +660,8 @@ export interface MentorProjectResponse {
   content: string;
   projectDescription?: string;
   liveDemoUrl?: string;
+  pictureUrl?: string;
+  displayOrder?: number;
   createdAt?: string;
 }
 
@@ -649,6 +691,8 @@ export interface MentorAchievementResponse {
   productHeader?: string;
   productDescription?: string;
   demoUrl?: string;
+  pictureUrl?: string;
+  displayOrder?: number;
   createdAt?: string;
 }
 

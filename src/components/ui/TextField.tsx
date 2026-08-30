@@ -11,7 +11,15 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
 }
 
-export function TextField({ label, error, helperText, id, name, className = '', ...props }: TextFieldProps) {
+export function TextField({
+  label,
+  error,
+  helperText,
+  id,
+  name,
+  className = '',
+  ...props
+}: TextFieldProps) {
   const fieldId = id ?? name;
   const inputEl = (
     <input

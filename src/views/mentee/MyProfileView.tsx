@@ -25,7 +25,21 @@ import { authRepo } from '@/repositories/authRepo';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Award, Briefcase, Calendar, ExternalLink, Globe, Phone, Plus, Star, Trash2, Edit3, Code, BookOpen, Target } from 'lucide-react';
+import {
+  Award,
+  Briefcase,
+  Calendar,
+  ExternalLink,
+  Globe,
+  Phone,
+  Plus,
+  Star,
+  Trash2,
+  Edit3,
+  Code,
+  BookOpen,
+  Target,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -92,7 +106,9 @@ export function MyProfileView() {
 
   // State cho Modal Achievement
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false);
-  const [editingAchievement, setEditingAchievement] = useState<MentorAchievementResponse | null>(null);
+  const [editingAchievement, setEditingAchievement] = useState<MentorAchievementResponse | null>(
+    null,
+  );
   const [achievementForm, setAchievementForm] = useState<CreateMentorAchievementRequest>({
     title: '',
     awardDescription: '',
@@ -510,8 +526,8 @@ export function MyProfileView() {
               </label>
               {profile && (
                 <p>
-                  Thông tin học thuật được xác thực: {profile.campus.name} · {profile.program.nameVi}{' '}
-                  · {profile.specialization.nameVi}
+                  Thông tin học thuật được xác thực: {profile.campus.name} ·{' '}
+                  {profile.program.nameVi} · {profile.specialization.nameVi}
                 </p>
               )}
               <button type="submit" disabled={saving}>
@@ -536,48 +552,119 @@ export function MyProfileView() {
 
       {/* Thông tin mở rộng dành cho Mentor với thiết kế đồng bộ theme xanh biển */}
       {isMentor && (
-        <div className="figma-mentor-profile-sections" style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div
+          className="figma-mentor-profile-sections"
+          style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}
+        >
           {/* Thanh thống kê nhanh (Sessions, Phone, Socials) */}
-          <div className="figma-mentor-stats-bar" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid var(--figma-border)' }}>
+          <div
+            className="figma-mentor-stats-bar"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              background: '#fff',
+              padding: '20px',
+              borderRadius: '16px',
+              border: '1px solid var(--figma-border)',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ padding: '10px', background: 'var(--figma-blue-light)', borderRadius: '12px', color: 'var(--figma-blue)' }}>
+              <div
+                style={{
+                  padding: '10px',
+                  background: 'var(--figma-blue-light)',
+                  borderRadius: '12px',
+                  color: 'var(--figma-blue)',
+                }}
+              >
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <small style={{ color: 'var(--figma-muted)', fontSize: '12px' }}>Buổi tư vấn đã hoàn thành</small>
-                <div style={{ fontWeight: '700', fontSize: '15px' }}>{mentorProfile?.completedSessions || 0} buổi</div>
+                <small style={{ color: 'var(--figma-muted)', fontSize: '12px' }}>
+                  Buổi tư vấn đã hoàn thành
+                </small>
+                <div style={{ fontWeight: '700', fontSize: '15px' }}>
+                  {mentorProfile?.completedSessions || 0} buổi
+                </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ padding: '10px', background: 'var(--figma-blue-light)', borderRadius: '12px', color: 'var(--figma-blue)' }}>
+              <div
+                style={{
+                  padding: '10px',
+                  background: 'var(--figma-blue-light)',
+                  borderRadius: '12px',
+                  color: 'var(--figma-blue)',
+                }}
+              >
                 <Phone className="w-5 h-5" />
               </div>
               <div>
-                <small style={{ color: 'var(--figma-muted)', fontSize: '12px' }}>Số điện thoại liên hệ</small>
-                <div style={{ fontWeight: '700', fontSize: '15px' }}>{mentorProfile?.phoneNumber || 'Chưa cập nhật'}</div>
+                <small style={{ color: 'var(--figma-muted)', fontSize: '12px' }}>
+                  Số điện thoại liên hệ
+                </small>
+                <div style={{ fontWeight: '700', fontSize: '15px' }}>
+                  {mentorProfile?.phoneNumber || 'Chưa cập nhật'}
+                </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ padding: '10px', background: 'var(--figma-blue-light)', borderRadius: '12px', color: 'var(--figma-blue)' }}>
+              <div
+                style={{
+                  padding: '10px',
+                  background: 'var(--figma-blue-light)',
+                  borderRadius: '12px',
+                  color: 'var(--figma-blue)',
+                }}
+              >
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <small style={{ color: 'var(--figma-muted)', fontSize: '12px' }}>Kênh truyền thông</small>
+                <small style={{ color: 'var(--figma-muted)', fontSize: '12px' }}>
+                  Kênh truyền thông
+                </small>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
                   {mentorProfile?.githubUrl && (
-                    <a href={mentorProfile.githubUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--figma-blue)', display: 'flex', alignItems: 'center', gap: '2px', fontSize: '13px', fontWeight: '600' }}>
+                    <a
+                      href={mentorProfile.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        color: 'var(--figma-blue)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                      }}
+                    >
                       <Code className="w-4 h-4" /> GitHub
                     </a>
                   )}
                   {mentorProfile?.portfolioUrl && (
-                    <a href={mentorProfile.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--figma-blue)', display: 'flex', alignItems: 'center', gap: '2px', fontSize: '13px', fontWeight: '600' }}>
+                    <a
+                      href={mentorProfile.portfolioUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        color: 'var(--figma-blue)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                      }}
+                    >
                       <ExternalLink className="w-4 h-4" /> Portfolio
                     </a>
                   )}
                   {!mentorProfile?.githubUrl && !mentorProfile?.portfolioUrl && (
-                    <span style={{ fontSize: '13px', color: 'var(--figma-muted)' }}>Chưa liên kết</span>
+                    <span style={{ fontSize: '13px', color: 'var(--figma-muted)' }}>
+                      Chưa liên kết
+                    </span>
                   )}
                 </div>
               </div>
@@ -585,64 +672,197 @@ export function MyProfileView() {
           </div>
 
           {/* Môn học giảng dạy & Mức độ hỗ trợ */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '24px',
+            }}
+          >
             {/* Môn học đã duyệt */}
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid var(--figma-border)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--figma-text)' }}>
-                <BookOpen className="w-5 h-5 text-[var(--figma-blue)]" /> Môn học giảng dạy ({mentorProfile?.subjectResults?.length || 0})
+            <div
+              style={{
+                background: '#fff',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '1px solid var(--figma-border)',
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: 'var(--figma-text)',
+                }}
+              >
+                <BookOpen className="w-5 h-5 text-[var(--figma-blue)]" /> Môn học giảng dạy (
+                {mentorProfile?.subjectResults?.length || 0})
               </h3>
               {mentorProfile?.subjectResults?.length ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {mentorProfile.subjectResults.map((sub, idx) => (
-                    <div key={sub.id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                    <div
+                      key={sub.id || idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '10px 14px',
+                        background: '#f8fafc',
+                        borderRadius: '10px',
+                        border: '1px solid #f1f5f9',
+                      }}
+                    >
                       <div>
-                        <strong style={{ color: 'var(--figma-blue)', marginRight: '8px' }}>{sub.subjectCode}</strong>
-                        <span style={{ fontSize: '13px', color: '#334155' }}>{sub.subjectName}</span>
+                        <strong style={{ color: 'var(--figma-blue)', marginRight: '8px' }}>
+                          {sub.subjectCode}
+                        </strong>
+                        <span style={{ fontSize: '13px', color: '#334155' }}>
+                          {sub.subjectName}
+                        </span>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: '700', padding: '4px 8px', background: 'var(--figma-blue-light)', color: 'var(--figma-blue)', borderRadius: '6px' }}>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          padding: '4px 8px',
+                          background: 'var(--figma-blue-light)',
+                          color: 'var(--figma-blue)',
+                          borderRadius: '6px',
+                        }}
+                      >
                         Điểm: {sub.scoreValue?.toFixed(1)}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p style={{ color: 'var(--figma-muted)', fontSize: '13px' }}>Chưa có thông tin môn học giảng dạy.</p>
+                <p style={{ color: 'var(--figma-muted)', fontSize: '13px' }}>
+                  Chưa có thông tin môn học giảng dạy.
+                </p>
               )}
             </div>
 
             {/* Mức độ hỗ trợ (Scale 1-5) */}
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid var(--figma-border)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--figma-text)' }}>
+            <div
+              style={{
+                background: '#fff',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '1px solid var(--figma-border)',
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: 'var(--figma-text)',
+                }}
+              >
                 <Target className="w-5 h-5 text-[var(--figma-blue)]" /> Mức độ hỗ trợ tư vấn
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <span>Hỗ trợ kiến thức căn bản</span>
                     <strong>{mentorProfile?.foundationSupportLevel || 0} / 5</strong>
                   </div>
-                  <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${((mentorProfile?.foundationSupportLevel || 0) / 5) * 100}%`, background: 'var(--figma-blue)', borderRadius: '4px' }} />
+                  <div
+                    style={{
+                      height: '8px',
+                      width: '100%',
+                      background: '#e2e8f0',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${((mentorProfile?.foundationSupportLevel || 0) / 5) * 100}%`,
+                        background: 'var(--figma-blue)',
+                        borderRadius: '4px',
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <span>Review sản phẩm & đồ án</span>
                     <strong>{mentorProfile?.outputReviewSupportLevel || 0} / 5</strong>
                   </div>
-                  <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${((mentorProfile?.outputReviewSupportLevel || 0) / 5) * 100}%`, background: '#0284c7', borderRadius: '4px' }} />
+                  <div
+                    style={{
+                      height: '8px',
+                      width: '100%',
+                      background: '#e2e8f0',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${((mentorProfile?.outputReviewSupportLevel || 0) / 5) * 100}%`,
+                        background: '#0284c7',
+                        borderRadius: '4px',
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <span>Định hướng học tập & sự nghiệp</span>
                     <strong>{mentorProfile?.directionSupportLevel || 0} / 5</strong>
                   </div>
-                  <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${((mentorProfile?.directionSupportLevel || 0) / 5) * 100}%`, background: '#3b82f6', borderRadius: '4px' }} />
+                  <div
+                    style={{
+                      height: '8px',
+                      width: '100%',
+                      background: '#e2e8f0',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${((mentorProfile?.directionSupportLevel || 0) / 5) * 100}%`,
+                        background: '#3b82f6',
+                        borderRadius: '4px',
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -650,41 +870,158 @@ export function MyProfileView() {
           </div>
 
           {/* Phần Dự án tiêu biểu (Featured Projects) */}
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid var(--figma-border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--figma-text)' }}>
-                <Briefcase className="w-5 h-5 text-[var(--figma-blue)]" /> Dự án nổi bật ({projects.length})
+          <div
+            style={{
+              background: '#fff',
+              padding: '24px',
+              borderRadius: '16px',
+              border: '1px solid var(--figma-border)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: 0,
+                  color: 'var(--figma-text)',
+                }}
+              >
+                <Briefcase className="w-5 h-5 text-[var(--figma-blue)]" /> Dự án nổi bật (
+                {projects.length})
               </h3>
               <button
                 type="button"
                 onClick={() => openProjectModal()}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'var(--figma-blue-light)', color: 'var(--figma-blue)', border: '1px solid var(--figma-blue-mid)', borderRadius: '8px', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  background: 'var(--figma-blue-light)',
+                  color: 'var(--figma-blue)',
+                  border: '1px solid var(--figma-blue-mid)',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
               >
                 <Plus className="w-4 h-4" /> Thêm dự án
               </button>
             </div>
 
             {projects.length ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '16px',
+                }}
+              >
                 {projects.map((proj) => (
-                  <div key={proj.id || proj.projectId} style={{ border: '1px solid var(--figma-border)', padding: '16px', borderRadius: '12px', background: '#fafafa', position: 'relative' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--figma-text)', margin: 0 }}>{proj.title}</h4>
+                  <div
+                    key={proj.id || proj.projectId}
+                    style={{
+                      border: '1px solid var(--figma-border)',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      background: '#fafafa',
+                      position: 'relative',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <h4
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: '700',
+                          color: 'var(--figma-text)',
+                          margin: 0,
+                        }}
+                      >
+                        {proj.title}
+                      </h4>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button type="button" onClick={() => openProjectModal(proj)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--figma-muted)' }} title="Sửa dự án">
+                        <button
+                          type="button"
+                          onClick={() => openProjectModal(proj)}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--figma-muted)',
+                          }}
+                          title="Sửa dự án"
+                        >
                           <Edit3 className="w-4 h-4" />
                         </button>
-                        <button type="button" onClick={() => handleDeleteProject(proj)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }} title="Xóa dự án">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProject(proj)}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            color: '#ef4444',
+                          }}
+                          title="Xóa dự án"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                    <p style={{ fontSize: '13px', color: '#475569', marginBottom: '8px', fontWeight: '500' }}>{proj.content}</p>
+                    <p
+                      style={{
+                        fontSize: '13px',
+                        color: '#475569',
+                        marginBottom: '8px',
+                        fontWeight: '500',
+                      }}
+                    >
+                      {proj.content}
+                    </p>
                     {proj.projectDescription && (
-                      <p style={{ fontSize: '12px', color: 'var(--figma-muted)', marginBottom: '10px' }}>{proj.projectDescription}</p>
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--figma-muted)',
+                          marginBottom: '10px',
+                        }}
+                      >
+                        {proj.projectDescription}
+                      </p>
                     )}
                     {proj.liveDemoUrl && (
-                      <a href={proj.liveDemoUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--figma-blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                      <a
+                        href={proj.liveDemoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--figma-blue)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: '600',
+                        }}
+                      >
                         <ExternalLink className="w-3 h-3" /> Xem Demo / Source
                       </a>
                     )}
@@ -692,56 +1029,187 @@ export function MyProfileView() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: 'var(--figma-muted)', fontSize: '13px', margin: 0 }}>Chưa có dự án tiêu biểu nào. Nhấn "+ Thêm dự án" để giới thiệu kinh nghiệm của bạn.</p>
+              <p style={{ color: 'var(--figma-muted)', fontSize: '13px', margin: 0 }}>
+                Chưa có dự án tiêu biểu nào. Nhấn "+ Thêm dự án" để giới thiệu kinh nghiệm của bạn.
+              </p>
             )}
           </div>
 
           {/* Phần Thành tích & Giải thưởng (Achievements) */}
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid var(--figma-border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--figma-text)' }}>
-                <Award className="w-5 h-5 text-[var(--figma-blue)]" /> Thành tích & Giải thưởng ({achievements.length})
+          <div
+            style={{
+              background: '#fff',
+              padding: '24px',
+              borderRadius: '16px',
+              border: '1px solid var(--figma-border)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: 0,
+                  color: 'var(--figma-text)',
+                }}
+              >
+                <Award className="w-5 h-5 text-[var(--figma-blue)]" /> Thành tích & Giải thưởng (
+                {achievements.length})
               </h3>
               <button
                 type="button"
                 onClick={() => openAchievementModal()}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'var(--figma-blue-light)', color: 'var(--figma-blue)', border: '1px solid var(--figma-blue-mid)', borderRadius: '8px', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  background: 'var(--figma-blue-light)',
+                  color: 'var(--figma-blue)',
+                  border: '1px solid var(--figma-blue-mid)',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
               >
                 <Plus className="w-4 h-4" /> Thêm thành tích
               </button>
             </div>
 
             {achievements.length ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '16px',
+                }}
+              >
                 {achievements.map((ach) => (
-                  <div key={ach.id || ach.achievementId} style={{ border: '1px solid var(--figma-border)', padding: '16px', borderRadius: '12px', background: '#fafafa', position: 'relative' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <div
+                    key={ach.id || ach.achievementId}
+                    style={{
+                      border: '1px solid var(--figma-border)',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      background: '#fafafa',
+                      position: 'relative',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px',
+                      }}
+                    >
                       <div>
-                        <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--figma-text)', margin: 0 }}>{ach.title}</h4>
+                        <h4
+                          style={{
+                            fontSize: '15px',
+                            fontWeight: '700',
+                            color: 'var(--figma-text)',
+                            margin: 0,
+                          }}
+                        >
+                          {ach.title}
+                        </h4>
                         {ach.achievedAt && (
-                          <small style={{ color: 'var(--figma-blue)', fontSize: '11px', fontWeight: '600' }}>{ach.achievedAt}</small>
+                          <small
+                            style={{
+                              color: 'var(--figma-blue)',
+                              fontSize: '11px',
+                              fontWeight: '600',
+                            }}
+                          >
+                            {ach.achievedAt}
+                          </small>
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button type="button" onClick={() => openAchievementModal(ach)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--figma-muted)' }} title="Sửa thành tích">
+                        <button
+                          type="button"
+                          onClick={() => openAchievementModal(ach)}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--figma-muted)',
+                          }}
+                          title="Sửa thành tích"
+                        >
                           <Edit3 className="w-4 h-4" />
                         </button>
-                        <button type="button" onClick={() => handleDeleteAchievement(ach)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }} title="Xóa thành tích">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAchievement(ach)}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            color: '#ef4444',
+                          }}
+                          title="Xóa thành tích"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                     {ach.awardDescription && (
-                      <p style={{ fontSize: '13px', color: '#475569', marginBottom: '8px' }}>{ach.awardDescription}</p>
+                      <p style={{ fontSize: '13px', color: '#475569', marginBottom: '8px' }}>
+                        {ach.awardDescription}
+                      </p>
                     )}
                     {ach.productHeader && (
-                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--figma-border)' }}>
-                        <strong style={{ fontSize: '12px', color: 'var(--figma-blue)' }}>Sản phẩm: {ach.productHeader}</strong>
-                        {ach.productDescription && <p style={{ fontSize: '12px', color: 'var(--figma-muted)', margin: '2px 0 0' }}>{ach.productDescription}</p>}
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          paddingTop: '8px',
+                          borderTop: '1px dashed var(--figma-border)',
+                        }}
+                      >
+                        <strong style={{ fontSize: '12px', color: 'var(--figma-blue)' }}>
+                          Sản phẩm: {ach.productHeader}
+                        </strong>
+                        {ach.productDescription && (
+                          <p
+                            style={{
+                              fontSize: '12px',
+                              color: 'var(--figma-muted)',
+                              margin: '2px 0 0',
+                            }}
+                          >
+                            {ach.productDescription}
+                          </p>
+                        )}
                       </div>
                     )}
                     {ach.demoUrl && (
-                      <a href={ach.demoUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--figma-blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600', marginTop: '8px' }}>
+                      <a
+                        href={ach.demoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--figma-blue)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: '600',
+                          marginTop: '8px',
+                        }}
+                      >
                         <ExternalLink className="w-3 h-3" /> Xem Chứng nhận / Minh chứng
                       </a>
                     )}
@@ -749,7 +1217,9 @@ export function MyProfileView() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: 'var(--figma-muted)', fontSize: '13px', margin: 0 }}>Chưa có thành tích hoặc giải thưởng. Nhấn "+ Thêm thành tích" để thêm mới.</p>
+              <p style={{ color: 'var(--figma-muted)', fontSize: '13px', margin: 0 }}>
+                Chưa có thành tích hoặc giải thưởng. Nhấn "+ Thêm thành tích" để thêm mới.
+              </p>
             )}
           </div>
         </div>
@@ -757,56 +1227,166 @@ export function MyProfileView() {
 
       {/* Modal Thêm/Sửa Dự án */}
       {isProjectModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '500px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '500px',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            }}
+          >
             <h3 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '700' }}>
               {editingProject ? 'Sửa thông tin dự án' : 'Thêm dự án nổi bật mới'}
             </h3>
-            <form onSubmit={(e) => { e.preventDefault(); void handleSaveProject(); }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSaveProject();
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+            >
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Tên dự án *
                 <input
                   required
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={projectForm.title}
                   onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
                   placeholder="Ví dụ: SWP391 Booking Platform"
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Vai trò / Công nghệ sử dụng *
                 <input
                   required
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={projectForm.content}
                   onChange={(e) => setProjectForm({ ...projectForm, content: e.target.value })}
                   placeholder="Ví dụ: Fullstack Lead (ReactJS, Java Spring Boot)"
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Mô tả dự án
                 <textarea
                   rows={3}
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={projectForm.projectDescription || ''}
-                  onChange={(e) => setProjectForm({ ...projectForm, projectDescription: e.target.value })}
+                  onChange={(e) =>
+                    setProjectForm({ ...projectForm, projectDescription: e.target.value })
+                  }
                   placeholder="Mô tả bài toán, giải pháp và kết quả chính đạt được…"
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Đường dẫn Live Demo / GitHub
                 <input
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={projectForm.liveDemoUrl || ''}
                   onChange={(e) => setProjectForm({ ...projectForm, liveDemoUrl: e.target.value })}
                   placeholder="https://github.com/your-username/your-repo"
                 />
               </label>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" onClick={() => setIsProjectModalOpen(false)} style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--figma-border)', background: '#f8fafc', fontWeight: '600', cursor: 'pointer' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '10px',
+                  marginTop: '10px',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsProjectModalOpen(false)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    background: '#f8fafc',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                  }}
+                >
                   Hủy
                 </button>
-                <button type="submit" disabled={projectSaving} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--figma-blue)', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>
+                <button
+                  type="submit"
+                  disabled={projectSaving}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'var(--figma-blue)',
+                    color: '#fff',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                  }}
+                >
                   {projectSaving ? 'Đang lưu…' : 'Lưu dự án'}
                 </button>
               </div>
@@ -817,75 +1397,221 @@ export function MyProfileView() {
 
       {/* Modal Thêm/Sửa Thành tích */}
       {isAchievementModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '500px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '500px',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            }}
+          >
             <h3 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '700' }}>
               {editingAchievement ? 'Sửa thông tin thành tích' : 'Thêm thành tích / giải thưởng'}
             </h3>
-            <form onSubmit={(e) => { e.preventDefault(); void handleSaveAchievement(); }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSaveAchievement();
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+            >
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Tên giải thưởng / thành tích *
                 <input
                   required
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={achievementForm.title}
-                  onChange={(e) => setAchievementForm({ ...achievementForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setAchievementForm({ ...achievementForm, title: e.target.value })
+                  }
                   placeholder="Ví dụ: NAB StarCamp Internship / Quán quân Hackathon"
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Ngày / Thời điểm đạt được
                 <input
                   type="date"
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={achievementForm.achievedAt || ''}
-                  onChange={(e) => setAchievementForm({ ...achievementForm, achievedAt: e.target.value })}
+                  onChange={(e) =>
+                    setAchievementForm({ ...achievementForm, achievedAt: e.target.value })
+                  }
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Mô tả chi tiết giải thưởng
                 <textarea
                   rows={2}
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={achievementForm.awardDescription || ''}
-                  onChange={(e) => setAchievementForm({ ...achievementForm, awardDescription: e.target.value })}
+                  onChange={(e) =>
+                    setAchievementForm({ ...achievementForm, awardDescription: e.target.value })
+                  }
                   placeholder="Mô tả quy mô, thành tựu hoặc tổ chức trao giải…"
                 />
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                  }}
+                >
                   Tên sản phẩm liên quan
                   <input
-                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--figma-border)',
+                      fontSize: '14px',
+                    }}
                     value={achievementForm.productHeader || ''}
-                    onChange={(e) => setAchievementForm({ ...achievementForm, productHeader: e.target.value })}
+                    onChange={(e) =>
+                      setAchievementForm({ ...achievementForm, productHeader: e.target.value })
+                    }
                     placeholder="Ví dụ: StarCamp"
                   />
                 </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                  }}
+                >
                   Mô tả sản phẩm
                   <input
-                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--figma-border)',
+                      fontSize: '14px',
+                    }}
                     value={achievementForm.productDescription || ''}
-                    onChange={(e) => setAchievementForm({ ...achievementForm, productDescription: e.target.value })}
+                    onChange={(e) =>
+                      setAchievementForm({ ...achievementForm, productDescription: e.target.value })
+                    }
                     placeholder="Ngắn gọn sản phẩm"
                   />
                 </label>
               </div>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                }}
+              >
                 Đường dẫn minh chứng / Demo
                 <input
-                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--figma-border)', fontSize: '14px' }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    fontSize: '14px',
+                  }}
                   value={achievementForm.demoUrl || ''}
-                  onChange={(e) => setAchievementForm({ ...achievementForm, demoUrl: e.target.value })}
+                  onChange={(e) =>
+                    setAchievementForm({ ...achievementForm, demoUrl: e.target.value })
+                  }
                   placeholder="https://certificate-link-or-demo.com"
                 />
               </label>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" onClick={() => setIsAchievementModalOpen(false)} style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--figma-border)', background: '#f8fafc', fontWeight: '600', cursor: 'pointer' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '10px',
+                  marginTop: '10px',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsAchievementModalOpen(false)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--figma-border)',
+                    background: '#f8fafc',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                  }}
+                >
                   Hủy
                 </button>
-                <button type="submit" disabled={achievementSaving} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--figma-blue)', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>
+                <button
+                  type="submit"
+                  disabled={achievementSaving}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'var(--figma-blue)',
+                    color: '#fff',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                  }}
+                >
                   {achievementSaving ? 'Đang lưu…' : 'Lưu thành tích'}
                 </button>
               </div>

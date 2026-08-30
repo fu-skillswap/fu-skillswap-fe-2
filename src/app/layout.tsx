@@ -13,7 +13,19 @@ export const metadata: Metadata = {
   title: 'SkillSwap- Đổi kinh nghiệm, trao kỹ năng',
   description: 'University skill exchange platform',
   // Tối ưu thêm SEO, thêm keywords khi search trên google, openGraph để hiển thị tiêu đề, hình, nội dung như đã modify khi chia sẻ
-  keywords: ['SkillSwap', 'tư vấn đồ án', 'mentor', 'hỗ trợ học tập', 'sinh viên', 'kinh nghiệm', 'kỹ năng', 'trao đổi', 'booking', 'university', 'fpt'],
+  keywords: [
+    'SkillSwap',
+    'tư vấn đồ án',
+    'mentor',
+    'hỗ trợ học tập',
+    'sinh viên',
+    'kinh nghiệm',
+    'kỹ năng',
+    'trao đổi',
+    'booking',
+    'university',
+    'fpt',
+  ],
   openGraph: {
     title: 'SkillSwap- Đổi kinh nghiệm, trao kỹ năng',
     description: 'University skill exchange platform',
@@ -44,7 +56,6 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
 };
-
 
 /**
  * Component RootLayout bọc toàn bộ mã HTML gốc của ứng dụng Next.js.

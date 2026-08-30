@@ -38,7 +38,12 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   return (
     <aside className={`figma-sidebar mentor-sidebar ${isOpen ? 'figma-sidebar-open' : ''}`}>
       <div className="figma-sidebar-header">
-        <Link href={dashboardHref} onClick={onClose} className="figma-brand" aria-label="SkillSwap Mentor">
+        <Link
+          href={dashboardHref}
+          onClick={onClose}
+          className="figma-brand"
+          aria-label="SkillSwap Mentor"
+        >
           <img
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
@@ -71,7 +76,6 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           <span>Tổng quan</span>
         </Link>
 
-
         <Link
           href={feedHref}
           onClick={onClose}
@@ -99,7 +103,6 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         </Link>
 
         {/* Phần dành riêng cho Mentor */}
-
 
         <Link
           href={scheduleHref}

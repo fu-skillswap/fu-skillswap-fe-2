@@ -5,10 +5,9 @@
 
 'use client';
 
-import { AlertTriangle, Archive, Calendar, Clock, Edit2, Eye } from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
 import type { AvailabilityTemplateResponse } from '@/models/auth';
 import { formatDateVi, formatLocalTime, WEEKDAY_SHORT_LABELS } from './mentorTemplateHelpers';
 
@@ -21,10 +20,8 @@ interface AvailabilityTemplateListProps {
   onLoadMore: () => void;
   onOpenCreate: () => void;
   onOpenDetail: (template: AvailabilityTemplateResponse) => void;
-  onOpenEdit: (template: AvailabilityTemplateResponse) => void;
   onPause: (template: AvailabilityTemplateResponse) => void;
   onResume: (template: AvailabilityTemplateResponse) => void;
-  onArchive: (template: AvailabilityTemplateResponse) => void;
 }
 
 export function AvailabilityTemplateList({
@@ -35,10 +32,8 @@ export function AvailabilityTemplateList({
   isLoadingMore,
   onLoadMore,
   onOpenDetail,
-  onOpenEdit,
   onPause,
   onResume,
-  onArchive,
 }: AvailabilityTemplateListProps) {
   const renderStatusBadge = (template: AvailabilityTemplateResponse) => {
     const { effectiveStatus, configuredStatus } = template;
@@ -68,7 +63,6 @@ export function AvailabilityTemplateList({
           {[1, 2].map((item) => (
             <div key={item} className="mentor-template-row mentor-template-row-skeleton">
               <div className="mentor-template-skeleton-block mentor-template-skeleton-wide" />
-              <div className="mentor-template-skeleton-block" />
               <div className="mentor-template-skeleton-block" />
               <div className="mentor-template-skeleton-block" />
               <div className="mentor-template-skeleton-block mentor-template-skeleton-actions" />
@@ -125,14 +119,6 @@ export function AvailabilityTemplateList({
                   </span>
                 </div>
 
-                <div className="mentor-template-service-column">
-                  <span className="mentor-template-column-label">Dịch vụ</span>
-                  <span className="mentor-template-service-name">
-                    {template.services.map((service) => service.title).join(', ') ||
-                      'Chưa gắn dịch vụ'}
-                  </span>
-                </div>
-
                 <div className="mentor-template-status-column">
                   <span className="mentor-template-column-label">Trạng thái</span>
                   {renderStatusBadge(template)}
@@ -150,14 +136,6 @@ export function AvailabilityTemplateList({
                           Tạm dừng
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        leftIcon={<Edit2 aria-hidden="true" />}
-                        onClick={() => onOpenEdit(template)}
-                      >
-                        Sửa
-                      </Button>
                     </>
                   )}
                   <Button
@@ -166,17 +144,8 @@ export function AvailabilityTemplateList({
                     leftIcon={<Eye aria-hidden="true" />}
                     onClick={() => onOpenDetail(template)}
                   >
-                    Chi tiết
+                    Xem chi tiết
                   </Button>
-                  {!isArchived && (
-                    <IconButton
-                      variant="ghost"
-                      size="sm"
-                      icon={<Archive aria-hidden="true" />}
-                      aria-label="Lưu trữ mẫu lịch này"
-                      onClick={() => onArchive(template)}
-                    />
-                  )}
                 </div>
 
                 {template.generationBlockedReason && (

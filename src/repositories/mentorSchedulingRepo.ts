@@ -163,10 +163,13 @@ export const mentorSchedulingRepo = {
     templateId: string,
     data: AvailabilityTemplateVersionRequest,
   ): Promise<AvailabilityTemplateResponse> =>
-    apiClient<AvailabilityTemplateResponse>(`/api/me/availability-templates/${templateId}/archive`, {
-      method: 'POST',
-      data,
-    }),
+    apiClient<AvailabilityTemplateResponse>(
+      `/api/me/availability-templates/${templateId}/archive`,
+      {
+        method: 'POST',
+        data,
+      },
+    ),
 
   addTemplateException: (
     templateId: string,

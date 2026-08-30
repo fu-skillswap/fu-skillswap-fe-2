@@ -99,15 +99,15 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
           {isApproved
             ? 'Quản lý Hồ sơ Mentor (Đã duyệt)'
             : isExistingProfile
-            ? 'Cập nhật Hồ sơ Mentor'
-            : 'Đăng ký trở thành Mentor'}
+              ? 'Cập nhật Hồ sơ Mentor'
+              : 'Đăng ký trở thành Mentor'}
         </h1>
         <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
           {isApproved
             ? 'Hồ sơ chuyên môn của bạn đã được kiểm duyệt chính thức. Bạn có thể cập nhật danh sách các Dự án thực tế và Giải thưởng nổi bật.'
             : isExistingProfile
-            ? 'Chỉnh sửa thông tin năng lực, kinh nghiệm chuyên môn và thời gian nhận lịch của bạn.'
-            : 'Chia sẻ kinh nghiệm, chuyên môn và thiết lập thời gian nhận lịch tư vấn cho Mentee.'}
+              ? 'Chỉnh sửa thông tin năng lực, kinh nghiệm chuyên môn và thời gian nhận lịch của bạn.'
+              : 'Chia sẻ kinh nghiệm, chuyên môn và thiết lập thời gian nhận lịch tư vấn cho Mentee.'}
         </p>
       </div>
 
@@ -165,13 +165,19 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
               Hồ sơ Mentor đã được phê duyệt thành công
             </strong>
             <span style={{ fontSize: '13px', color: '#166534' }}>
-              Các thông tin cơ bản, tư cách FPTU và cài đặt thời gian đặt lịch đã được kiểm duyệt và khóa cố định. Bạn có thể tự do thêm, sửa hoặc xóa các Dự án tiêu biểu và Học vấn/Giải thưởng bên dưới.
+              Các thông tin cơ bản, tư cách FPTU và cài đặt thời gian đặt lịch đã được kiểm duyệt và
+              khóa cố định. Bạn có thể tự do thêm, sửa hoặc xóa các Dự án tiêu biểu và Học vấn/Giải
+              thưởng bên dưới.
             </span>
           </div>
         </div>
       )}
 
-      <form onSubmit={submitProfile} className="figma-profile-form" style={{ display: 'grid', gap: '20px' }}>
+      <form
+        onSubmit={submitProfile}
+        className="figma-profile-form"
+        style={{ display: 'grid', gap: '20px' }}
+      >
         {/* NẾU HỒ SƠ Ở TRẠNG THÁI APPROVED -> HIỂN THỊ DASHBOARD READ-ONLY CHO CÁC MỤC CỐ ĐỊNH */}
         {isApproved ? (
           <>
@@ -315,7 +321,10 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
                 </span>
               </label>
               {errors.agreeTerms && (
-                <p className="error" style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px' }}>
+                <p
+                  className="error"
+                  style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px' }}
+                >
                   {errors.agreeTerms.message}
                 </p>
               )}
