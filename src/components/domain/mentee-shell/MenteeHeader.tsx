@@ -8,7 +8,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { authRepo } from '@/repositories/authRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
 import { NotificationMenu } from '@/components/domain/notifications/NotificationMenu';
-import { BookOpen, ChevronDown, LogOut, Menu, MessageSquare, User } from 'lucide-react';
+import { BookOpen, ChevronDown, LogOut, Menu, MessageSquare, User, UserCheck } from 'lucide-react';
 
 const prototypeProfile: {
   initials: string;
@@ -137,6 +137,11 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
     router.push(`/${locale}/profile`);
   };
 
+  const openMentorRegistration = () => {
+    setIsProfileOpen(false);
+    router.push(`/${locale}/mentor-registration`);
+  };
+
   const isMentor = activeUser?.roles.includes('MENTOR');
   const isMentorDashboard = pathname.startsWith(`/${locale}/mentor/dashboard`);
 
@@ -201,6 +206,14 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
                   <button type="button" className="figma-profile-menu-item" onClick={openProfile}>
                     <User aria-hidden="true" />
                     Hồ sơ của tôi
+                  </button>
+                  <button
+                    type="button"
+                    className="figma-profile-menu-item"
+                    onClick={openMentorRegistration}
+                  >
+                    <UserCheck aria-hidden="true" />
+                    Đăng ký làm mentor
                   </button>
                 </div>
                 <button

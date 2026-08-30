@@ -72,6 +72,7 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
     if (user?.fullName) {
       setValue('displayName', user.fullName);
     }
+    void openCreateForm();
   }, [user?.fullName, setValue]);
 
   const openCreateForm = async () => {

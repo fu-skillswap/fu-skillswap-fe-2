@@ -1,6 +1,6 @@
 'use client';
 
-import type { PublicAvailabilitySlotResponse } from '@/models/auth';
+import type { CandidateSegmentResponse } from '@/models/auth';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -52,29 +52,32 @@ function formatTimeHHmm(isoString?: string) {
 
 /** Props của Google Calendar Style BookingCalendar Component */
 interface BookingCalendarProps {
-  /** Danh sách availability slots công khai trả về từ API (GET /api/mentors/{mentorUserId}/availability-slots) */
-  slots?: PublicAvailabilitySlotResponse[];
-  /** Service ID được chọn để lọc slot hỗ trợ */
+  /** Danh sách candidate segments trả về từ Candidate API (GET /api/mentors/{mentorUserId}/availability-slots/{slotId}/candidates?serviceId={serviceId}) */
+  candidates?: CandidateSegmentResponse[];
+  /** Alias tương thích ngược với candidateSegments */
+  candidateSegments?: CandidateSegmentResponse[];
+  /** Service ID được chọn để lọc segment hỗ trợ */
   selectedServiceId?: string;
   /** Tên gói dịch vụ được chọn (dùng hiển thị trên thẻ event) */
   selectedServiceName?: string;
-  /** Slot ISO string / slotId đang được chọn */
+  /** Slot ISO string / slotId / segmentId đang được chọn */
   value?: string;
-  /** Callback khi người dùng click chọn slot */
-  onSelectSlot: (slot: PublicAvailabilitySlotResponse, slotTimeStr: string) => void;
+  /** Callback khi người dùng click chọn candidate segment */
+  onSelectSlot: (candidate: CandidateSegmentResponse, slotTimeStr: string) => void;
   /** Callback khi đổi khoảng ngày xem lịch tuần */
   onRangeChange?: (fromDate: string, toDate: string) => void;
-  /** Cờ trạng thái đang tải slots từ API */
+  /** Cờ trạng thái đang tải candidates từ API */
   isLoading?: boolean;
 }
 
 const ROW_HEIGHT_PX = 60; // Chiều cao mỗi ô 1 giờ trong bảng grid
 
 /**
- * Component hiển thị Lịch dạng Google Calendar tuần (Pick a Time Slot - Google Calendar Weekly View).
+ * Component hiển thị Lịch dạng Google Calendar tuần (Pick a Candidate Segment - Google Calendar Weekly View).
  */
 export function BookingCalendar({
-  slots = [],
+  candidates = [],
+  candidateSegments = [],
   selectedServiceId,
   selectedServiceName,
   value,
@@ -111,28 +114,26 @@ export function BookingCalendar({
     }
   };
 
-  // Lọc danh sách slots theo selectedServiceId nếu có
-  const filteredSlots = useMemo(() => {
-    if (!selectedServiceId) return slots;
-    return slots.filter((s) => {
-      if (!Array.isArray(s.services) || s.services.length === 0) return true;
-      const matchesService = s.services.some(
-        (srv) =>
-          srv.serviceId === selectedServiceId ||
-          selectedServiceId.includes(srv.serviceId) ||
-          srv.serviceId.includes(selectedServiceId),
+  // Danh sách các candidate segments hiển thị trên lịch từ API candidates
+  const displaySegments = useMemo<CandidateSegmentResponse[]>(() => {
+    const list = candidates.length > 0 ? candidates : candidateSegments;
+    if (!selectedServiceId) return list;
+    return list.filter((s) => {
+      if (!s.serviceId) return true;
+      return (
+        s.serviceId === selectedServiceId ||
+        selectedServiceId.includes(s.serviceId) ||
+        s.serviceId.includes(selectedServiceId)
       );
-      if (!matchesService && selectedServiceId.startsWith('service-')) return true;
-      return matchesService;
     });
-  }, [slots, selectedServiceId]);
+  }, [candidates, candidateSegments, selectedServiceId]);
 
-  // Tính toán dải giờ hiển thị (mặc định từ 08:00 tới 21:00 hoặc tự mở rộng theo slots)
+  // Tính toán dải giờ hiển thị (mặc định từ 08:00 tới 21:00 hoặc tự mở rộng theo slots/candidateSegments)
   const { gridHours, startGridHour } = useMemo(() => {
     let minHour = 8;
     let maxHour = 21;
 
-    filteredSlots.forEach((s) => {
+    displaySegments.forEach((s) => {
       if (!s.startTime) return;
       const startD = new Date(s.startTime);
       if (!Number.isNaN(startD.getTime())) {
@@ -152,15 +153,15 @@ export function BookingCalendar({
     }
 
     return { gridHours: hoursArr, startGridHour: minHour };
-  }, [filteredSlots]);
+  }, [displaySegments]);
 
-  // Gom các slot theo từng ngày YYYY-MM-DD
-  const slotsByDay = useMemo(() => {
-    const map = new Map<string, PublicAvailabilitySlotResponse[]>();
+  // Gom các candidate segment theo từng ngày YYYY-MM-DD
+  const segmentsByDay = useMemo(() => {
+    const map = new Map<string, CandidateSegmentResponse[]>();
 
-    filteredSlots.forEach((slot) => {
-      if (!slot.startTime) return;
-      const d = new Date(slot.startTime);
+    displaySegments.forEach((segment) => {
+      if (!segment.startTime) return;
+      const d = new Date(segment.startTime);
       if (Number.isNaN(d.getTime())) return;
 
       const year = d.getFullYear();
@@ -169,12 +170,12 @@ export function BookingCalendar({
       const dateStr = `${year}-${month}-${day}`;
 
       const existing = map.get(dateStr) || [];
-      existing.push(slot);
+      existing.push(segment);
       map.set(dateStr, existing);
     });
 
     return map;
-  }, [filteredSlots]);
+  }, [displaySegments]);
 
   return (
     <section className="gcal-booking-wrapper" aria-label="Pick a Time Slot - Google Calendar View" style={{ background: '#fff', border: '1px solid var(--figma-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -206,7 +207,7 @@ export function BookingCalendar({
           </button>
           {isLoading && (
             <span style={{ fontSize: '13px', color: 'var(--figma-blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
-              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải lịch…
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải candidate segments…
             </span>
           )}
         </div>
@@ -217,7 +218,7 @@ export function BookingCalendar({
         </div>
       </div>
 
-      {/* Grid Google Calendar Tuần (Hiển thị thẻ sự kiện theo vị trí & thời lượng chính xác) */}
+      {/* Grid Google Calendar Tuần (Hiển thị các candidate segment theo vị trí & trạng thái rảnh / bị khóa) */}
       <div className="gcal-grid-scroll" style={{ width: '100%', overflowX: 'auto', border: '1px solid var(--figma-border)', borderRadius: '12px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '55px repeat(7, minmax(0, 1fr))', width: '100%', minWidth: '680px', background: '#fff' }}>
           {/* Header hàng 1: Cột trống + 7 cột Ngày */}
@@ -261,9 +262,9 @@ export function BookingCalendar({
             ))}
           </div>
 
-          {/* 7 Cột ngày chứa các đường kẻ ngang và các thẻ Event định vị chính xác theo thời lượng */}
+          {/* 7 Cột ngày chứa các đường kẻ ngang và các thẻ Candidate Segment được vẽ đè lên theo toạ độ */}
           {weekDays.map((day) => {
-            const daySlots = slotsByDay.get(day.dateStr) || [];
+            const daySegments = segmentsByDay.get(day.dateStr) || [];
             const totalGridHeight = gridHours.length * ROW_HEIGHT_PX;
 
             return (
@@ -288,35 +289,63 @@ export function BookingCalendar({
                   />
                 ))}
 
-                {/* Các Thẻ Event Lịch Rảnh (Google Calendar Event Blocks) được vẽ đè lên theo toạ độ tuyệt đối */}
-                {daySlots.map((slotItem) => {
-                  const startD = new Date(slotItem.startTime);
-                  const endD = slotItem.endTime ? new Date(slotItem.endTime) : new Date(startD.getTime() + 60 * 60 * 1000);
+                {/* Thẻ Candidate Segment Lịch Rảnh / Blocked */}
+                {daySegments.map((segmentItem, idx) => {
+                  const startD = new Date(segmentItem.startTime);
+                  const endD = segmentItem.endTime ? new Date(segmentItem.endTime) : new Date(startD.getTime() + 60 * 60 * 1000);
 
                   const startHours = startD.getHours() + startD.getMinutes() / 60;
                   const endHours = endD.getHours() + endD.getMinutes() / 60;
 
-                  // Tính toạ độ Top và Height theo thời lượng thực tế của Slot
+                  // Tính toạ độ Top và Height theo thời lượng thực tế của Candidate Segment
                   const topPx = Math.max(0, (startHours - startGridHour) * ROW_HEIGHT_PX);
                   const durationHours = Math.max(0.5, endHours - startHours); // Tối thiểu 30 phút
                   const heightPx = durationHours * ROW_HEIGHT_PX;
 
-                  const startTimeStr = formatTimeHHmm(slotItem.startTime);
-                  const endTimeStr = formatTimeHHmm(slotItem.endTime) || 'End';
+                  const startTimeStr = formatTimeHHmm(segmentItem.startTime);
+                  const endTimeStr = formatTimeHHmm(segmentItem.endTime) || 'End';
+
+                  const isBlocked =
+                    segmentItem.isSelectable === false ||
+                    Boolean(
+                      segmentItem.blockedByAcceptedBooking ||
+                        segmentItem.blockedBySameService ||
+                        segmentItem.blockedByDifferentService ||
+                        segmentItem.isBlocked,
+                    );
+
+                  const blockedReasonText =
+                    segmentItem.reasonIfBlocked ||
+                    segmentItem.bookingConflictNote ||
+                    segmentItem.blockedReason ||
+                    'Candidate segment này bị block bởi booking đã được chốt';
+
+                  const keyId =
+                    segmentItem.segmentId ||
+                    segmentItem.candidateId ||
+                    `${segmentItem.slotId}_${segmentItem.startTime}_${idx}`;
 
                   const isSelected =
-                    value === slotItem.slotId ||
-                    value === `${day.dateStr}T${startTimeStr}` ||
-                    value === slotItem.startTime;
+                    !isBlocked &&
+                    (value === segmentItem.segmentId ||
+                      value === segmentItem.candidateId ||
+                      value === segmentItem.slotId ||
+                      value === `${day.dateStr}T${startTimeStr}` ||
+                      value === segmentItem.startTime);
 
-                  const serviceTitle =
-                    slotItem.services?.[0]?.title || selectedServiceName || 'Review CV cho OJT';
+                  const serviceTitle = segmentItem.title || selectedServiceName || 'Mentoring Session';
 
                   return (
                     <button
-                      key={slotItem.slotId || slotItem.startTime}
+                      key={keyId}
                       type="button"
-                      onClick={() => onSelectSlot(slotItem, `${day.dateStr}T${startTimeStr}`)}
+                      disabled={isBlocked}
+                      onClick={() => {
+                        if (!isBlocked) {
+                          onSelectSlot(segmentItem, `${day.dateStr}T${startTimeStr}`);
+                        }
+                      }}
+                      title={isBlocked ? blockedReasonText : undefined}
                       style={{
                         position: 'absolute',
                         top: `${topPx + 2}px`,
@@ -327,37 +356,60 @@ export function BookingCalendar({
                         textAlign: 'left',
                         padding: '6px 8px',
                         borderRadius: '8px',
-                        cursor: 'pointer',
+                        cursor: isBlocked ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s ease',
-                        border: isSelected ? '2px solid var(--figma-blue)' : '1px solid #93c5fd',
-                        background: isSelected ? 'var(--figma-blue)' : '#eff6ff',
-                        color: isSelected ? '#ffffff' : '#0369a1',
-                        boxShadow: isSelected
+                        opacity: isBlocked ? 0.7 : 1,
+                        border: isBlocked
+                          ? '1px dashed #cbd5e1'
+                          : isSelected
+                          ? '2px solid var(--figma-blue)'
+                          : '1px solid #93c5fd',
+                        background: isBlocked
+                          ? '#f1f5f9'
+                          : isSelected
+                          ? 'var(--figma-blue)'
+                          : '#eff6ff',
+                        color: isBlocked
+                          ? '#64748b'
+                          : isSelected
+                          ? '#ffffff'
+                          : '#0369a1',
+                        boxShadow: isBlocked
+                          ? 'none'
+                          : isSelected
                           ? '0 6px 16px rgba(0,149,246,0.4)'
                           : '0 2px 6px rgba(147,197,253,0.3)',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <div style={{ fontSize: '11px', fontWeight: '700', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '3px', lineHeight: '1.2' }}>
-                        <span style={{ fontSize: '10px', opacity: isSelected ? 0.9 : 0.8 }}>Lịch rảnh</span>
-                        <span>{startTimeStr}–{endTimeStr}</span>
-                      </div>
                       <div
                         style={{
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          marginTop: '3px',
-                          color: isSelected ? '#ffffff' : '#0284c7',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          lineHeight: '1.2',
+                          textAlign: 'center',
                           whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
                       >
-                        {serviceTitle}
+                        {startTimeStr}–{endTimeStr}
                       </div>
+                      {isBlocked && (
+                        <div
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            marginTop: '2px',
+                            opacity: 0.85,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Bị khóa
+                        </div>
+                      )}
                     </button>
                   );
                 })}

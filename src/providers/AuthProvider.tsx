@@ -13,7 +13,7 @@ import { AuthRequiredModal } from '@/components/domain/auth/AuthRequiredModal';
 import { authRepo } from '@/repositories/authRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 /** Dữ liệu và các hàm thao tác được cung cấp bởi AuthContext */
 interface AuthContextValue {
@@ -49,20 +49,21 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const isBootstrappingRef = useRef(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState<string | undefined>();
 
-  const showAuthRequiredModal = (message?: string) => {
+  const showAuthRequiredModal = useCallback((message?: string) => {
     setAuthModalMessage(message);
     setIsAuthModalOpen(true);
-  };
+  }, []);
 
-  const closeAuthRequiredModal = () => {
+  const closeAuthRequiredModal = useCallback(() => {
     setIsAuthModalOpen(false);
     setAuthModalMessage(undefined);
-  };
+  }, []);
 
   /** Chuyển đổi dữ liệu thông tin người dùng từ Backend API sang dạng AuthenticatedUser chuẩn */
   const toAuthenticatedUser = (me: UserMeResponse): AuthenticatedUser => ({
@@ -86,8 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const me = toAuthenticatedUser(await authRepo.getMe());
-      const onboarding = await authRepo.getOnboardingStatus();
       setUser(me);
+      closeAuthRequiredModal();
+
+      let onboarding: OnboardingStatusResponse = {
+        studentProfileCompleted: false,
+        mentorProfileCompleted: false,
+        roles: me.roles || [],
+        nextRecommendedAction: 'COMPLETE_STUDENT_PROFILE',
+      };
+      try {
+        const fetchedOnboarding = await authRepo.getOnboardingStatus();
+        if (fetchedOnboarding) {
+          onboarding = fetchedOnboarding;
+        }
+      } catch {
+        /* Đăng nhập lần đầu, onboarding-status có thể chưa khởi tạo */
+      }
+
       return { user: me, onboarding };
     } finally {
       setIsLoading(false);
@@ -100,15 +117,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const restoreSession = async () => {
     setIsBootstrapping(true);
+    isBootstrappingRef.current = true;
     try {
       await refreshSession();
       const me = await authRepo.getMe();
-      setUser(toAuthenticatedUser(me));
-      await authRepo.getOnboardingStatus();
+      const authedUser = toAuthenticatedUser(me);
+      setUser(authedUser);
+      closeAuthRequiredModal();
+      try {
+        await authRepo.getOnboardingStatus();
+      } catch {
+        /* Fallback nếu onboarding-status chưa sẵn sàng */
+      }
     } catch {
       clearSession();
     } finally {
       setIsBootstrapping(false);
+      isBootstrappingRef.current = false;
     }
   };
 
@@ -130,12 +155,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleUnauthenticated = () => {
       clearSession();
-      showAuthRequiredModal('Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng này.');
+      // Chỉ mở modal yêu cầu đăng nhập nếu người dùng không trong giai đoạn khôi phục phiên (bootstrapping)
+      if (!isBootstrappingRef.current) {
+        showAuthRequiredModal('Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng này.');
+      }
     };
     setUnauthenticatedHandler(handleUnauthenticated);
     void restoreSession();
     return () => setUnauthenticatedHandler(undefined);
-  }, []);
+  }, [showAuthRequiredModal]);
 
   const value = useMemo(
     () => ({

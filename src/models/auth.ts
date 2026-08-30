@@ -94,7 +94,7 @@ export interface StudentProfileRequest {
   /** ID Chương trình / Ngành học */
   programId: string;
   /** ID Chuyên ngành hẹp */
-  specializationId: string;
+  specializationId?: string | null;
   /** Học kỳ hiện tại */
   semester: number;
   /** Khóa học / Năm nhập học */
@@ -297,6 +297,77 @@ export interface PublicAvailabilitySlotResponse {
   pendingRequestCount?: number;
   acceptedSlotCount?: number;
   services: PublicSlotServiceInfo[];
+}
+
+/** Candidate service slot item returned in candidateServiceSlots array from GET /api/mentors/{mentorUserId}/availability-slots/{slotId}/candidates */
+export interface CandidateServiceSlot {
+  startTime: string;
+  endTime: string;
+  pendingCount?: number;
+  remainingPendingQuota?: number;
+  isSelectable?: boolean;
+  reasonIfBlocked?: string | null;
+  blockedByAcceptedBooking?: boolean;
+  blockingBookingId?: string | null;
+  blockingServiceId?: string | null;
+  blockingServiceTitle?: string | null;
+  blockedBySameService?: boolean;
+  blockedByDifferentService?: boolean;
+  bookingConflictNote?: string | null;
+
+  // Extra helper properties mapped for calendar UI
+  segmentId?: string;
+  candidateId?: string;
+  slotId?: string;
+  serviceId?: string;
+  title?: string;
+  isBlocked?: boolean;
+  blockedReason?: string | null;
+}
+
+/** Response payload of GET /api/mentors/{mentorUserId}/availability-slots/{slotId}/candidates */
+export interface GetCandidateSlotsResponse {
+  candidateServiceSlots: CandidateServiceSlot[];
+}
+
+/** Alias CandidateSegmentResponse for backward compatibility */
+export type CandidateSegmentResponse = CandidateServiceSlot;
+
+/** Payload for POST /api/bookings */
+export interface CreateBookingRequest {
+  slotId: string;
+  serviceId: string;
+  startAt: string;
+  learningGoalTitle?: string;
+  learningGoalDescription?: string;
+  legacySelectedEndTime?: string;
+}
+
+/** Item payload returned by GET /api/me/bookings */
+export interface UserBookingItem {
+  id: string;
+  bookingId?: string;
+  slotId?: string;
+  serviceId?: string;
+  mentorId?: string;
+  mentorName?: string;
+  mentorDisplayName?: string;
+  mentorAvatarUrl?: string;
+  serviceName?: string;
+  serviceTitle?: string;
+  serviceDescription?: string;
+  priceScoins?: number;
+  durationMinutes?: number;
+  startAt?: string;
+  endAt?: string;
+  startsAt?: string;
+  endsAt?: string;
+  selectedStartTime?: string;
+  selectedEndTime?: string;
+  status: 'PENDING' | 'CONFIRMED' | 'ACCEPTED' | 'CANCELLED' | 'REJECTED' | string;
+  learningGoalTitle?: string;
+  learningGoalDescription?: string;
+  createdAt?: string;
 }
 
 /** Availability slot returned by GET /api/me/availability-slots. */

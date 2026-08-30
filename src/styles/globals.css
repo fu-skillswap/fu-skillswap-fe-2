@@ -1,18 +1,86 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --figma-blue: #0095f6;
-  --figma-blue-light: #ebf5fe;
-  --figma-blue-mid: #c8e6fd;
-  --ink: #18243a;
-  --muted: #61708a;
-  --brand: #4f46e5;
-  --brand-dark: #3730a3;
-  --surface: #fff;
-  --line: #e3e8f1;
-  --bg: #f7f8fc;
-  --success: #047857;
-  --danger: #b42318;
+  /* Central Theme Tokens */
+  --primary: #0095f6;
+  --primary-hover: #0088e2;
+  --primary-light: #eff6ff;
+  --primary-border: #93c5fd;
+
+  --text-main: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
+  --text-subtle: #8e8e8e;
+
+  --border-color: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-light: #f1f5f9;
+
+  --surface: #ffffff;
+  --surface-subtle: #f8fafc;
+  --bg: #f8fafc;
+
+  --success: #10b981;
+  --success-soft: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+
+  /* Box Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-blue: 0 4px 12px rgba(0, 149, 246, 0.15);
+  --shadow-blue-lg: 0 6px 16px rgba(0, 149, 246, 0.35);
+  --focus-ring-blue: 0 0 0 3px rgba(0, 149, 246, 0.12);
+
+  /* Transitions */
+  --transition-fast: all 0.15s ease-in-out;
+  --transition-normal: all 0.2s ease;
+
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-full: 9999px;
+
+  --ui-height-sm: 32px;
+  --ui-height-md: 38px;
+  --ui-height-lg: 44px;
+
+  /* Aliases tương thích cho mã cũ */
+  --figma-blue: var(--primary);
+  --figma-blue-light: var(--primary-light);
+  --figma-blue-mid: var(--primary-border);
+  --figma-text: var(--text-main);
+  --figma-muted: var(--text-muted);
+  --figma-border: var(--border-color);
+
+  --brand: var(--primary);
+  --brand-dark: var(--primary-hover);
+  --ink: var(--text-main);
+  --muted: var(--text-muted);
+  --line: var(--border-color);
+
+  --ui-primary: var(--primary);
+  --ui-primary-hover: var(--primary-hover);
+  --ui-primary-soft: var(--primary-light);
+  --ui-primary-border: var(--primary-border);
+  --ui-text: var(--text-main);
+  --ui-text-secondary: var(--text-secondary);
+  --ui-text-muted: var(--text-muted);
+  --ui-text-disabled: var(--text-disabled);
+  --ui-border: var(--border-color);
+  --ui-border-strong: var(--border-strong);
+  --ui-surface: var(--surface);
+  --ui-surface-subtle: var(--surface-subtle);
+  --ui-danger: var(--danger);
+  --ui-danger-soft: var(--danger-soft);
+  --ui-warning: var(--warning);
+  --ui-warning-soft: var(--warning-soft);
+  --ui-success: var(--success);
+  --ui-success-soft: var(--success-soft);
 }
 
 * {
@@ -764,30 +832,71 @@ textarea:focus,
   padding: 20px;
   display: grid;
   place-items: center;
-  background: #18243a88;
-  z-index: 20;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  overflow-y: auto;
 }
 
 .modal {
-  width: min(100%, 480px);
-  display: grid;
-  gap: 18px;
-  background: white;
+  width: min(100%, 540px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  padding: 22px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+.booking-goal-popup-modal {
+  width: min(100%, 580px) !important;
+  max-height: calc(100vh - 40px) !important;
+  padding: 24px 28px !important;
+  border-radius: 20px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  gap: 0 !important;
+}
+
+.booking-goal-popup-modal .modal-header {
+  padding-bottom: 16px !important;
+  margin-bottom: 8px !important;
+  border-bottom: 1px solid var(--border-light) !important;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: start;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
 }
 
 .modal-header button {
   border: 0;
   background: none;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+
+.modal-header button:hover {
+  color: var(--text-main);
 }
 
 .avatar {
@@ -927,12 +1036,6 @@ textarea:focus,
 }
 
 .figma-app {
-  --figma-blue: #0095f6;
-  --figma-blue-light: #ebf5fe;
-  --figma-blue-mid: #c8e6fd;
-  --figma-border: #efefef;
-  --figma-text: #262626;
-  --figma-muted: #8e8e8e;
   height: 100dvh;
   overflow: hidden;
   background: #fafafa;
@@ -2873,15 +2976,17 @@ textarea:focus,
 }
 
 .figma-booking-modal {
-  width: min(98vw, 980px);
-  max-height: min(900px, calc(100dvh - 40px));
+  width: min(94vw, 880px);
+  max-width: calc(100vw - 32px);
+  max-height: min(850px, calc(100dvh - 32px));
   gap: 0;
   min-width: 0;
   padding: 0;
   overflow: auto;
-  border: 1px solid var(--figma-border);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: 0 18px 50px rgb(24 36 58 / 24%);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
 .figma-booking-modal > *,
@@ -12961,6 +13066,43 @@ textarea:focus,
 
   .schedule-services-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* --- MOBILE & TABLET RESPONSIVE ENHANCEMENTS --- */
+@media (max-width: 640px) {
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .modal {
+    width: 100%;
+    padding: 18px 16px;
+    border-radius: 14px;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .page-shell {
+    padding-left: 14px;
+    padding-right: 14px;
+    padding-bottom: 40px;
+  }
+
+  .ui-tabs-list {
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding: 3px;
+  }
+
+  .ui-tab-button {
+    font-size: 12px;
+    padding: 0 12px;
+  }
+
+  .figma-booking-flow {
+    gap: 14px;
   }
 }
 

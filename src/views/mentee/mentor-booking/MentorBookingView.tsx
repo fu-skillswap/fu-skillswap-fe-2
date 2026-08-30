@@ -207,6 +207,9 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
             onConfirm={() => {
               void confirmBooking();
             }}
+            onConfirmWithPayload={async (payload) => {
+              if (await book(payload)) setBookingSuccess(true);
+            }}
             isSubmitting={isSubmitting}
             error={error}
             success={bookingSuccess}
