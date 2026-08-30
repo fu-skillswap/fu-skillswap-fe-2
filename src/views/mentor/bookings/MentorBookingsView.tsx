@@ -7,9 +7,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowDownUp,
   CalendarDays,
+  CalendarX,
   Check,
   CheckCircle2,
+  ChevronDown,
   PlayCircle,
   Eye,
   Filter,
@@ -217,16 +220,28 @@ export function MentorBookingsView() {
       {showAdvancedFilter && (
         <div className="mentor-booking-advanced-filter">
           <label>
-            Sắp xếp theo thời gian
-            <select
-              value={sortDirection}
-              onChange={(event) => setSortDirection(event.target.value as 'ASC' | 'DESC')}
-            >
-              <option value="ASC">Gần nhất trước</option>
-              <option value="DESC">Xa nhất trước</option>
-            </select>
+            <span className="mentor-booking-advanced-label">
+              <ArrowDownUp aria-hidden="true" />
+              Sắp xếp theo thời gian
+            </span>
+            <span className="mentor-booking-sort-select">
+              <select
+                value={sortDirection}
+                onChange={(event) => setSortDirection(event.target.value as 'ASC' | 'DESC')}
+              >
+                <option value="ASC">Gần nhất trước</option>
+                <option value="DESC">Xa nhất trước</option>
+              </select>
+              <ChevronDown aria-hidden="true" />
+            </span>
           </label>
-          <button type="button" onClick={() => setSelectedDate('')} disabled={!selectedDate}>
+          <button
+            type="button"
+            className="mentor-booking-clear-date"
+            onClick={() => setSelectedDate('')}
+            disabled={!selectedDate}
+          >
+            <CalendarX aria-hidden="true" />
             Xóa ngày đã chọn
           </button>
         </div>
