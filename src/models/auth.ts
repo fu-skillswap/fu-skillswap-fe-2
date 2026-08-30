@@ -381,6 +381,103 @@ export interface UserBookingItem {
   createdAt?: string;
 }
 
+export type MentorBookingStatus =
+  | 'REQUESTED'
+  | 'WAITING_PAYMENT'
+  | 'CONFIRMED'
+  | 'REJECTED_BY_MENTOR'
+  | 'CANCELED_BY_MENTEE'
+  | 'CANCELED_BY_MENTOR'
+  | 'REQUEST_EXPIRED'
+  | 'PAYMENT_EXPIRED'
+  | 'UNDER_REVIEW'
+  | 'COMPLETED';
+
+export type MentorBookingDisplayState =
+  | 'PENDING_MENTOR_RESPONSE'
+  | 'PAYMENT_REQUIRED'
+  | 'MENTOR_ACTION_REQUIRED'
+  | 'UPCOMING'
+  | 'IN_SESSION'
+  | 'WAITING_CONFIRMATION'
+  | 'UNDER_REVIEW'
+  | 'FEEDBACK_REQUIRED'
+  | 'COMPLETED'
+  | 'CANCELED_OR_EXPIRED';
+
+export type MentorBookingNextAction =
+  | 'NONE'
+  | 'PAY_NOW'
+  | 'ACCEPT_OR_REJECT'
+  | 'JOIN_SESSION'
+  | 'COMPLETE_SESSION'
+  | 'CONFIRM_SESSION'
+  | 'LEAVE_FEEDBACK'
+  | 'VIEW_ISSUE';
+
+/** Booking hiển thị trong khu vực quản lý của Mentor. */
+export interface MentorBookingResponse {
+  bookingId: string;
+  menteeUserId: string;
+  menteeDisplayName: string;
+  menteeAvatarUrl?: string | null;
+  serviceTitle?: string | null;
+  serviceDescriptionSnapshot?: string | null;
+  serviceDurationSnapshot?: number | null;
+  servicePriceScoinSnapshot?: number | null;
+  selectedStartTime: string;
+  selectedEndTime: string;
+  bookingStatus: MentorBookingStatus;
+  actualSessionStatus?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | null;
+  learningGoalTitle: string;
+  learningGoalDescription?: string | null;
+  mentorResponseNote?: string | null;
+  rejectReason?: string | null;
+  cancelReason?: string | null;
+  meetingPlatform?:
+    'GOOGLE_MEET' | 'ZOOM' | 'MICROSOFT_TEAMS' | 'DISCORD' | 'OFFLINE' | 'OTHER' | null;
+  meetingLink?: string | null;
+  location?: string | null;
+  displayState: MentorBookingDisplayState;
+  nextAction?: MentorBookingNextAction | null;
+  canAccept: boolean;
+  canReject: boolean;
+  canCompleteByMentor: boolean;
+  canCancel: boolean;
+  canJoin: boolean;
+  joinAvailableAt?: string | null;
+  createdAt: string;
+}
+
+export interface MentorBookingPageResponse {
+  content: MentorBookingResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+export interface AcceptMentorBookingRequest {
+  mentorResponseNote?: string;
+  meetingPlatform?: MentorBookingResponse['meetingPlatform'];
+  meetingLink?: string;
+  location?: string;
+}
+
+export interface RejectMentorBookingRequest {
+  rejectReason: string;
+  mentorResponseNote?: string;
+}
+
+export interface CompleteMentorBookingRequest {
+  completionNote?: string;
+}
+
+export interface CancelMentorBookingRequest {
+  cancelReason: string;
+}
+
 /** Availability slot returned by GET /api/me/availability-slots. */
 export interface MentorManagedAvailabilitySlotResponse {
   slotId: string;

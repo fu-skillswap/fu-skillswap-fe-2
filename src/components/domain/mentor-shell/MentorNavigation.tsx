@@ -33,6 +33,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const bookingHref = `/${locale}/mentor-booking`;
   const dashboardHref = `/${locale}/mentor/dashboard`;
   const scheduleHref = `/${locale}/mentor/schedule-manage`;
+  const mentorBookingsHref = `/${locale}/mentor/bookings`;
   const coursesHref = `/${locale}/mentor/my-courses`;
 
   return (
@@ -117,10 +118,18 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           <span>Dịch vụ & Lịch dạy</span>
         </Link>
 
-        <button type="button" className="figma-nav-link mentor-nav-link-unavailable" tabIndex={-1}>
+        <Link
+          href={mentorBookingsHref}
+          onClick={onClose}
+          className={
+            pathname.includes('/mentor/bookings')
+              ? 'figma-nav-link figma-nav-link-active'
+              : 'figma-nav-link'
+          }
+        >
           <Calendar className="w-5 h-5" aria-hidden="true" />
           <span>Lịch đặt</span>
-        </button>
+        </Link>
 
         <button type="button" className="figma-nav-link mentor-nav-link-unavailable" tabIndex={-1}>
           <FileText className="w-5 h-5" aria-hidden="true" />

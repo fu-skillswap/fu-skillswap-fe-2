@@ -78,6 +78,8 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
       title = 'Chi tiết dịch vụ';
     } else if (pathname.includes('/schedule-manage')) {
       title = 'Dịch vụ & Lịch dạy';
+    } else if (pathname.includes('/mentor/bookings')) {
+      title = 'Lịch đặt';
     }
   }
 
