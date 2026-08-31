@@ -30,9 +30,9 @@ export function AdminGuard({ children, locale }: { children: React.ReactNode; lo
 
   if (!hasAdminRole(user?.roles)) {
     return (
-      <main className="admin-guard-state admin-guard-denied" role="alert">
-        <strong>Không có quyền truy cập</strong>
-        <span>Tài khoản này không có vai trò quản trị viên.</span>
+      <main className="min-h-screen bg-bg flex flex-col items-center justify-center p-6 text-center text-text-main gap-2" role="alert">
+        <strong className="text-lg font-bold text-danger">Không có quyền truy cập</strong>
+        <span className="text-sm text-text-muted">Tài khoản này không có vai trò quản trị viên.</span>
       </main>
     );
   }

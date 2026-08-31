@@ -146,82 +146,82 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
   const isMentorDashboard = pathname.startsWith(`/${locale}/mentor/dashboard`);
 
   return (
-    <header className="figma-topbar">
-      <div className="figma-topbar-left">
+    <header className="h-16 px-4 md:px-6 bg-white/85 backdrop-blur-xl border-b border-solid border-border-light/80 sticky top-0 z-30 flex items-center justify-between gap-4 shadow-xs">
+      <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
-          className="figma-sidebar-toggle-btn"
+          className="lg:hidden p-1.5 rounded-lg text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer"
           onClick={onToggleSidebar}
           aria-label="Bật/Tắt thanh điều hướng"
         >
           <Menu className="w-5 h-5" aria-hidden="true" />
         </button>
-        <h1>{title}</h1>
+        <h1 className="m-0 text-base md:text-lg font-extrabold text-text-main truncate tracking-tight">{title}</h1>
       </div>
-      <div className="figma-topbar-actions" aria-label="Account actions">
+      <div className="flex items-center gap-3 shrink-0" aria-label="Account actions">
         {!isGuest && (
           <>
             <NotificationMenu />
             <button
               type="button"
-              className="figma-icon-button mentor-chat-button"
+              className="w-9.5 h-9.5 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer"
               aria-label="Messages"
             >
-              <MessageSquare aria-hidden="true" />
+              <MessageSquare className="w-4.5 h-4.5" aria-hidden="true" />
             </button>
           </>
         )}
 
         {isGuest ? (
           /* Nút Đăng nhập / Đăng ký dành cho Guest Mode khi chưa đăng nhập */
-          <Link href={`/${locale}/login`} className="figma-topbar-guest-login-btn">
+          <Link href={`/${locale}/login`} className="px-4 py-2 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 transition-all border-none cursor-pointer inline-flex items-center justify-center">
             Đăng nhập / Đăng ký
           </Link>
         ) : (
           /* Nút hiển thị Tên người dùng và nút dropdown ngay bên cạnh icon Chat */
-          <div className="figma-profile-menu" ref={profileMenuRef}>
+          <div className="relative" ref={profileMenuRef}>
             <button
               type="button"
-              className="figma-profile-link"
+              className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
               onClick={() => setIsProfileOpen((prev) => !prev)}
               aria-expanded={isProfileOpen}
               aria-label="User profile menu"
             >
-              <span className="figma-profile-avatar">
-                {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : profile.initials}
+              <span className="w-8 h-8 rounded-full bg-primary-light border border-solid border-primary-border text-primary font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
+                {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" /> : profile.initials}
               </span>
-              <span className="figma-profile-copy">
-                <strong>{profile.fullName}</strong>
-                <small>{profile.role}</small>
+              <span className="hidden sm:flex flex-col text-left">
+                <strong className="text-xs font-bold text-text-main leading-tight">{profile.fullName}</strong>
+                <small className="text-[10px] text-text-muted">{profile.role}</small>
               </span>
               <ChevronDown
-                className={`figma-chevron ${isProfileOpen ? 'figma-chevron-open' : ''}`}
+                className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </button>
 
             {isProfileOpen && (
-              <section className="figma-profile-dropdown" aria-label="User profile menu">
-                <div className="figma-profile-dropdown-actions">
-                  <button type="button" className="figma-profile-menu-item" onClick={openProfile}>
-                    <User aria-hidden="true" />
+              <section className="absolute right-0 top-full mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-2 z-50 flex flex-col gap-1 animate-in fade-in-0 zoom-in-95 duration-150" aria-label="User profile menu">
+                <div className="flex flex-col gap-1">
+                  <button type="button" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left" onClick={openProfile}>
+                    <User className="w-4 h-4 shrink-0 text-text-muted" aria-hidden="true" />
                     Hồ sơ của tôi
                   </button>
                   <button
                     type="button"
-                    className="figma-profile-menu-item"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
                     onClick={openMentorRegistration}
                   >
-                    <UserCheck aria-hidden="true" />
+                    <UserCheck className="w-4 h-4 shrink-0 text-text-muted" aria-hidden="true" />
                     Đăng ký làm mentor
                   </button>
                 </div>
                 <button
                   type="button"
-                  className="figma-profile-menu-item figma-profile-logout"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-danger hover:bg-danger-soft transition-colors border-none bg-transparent cursor-pointer text-left mt-1 border-t border-solid border-border-light/60 pt-2"
                   onClick={handleLogout}
                 >
-                  <LogOut aria-hidden="true" />
+                  <LogOut className="w-4 h-4 shrink-0 text-danger" aria-hidden="true" />
                   Đăng xuất
                 </button>
               </section>

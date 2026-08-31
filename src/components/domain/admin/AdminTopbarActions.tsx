@@ -117,102 +117,103 @@ export function AdminTopbarActions() {
   };
 
   return (
-    <div className="admin-topbar-actions">
-      <label>
-        <Search aria-hidden="true" />
-        <input aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
+    <div className="flex items-center gap-3 relative">
+      <label className="relative hidden sm:flex items-center">
+        <Search aria-hidden="true" className="w-4 h-4 text-text-muted absolute left-3 pointer-events-none" />
+        <input className="w-48 lg:w-64 h-9 pl-9 pr-3 rounded-xl border border-solid border-border-color bg-surface-subtle text-xs text-text-main transition-all outline-none focus:bg-white focus:border-primary focus:ring-3 focus:ring-primary-border" aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
       </label>
-      <div className="admin-notifications">
+      <div className="relative">
         <button
           aria-label="Thông báo"
           aria-expanded={isOpen}
           type="button"
+          className="relative w-9 h-9 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-colors cursor-pointer"
           onClick={() => {
             setIsOpen((current) => !current);
             if (!isOpen) void loadNotifications();
           }}
         >
-          <Bell aria-hidden="true" />
-          {unreadCount > 0 && <b>{unreadCount > 99 ? '99+' : unreadCount}</b>}
+          <Bell aria-hidden="true" className="w-4.5 h-4.5" />
+          {unreadCount > 0 && <b className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-danger text-white text-[10px] font-bold leading-none">{unreadCount > 99 ? '99+' : unreadCount}</b>}
         </button>
         {isOpen && (
-          <section className="admin-notification-panel" aria-label="Thông báo">
-            <header>
-              <div>
-                <strong>Thông báo</strong>
-                {unreadCount > 0 && <span>{unreadCount} chưa đọc</span>}
+          <section className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-solid border-border-light p-3 z-50 flex flex-col gap-2" aria-label="Thông báo">
+            <header className="flex items-center justify-between pb-2 border-b border-solid border-border-light">
+              <div className="flex items-center gap-2">
+                <strong className="text-xs font-bold text-text-main">Thông báo</strong>
+                {unreadCount > 0 && <span className="text-[11px] font-semibold text-primary bg-primary-light px-2 py-0.5 rounded-full">{unreadCount} chưa đọc</span>}
               </div>
               <button
                 type="button"
+                className="p-1 text-text-muted hover:text-primary transition-colors border-none bg-transparent cursor-pointer disabled:opacity-40"
                 onClick={() => void markAllRead()}
                 disabled={!unreadCount}
                 aria-label="Đánh dấu tất cả đã đọc"
               >
-                <CheckCheck aria-hidden="true" />
+                <CheckCheck aria-hidden="true" className="w-4 h-4" />
               </button>
             </header>
             {loading ? (
-              <p>Đang tải thông báo...</p>
+              <p className="text-xs text-text-muted p-3 text-center m-0">Đang tải thông báo...</p>
             ) : error ? (
-              <p>{error}</p>
+              <p className="text-xs text-danger p-3 text-center m-0">{error}</p>
             ) : items.length ? (
-              <div>
+              <div className="flex flex-col gap-1 max-h-80 overflow-y-auto">
                 {items.map((item) => (
                   <button
                     key={item.notificationId}
                     type="button"
-                    className={item.read ? '' : 'is-unread'}
+                    className={`w-full p-2.5 rounded-xl border border-solid transition-colors text-left flex flex-col gap-1 border-none cursor-pointer ${item.read ? 'bg-white hover:bg-surface-subtle' : 'bg-primary-light/40 hover:bg-primary-light/70'}`}
                     onClick={() => void markRead(item)}
                   >
-                    <strong>{item.title}</strong>
-                    <span>{item.message}</span>
-                    <small>{formatDate(item.createdAt)}</small>
+                    <strong className="text-xs font-bold text-text-main block">{item.title}</strong>
+                    <span className="text-xs text-text-secondary leading-relaxed block">{item.message}</span>
+                    <small className="text-[10px] text-text-muted block">{formatDate(item.createdAt)}</small>
                   </button>
                 ))}
               </div>
             ) : (
-              <p>Chưa có thông báo nào.</p>
+              <p className="text-xs text-text-muted p-3 text-center m-0">Chưa có thông báo nào.</p>
             )}
           </section>
         )}
       </div>
-      <button aria-label="Cài đặt" type="button">
-        <Settings aria-hidden="true" />
+      <button aria-label="Cài đặt" type="button" className="w-9 h-9 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-colors cursor-pointer">
+        <Settings aria-hidden="true" className="w-4.5 h-4.5" />
       </button>
-      <div className="admin-avatar" aria-label="Hồ sơ quản trị viên">
-        A
-      </div>
-      <div className="admin-profile-menu" ref={profileMenuRef}>
+
+      <div className="relative" ref={profileMenuRef}>
         <button
           type="button"
-          className="admin-avatar"
+          className="w-9 h-9 rounded-full bg-primary-light border border-solid border-primary-border text-primary font-bold text-xs flex items-center justify-center overflow-hidden cursor-pointer shrink-0"
           aria-label="Hồ sơ quản trị viên"
           aria-expanded={isProfileOpen}
           onClick={() => setIsProfileOpen((current) => !current)}
         >
-          {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials || 'A'}
+          {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : initials || 'A'}
         </button>
         {isProfileOpen && (
-          <section className="admin-profile-menu-panel" aria-label="Tùy chọn hồ sơ">
-            <div>
-              <strong>{user?.fullName || 'Quản trị viên'}</strong>
-              <span>{user?.email}</span>
+          <section className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-solid border-border-light p-2 z-50 flex flex-col gap-1" aria-label="Tùy chọn hồ sơ">
+            <div className="p-2 border-b border-solid border-border-light/60 flex flex-col">
+              <strong className="text-xs font-bold text-text-main">{user?.fullName || 'Quản trị viên'}</strong>
+              <span className="text-[11px] text-text-muted truncate">{user?.email}</span>
             </div>
             <button
               type="button"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
               onClick={() => {
                 setIsProfileOpen(false);
                 router.push(`/${locale}/admin/profile`);
               }}
             >
-              <UserRound aria-hidden="true" /> Xem hồ sơ
+              <UserRound aria-hidden="true" className="w-4 h-4 text-text-muted" /> Xem hồ sơ
             </button>
             <button
               type="button"
-              className="admin-profile-logout"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-danger hover:bg-danger-soft transition-colors border-none bg-transparent cursor-pointer text-left border-t border-solid border-border-light/60 pt-2 mt-1"
               onClick={() => void handleLogout()}
             >
-              <LogOut aria-hidden="true" /> Đăng xuất
+              <LogOut aria-hidden="true" className="w-4 h-4 text-danger" /> Đăng xuất
             </button>
           </section>
         )}

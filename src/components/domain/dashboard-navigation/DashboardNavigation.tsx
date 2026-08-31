@@ -62,35 +62,35 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
   };
 
   return (
-    <aside className={`figma-sidebar ${isOpen ? 'figma-sidebar-open' : ''}`}>
-      <div className="figma-sidebar-header">
+    <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-solid border-border-light z-50 flex flex-col p-4 transition-transform duration-300 ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}`}>
+      <div className="relative flex items-center justify-center text-center py-0.5 pb-1 mb-1 border-b border-solid border-border-light/60 w-full">
         <Link
           href={dashboardHref}
-          className="figma-brand"
+          className="w-full flex justify-center items-center px-1"
           aria-label="SkillSwap newsfeed"
           onClick={onClose}
         >
           <img
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
-            className="figma-brand-logo-text"
+            className="w-full max-w-[165px] max-h-[90px] object-contain mx-auto"
           />
         </Link>
         <button
           type="button"
-          className="figma-sidebar-close-btn"
+          className="lg:hidden absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer"
           onClick={onClose}
           aria-label="Đóng thanh điều hướng"
         >
-          <X aria-hidden="true" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
 
-      <nav className="figma-navigation" aria-label="Main navigation">
+      <nav className="flex-1 flex flex-col gap-1 overflow-y-auto" aria-label="Main navigation">
         <Link
           href={dashboardHref}
           onClick={onClose}
-          className={dashboardActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
+          className={dashboardActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
         >
           <Icon name="home" />
           <span>Bảng tin</span>
@@ -98,7 +98,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <Link
           href={mentorHref}
           onClick={onClose}
-          className={mentorActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
+          className={mentorActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
         >
           <Icon name="search" />
           <span>Tìm Mentor</span>
@@ -106,14 +106,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <button
           type="button"
           onClick={() => handleProtectedAction('Ví S-Coin')}
-          className="figma-nav-link figma-nav-link-static"
-          style={{
-            width: '100%',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all text-left bg-transparent cursor-pointer"
         >
           <Icon name="wallet" />
           <span>S-coin</span>
@@ -121,7 +114,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <Link
           href={bookingsHref}
           onClick={onClose}
-          className={bookingsActive ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'}
+          className={bookingsActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
         >
           <Icon name="calendar" />
           <span>Booking của tôi</span>
@@ -130,8 +123,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
       <button
         type="button"
         onClick={() => handleProtectedAction('Tạo bài viết mới')}
-        className="figma-sidebar-compose"
-        style={{ cursor: 'pointer' }}
+        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer flex items-center justify-center gap-2"
       >
         + Bài viết mới
       </button>

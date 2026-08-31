@@ -39,10 +39,10 @@ export function SelectField({
   required,
 }: SelectFieldProps) {
   return (
-    <div className="field">
+    <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label htmlFor={id}>
-          {label} {required && <span className="required-asterisk">*</span>}
+        <label htmlFor={id} className="text-xs font-semibold text-text-secondary flex items-center gap-1">
+          {label} {required && <span className="text-danger font-bold">*</span>}
         </label>
       )}
       <SelectPrimitive.Root
@@ -52,30 +52,30 @@ export function SelectField({
       >
         <SelectPrimitive.Trigger
           id={id}
-          className="radix-select-trigger"
+          className={`h-10 px-3.5 bg-white border border-solid border-border-color hover:border-border-strong rounded-xl flex items-center justify-between text-xs text-text-main transition-all duration-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${error ? '!border-danger focus:!ring-danger/10' : ''}`}
           aria-label={typeof label === 'string' ? label : placeholder}
         >
           <SelectPrimitive.Value placeholder={placeholder} />
-          <SelectPrimitive.Icon className="radix-select-icon">
+          <SelectPrimitive.Icon className="text-text-muted shrink-0 ml-2">
             <ChevronDown size={18} />
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
 
         <SelectPrimitive.Portal>
           <SelectPrimitive.Content
-            className="radix-select-content"
+            className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-1.5 min-w-[var(--radix-select-trigger-width)] max-h-60 overflow-y-auto z-[99999] animate-in fade-in-0 zoom-in-95 duration-150"
             position="popper"
             sideOffset={6}
           >
-            <SelectPrimitive.Viewport className="radix-select-viewport">
+            <SelectPrimitive.Viewport className="p-1">
               {options.map((option) => (
                 <SelectPrimitive.Item
                   key={option.value}
                   value={String(option.value)}
-                  className="radix-select-item"
+                  className="flex items-center justify-between px-3 py-2 text-xs font-medium text-text-main rounded-lg outline-none cursor-pointer hover:bg-primary-light hover:text-primary data-[highlighted]:bg-primary-light data-[highlighted]:text-primary transition-colors"
                 >
                   <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
-                  <SelectPrimitive.ItemIndicator className="radix-select-item-indicator">
+                  <SelectPrimitive.ItemIndicator className="text-primary shrink-0 ml-2">
                     <Check size={16} />
                   </SelectPrimitive.ItemIndicator>
                 </SelectPrimitive.Item>
@@ -84,7 +84,7 @@ export function SelectField({
           </SelectPrimitive.Content>
         </SelectPrimitive.Portal>
       </SelectPrimitive.Root>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="text-[11px] text-danger font-medium m-0">{error}</p>}
     </div>
   );
 }

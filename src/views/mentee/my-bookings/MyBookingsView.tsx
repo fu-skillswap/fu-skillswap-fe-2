@@ -88,85 +88,70 @@ export function MyBookingsView({ locale }: { locale: string }) {
   }, [setHeaderTitle]);
 
   return (
-    <section className="page-shell" style={{ paddingTop: '24px' }}>
-      <div className="section-heading" style={{ flexWrap: 'wrap', gap: '16px', alignItems: 'center', marginBottom: '24px' }}>
+    <section className="space-y-6 max-w-7xl mx-auto">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-solid border-border-light shadow-xs">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-text-main m-0">
             Booking của tôi
           </h1>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <p className="text-xs text-text-muted mt-1 m-0">
             Quản lý và theo dõi trạng thái các buổi tư vấn mentoring đã đặt ({totalCount} booking)
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={refresh}
-            className="ui-btn ui-btn-outline"
+            className="h-10 px-4 rounded-xl border border-solid border-border-color bg-white hover:bg-surface-subtle text-text-secondary font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             disabled={isLoading}
-            style={{
-              height: '42px',
-              padding: '0 20px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '500',
-              gap: '6px',
-            }}
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Làm mới
           </button>
           <Link
             href={`/${locale}/mentor-booking`}
-            className="ui-btn ui-btn-primary"
-            style={{
-              height: '42px',
-              padding: '0 24px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '600',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-10 px-5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors inline-flex items-center justify-center text-center cursor-pointer"
           >
             + Đặt lịch mới
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* Tabs lọc trạng thái */}
-      <div className="ui-tabs-list" style={{ marginBottom: '24px', padding: '6px', borderRadius: '14px', gap: '6px' }}>
+      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-solid border-border-light shadow-xs">
         <button
           type="button"
-          className={`ui-tab-button ${activeTab === 'ALL' ? 'ui-tab-active' : ''}`}
+          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
+            activeTab === 'ALL' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
+          }`}
           onClick={() => setActiveTab('ALL')}
-          style={{ height: '38px', padding: '0 18px', borderRadius: '10px', fontSize: '13.5px' }}
         >
           Tất cả ({totalCount})
         </button>
         <button
           type="button"
-          className={`ui-tab-button ${activeTab === 'PENDING' ? 'ui-tab-active' : ''}`}
+          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
+            activeTab === 'PENDING' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
+          }`}
           onClick={() => setActiveTab('PENDING')}
-          style={{ height: '38px', padding: '0 18px', borderRadius: '10px', fontSize: '13.5px' }}
         >
           Chờ xác nhận (PENDING)
         </button>
         <button
           type="button"
-          className={`ui-tab-button ${activeTab === 'CONFIRMED' ? 'ui-tab-active' : ''}`}
+          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
+            activeTab === 'CONFIRMED' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
+          }`}
           onClick={() => setActiveTab('CONFIRMED')}
-          style={{ height: '38px', padding: '0 18px', borderRadius: '10px', fontSize: '13.5px' }}
         >
           Đã xác nhận
         </button>
         <button
           type="button"
-          className={`ui-tab-button ${activeTab === 'CANCELLED' ? 'ui-tab-active' : ''}`}
+          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
+            activeTab === 'CANCELLED' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
+          }`}
           onClick={() => setActiveTab('CANCELLED')}
-          style={{ height: '38px', padding: '0 18px', borderRadius: '10px', fontSize: '13.5px' }}
         >
           Đã hủy
         </button>
@@ -174,57 +159,36 @@ export function MyBookingsView({ locale }: { locale: string }) {
 
       {/* Error state */}
       {error && (
-        <div className="ui-badge ui-badge-danger" style={{ width: '100%', padding: '14px 18px', borderRadius: '12px', marginBottom: '16px', fontSize: '14px' }}>
+        <div className="p-4 rounded-2xl bg-danger-soft border border-solid border-red-200 text-danger text-xs font-medium" role="alert">
           {error}
         </div>
       )}
 
       {/* Loading state */}
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[var(--primary)]" />
+        <div className="text-center py-12 text-xs text-text-muted">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
           <p>Đang tải danh sách đặt lịch từ hệ thống...</p>
         </div>
       ) : bookings.length === 0 ? (
-        <div
-          className="card"
-          style={{
-            textAlign: 'center',
-            padding: '48px 24px',
-            background: 'var(--surface)',
-            borderRadius: '16px',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-xs)',
-          }}
-        >
-          <Calendar className="w-12 h-12 mx-auto text-[var(--text-disabled)] mb-3" />
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: '0 0 6px', color: 'var(--text-main)' }}>
+        <div className="p-12 text-center bg-white rounded-3xl border border-solid border-border-light shadow-xs flex flex-col items-center gap-3">
+          <Calendar className="w-12 h-12 text-text-disabled mb-1" />
+          <h3 className="text-base font-bold text-text-main m-0">
             Hiện tại chưa có booking nào
           </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px' }}>
+          <p className="text-xs text-text-muted m-0">
             Không tìm thấy lịch đặt nào từ hệ thống. Hãy chọn Mentor và gửi yêu cầu đặt lịch!
           </p>
           <Link
             href={`/${locale}/mentor-booking`}
-            className="ui-btn ui-btn-primary"
-            style={{
-              height: '42px',
-              padding: '0 24px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '600',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textDecoration: 'none',
-            }}
+            className="mt-2 h-10 px-6 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors inline-flex items-center justify-center"
           >
             Tìm Mentor ngay
           </Link>
         </div>
       ) : (
         /* Danh sách thẻ Booking */
-        <div style={{ display: 'grid', gap: '16px' }}>
+        <div className="grid grid-cols-1 gap-4">
           {bookings.map((item) => (
             <div
               key={item.id}

@@ -28,7 +28,7 @@ export function RadioOption({
   return (
     <label
       htmlFor={radioId}
-      className={`ui-radio-wrapper ${checked ? 'ui-radio-checked' : ''} ${disabled ? 'ui-radio-disabled' : ''} ${className}`.trim()}
+      className={`inline-flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-text-main ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`.trim()}
     >
       <input
         type="radio"
@@ -38,10 +38,12 @@ export function RadioOption({
         checked={checked}
         disabled={disabled}
         onChange={() => onChange(value)}
-        className="ui-radio-input"
+        className="sr-only peer"
       />
-      <span className="ui-radio-dot" aria-hidden="true" />
-      <span className="ui-radio-label">{label}</span>
+      <span className="w-4.5 h-4.5 rounded-full border border-solid border-border-strong bg-white relative flex items-center justify-center transition-all duration-150 peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary-border" aria-hidden="true">
+        <span className="w-2 h-2 rounded-full bg-primary opacity-0 transition-opacity duration-150 peer-checked:opacity-100" />
+      </span>
+      <span>{label}</span>
     </label>
   );
 }
@@ -63,10 +65,11 @@ export function RadioGroup({
   direction = 'horizontal',
   className = '',
 }: RadioGroupProps) {
+  const directionClasses = direction === 'vertical' ? 'flex-direction-col gap-2' : 'flex-row flex-wrap gap-6';
   return (
     <div
       role="radiogroup"
-      className={`ui-radio-group ui-radio-group-${direction} ${className}`.trim()}
+      className={`flex ${directionClasses} ${className}`.trim()}
     >
       {options.map((opt) => (
         <RadioOption

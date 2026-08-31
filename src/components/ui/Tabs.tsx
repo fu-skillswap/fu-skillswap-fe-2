@@ -28,7 +28,11 @@ export function Tabs({
   className = '',
 }: TabsProps) {
   return (
-    <div className={`ui-tabs-list ${className}`.trim()} role="tablist" aria-label={ariaLabel}>
+    <div
+      className={`inline-flex items-center gap-1 bg-surface-subtle p-1 rounded-xl border border-solid border-border-light ${className}`.trim()}
+      role="tablist"
+      aria-label={ariaLabel}
+    >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -37,12 +41,12 @@ export function Tabs({
             type="button"
             role="tab"
             aria-selected={isActive}
-            className={`ui-tab-button ${isActive ? 'ui-tab-active' : ''}`.trim()}
+            className={`h-9 px-4 text-xs font-semibold rounded-lg border-none bg-transparent cursor-pointer flex items-center gap-1.5 transition-all duration-150 ${isActive ? 'bg-white text-primary shadow-xs font-bold' : 'text-text-muted hover:text-text-main'}`.trim()}
             onClick={() => onChange(tab.id)}
           >
-            {tab.icon && <span className="ui-tab-icon">{tab.icon}</span>}
+            {tab.icon && <span className="shrink-0 inline-flex items-center justify-center">{tab.icon}</span>}
             <span>{tab.label}</span>
-            {tab.badge && <span className="ui-tab-badge">{tab.badge}</span>}
+            {tab.badge && <span className="shrink-0">{tab.badge}</span>}
           </button>
         );
       })}

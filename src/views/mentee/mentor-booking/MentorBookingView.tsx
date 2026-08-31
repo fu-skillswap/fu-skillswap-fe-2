@@ -133,27 +133,28 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
           onBook={(service) => openBooking(detailMentor, service)}
         />
       ) : (
-        <section className="figma-mentor-directory" aria-label="Mentor discovery">
-          <div className="figma-mentor-toolbar">
-            <label className="figma-mentor-search">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+        <section className="space-y-6 max-w-7xl mx-auto" aria-label="Mentor discovery">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-3xl border border-solid border-border-light shadow-xs">
+            <label className="relative flex-1 max-w-md">
+              <svg className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted fill-none stroke-current stroke-2" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="m16 16 4.25 4.25" />
               </svg>
               <input
+                className="w-full h-10 pl-10 pr-4 rounded-xl border border-solid border-border-color bg-surface-subtle text-text-main text-xs transition-all outline-none focus:bg-white focus:border-primary focus:ring-3 focus:ring-primary-border"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search by name or skill..."
                 aria-label="Search mentors"
               />
             </label>
-            <div className="figma-filter-chips" aria-label="Filter mentors by category">
+            <div className="flex flex-wrap items-center gap-2" aria-label="Filter mentors by category">
               <button
                 type="button"
                 onClick={() => setCategory(undefined)}
-                className={
-                  category ? 'figma-filter-chip' : 'figma-filter-chip figma-filter-chip-active'
-                }
+                className={`h-9 px-4 rounded-xl text-xs font-semibold border border-solid transition-all cursor-pointer ${
+                  !category ? 'bg-primary border-primary text-white shadow-xs' : 'bg-surface-subtle border-border-color text-text-secondary hover:bg-border-strong/20 hover:border-border-strong'
+                }`}
               >
                 All
               </button>
@@ -162,11 +163,11 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
                   type="button"
                   key={option}
                   onClick={() => setCategory(option)}
-                  className={
+                  className={`h-9 px-4 rounded-xl text-xs font-semibold border border-solid transition-all cursor-pointer ${
                     category === option
-                      ? 'figma-filter-chip figma-filter-chip-active'
-                      : 'figma-filter-chip'
-                  }
+                      ? 'bg-primary border-primary text-white shadow-xs'
+                      : 'bg-surface-subtle border-border-color text-text-secondary hover:bg-border-strong/20 hover:border-border-strong'
+                  }`}
                 >
                   {option}
                 </button>
@@ -174,21 +175,21 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
             </div>
           </div>
           {!isLoading && (
-            <p className="figma-mentor-count">
+            <p className="text-xs font-medium text-text-muted m-0 px-2">
               {filteredMentors.length} mentor
               {filteredMentors.length === 1 ? '' : 's'} found
             </p>
           )}
           {isLoading ? (
-            <p className="figma-mentor-empty">Searching mentors...</p>
+            <p className="p-12 text-center text-xs text-text-muted bg-white rounded-3xl border border-solid border-border-light shadow-xs">Searching mentors...</p>
           ) : filteredMentors.length ? (
-            <div className="figma-mentor-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredMentors.map((mentor) => (
                 <MentorCard mentor={mentor} key={mentor.id} onSelect={setDetailMentor} />
               ))}
             </div>
           ) : (
-            <p className="figma-mentor-empty">No mentors match your search.</p>
+            <p className="p-12 text-center text-xs text-text-muted bg-white rounded-3xl border border-solid border-border-light shadow-xs">No mentors match your search.</p>
           )}
         </section>
       )}
@@ -196,7 +197,6 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
         open={Boolean(bookingMentor && bookingService)}
         title="Book a mentoring session"
         onClose={closeBooking}
-        className="figma-booking-modal"
       >
         {bookingMentor && bookingService && (
           <BookingFlow

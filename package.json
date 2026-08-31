@@ -29,10 +29,13 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "1.18.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "postcss": "^8.5.26",
     "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.8.2",
     "wrangler": "^4.65.0"
   }
