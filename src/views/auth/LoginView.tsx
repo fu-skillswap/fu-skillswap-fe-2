@@ -9,6 +9,7 @@
 
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
+import { showError } from '@/utils/toast';
 import { useEffect } from 'react';
 import { useLoginLogic } from './useLoginLogic';
 
@@ -25,11 +26,13 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
     formState: { errors },
   } = form;
 
-  /** Tự động ẩn thông báo lỗi sau 7 giây */
   useEffect(() => {
     if (!error) return;
-    const timeout = window.setTimeout(clearError, 7000);
-    return () => window.clearTimeout(timeout);
+    showError(error, {
+      title: 'Không thể đăng nhập',
+      description: 'Vui lòng kiểm tra thông tin và thử lại.',
+    });
+    clearError();
   }, [clearError, error]);
 
   return (
@@ -135,20 +138,6 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
           </div>
         </div>
       </aside>
-      {error && (
-        <div className="figma-toast figma-toast-error" role="alert" aria-live="assertive">
-          <span className="figma-toast-icon" aria-hidden="true">
-            !
-          </span>
-          <div>
-            <strong>Không thể đăng nhập</strong>
-            <p>{error}</p>
-          </div>
-          <button type="button" aria-label="Đóng thông báo" onClick={clearError}>
-            ×
-          </button>
-        </div>
-      )}
     </main>
   );
 }

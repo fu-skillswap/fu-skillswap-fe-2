@@ -215,14 +215,17 @@ export function useMentorRegistration() {
       setIsExistingProfile(true);
       setApplicationStatus('PENDING_REVIEW');
       setSuccessMessage(successMsg);
-      showSuccess(successMsg);
+      showSuccess({
+        title: 'Đã gửi hồ sơ Mentor',
+        description: 'Hồ sơ của bạn đã được gửi để xét duyệt.',
+      });
     } catch (err) {
       let errMsg = 'Có lỗi xảy ra trong quá trình kết nối máy chủ.';
       if (err instanceof ApiClientError) {
         errMsg = err.message || 'Lỗi nộp hồ sơ từ máy chủ.';
       }
       setServerError(errMsg);
-      showError(errMsg);
+      showError(err, { title: 'Không thể gửi hồ sơ Mentor' });
     }
   };
 
@@ -245,18 +248,24 @@ export function useMentorRegistration() {
     if (projectId) {
       try {
         await mentorProfileRepo.deleteProject(projectId);
-        showSuccess('Xóa dự án tiêu biểu thành công.');
+        showSuccess({
+          title: 'Đã xóa dự án',
+          description: 'Dự án đã được xóa khỏi hồ sơ của bạn.',
+        });
       } catch (err) {
         const errMsg =
           err instanceof ApiClientError
             ? err.message || 'Xóa dự án thất bại.'
             : 'Không thể xóa dự án trên máy chủ.';
         setServerError(errMsg);
-        showError(errMsg);
+        showError(err, { title: 'Không thể xóa dự án' });
         return;
       }
     } else {
-      showSuccess('Đã xóa dự án.');
+      showSuccess({
+        title: 'Đã xóa dự án',
+        description: 'Dự án đã được xóa khỏi hồ sơ của bạn.',
+      });
     }
 
     projectFieldsArray.remove(index);
@@ -281,18 +290,24 @@ export function useMentorRegistration() {
     if (achievementId) {
       try {
         await mentorProfileRepo.deleteAchievement(achievementId);
-        showSuccess('Xóa học vấn/giải thưởng thành công.');
+        showSuccess({
+          title: 'Đã xóa thành tích',
+          description: 'Thông tin đã được xóa khỏi hồ sơ của bạn.',
+        });
       } catch (err) {
         const errMsg =
           err instanceof ApiClientError
             ? err.message || 'Xóa giải thưởng thất bại.'
             : 'Không thể xóa giải thưởng trên máy chủ.';
         setServerError(errMsg);
-        showError(errMsg);
+        showError(err, { title: 'Không thể xóa thành tích' });
         return;
       }
     } else {
-      showSuccess('Đã xóa học vấn/giải thưởng.');
+      showSuccess({
+        title: 'Đã xóa thành tích',
+        description: 'Thông tin đã được xóa khỏi hồ sơ của bạn.',
+      });
     }
 
     achievementFieldsArray.remove(index);
@@ -319,14 +334,17 @@ export function useMentorRegistration() {
       const msg =
         'Đã rút hồ sơ đăng ký thành công. Hồ sơ hiện đã trở về trạng thái DRAFT để bạn chỉnh sửa.';
       setSuccessMessage(msg);
-      showSuccess(msg);
+      showSuccess({
+        title: 'Đã rút hồ sơ Mentor',
+        description: 'Bạn có thể chỉnh sửa và gửi lại hồ sơ sau.',
+      });
     } catch (err) {
       let errMsg = 'Không thể rút hồ sơ vào lúc này.';
       if (err instanceof ApiClientError) {
         errMsg = err.message || 'Lỗi rút hồ sơ từ máy chủ.';
       }
       setServerError(errMsg);
-      showError(errMsg);
+      showError(err, { title: 'Không thể rút hồ sơ Mentor' });
     }
   };
 

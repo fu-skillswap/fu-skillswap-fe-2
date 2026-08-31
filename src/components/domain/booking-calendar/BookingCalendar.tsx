@@ -1,7 +1,7 @@
 'use client';
 
 import type { CandidateSegmentResponse } from '@/models/auth';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { CalendarX2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 /** Danh sách nhãn ngày đầy đủ chuẩn Google Calendar */
@@ -127,6 +127,15 @@ export function BookingCalendar({
       );
     });
   }, [candidates, candidateSegments, selectedServiceId]);
+
+  const hasSelectableSegments = displaySegments.some(
+    (segment) =>
+      segment.isSelectable !== false &&
+      !segment.blockedByAcceptedBooking &&
+      !segment.blockedBySameService &&
+      !segment.blockedByDifferentService &&
+      !segment.isBlocked,
+  );
 
   // Tính toán dải giờ hiển thị (mặc định từ 08:00 tới 21:00 hoặc tự mở rộng theo slots/candidateSegments)
   const { gridHours, startGridHour } = useMemo(() => {
@@ -513,6 +522,29 @@ export function BookingCalendar({
           })}
         </div>
       </div>
+
+      {!isLoading && !hasSelectableSegments && (
+        <div
+          role="status"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            minHeight: '48px',
+            padding: '12px 16px',
+            border: '1px solid #dbeafe',
+            borderRadius: '10px',
+            background: '#f0f9ff',
+            color: '#475569',
+            fontSize: '14px',
+            textAlign: 'center',
+          }}
+        >
+          <CalendarX2 size={18} color="#119CF7" aria-hidden="true" />
+          Không còn lịch rảnh phù hợp với buổi chia sẻ này trong tuần đang xem.
+        </div>
+      )}
     </section>
   );
 }

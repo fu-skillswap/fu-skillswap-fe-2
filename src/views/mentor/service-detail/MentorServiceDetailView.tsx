@@ -6,7 +6,6 @@
 'use client';
 
 import { Button } from '@/components/ui/Button';
-import { ApiClientError } from '@/models/apiClient';
 import type { MentorServiceManagementResponse } from '@/models/auth';
 import {
   mentorServiceUpdateSchema,
@@ -56,11 +55,7 @@ export function MentorServiceDetailView({
       });
     } catch (reason) {
       setHasError(true);
-      showError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể tải chi tiết dịch vụ. Vui lòng thử lại.',
-      );
+      showError(reason, { title: 'Không thể tải chi tiết dịch vụ' });
     } finally {
       setIsLoading(false);
     }
@@ -106,13 +101,12 @@ export function MentorServiceDetailView({
         maintainPostSessionChat: updated.maintainPostSessionChat,
       });
       setIsEditing(false);
-      showSuccess('Đã lưu thay đổi dịch vụ.');
+      showSuccess({
+        title: 'Đã cập nhật dịch vụ',
+        description: 'Thông tin dịch vụ đã được lưu.',
+      });
     } catch (reason) {
-      showError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể lưu thay đổi dịch vụ. Vui lòng thử lại.',
-      );
+      showError(reason, { title: 'Không thể cập nhật dịch vụ' });
     } finally {
       setIsSaving(false);
     }

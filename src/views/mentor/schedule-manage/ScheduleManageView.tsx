@@ -11,7 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
-import { getGoogleCalendarRedirectUri } from '@/lib/auth/google';
+import { getGoogleCalendarClientId, getGoogleCalendarRedirectUri } from '@/lib/auth/google';
 import { formatDateVi } from './mentorTemplateHelpers';
 import { ApiClientError } from '@/models/apiClient';
 import type {
@@ -19,6 +19,7 @@ import type {
   CreateAvailabilityTemplateRequest,
   DeactivateAvailabilitySlotRequest,
   GoogleAuthorizationContextResponse,
+  MentorBookingResponse,
   MentorManagedAvailabilitySlotResponse,
   MentorServiceManagementResponse,
   UpdateAvailabilitySlotRequest,
@@ -58,19 +59,22 @@ import {
   Settings,
   ShieldCheck,
   Target,
+  UserRound,
+  Video,
   X,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
 import { MentorScheduleCalendar } from './MentorScheduleCalendar';
 import {
+  mergeBookingsIntoCalendar,
   mergeAvailabilityTemplatesIntoCalendar,
   toMentorScheduleCalendarData,
 } from './mentorScheduleCalendarData';
 import { localDateTimeToUtcIso } from './mentorScheduleDateTime';
 import { useMentorSchedulingRead } from './useMentorSchedulingRead';
+import { bookingFilterOf } from '../bookings/useMentorBookings';
 
 function addDays(date: Date, days: number) {
   const result = new Date(date);
@@ -116,6 +120,228 @@ function formatServicePrice(service: MentorServiceManagementResponse) {
   return `${new Intl.NumberFormat('vi-VN').format(service.publicPriceScoin ?? 0)} SCoin`;
 }
 
+function formatDuration(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return [hours > 0 ? `${hours} giờ` : '', remainingMinutes > 0 ? `${remainingMinutes} phút` : '']
+    .filter(Boolean)
+    .join(' ');
+}
+
+function formatTimezoneOffset(date: Date, timezone: string) {
+  const offset = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    timeZoneName: 'shortOffset',
+  })
+    .formatToParts(date)
+    .find((part) => part.type === 'timeZoneName')?.value;
+  return offset || timezone;
+}
+
+function menteeInitials(name: string) {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(-2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'MT'
+  );
+}
+
+function bookingStatusPresentation(booking: MentorBookingResponse) {
+  const filter = bookingFilterOf(booking);
+  if (filter === 'NEW') return { label: 'Chờ xác nhận', variant: 'warning' as const };
+  if (filter === 'UPCOMING') return { label: 'Sắp tới', variant: 'success' as const };
+  if (filter === 'IN_PROGRESS') return { label: 'Đang diễn ra', variant: 'info' as const };
+  if (filter === 'COMPLETED') return { label: 'Hoàn thành', variant: 'success' as const };
+  return { label: 'Đã hủy', variant: 'danger' as const };
+}
+
+function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']) {
+  if (platform === 'GOOGLE_MEET') return 'Google Meet';
+  if (platform === 'MICROSOFT_TEAMS') return 'Microsoft Teams';
+  if (platform === 'ZOOM') return 'Zoom';
+  if (platform === 'DISCORD') return 'Discord';
+  if (platform === 'OFFLINE') return 'Trực tiếp';
+  if (platform === 'OTHER') return 'Khác';
+  return 'Chưa thiết lập';
+}
+
+function BookingAvailabilityDetail({
+  booking,
+  timezone,
+  canDeactivate,
+  canEdit,
+  onClose,
+  onDeactivate,
+  onEdit,
+}: {
+  booking: MentorBookingResponse;
+  timezone: string;
+  canDeactivate: boolean;
+  canEdit: boolean;
+  onClose: () => void;
+  onDeactivate: () => void;
+  onEdit: () => void;
+}) {
+  const start = new Date(booking.selectedStartTime);
+  const end = new Date(booking.selectedEndTime);
+  const startParts = getLocalDateTimeParts(booking.selectedStartTime, timezone);
+  const endParts = getLocalDateTimeParts(booking.selectedEndTime, timezone);
+  const scheduledMinutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
+  const sessionDuration = booking.serviceDurationSnapshot ?? scheduledMinutes;
+  const status = bookingStatusPresentation(booking);
+  const weekday = new Intl.DateTimeFormat('vi-VN', {
+    timeZone: timezone,
+    weekday: 'long',
+  }).format(start);
+
+  return (
+    <div className="bookingAvailabilityDetailModal">
+      <header className="bookingDetailHeader">
+        <h2>Chi tiết lịch hẹn</h2>
+        <button type="button" aria-label="Đóng" onClick={onClose}>
+          <X aria-hidden="true" />
+        </button>
+      </header>
+
+      <section className="bookingDetailSummary" aria-label="Thông tin lịch hẹn">
+        <div className="bookingDetailInfoItem">
+          <span className="bookingDetailInfoIcon" aria-hidden="true">
+            <CalendarDays />
+          </span>
+          <div>
+            <span>Ngày hẹn</span>
+            <strong>{startParts.date.split('-').reverse().join('/')}</strong>
+            <small>({weekday})</small>
+          </div>
+        </div>
+
+        <div className="bookingDetailInfoItem">
+          <span className="bookingDetailInfoIcon" aria-hidden="true">
+            <Clock />
+          </span>
+          <div>
+            <span>Thời gian</span>
+            <strong>
+              {startParts.time} – {endParts.time}
+            </strong>
+            {scheduledMinutes > 0 && <small>{formatDuration(scheduledMinutes)}</small>}
+          </div>
+        </div>
+
+        <div className="bookingDetailInfoItem bookingDetailStatus">
+          <span>Trạng thái</span>
+          <Badge variant={status.variant}>{status.label}</Badge>
+        </div>
+
+        <div className="bookingDetailInfoItem">
+          <span className="bookingDetailInfoIcon" aria-hidden="true">
+            <Globe />
+          </span>
+          <div>
+            <span>Múi giờ</span>
+            <strong>{timezone}</strong>
+            <small>{formatTimezoneOffset(start, timezone)}</small>
+          </div>
+        </div>
+
+        <div className="bookingDetailInfoItem">
+          <span className="bookingDetailInfoIcon" aria-hidden="true">
+            <FileText />
+          </span>
+          <div>
+            <span>Ghi chú từ mentee</span>
+            <strong>{booking.learningGoalDescription?.trim() || 'Không có ghi chú'}</strong>
+          </div>
+        </div>
+
+        <div className="bookingDetailInfoItem">
+          <span className="bookingDetailInfoIcon" aria-hidden="true">
+            <Video />
+          </span>
+          <div>
+            <span>Hình thức</span>
+            <strong>{meetingPlatformLabel(booking.meetingPlatform)}</strong>
+            {booking.meetingLink && (
+              <a href={booking.meetingLink} target="_blank" rel="noreferrer">
+                Mở liên kết buổi học
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="bookingDetailSession">
+        <h3>Thông tin buổi học</h3>
+        <div>
+          <article>
+            <span>Dịch vụ đã đặt</span>
+            <strong>{booking.serviceTitle || 'Chưa có thông tin dịch vụ'}</strong>
+          </article>
+          <article>
+            <span>Thời lượng</span>
+            <strong>
+              {sessionDuration > 0 ? formatDuration(sessionDuration) : 'Chưa xác định'}
+            </strong>
+          </article>
+        </div>
+      </section>
+
+      <section className="bookingDetailMentee" aria-label="Mentee đặt lịch">
+        <span className="bookingDetailMenteeAvatar" aria-hidden={!booking.menteeAvatarUrl}>
+          {booking.menteeAvatarUrl ? (
+            <img src={booking.menteeAvatarUrl} alt="" />
+          ) : (
+            menteeInitials(booking.menteeDisplayName)
+          )}
+        </span>
+        <div>
+          <span>Mentee đặt lịch</span>
+          <strong>{booking.menteeDisplayName}</strong>
+        </div>
+      </section>
+
+      {(!canDeactivate || !canEdit) && (
+        <p className="bookingDetailCapabilityNote">
+          {!canDeactivate && !canEdit
+            ? 'Không thể thu hồi hoặc chỉnh sửa vì lịch đã có booking.'
+            : !canDeactivate
+              ? 'Không thể thu hồi vì lịch đã có booking.'
+              : 'Không thể chỉnh sửa thời gian vì lịch đã có booking.'}
+        </p>
+      )}
+
+      <footer className="bookingDetailFooter">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Đóng
+        </Button>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canDeactivate}
+            title={!canDeactivate ? 'Không thể thu hồi vì đã có booking.' : undefined}
+            onClick={onDeactivate}
+          >
+            Thu hồi lịch hẹn
+          </Button>
+          <Button
+            type="button"
+            disabled={!canEdit}
+            title={!canEdit ? 'Không thể chỉnh sửa vì đã có booking.' : undefined}
+            onClick={onEdit}
+          >
+            Chỉnh sửa
+          </Button>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
 /** Helper chọn Icon phù hợp với tên dịch vụ */
 function getServiceIcon(title: string) {
   const lower = title.toLowerCase();
@@ -132,24 +358,12 @@ function getServiceIcon(title: string) {
 }
 
 function showServiceStatusSuccess(isActive: boolean) {
-  toast.custom(
-    (toastItem) => (
-      <div className="mentor-service-status-toast" role="status">
-        <span className="mentor-service-status-toast-icon" aria-hidden="true">
-          <CheckCircle2 size={19} />
-        </span>
-        <p>{isActive ? 'Đã bật dịch vụ.' : 'Đã tắt dịch vụ.'}</p>
-        <button
-          type="button"
-          onClick={() => toast.dismiss(toastItem.id)}
-          aria-label="Đóng thông báo"
-        >
-          <X size={16} />
-        </button>
-      </div>
-    ),
-    { duration: 3500, position: 'top-right' },
-  );
+  showSuccess({
+    title: isActive ? 'Đã bật dịch vụ' : 'Đã tạm ẩn dịch vụ',
+    description: isActive
+      ? 'Mentee có thể đặt dịch vụ này.'
+      : 'Mentee tạm thời không thể đặt dịch vụ này.',
+  });
 }
 
 export function ScheduleManageView() {
@@ -172,6 +386,7 @@ export function ScheduleManageView() {
 
   // Slot Detail, Edit, Deactivate States
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
@@ -224,6 +439,7 @@ export function ScheduleManageView() {
   const {
     availabilityError,
     availabilitySlots,
+    bookings,
     bookingPolicy,
     constraints: schedulingConstraints,
     googleCalendarStatus,
@@ -237,10 +453,9 @@ export function ScheduleManageView() {
   const timezone =
     bookingPolicy?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
   const calendarData = toMentorScheduleCalendarData(availabilitySlots);
-  const calendarEvents = mergeAvailabilityTemplatesIntoCalendar(
-    calendarData.events,
-    templates,
-    weekStart,
+  const calendarEvents = mergeBookingsIntoCalendar(
+    mergeAvailabilityTemplatesIntoCalendar(calendarData.events, templates, weekStart),
+    bookings,
   );
   const isAvailabilityResponseEmpty = calendarData.isEmpty && calendarEvents.length === 0;
   const canCreateAvailability = Boolean(bookingPolicy);
@@ -249,6 +464,7 @@ export function ScheduleManageView() {
   );
 
   const selectedSlot = availabilitySlots?.find((slot) => slot.slotId === selectedSlotId);
+  const selectedBooking = bookings?.find((booking) => booking.bookingId === selectedBookingId);
   const isTimeEditBlocked = Boolean(
     selectedSlot?.timeMutation?.mode && selectedSlot.timeMutation.mode !== 'ALLOWED',
   );
@@ -349,7 +565,10 @@ export function ScheduleManageView() {
       };
 
       await mentorSchedulingRepo.updateBookingPolicy(payload);
-      showSuccess('Đã cập nhật cài đặt lịch.');
+      showSuccess({
+        title: 'Đã lưu thay đổi',
+        description: 'Cài đặt lịch đã được cập nhật.',
+      });
       setIsScheduleSettingsOpen(false);
       await reloadScheduling();
     } catch (reason) {
@@ -417,28 +636,21 @@ export function ScheduleManageView() {
     setIsTemplateFormOpen(true);
   };
 
-  const formatApiClientError = (reason: ApiClientError) => {
-    if (reason.data && Array.isArray(reason.data) && reason.data.length > 0) {
-      const details = reason.data
-        .map((d) => (d.field ? `${d.field}: ${d.message}` : d.message))
-        .join('; ');
-      return `${reason.message} (${details})`;
-    }
-    return reason.message;
-  };
-
   const onSubmitCreateTemplate = async (data: CreateAvailabilityTemplateRequest) => {
     setIsSubmittingTemplate(true);
     setTemplateStaleNotice(null);
     try {
       await mentorSchedulingRepo.createAvailabilityTemplate(data);
-      showSuccess('Đã tạo lịch hàng tuần.');
+      showSuccess({
+        title: 'Đã tạo lịch lặp',
+        description: 'Lịch sẽ tự động mở theo thời gian bạn đã thiết lập.',
+      });
       setIsTemplateFormOpen(false);
       await reloadTemplates();
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
-        showError(formatApiClientError(reason));
+        showError(reason, { title: 'Không thể tạo lịch lặp' });
         console.error('Create template error:', reason);
       } else {
         showError('Không thể tạo mẫu lịch lặp. Vui lòng thử lại.');
@@ -456,7 +668,10 @@ export function ScheduleManageView() {
     setTemplateStaleNotice(null);
     try {
       await mentorSchedulingRepo.updateAvailabilityTemplate(templateId, data);
-      showSuccess('Đã cập nhật mẫu lịch lặp.');
+      showSuccess({
+        title: 'Đã cập nhật lịch lặp',
+        description: 'Thay đổi đã được lưu.',
+      });
       setIsTemplateFormOpen(false);
       setSelectedTemplateForEdit(null);
       await reloadTemplates();
@@ -476,7 +691,7 @@ export function ScheduleManageView() {
             showError('Mẫu lịch này không còn tồn tại hoặc đã bị lưu trữ.');
           }
         } else {
-          showError(formatApiClientError(reason));
+          showError(reason, { title: 'Không thể cập nhật lịch lặp' });
           console.error('Update template error:', reason);
         }
       } else {
@@ -492,7 +707,10 @@ export function ScheduleManageView() {
       await mentorSchedulingRepo.pauseAvailabilityTemplate(template.templateId, {
         expectedVersion: template.configVersion,
       });
-      showSuccess('Đã tạm dừng mẫu lịch lặp.');
+      showSuccess({
+        title: 'Đã tạm dừng lịch lặp',
+        description: 'Các lịch mới từ mẫu này sẽ tạm thời không được mở.',
+      });
       await reloadTemplates();
       await reloadScheduling();
     } catch (reason) {
@@ -501,7 +719,7 @@ export function ScheduleManageView() {
           await reloadTemplates();
           showError('Mẫu lịch lặp vừa được thay đổi ở nơi khác. Dữ liệu đã được tải lại.');
         } else {
-          showError(reason.message);
+          showError(reason);
         }
       } else {
         showError('Không thể tạm dừng mẫu lịch lặp.');
@@ -514,7 +732,10 @@ export function ScheduleManageView() {
       await mentorSchedulingRepo.resumeAvailabilityTemplate(template.templateId, {
         expectedVersion: template.configVersion,
       });
-      showSuccess('Đã tiếp tục mẫu lịch lặp.');
+      showSuccess({
+        title: 'Đã khôi phục lịch lặp',
+        description: 'Lịch sẽ tiếp tục được tạo theo thời gian đã thiết lập.',
+      });
       await reloadTemplates();
       await reloadScheduling();
     } catch (reason) {
@@ -523,7 +744,7 @@ export function ScheduleManageView() {
           await reloadTemplates();
           showError('Mẫu lịch lặp vừa được thay đổi ở nơi khác. Dữ liệu đã được tải lại.');
         } else {
-          showError(reason.message);
+          showError(reason);
         }
       } else {
         showError('Không thể tiếp tục mẫu lịch lặp.');
@@ -536,7 +757,10 @@ export function ScheduleManageView() {
       await mentorSchedulingRepo.archiveAvailabilityTemplate(template.templateId, {
         expectedVersion: template.configVersion,
       });
-      showSuccess('Đã lưu trữ mẫu lịch lặp.');
+      showSuccess({
+        title: 'Đã lưu trữ lịch lặp',
+        description: 'Mẫu lịch đã được chuyển khỏi danh sách đang hoạt động.',
+      });
       await reloadTemplates();
       await reloadScheduling();
     } catch (reason) {
@@ -545,7 +769,7 @@ export function ScheduleManageView() {
           await reloadTemplates();
           showError('Mẫu lịch lặp vừa được thay đổi ở nơi khác. Dữ liệu đã được tải lại.');
         } else {
-          showError(reason.message);
+          showError(reason);
         }
       } else {
         showError('Không thể lưu trữ mẫu lịch lặp.');
@@ -599,7 +823,7 @@ export function ScheduleManageView() {
               : reason.message,
           );
         } else {
-          showError(reason.message);
+          showError(reason);
         }
       } else {
         showError('Không thể bỏ qua ngày đã chọn. Vui lòng thử lại.');
@@ -654,7 +878,7 @@ export function ScheduleManageView() {
               : reason.message,
           );
         } else {
-          showError(reason.message);
+          showError(reason);
         }
       } else {
         showError('Không thể khôi phục ngày đã chọn. Vui lòng thử lại.');
@@ -676,11 +900,7 @@ export function ScheduleManageView() {
       setServices(list);
       setConstraints(cons);
     } catch (reason) {
-      showError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể tải danh sách dịch vụ. Vui lòng thử lại sau.',
-      );
+      showError(reason, { title: 'Không thể tải danh sách dịch vụ' });
     } finally {
       setLoading(false);
     }
@@ -710,11 +930,7 @@ export function ScheduleManageView() {
         await loadServices();
         showError('Dịch vụ đã thay đổi. Danh sách đã được tải lại, vui lòng thử lại.');
       } else {
-        showError(
-          reason instanceof ApiClientError
-            ? reason.message
-            : 'Không thể cập nhật trạng thái dịch vụ. Vui lòng thử lại.',
-        );
+        showError(reason, { title: 'Không thể cập nhật trạng thái dịch vụ' });
       }
     } finally {
       setTogglingId(null);
@@ -742,9 +958,7 @@ export function ScheduleManageView() {
       sessionStorage.setItem('skillswap.googleCalendar.state', context.state);
       sessionStorage.setItem('skillswap.googleCalendar.redirectUri', redirectUri);
 
-      const clientId =
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-        '1009522721292-e7fb6m9h3h62svo27d2s1f7jh5rdeoff.apps.googleusercontent.com';
+      const clientId = getGoogleCalendarClientId();
       const scope =
         'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
 
@@ -763,11 +977,10 @@ export function ScheduleManageView() {
       window.location.href = googleAuthUrl;
     } catch (reason) {
       setIsInitiatingGoogleOAuth(false);
-      if (reason instanceof ApiClientError) {
-        showError(reason.message);
-      } else {
-        showError('Không thể khởi tạo kết nối Google Calendar. Vui lòng thử lại.');
-      }
+      showError(reason, {
+        title: 'Không thể kết nối Google Calendar',
+        description: 'Tính năng kết nối lịch hiện chưa sẵn sàng. Vui lòng thử lại sau.',
+      });
     }
   };
 
@@ -776,7 +989,10 @@ export function ScheduleManageView() {
     try {
       await mentorSchedulingRepo.disconnectGoogleCalendar();
       setIsDisconnectModalOpen(false);
-      showSuccess('Đã ngắt kết nối Google Calendar.');
+      showSuccess({
+        title: 'Đã ngắt kết nối Google Calendar',
+        description: 'Lịch Google sẽ không còn được đồng bộ với SkillSwap.',
+      });
       await reloadScheduling();
     } catch (reason) {
       setIsDisconnectModalOpen(false);
@@ -788,7 +1004,7 @@ export function ScheduleManageView() {
           'Bạn vẫn còn lịch đã thanh toán trong tương lai đang sử dụng Google Calendar.',
         );
       } else if (reason instanceof ApiClientError) {
-        showError(reason.message);
+        showError(reason);
       } else {
         showError('Không thể ngắt kết nối Google Calendar.');
       }
@@ -819,12 +1035,12 @@ export function ScheduleManageView() {
       await loadServices();
       form.reset();
       setOpenModal(false);
+      showSuccess({
+        title: 'Đã tạo dịch vụ',
+        description: 'Dịch vụ mới đã được thêm vào hồ sơ của bạn.',
+      });
     } catch (reason) {
-      showError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể tạo dịch vụ. Vui lòng thử lại.',
-      );
+      showError(reason, { title: 'Không thể tạo dịch vụ' });
     } finally {
       setIsSaving(false);
     }
@@ -855,7 +1071,29 @@ export function ScheduleManageView() {
       void reloadScheduling();
       return;
     }
+    setSelectedBookingId(null);
     setSelectedSlotId(slotId);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleSelectBooking = (bookingId: string) => {
+    const booking = bookings?.find((item) => item.bookingId === bookingId);
+    if (!booking) {
+      showError('Lịch hẹn này không còn tồn tại.');
+      void reloadScheduling();
+      return;
+    }
+
+    const bookingStart = new Date(booking.selectedStartTime).getTime();
+    const bookingEnd = new Date(booking.selectedEndTime).getTime();
+    const parentSlot = availabilitySlots?.find(
+      (slot) =>
+        new Date(slot.startAt).getTime() <= bookingStart &&
+        new Date(slot.endAt).getTime() >= bookingEnd,
+    );
+
+    setSelectedBookingId(bookingId);
+    setSelectedSlotId(parentSlot?.slotId ?? null);
     setIsDetailModalOpen(true);
   };
 
@@ -935,7 +1173,10 @@ export function ScheduleManageView() {
         note: values.note.trim() || undefined,
       });
       setIsAvailabilityModalOpen(false);
-      showSuccess('Đã thêm lịch rảnh.');
+      showSuccess({
+        title: 'Đã thêm lịch rảnh',
+        description: 'Mentee có thể đặt lịch trong khung giờ này.',
+      });
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
@@ -1045,7 +1286,10 @@ export function ScheduleManageView() {
       setSelectedSlotId(null);
       setEditStaleNotice(null);
       setPendingRejectionConfirm(null);
-      showSuccess('Đã cập nhật lịch rảnh.');
+      showSuccess({
+        title: 'Đã cập nhật lịch rảnh',
+        description: 'Thay đổi đã được lưu.',
+      });
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
@@ -1153,7 +1397,10 @@ export function ScheduleManageView() {
       setIsDetailModalOpen(false);
       setSelectedSlotId(null);
       setPendingRejectionConfirm(null);
-      showSuccess('Đã thu hồi lịch rảnh.');
+      showSuccess({
+        title: 'Đã thu hồi lịch rảnh',
+        description: 'Khung giờ này không còn nhận booking mới.',
+      });
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
@@ -1207,7 +1454,7 @@ export function ScheduleManageView() {
               : reason.message,
           );
         } else {
-          showError(reason.message);
+          showError(reason);
         }
       } else {
         showError('Không thể thu hồi lịch rảnh. Vui lòng thử lại.');
@@ -1388,6 +1635,7 @@ export function ScheduleManageView() {
             onRetry={() => void Promise.all([reloadScheduling(), reloadTemplates()])}
             onUnavailableAction={openAvailabilityModal}
             onSelectSlot={handleSelectSlot}
+            onSelectBooking={handleSelectBooking}
           />
         ) : (
           <AvailabilityTemplateList
@@ -2530,18 +2778,33 @@ export function ScheduleManageView() {
         </form>
       </Modal>
 
-      {/* Modal Chi tiết Lịch rảnh */}
+      {/* Modal Chi tiết Lịch rảnh / Lịch hẹn */}
       <Modal
-        open={isDetailModalOpen && Boolean(selectedSlot)}
-        title="Chi tiết lịch rảnh"
+        open={isDetailModalOpen && Boolean(selectedSlot || selectedBooking)}
+        title={selectedBooking ? 'Chi tiết lịch hẹn' : 'Chi tiết lịch rảnh'}
         hideHeader
         onClose={() => {
           setIsDetailModalOpen(false);
           setSelectedSlotId(null);
+          setSelectedBookingId(null);
         }}
-        className="availability-detail-modal"
+        className={`availability-detail-modal ${selectedBooking ? 'bookingAvailabilityDetailModalShell' : ''}`}
       >
-        {selectedSlot && (
+        {selectedBooking ? (
+          <BookingAvailabilityDetail
+            booking={selectedBooking}
+            timezone={timezone}
+            canDeactivate={Boolean(selectedSlot && canDeactivate)}
+            canEdit={Boolean(selectedSlot && !isTimeEditBlocked)}
+            onClose={() => {
+              setIsDetailModalOpen(false);
+              setSelectedSlotId(null);
+              setSelectedBookingId(null);
+            }}
+            onDeactivate={handleOpenDeactivateModal}
+            onEdit={handleOpenEditModal}
+          />
+        ) : selectedSlot ? (
           <div className="availability-detail-content">
             <header className="availability-detail-header">
               <h2>Chi tiết lịch rảnh</h2>
@@ -2552,6 +2815,7 @@ export function ScheduleManageView() {
                 onClick={() => {
                   setIsDetailModalOpen(false);
                   setSelectedSlotId(null);
+                  setSelectedBookingId(null);
                 }}
               >
                 <X aria-hidden="true" />
@@ -2644,25 +2908,13 @@ export function ScheduleManageView() {
               )}
             </section>
 
-            {selectedSlot.pendingBookingCount > 0 && (
-              <div className="availability-detail-notice is-warning">
-                <AlertTriangle aria-hidden="true" />
-                <span>{selectedSlot.pendingBookingCount} yêu cầu đang chờ</span>
-              </div>
-            )}
-
-            {selectedSlot.hasLockingBooking && (
+            {(selectedSlot.pendingBookingCount > 0 ||
+              selectedSlot.hasLockingBooking ||
+              isTimeEditBlocked) && (
               <div className="availability-detail-notice is-info">
                 <AlertTriangle aria-hidden="true" />
-                <span>Khung giờ đang bị khóa bởi booking</span>
+                <span>Không thể thay đổi khung giờ rảnh này vì đã có mentee booking.</span>
               </div>
-            )}
-
-            {selectedSlot.timeMutation?.mode && selectedSlot.timeMutation.mode !== 'ALLOWED' && (
-              <p className="availability-detail-restriction">
-                Hạn chế đổi giờ:{' '}
-                {selectedSlot.timeMutation.restrictionCode || 'Khung giờ đang có booking'}
-              </p>
             )}
 
             <footer className="availability-detail-footer">
@@ -2681,7 +2933,7 @@ export function ScheduleManageView() {
               </Button>
             </footer>
           </div>
-        )}
+        ) : null}
       </Modal>
 
       {/* Modal Chỉnh sửa Lịch rảnh */}

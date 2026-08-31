@@ -6,9 +6,9 @@
 'use client';
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { ApiClientError } from '@/models/apiClient';
 import type { AdminBooking } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
+import { showError } from '@/utils/toast';
 import {
   CalendarCheck2,
   ChevronLeft,
@@ -17,7 +17,6 @@ import {
   ClipboardList,
   RefreshCw,
   Search,
-  X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
@@ -32,10 +31,6 @@ const bookingStatusLabels: Record<string, string> = {
   REJECTED: 'Đã từ chối',
   EXPIRED: 'Đã hết hạn',
 };
-
-function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError ? reason.message : 'Không thể tải danh sách lịch hẹn.';
-}
 
 function getLabel(value: string | null) {
   if (!value) return 'Chưa cập nhật';
@@ -69,18 +64,16 @@ export function AdminBookingsView() {
   const [statusFilter, setStatusFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
-    setError(undefined);
     try {
       const data = await adminRepo.getBookings({ page, size: pageSize });
       setBookings(data.content);
       setTotalElements(data.totalElements);
       setTotalPages(data.totalPages);
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể tải lịch hẹn' });
     } finally {
       setLoading(false);
     }
@@ -89,12 +82,6 @@ export function AdminBookingsView() {
   useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
-
-  useEffect(() => {
-    if (!error) return;
-    const timer = window.setTimeout(() => setError(undefined), 5000);
-    return () => window.clearTimeout(timer);
-  }, [error]);
 
   const visibleBookings = useMemo(() => {
     const keyword = searchTerm.trim().toLocaleLowerCase('vi-VN');
@@ -133,18 +120,6 @@ export function AdminBookingsView() {
             <p>Theo dõi các buổi mentoring và những lịch hẹn cần được xử lý.</p>
           </div>
         </section>
-        {error && (
-          <div className="admin-dashboard-toast" role="alert">
-            <span>{error}</span>
-            <button
-              type="button"
-              aria-label="Đóng thông báo lỗi"
-              onClick={() => setError(undefined)}
-            >
-              <X aria-hidden="true" />
-            </button>
-          </div>
-        )}
         <section className="admin-booking-metrics" aria-label="Tổng quan lịch hẹn">
           <BookingMetric
             icon={<ClipboardList aria-hidden="true" />}

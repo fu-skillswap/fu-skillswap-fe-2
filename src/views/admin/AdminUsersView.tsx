@@ -6,10 +6,10 @@
 'use client';
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { ApiClientError } from '@/models/apiClient';
 import type { AdminMentor, AdminUser } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { ChevronLeft, ChevronRight, RefreshCw, Users, X } from 'lucide-react';
+import { showError } from '@/utils/toast';
+import { ChevronLeft, ChevronRight, RefreshCw, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -32,10 +32,6 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusOptions = ['ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED', 'BANNED'];
-
-function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError ? reason.message : 'Không thể tải danh sách người dùng.';
-}
 
 function formatDate(value: string | null) {
   if (!value) return 'Chưa đăng nhập';
@@ -74,11 +70,9 @@ export function AdminUsersView() {
   const [totalPages, setTotalPages] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
-    setError(undefined);
     try {
       if (activeTab === 'mentee') {
         const data = await adminRepo.getUsers({ page, size: pageSize });
@@ -92,7 +86,7 @@ export function AdminUsersView() {
         setTotalPages(data.totalPages);
       }
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể tải danh sách người dùng' });
     } finally {
       setLoading(false);
     }
@@ -101,12 +95,6 @@ export function AdminUsersView() {
   useEffect(() => {
     void loadAccounts();
   }, [loadAccounts]);
-
-  useEffect(() => {
-    if (!error) return;
-    const timer = window.setTimeout(() => setError(undefined), 5000);
-    return () => window.clearTimeout(timer);
-  }, [error]);
 
   const visibleMentees = useMemo(
     () =>
@@ -147,18 +135,6 @@ export function AdminUsersView() {
             <p>Theo dõi các tài khoản mentee và mentor trên nền tảng.</p>
           </div>
         </section>
-        {error && (
-          <div className="admin-dashboard-toast" role="alert">
-            <span>{error}</span>
-            <button
-              type="button"
-              aria-label="Đóng thông báo lỗi"
-              onClick={() => setError(undefined)}
-            >
-              <X aria-hidden="true" />
-            </button>
-          </div>
-        )}
         <section className="admin-users-table" aria-labelledby="admin-users-title">
           <div className="admin-users-toolbar">
             <div>

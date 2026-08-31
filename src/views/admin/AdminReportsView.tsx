@@ -6,10 +6,10 @@
 'use client';
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { ApiClientError } from '@/models/apiClient';
 import type { AdminForumReport, ForumReportStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { ChevronLeft, ChevronRight, Filter, RefreshCw, Search, X } from 'lucide-react';
+import { showError } from '@/utils/toast';
+import { ChevronLeft, ChevronRight, Filter, RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,10 +22,6 @@ const statuses: Array<{ value: ForumReportStatus | ''; label: string }> = [
   { value: 'RESOLVED_ACTION_TAKEN', label: 'Đã xử lý' },
   { value: 'DISMISSED', label: 'Đã bỏ qua' },
 ];
-
-function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError ? reason.message : 'Không thể tải danh sách báo cáo.';
-}
 
 function labelOf(value: string) {
   const labels: Record<string, string> = {
@@ -63,11 +59,9 @@ export function AdminReportsView() {
   const [status, setStatus] = useState<ForumReportStatus | ''>('OPEN');
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
 
   const loadReports = useCallback(async () => {
     setLoading(true);
-    setError(undefined);
     try {
       const data = await adminRepo.getForumReports({
         page,
@@ -79,19 +73,13 @@ export function AdminReportsView() {
       setTotalElements(data.totalElements);
       setTotalPages(data.totalPages);
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể tải báo cáo' });
     } finally {
       setLoading(false);
     }
   }, [keyword, page, status]);
 
   useEffect(() => void loadReports(), [loadReports]);
-  useEffect(() => {
-    if (!error) return;
-    const timer = window.setTimeout(() => setError(undefined), 5000);
-    return () => window.clearTimeout(timer);
-  }, [error]);
-
   const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
   const first = reports.length ? page * pageSize + 1 : 0;
   const last = reports.length ? Math.min((page + 1) * pageSize, totalElements) : 0;
@@ -111,14 +99,6 @@ export function AdminReportsView() {
             <p>Rà soát các báo cáo nội dung do người dùng gửi.</p>
           </div>
         </section>
-        {error && (
-          <div className="admin-dashboard-toast" role="alert">
-            <span>{error}</span>
-            <button type="button" onClick={() => setError(undefined)} aria-label="Đóng thông báo">
-              <X aria-hidden="true" />
-            </button>
-          </div>
-        )}
         <section className="admin-reports-table" aria-labelledby="admin-reports-title">
           <div className="admin-reports-toolbar">
             <label>

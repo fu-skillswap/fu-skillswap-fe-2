@@ -80,6 +80,8 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
       title = 'Dịch vụ & Lịch dạy';
     } else if (pathname.includes('/mentor/bookings')) {
       title = 'Lịch đặt';
+    } else if (pathname.includes('/mentor/posts')) {
+      title = 'Bài viết của tôi';
     }
   }
 

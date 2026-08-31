@@ -34,6 +34,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const dashboardHref = `/${locale}/mentor/dashboard`;
   const scheduleHref = `/${locale}/mentor/schedule-manage`;
   const mentorBookingsHref = `/${locale}/mentor/bookings`;
+  const mentorPostsHref = `/${locale}/mentor/posts`;
   const coursesHref = `/${locale}/mentor/my-courses`;
 
   return (
@@ -81,9 +82,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           href={feedHref}
           onClick={onClose}
           className={
-            pathname === feedHref || pathname.includes('/posts')
-              ? 'figma-nav-link figma-nav-link-active'
-              : 'figma-nav-link'
+            pathname === feedHref ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'
           }
         >
           <Home className="w-5 h-5" aria-hidden="true" />
@@ -131,10 +130,18 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           <span>Lịch đặt</span>
         </Link>
 
-        <button type="button" className="figma-nav-link mentor-nav-link-unavailable" tabIndex={-1}>
+        <Link
+          href={mentorPostsHref}
+          onClick={onClose}
+          className={
+            pathname.includes('/mentor/posts')
+              ? 'figma-nav-link figma-nav-link-active'
+              : 'figma-nav-link'
+          }
+        >
           <FileText className="w-5 h-5" aria-hidden="true" />
           <span>Bài viết của tôi</span>
-        </button>
+        </Link>
 
         <Link
           href={coursesHref}
@@ -156,9 +163,13 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
       </nav>
 
       {/* Bottom Action Button: + Bài viết mới */}
-      <button type="button" className="figma-sidebar-compose">
+      <Link
+        href={`${mentorPostsHref}?create=1`}
+        onClick={onClose}
+        className="figma-sidebar-compose"
+      >
         + Bài viết mới
-      </button>
+      </Link>
     </aside>
   );
 }
