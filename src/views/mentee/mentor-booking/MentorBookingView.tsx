@@ -195,8 +195,9 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
       )}
       <Modal
         open={Boolean(bookingMentor && bookingService)}
-        title="Book a mentoring session"
+        title={bookingService ? `Đặt lịch tư vấn 1:1 — ${bookingService.name}` : 'Đặt lịch tư vấn 1:1'}
         onClose={closeBooking}
+        className="w-[85vw] max-w-[85vw] md:max-w-5xl"
       >
         {bookingMentor && bookingService && (
           <BookingFlow

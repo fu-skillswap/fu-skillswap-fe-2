@@ -52,112 +52,45 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
     ) || [];
 
   return (
-    <div style={{ display: 'grid', gap: '20px' }}>
+    <div className="space-y-6">
       {/* CARD 1: THÔNG TIN CƠ BẢN & LIÊN HỆ */}
-      <section
-        className="card"
-        style={{
-          padding: '24px',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          display: 'grid',
-          gap: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <User size={20} />
+      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <User className="w-5 h-5" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+            <h3 className="text-base font-bold text-slate-900 m-0">
               1. Thông tin vị trí & Chuyên môn
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Đã xác thực & cố định</span>
+            <span className="text-xs text-slate-500">Đã xác thực & cố định</span>
           </div>
         </div>
 
-        <div>
-          <label
-            style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#64748b',
-              display: 'block',
-              marginBottom: '4px',
-            }}
-          >
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
             TIÊU ĐỀ VỊ TRÍ / CHUYÊN MÔN
           </label>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>
+          <div className="text-base font-bold text-slate-900">
             {headline || 'Chưa cập nhật'}
           </div>
         </div>
 
-        <div>
-          <label
-            style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#64748b',
-              display: 'block',
-              marginBottom: '4px',
-            }}
-          >
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
             MÔ TẢ KINH NGHIỆM CHUYÊN MÔN
           </label>
-          <div
-            style={{
-              fontSize: '14px',
-              color: '#334155',
-              lineHeight: '1.6',
-              whiteSpace: 'pre-line',
-              background: '#f8fafc',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
+          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100">
             {expertiseDescription || 'Chưa cập nhật'}
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '12px',
-            marginTop: '4px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              background: '#f8fafc',
-              padding: '10px 14px',
-              borderRadius: '10px',
-            }}
-          >
-            <Phone size={16} color="#64748b" />
-            <div>
-              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
-                Số điện thoại
-              </span>
-              <strong style={{ fontSize: '13px', color: '#0f172a' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div className="flex items-center gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <Phone className="w-4 h-4 text-slate-500 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[11px] text-slate-500 block">Số điện thoại</span>
+              <strong className="text-xs font-bold text-slate-900 truncate block">
                 {phoneNumber || 'Chưa cung cấp'}
               </strong>
             </div>
@@ -168,30 +101,13 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
               href={githubUrl}
               target="_blank"
               rel="noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: '#f8fafc',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                color: '#0f172a',
-              }}
+              className="flex items-center gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors"
             >
-              <GitBranch size={16} color="#334155" />
-              <div>
-                <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>GitHub</span>
-                <strong
-                  style={{
-                    fontSize: '13px',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  {githubUrl.replace('https://', '')} <ExternalLink size={12} />
+              <GitBranch className="w-4 h-4 text-slate-600 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[11px] text-slate-500 block">GitHub</span>
+                <strong className="text-xs font-bold text-blue-600 flex items-center gap-1 truncate">
+                  {githubUrl.replace('https://', '')} <ExternalLink className="w-3 h-3" />
                 </strong>
               </div>
             </a>
@@ -202,32 +118,13 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
               href={portfolioUrl}
               target="_blank"
               rel="noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: '#f8fafc',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                color: '#0f172a',
-              }}
+              className="flex items-center gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors"
             >
-              <Globe size={16} color="#0284c7" />
-              <div>
-                <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
-                  Portfolio
-                </span>
-                <strong
-                  style={{
-                    fontSize: '13px',
-                    color: '#0284c7',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  {portfolioUrl.replace('https://', '')} <ExternalLink size={12} />
+              <Globe className="w-4 h-4 text-sky-600 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[11px] text-slate-500 block">Portfolio</span>
+                <strong className="text-xs font-bold text-sky-600 flex items-center gap-1 truncate">
+                  {portfolioUrl.replace('https://', '')} <ExternalLink className="w-3 h-3" />
                 </strong>
               </div>
             </a>
@@ -236,97 +133,39 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
       </section>
 
       {/* CARD 2: MÔN HỌC CHUYÊN MÔN */}
-      <section
-        className="card"
-        style={{
-          padding: '24px',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          display: 'grid',
-          gap: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: '#f0fdf4',
-              color: '#16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <BookOpen size={20} />
+      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+            <h3 className="text-base font-bold text-slate-900 m-0">
               2. Môn học nhận hướng dẫn ({subjectResults.length})
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>
+            <span className="text-xs text-slate-500">
               Danh mục môn học và điểm số đã duyệt
             </span>
           </div>
         </div>
 
         {subjectResults.length === 0 ? (
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-            Chưa đăng ký môn học hướng dẫn nào.
-          </p>
+          <p className="text-sm text-slate-500">Chưa đăng ký môn học hướng dẫn nào.</p>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: '12px',
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {subjectResults.map((sub, idx) => (
               <div
                 key={idx}
-                style={{
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  background: '#f8fafc',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
+                className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50 flex items-center justify-between gap-2"
               >
-                <div>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#0284c7',
-                      background: '#e0f2fe',
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                      display: 'inline-block',
-                      marginBottom: '4px',
-                    }}
-                  >
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-sky-600 bg-sky-100 px-2 py-0.5 rounded-md inline-block mb-1">
                     {sub.subjectCode}
                   </span>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                  <div className="text-xs font-semibold text-slate-800 truncate">
                     {sub.subjectName}
                   </div>
                 </div>
-                <div
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: 800,
-                    color: '#16a34a',
-                    background: '#dcfce7',
-                    padding: '4px 10px',
-                    borderRadius: '8px',
-                  }}
-                >
+                <div className="text-sm font-extrabold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0">
                   {sub.scoreValue}
                 </div>
               </div>
@@ -336,100 +175,39 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
       </section>
 
       {/* CARD 3: CẤP ĐỘ NĂNG LỰC HỖ TRỢ */}
-      <section
-        className="card"
-        style={{
-          padding: '24px',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          display: 'grid',
-          gap: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: '#faf5ff',
-              color: '#8b5cf6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Sliders size={20} />
+      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <Sliders className="w-5 h-5" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+            <h3 className="text-base font-bold text-slate-900 m-0">
               3. Cấp độ năng lực hỗ trợ (Thang 1 - 5)
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>
+            <span className="text-xs text-slate-500">
               Đánh giá khả năng đồng hành cùng Mentee
             </span>
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px',
-          }}
-        >
-          <div
-            style={{
-              padding: '14px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <span
-              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
-            >
-              Kiến thức căn bản
-            </span>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: '#7c3aed' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-xs text-slate-500 block mb-1">Kiến thức căn bản</span>
+            <div className="text-lg font-extrabold text-purple-600">
               Mức {foundationSupportLevel || '-'} / 5
             </div>
           </div>
 
-          <div
-            style={{
-              padding: '14px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <span
-              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
-            >
-              Review Đồ án / Code
-            </span>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-xs text-slate-500 block mb-1">Review Đồ án / Code</span>
+            <div className="text-lg font-extrabold text-blue-600">
               Mức {outputReviewSupportLevel || '-'} / 5
             </div>
           </div>
 
-          <div
-            style={{
-              padding: '14px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <span
-              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
-            >
-              Định hướng phát triển
-            </span>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-xs text-slate-500 block mb-1">Định hướng phát triển</span>
+            <div className="text-lg font-extrabold text-emerald-600">
               Mức {directionSupportLevel || '-'} / 5
             </div>
           </div>
@@ -437,115 +215,46 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
       </section>
 
       {/* CARD 4: CẤU HÌNH ĐẶT LỊCH BOOKING */}
-      <section
-        className="card"
-        style={{
-          padding: '24px',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          display: 'grid',
-          gap: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: '#fff7ed',
-              color: '#ea580c',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Calendar size={20} />
+      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+            <Calendar className="w-5 h-5" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+            <h3 className="text-base font-bold text-slate-900 m-0">
               4. Cấu hình thời gian booking
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>
+            <span className="text-xs text-slate-500">
               Quy định nhận lịch tư vấn từ Mentee
             </span>
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '14px',
-          }}
-        >
-          <div
-            style={{
-              padding: '14px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-xs text-slate-500 block mb-1">Trạng thái nhận lịch</span>
             <span
-              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg ${
+                isAvailable ? 'text-emerald-700 bg-emerald-100' : 'text-red-700 bg-red-100'
+              }`}
             >
-              Trạng thái nhận lịch
-            </span>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: isAvailable ? '#15803d' : '#b91c1c',
-                background: isAvailable ? '#dcfce7' : '#fee2e2',
-                padding: '4px 12px',
-                borderRadius: '8px',
-              }}
-            >
-              <CheckCircle2 size={14} />
-              {isAvailable ? 'Sẵn sàng nhận lịch tư vấn' : 'Tạm ngưng nhận lịch'}
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {isAvailable ? 'Sẵn sàng nhận lịch' : 'Tạm ngưng'}
             </span>
           </div>
 
-          <div
-            style={{
-              padding: '14px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <span
-              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
-            >
-              Báo trước tối thiểu
-            </span>
-            <strong style={{ fontSize: '15px', color: '#0f172a' }}>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-xs text-slate-500 block mb-1">Báo trước tối thiểu</span>
+            <strong className="text-base font-bold text-slate-900">
               {minimumBookingLeadTimeMinutes
                 ? `${minimumBookingLeadTimeMinutes} phút`
                 : 'Chưa thiết lập'}
             </strong>
           </div>
 
-          <div
-            style={{
-              padding: '14px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <span
-              style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}
-            >
-              Hạn mở lịch tối đa
-            </span>
-            <strong style={{ fontSize: '15px', color: '#0f172a' }}>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-xs text-slate-500 block mb-1">Hạn mở lịch tối đa</span>
+            <strong className="text-base font-bold text-slate-900">
               {maximumBookingHorizonDays ? `${maximumBookingHorizonDays} ngày` : 'Chưa thiết lập'}
             </strong>
           </div>
@@ -553,66 +262,32 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
       </section>
 
       {/* CARD 5: MINH CHỨNG ĐÃ ĐƯỢC PHÊ DUYỆT */}
-      <section
-        className="card"
-        style={{
-          padding: '24px',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          display: 'grid',
-          gap: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: '#f0fdf4',
-              color: '#16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <FileCheck size={20} />
+      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <FileCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+            <h3 className="text-base font-bold text-slate-900 m-0">
               5. Tài liệu minh chứng đã xác thực
             </h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>
+            <span className="text-xs text-slate-500">
               Đã qua quy trình kiểm duyệt chính thức
             </span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gap: '10px' }}>
+        <div className="space-y-2.5">
           {/* FPTU Proof */}
           {existingFptuDoc && (
-            <div
-              style={{
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '1px solid #bbf7d0',
-                background: '#f0fdf4',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <GraduationCap size={20} color="#16a34a" />
-                <div>
-                  <strong style={{ fontSize: '13px', color: '#15803d', display: 'block' }}>
+            <div className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/70 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <GraduationCap className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div className="min-w-0">
+                  <strong className="text-sm font-bold text-emerald-800 truncate block">
                     {existingFptuDoc.originalFilename || 'Minh chứng Sinh viên / Cựu SV FPTU'}
                   </strong>
-                  <span style={{ fontSize: '12px', color: '#166534' }}>
-                    Tư cách FPTU • Đã phê duyệt
-                  </span>
+                  <span className="text-xs text-emerald-600">Tư cách FPTU • Đã phê duyệt</span>
                 </div>
               </div>
               {existingFptuDoc.fileUrl && (
@@ -620,17 +295,9 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
                   href={existingFptuDoc.fileUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#16a34a',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
+                  className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
                 >
-                  Xem file <ExternalLink size={14} />
+                  Xem file <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
             </div>
@@ -640,23 +307,15 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
           {existingExpertiseDocs.map((doc, idx) => (
             <div
               key={doc.id || idx}
-              style={{
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '1px solid #ddd6fe',
-                background: '#faf5ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+              className="p-4 rounded-xl border border-purple-200/80 bg-purple-50/70 flex items-center justify-between gap-3"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Award size={20} color="#7c3aed" />
-                <div>
-                  <strong style={{ fontSize: '13px', color: '#6d28d9', display: 'block' }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <Award className="w-5 h-5 text-purple-600 shrink-0" />
+                <div className="min-w-0">
+                  <strong className="text-sm font-bold text-purple-900 truncate block">
                     {doc.originalFilename || `Chứng chỉ chuyên môn #${idx + 1}`}
                   </strong>
-                  <span style={{ fontSize: '12px', color: '#5b21b6' }}>
+                  <span className="text-xs text-purple-600">
                     Chứng minh năng lực chuyên môn • Đã phê duyệt
                   </span>
                 </div>
@@ -666,17 +325,9 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
                   href={doc.fileUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#7c3aed',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
+                  className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"
                 >
-                  Xem file <ExternalLink size={14} />
+                  Xem file <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
             </div>
