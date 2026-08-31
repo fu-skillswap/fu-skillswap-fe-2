@@ -62,7 +62,7 @@ const iconComponents: Record<IconName, LucideIcon> = {
 
 function Icon({ name }: { name: IconName }) {
   const Component = iconComponents[name];
-  return <Component aria-hidden="true" className="admin-icon" />;
+  return <Component aria-hidden="true" className="w-5 h-5 shrink-0" />;
 }
 
 export function AdminSidebar({ locale }: { locale: string }) {
@@ -75,45 +75,45 @@ export function AdminSidebar({ locale }: { locale: string }) {
   const profileHref = `/${locale}/admin/profile`;
 
   return (
-    <aside className="admin-sidebar admin-shared-sidebar">
-      <div className="admin-brand">
-        <img src="/images/SkillSwapLogo.png" alt="SkillSwap" />
+    <aside className="w-64 bg-slate-950 text-white min-h-screen flex flex-col p-4 shrink-0 border-r border-solid border-slate-800/80 shadow-2xl">
+      <div className="flex items-center gap-3 pb-5 mb-3 border-b border-solid border-slate-800/80">
+        <img src="/images/SkillSwapLogo.png" alt="SkillSwap" className="h-9 w-auto object-contain drop-shadow-md" />
         <div>
-          <span className="admin-brand-eyebrow">Cổng quản lý</span>
-          <strong>SkillSwap Admin</strong>
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Cổng quản lý</span>
+          <strong className="text-sm font-extrabold text-white block tracking-tight">SkillSwap Admin</strong>
         </div>
       </div>
-      <nav aria-label="Điều hướng quản trị">
-        <Link className={pathname === dashboardHref ? 'is-active' : ''} href={dashboardHref}>
+      <nav className="flex-1 flex flex-col gap-1.5 overflow-y-auto" aria-label="Điều hướng quản trị">
+        <Link className={pathname === dashboardHref ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold bg-primary text-white shadow-lg shadow-primary/20 transition-all border border-solid border-primary/40' : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all'} href={dashboardHref}>
           <Icon name="grid" />
           Tổng quan
         </Link>
         <Link
-          className={pathname === mentorVerificationHref ? 'is-active' : ''}
+          className={pathname === mentorVerificationHref ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold bg-primary text-white shadow-lg shadow-primary/20 transition-all border border-solid border-primary/40' : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all'}
           href={mentorVerificationHref}
         >
           <Icon name="shield" />
           Xác minh mentor
         </Link>
-        <Link className={pathname === usersHref ? 'is-active' : ''} href={usersHref}>
+        <Link className={pathname === usersHref ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold bg-primary text-white shadow-lg shadow-primary/20 transition-all border border-solid border-primary/40' : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all'} href={usersHref}>
           <Icon name="users" />
           Người dùng
         </Link>
-        <Link className={pathname === bookingsHref ? 'is-active' : ''} href={bookingsHref}>
+        <Link className={pathname === bookingsHref ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold bg-primary text-white shadow-lg shadow-primary/20 transition-all border border-solid border-primary/40' : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all'} href={bookingsHref}>
           <Icon name="booking" />
           Lịch hẹn
         </Link>
-        <Link className={pathname === reportsHref ? 'is-active' : ''} href={reportsHref}>
+        <Link className={pathname === reportsHref ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold bg-primary text-white shadow-lg shadow-primary/20 transition-all border border-solid border-primary/40' : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all'} href={reportsHref}>
           <Icon name="report" />
           Đánh giá &amp; báo cáo
         </Link>
       </nav>
-      <div className="admin-sidebar-footer">
-        <a href="/" target="_blank" rel="noreferrer">
-          <ArrowUpRight aria-hidden="true" className="admin-icon" /> <span>Xem SkillSwap</span>
+      <div className="pt-4 border-t border-solid border-slate-800/80 flex flex-col gap-1.5">
+        <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+          <ArrowUpRight aria-hidden="true" className="w-5 h-5 shrink-0" /> <span>Xem SkillSwap</span>
         </a>
-        <Link className={pathname === profileHref ? 'is-active' : ''} href={profileHref}>
-          <CircleUserRound aria-hidden="true" className="admin-icon" /> <span>Hồ sơ</span>
+        <Link className={pathname === profileHref ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold bg-primary text-white shadow-lg shadow-primary/20 transition-all border border-solid border-primary/40' : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all'} href={profileHref}>
+          <CircleUserRound aria-hidden="true" className="w-5 h-5 shrink-0" /> <span>Hồ sơ</span>
         </Link>
       </div>
     </aside>

@@ -53,12 +53,12 @@ export function MentorPostsView() {
   }, [posts.openCreate]);
 
   return (
-    <section className="mentor-posts-page">
-      <header className="mentor-posts-header">
+    <section className="space-y-6 max-w-7xl mx-auto">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-solid border-border-light shadow-xs">
         <div>
-          <h1>Bài viết của tôi</h1>
-          <p>
-            {posts.counts.published} đã đăng <span>·</span> {posts.counts.draft} bản nháp
+          <h1 className="text-xl sm:text-2xl font-extrabold text-text-main m-0">Bài viết của tôi</h1>
+          <p className="text-xs text-text-muted mt-1 m-0">
+            {posts.counts.published} đã đăng <span className="mx-1">·</span> {posts.counts.draft} bản nháp
           </p>
         </div>
         <Button leftIcon={<Plus />} onClick={posts.openCreate}>
@@ -67,7 +67,7 @@ export function MentorPostsView() {
       </header>
 
       {posts.error && (
-        <div className="mentor-posts-error" role="alert">
+        <div className="p-4 rounded-2xl bg-danger-soft border border-solid border-red-200 text-danger text-xs font-medium flex items-center justify-between gap-4" role="alert">
           <span>{posts.error}</span>
           <Button variant="outline" size="sm" onClick={() => void posts.refresh()}>
             Thử lại
@@ -76,13 +76,13 @@ export function MentorPostsView() {
       )}
 
       {posts.isLoading ? (
-        <div className="mentor-posts-list" aria-label="Đang tải bài viết">
+        <div className="grid grid-cols-1 gap-4" aria-label="Đang tải bài viết">
           {[1, 2, 3].map((item) => (
-            <div className="mentor-post-skeleton" key={item} />
+            <div className="h-36 rounded-2xl bg-surface-subtle animate-pulse border border-solid border-border-light" key={item} />
           ))}
         </div>
       ) : posts.posts.length ? (
-        <div className="mentor-posts-list">
+        <div className="grid grid-cols-1 gap-4">
           {posts.posts.map((post) => (
             <MentorPostCard
               key={post.id}
@@ -93,10 +93,10 @@ export function MentorPostsView() {
           ))}
         </div>
       ) : (
-        <div className="mentor-posts-empty">
-          <FileText aria-hidden="true" />
-          <strong>Bạn chưa có bài viết nào.</strong>
-          <span>Chia sẻ kinh nghiệm, kiến thức hoặc góc nhìn của bạn với mentee.</span>
+        <div className="p-12 text-center bg-white rounded-3xl border border-solid border-border-light shadow-xs flex flex-col items-center gap-3">
+          <FileText className="w-12 h-12 text-text-muted" aria-hidden="true" />
+          <strong className="text-sm font-bold text-text-main">Bạn chưa có bài viết nào.</strong>
+          <span className="text-xs text-text-muted">Chia sẻ kinh nghiệm, kiến thức hoặc góc nhìn của bạn với mentee.</span>
           <Button leftIcon={<Plus />} onClick={posts.openCreate}>
             Tạo bài viết đầu tiên
           </Button>
@@ -107,9 +107,8 @@ export function MentorPostsView() {
         open={posts.isEditorOpen}
         onClose={posts.closeEditor}
         title={posts.editingPost ? 'Chỉnh sửa bản nháp' : 'Tạo bài viết mới'}
-        className="mentor-post-editor-modal"
       >
-        <form className="mentor-post-editor" onSubmit={posts.submitDraft} noValidate>
+        <form className="flex flex-col gap-4" onSubmit={posts.submitDraft} noValidate>
           <TextField
             label="Tiêu đề"
             required
@@ -145,11 +144,11 @@ export function MentorPostsView() {
               }
             />
           </FormField>
-          <footer className="mentor-post-editor-footer">
+          <footer className="flex items-center justify-between gap-3 pt-4 border-t border-solid border-border-light mt-2">
             <Button type="button" variant="outline" onClick={posts.closeEditor}>
               Hủy
             </Button>
-            <div>
+            <div className="flex items-center gap-2">
               <Button type="submit" variant="secondary" loading={posts.isSaving}>
                 Lưu bản nháp
               </Button>
@@ -170,13 +169,12 @@ export function MentorPostsView() {
         open={Boolean(posts.archiveTarget)}
         onClose={() => !posts.isSaving && posts.setArchiveTarget(undefined)}
         title="Xóa bài viết khỏi danh sách?"
-        className="mentor-post-confirm-modal"
       >
-        <div className="mentor-post-confirm-content">
-          <Archive aria-hidden="true" />
-          <p>Bài viết sẽ được chuyển vào lưu trữ theo chính sách hiện tại của hệ thống.</p>
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-solid border-amber-200 text-amber-900 text-xs">
+          <Archive className="w-6 h-6 text-amber-600 shrink-0" aria-hidden="true" />
+          <p className="m-0 leading-relaxed">Bài viết sẽ được chuyển vào lưu trữ theo chính sách hiện tại của hệ thống.</p>
         </div>
-        <footer className="mentor-post-confirm-footer">
+        <footer className="flex items-center justify-end gap-3 pt-4 border-t border-solid border-border-light mt-4">
           <Button
             variant="outline"
             disabled={posts.isSaving}
@@ -208,16 +206,16 @@ function MentorPostCard({
 }) {
   const preview = post.contentMarkdown?.trim() || post.excerpt?.trim();
   return (
-    <article className="mentor-post-card">
-      <header className="mentor-post-card-header">
-        <div className="mentor-post-meta">
+    <article className="bg-white p-6 rounded-2xl border border-solid border-border-light shadow-xs hover:border-primary-border/60 transition-all flex flex-col gap-3">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-xs text-text-muted">
           <Badge variant="info">{post.status === 'PUBLISHED' ? 'Đã đăng' : 'Bản nháp'}</Badge>
-          <span>
-            <CalendarDays aria-hidden="true" />
+          <span className="flex items-center gap-1">
+            <CalendarDays className="w-4 h-4 text-text-muted" aria-hidden="true" />
             {formatPostDate(post.publishedAt || post.updatedAt || post.createdAt)}
           </span>
         </div>
-        <div className="mentor-post-actions">
+        <div className="flex items-center gap-2">
           {post.status === 'DRAFT' && (
             <Button variant="secondary" size="sm" leftIcon={<Pencil />} onClick={onEdit}>
               Chỉnh sửa
@@ -228,15 +226,15 @@ function MentorPostCard({
           </Button>
         </div>
       </header>
-      <h2>{post.title}</h2>
-      {preview && <p className="mentor-post-preview">{preview}</p>}
+      <h2 className="text-base font-bold text-text-main m-0">{post.title}</h2>
+      {preview && <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 m-0">{preview}</p>}
       {(post.categories?.length || post.tags?.length) && (
-        <footer className="mentor-post-taxonomy">
+        <footer className="flex flex-wrap gap-1.5 pt-2 border-t border-solid border-border-light">
           {post.categories?.map((category) => (
-            <span key={category.id}>{category.name}</span>
+            <span key={category.id} className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color">{category.name}</span>
           ))}
           {post.tags?.map((tag) => (
-            <span key={tag.id}>#{tag.name}</span>
+            <span key={tag.id} className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color">#{tag.name}</span>
           ))}
         </footer>
       )}

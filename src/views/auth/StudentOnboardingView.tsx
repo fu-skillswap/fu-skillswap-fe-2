@@ -143,21 +143,21 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
 
   return (
     <AuthGuard locale={locale}>
-      <main className="figma-onboarding-page">
-        <section className="figma-onboarding-card" aria-labelledby="onboarding-title">
-          <span className="figma-onboarding-icon" aria-hidden="true">
-            <CheckCircle2 />
+      <main className="min-h-screen bg-bg flex items-center justify-center p-4 sm:p-6 md:p-10">
+        <section className="bg-white rounded-3xl shadow-xl border border-solid border-border-light p-6 sm:p-10 max-w-2xl w-full flex flex-col items-center text-center" aria-labelledby="onboarding-title">
+          <span className="w-14 h-14 rounded-2xl bg-emerald-100 text-success flex items-center justify-center mb-2" aria-hidden="true">
+            <CheckCircle2 className="w-7 h-7" />
           </span>
-          <p className="figma-onboarding-eyebrow">ĐĂNG NHẬP THÀNH CÔNG</p>
-          <h1 id="onboarding-title">Chào {user?.fullName || 'bạn'}!</h1>
+          <p className="text-[11px] font-extrabold tracking-wider text-success uppercase m-0">ĐĂNG NHẬP THÀNH CÔNG</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main mt-1 mb-4" id="onboarding-title">Chào {user?.fullName || 'bạn'}!</h1>
           {!isCreating ? (
             <>
-              <p>
+              <p className="text-xs text-text-secondary leading-relaxed mb-6">
                 Tài khoản Google của bạn đã được xác thực, nhưng hồ sơ sinh viên chưa hoàn tất. Hãy
                 tạo hồ sơ để tiếp tục sử dụng nền tảng.
               </p>
               <button
-                className="figma-onboarding-action"
+                className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer inline-flex items-center justify-center min-w-[160px]"
                 type="button"
                 onClick={() => {
                   void openCreateForm();
@@ -167,31 +167,31 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
               </button>
             </>
           ) : (
-            <form className="figma-profile-form" onSubmit={handleSubmit(submit)} noValidate>
-              <p>Điền thông tin sinh viên để hoàn tất hồ sơ Mentee.</p>
+            <form className="w-full flex flex-col gap-4 text-left mt-2" onSubmit={handleSubmit(submit)} noValidate>
+              <p className="text-xs text-text-secondary text-center m-0 mb-2">Điền thông tin sinh viên để hoàn tất hồ sơ Mentee.</p>
               {error && (
-                <p className="figma-profile-error" role="alert">
+                <p className="p-3 rounded-xl bg-danger-soft border border-solid border-red-200 text-danger text-xs font-medium m-0" role="alert">
                   {error}
                 </p>
               )}
               {isLoadingCatalog ? (
-                <p>Đang tải danh mục học thuật...</p>
+                <p className="text-xs text-text-muted text-center py-4">Đang tải danh mục học thuật...</p>
               ) : (
                 <>
-                  <label>
+                  <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                     Mã số sinh viên
-                    <input placeholder="SE192621" {...register('studentCode')} />
-                    {errors.studentCode && <small>{errors.studentCode.message}</small>}
+                    <input className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border" placeholder="SE192621" {...register('studentCode')} />
+                    {errors.studentCode && <small className="text-[11px] text-danger font-medium">{errors.studentCode.message}</small>}
                   </label>
-                  <label>
+                  <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                     Tên hiển thị
-                    <input placeholder="Nguyễn Văn A" {...register('displayName')} />
-                    {errors.displayName && <small>{errors.displayName.message}</small>}
+                    <input className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border" placeholder="Nguyễn Văn A" {...register('displayName')} />
+                    {errors.displayName && <small className="text-[11px] text-danger font-medium">{errors.displayName.message}</small>}
                   </label>
-                  <div className="figma-profile-grid">
-                    <label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                       Cơ sở
-                      <select {...register('campusId')}>
+                      <select className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border" {...register('campusId')}>
                         <option value="">Chọn cơ sở</option>
                         {campuses.map((campus) => (
                           <option key={campus.id} value={campus.id}>
@@ -199,11 +199,12 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                           </option>
                         ))}
                       </select>
-                      {errors.campusId && <small>{errors.campusId.message}</small>}
+                      {errors.campusId && <small className="text-[11px] text-danger font-medium">{errors.campusId.message}</small>}
                     </label>
-                    <label>
+                    <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                       Ngành học
                       <select
+                        className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border"
                         {...register('programId', {
                           onChange: (e) => void selectProgram(e.target.value),
                         })}
@@ -215,12 +216,12 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                           </option>
                         ))}
                       </select>
-                      {errors.programId && <small>{errors.programId.message}</small>}
+                      {errors.programId && <small className="text-[11px] text-danger font-medium">{errors.programId.message}</small>}
                     </label>
                   </div>
-                  <label>
+                  <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                     Chuyên ngành
-                    <select disabled={!selectedProgramId} {...register('specializationId')}>
+                    <select className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border disabled:opacity-50" disabled={!selectedProgramId} {...register('specializationId')}>
                       <option value="">
                         {selectedProgramId ? 'Chọn chuyên ngành' : 'Chọn ngành trước'}
                       </option>
@@ -230,55 +231,58 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                         </option>
                       ))}
                     </select>
-                    {errors.specializationId && <small>{errors.specializationId.message}</small>}
+                    {errors.specializationId && <small className="text-[11px] text-danger font-medium">{errors.specializationId.message}</small>}
                   </label>
-                  <div className="figma-profile-grid">
-                    <label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                       Học kỳ
-                      <select {...register('semester', { valueAsNumber: true })}>
+                      <select className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border" {...register('semester', { valueAsNumber: true })}>
                         {Array.from({ length: 10 }, (_, value) => (
                           <option key={value} value={value}>
                             {value === 0 ? '0 — Tiếng Anh dự bị' : `Học kỳ ${value}`}
                           </option>
                         ))}
                       </select>
-                      {errors.semester && <small>{errors.semester.message}</small>}
+                      {errors.semester && <small className="text-[11px] text-danger font-medium">{errors.semester.message}</small>}
                     </label>
-                    <label>
+                    <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                       Năm nhập học
                       <input
+                        className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border"
                         type="number"
                         min="2000"
                         max={new Date().getFullYear()}
                         {...register('intakeYear', { valueAsNumber: true })}
                       />
-                      {errors.intakeYear && <small>{errors.intakeYear.message}</small>}
+                      {errors.intakeYear && <small className="text-[11px] text-danger font-medium">{errors.intakeYear.message}</small>}
                     </label>
                   </div>
-                  <label className="figma-profile-check">
-                    <input type="checkbox" {...register('isAlumni')} /> Tôi đã tốt nghiệp
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-text-main my-1">
+                    <input type="checkbox" className="w-4 h-4 rounded border-border-strong text-primary focus:ring-primary" {...register('isAlumni')} /> Tôi đã tốt nghiệp
                   </label>
                   {isAlumni && (
-                    <label>
+                    <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
                       Năm tốt nghiệp
                       <input
+                        className="w-full h-10 px-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border"
                         type="number"
                         min="2000"
                         {...register('graduationYear', { valueAsNumber: true })}
                       />
-                      {errors.graduationYear && <small>{errors.graduationYear.message}</small>}
+                      {errors.graduationYear && <small className="text-[11px] text-danger font-medium">{errors.graduationYear.message}</small>}
                     </label>
                   )}
-                  <label>
-                    Giới thiệu bản thân <em>(không bắt buộc)</em>
+                  <label className="flex flex-col gap-1.5 text-xs font-semibold text-text-secondary w-full">
+                    Giới thiệu bản thân <em className="text-text-muted font-normal">(không bắt buộc)</em>
                     <textarea
+                      className="w-full p-3 rounded-xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border resize-y"
                       rows={3}
                       placeholder="Kỹ năng và mục tiêu học tập của bạn"
                       {...register('bio')}
                     />
-                    {errors.bio && <small>{errors.bio.message}</small>}
+                    {errors.bio && <small className="text-[11px] text-danger font-medium">{errors.bio.message}</small>}
                   </label>
-                  <button className="figma-onboarding-action" type="submit" disabled={isSubmitting}>
+                  <button className="w-full mt-2 py-3 px-4 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer disabled:opacity-50" type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Đang lưu hồ sơ...' : 'Hoàn tất hồ sơ'}
                   </button>
                 </>

@@ -35,7 +35,7 @@ export function ToggleGroup<T extends string = string>({
   };
 
   return (
-    <div className={`ui-toggle-group ${className}`.trim()}>
+    <div className={`flex flex-wrap gap-2 ${className}`.trim()}>
       {options.map((opt) => {
         const isSelected = value.includes(opt.value);
         return (
@@ -45,7 +45,7 @@ export function ToggleGroup<T extends string = string>({
             role="checkbox"
             aria-checked={isSelected}
             disabled={opt.disabled}
-            className={`ui-toggle-chip ${isSelected ? 'ui-toggle-chip-selected' : ''}`.trim()}
+            className={`h-9 min-w-[42px] px-2.5 text-xs font-bold rounded-md border border-solid transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? 'bg-primary border-primary text-white shadow-xs' : 'bg-surface-subtle border-border-color text-text-secondary hover:bg-border-strong/20 hover:border-border-strong'}`.trim()}
             onClick={() => toggle(opt.value)}
           >
             {opt.label}

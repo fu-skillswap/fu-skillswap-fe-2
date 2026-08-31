@@ -41,41 +41,44 @@ export function PostDetailView({ post, initialComments, locale }: PostDetailView
   };
 
   return (
-    <main className="page-shell narrow">
-      <Link href={`/${locale}/dashboard`} className="back-link">
+    <main className="max-w-4xl mx-auto space-y-6 py-4">
+      <Link href={`/${locale}/dashboard`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
         ← Quay về trang chủ
       </Link>
-      <article className="card post-detail">
-        <div className="post-meta">
+      <article className="bg-white p-6 sm:p-8 rounded-3xl border border-solid border-border-light shadow-xs flex flex-col gap-4">
+        <div className="text-xs text-text-muted font-medium">
           {post.author.name} · {post.createdAt}
         </div>
-        <h1>{post.title}</h1>
-        <p>{post.content}</p>
-        <div className="tags">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-text-main m-0">{post.title}</h1>
+        <p className="text-sm text-text-secondary leading-relaxed m-0 whitespace-pre-wrap">{post.content}</p>
+        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-solid border-border-light">
           {post.tags.map((tag) => (
-            <span key={tag}>#{tag}</span>
+            <span key={tag} className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color">#{tag}</span>
           ))}
         </div>
       </article>
-      <section className="comments">
-        <h2>Thảo luận ({comments.length})</h2>
+      <section className="bg-white p-6 sm:p-8 rounded-3xl border border-solid border-border-light shadow-xs flex flex-col gap-4">
+        <h2 className="text-base font-bold text-text-main m-0">Thảo luận ({comments.length})</h2>
         {comments.map((comment) => (
-          <article className="comment" key={comment.id}>
-            <strong>{comment.authorName}</strong>
-            <span>{comment.createdAt}</span>
-            <p>{comment.content}</p>
+          <article className="p-4 rounded-2xl bg-surface-subtle border border-solid border-border-color flex flex-col gap-1" key={comment.id}>
+            <div className="flex items-center justify-between">
+              <strong className="text-xs font-bold text-text-main">{comment.authorName}</strong>
+              <span className="text-[10px] text-text-muted">{comment.createdAt}</span>
+            </div>
+            <p className="text-xs text-text-secondary m-0 mt-1">{comment.content}</p>
           </article>
         ))}
-        <form className="comment-form" onSubmit={submitComment} noValidate>
+        <form className="flex flex-col gap-3 pt-2" onSubmit={submitComment} noValidate>
           <textarea
+            className="w-full p-3.5 rounded-2xl border border-solid border-border-color bg-white text-text-main text-xs transition-all outline-none focus:border-primary focus:ring-3 focus:ring-primary-border resize-y"
             placeholder="Viết bình luận của bạn..."
             rows={4}
             onClick={handleTextareaClick}
             {...register('content')}
           />
-          {errors.content && <p className="error">{errors.content.message}</p>}
-          {serverError && <p className="error">{serverError}</p>}
-          <Button type="submit">Gửi bình luận</Button>
+          {errors.content && <p className="text-xs text-danger font-medium m-0">{errors.content.message}</p>}
+          {serverError && <p className="text-xs text-danger font-medium m-0">{serverError}</p>}
+          <Button type="submit" className="self-end">Gửi bình luận</Button>
         </form>
       </section>
     </main>

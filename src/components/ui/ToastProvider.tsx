@@ -94,74 +94,29 @@ export function ToastProvider({ children }: { children?: React.ReactNode }) {
       {/* CUSTOM CONFIRMATION MODAL */}
       {confirmState && variantStyle && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.55)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 99999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-          }}
+          className="fixed inset-0 bg-slate-950/55 backdrop-blur-xs z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => handleClose(false)}
         >
           <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              boxShadow:
-                '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              width: '100%',
-              maxWidth: '440px',
-              padding: '24px',
-              display: 'grid',
-              gap: '16px',
-              border: '1px solid #f1f5f9',
-            }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 grid gap-4 border border-solid border-border-light"
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                gap: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <div
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: variantStyle.iconBg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
+                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: variantStyle.iconBg }}
                 >
                   {variantStyle.icon}
                 </div>
                 <div>
                   <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      letterSpacing: '0.5px',
-                      color: variantStyle.titleColor,
-                      display: 'block',
-                      marginBottom: '2px',
-                    }}
+                    className="text-[11px] font-extrabold tracking-wider block mb-0.5"
+                    style={{ color: variantStyle.titleColor }}
                   >
                     {variantStyle.badge}
                   </span>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+                  <h3 className="m-0 text-base font-bold text-text-main">
                     {confirmState.title || 'Xác nhận thao tác'}
                   </h3>
                 </div>
@@ -169,59 +124,29 @@ export function ToastProvider({ children }: { children?: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => handleClose(false)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                className="border-none bg-transparent text-text-muted hover:text-text-main cursor-pointer p-1 rounded-md flex items-center justify-center transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>
+            <p className="m-0 text-sm text-text-secondary leading-relaxed">
               {confirmState.message}
             </p>
 
-            <div
-              style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}
-            >
+            <div className="flex gap-3 justify-end mt-2">
               <button
                 type="button"
                 onClick={() => handleClose(false)}
-                style={{
-                  padding: '10px 18px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#475569',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                }}
+                className="px-4 py-2 rounded-xl border border-solid border-border-strong bg-white text-text-secondary font-semibold text-sm cursor-pointer hover:bg-surface-subtle transition-colors"
               >
                 {confirmState.cancelText || 'Hủy bỏ'}
               </button>
               <button
                 type="button"
                 onClick={() => handleClose(true)}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: variantStyle.btnColor,
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                }}
+                className="px-5 py-2 rounded-xl border-none text-white font-bold text-sm cursor-pointer shadow-xs transition-colors"
+                style={{ background: variantStyle.btnColor }}
               >
                 {confirmState.confirmText || 'Đồng ý'}
               </button>

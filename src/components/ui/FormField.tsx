@@ -25,16 +25,16 @@ export function FormField({
   className = '',
 }: FormFieldProps) {
   return (
-    <div className={`ui-form-field ${className}`.trim()}>
+    <div className={`flex flex-col gap-1.5 w-full ${className}`.trim()}>
       {label && (
-        <label htmlFor={htmlFor} className="ui-form-label">
+        <label htmlFor={htmlFor} className="text-xs font-semibold text-text-secondary flex items-center gap-1">
           {label}
-          {required && <span className="ui-required-asterisk">*</span>}
+          {required && <span className="text-danger font-bold">*</span>}
         </label>
       )}
-      <div className="ui-form-control-wrapper">{children}</div>
-      {helperText && !error && <p className="ui-form-helper">{helperText}</p>}
-      {error && <p className="ui-form-error">{error}</p>}
+      <div className="w-full">{children}</div>
+      {helperText && !error && <p className="text-[11px] text-text-muted m-0">{helperText}</p>}
+      {error && <p className="text-[11px] text-danger font-medium m-0">{error}</p>}
     </div>
   );
 }

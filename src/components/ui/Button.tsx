@@ -13,6 +13,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: ReactNode;
 }
 
+const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
+  primary: 'bg-primary text-white border-primary hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 active:shadow-none',
+  secondary: 'bg-surface-subtle text-text-main border-border-color hover:bg-slate-200/60 hover:border-border-strong shadow-xs',
+  outline: 'bg-white text-primary border-primary-border hover:bg-primary-light/80 hover:text-primary-hover hover:border-primary shadow-xs',
+  ghost: 'bg-transparent text-text-secondary border-transparent hover:bg-surface-subtle hover:text-text-main',
+  destructive: 'bg-danger text-white border-danger hover:bg-red-600 shadow-xs hover:shadow-md hover:shadow-danger/20 active:shadow-none',
+};
+
+const sizeStyles: Record<NonNullable<ButtonProps['size']>, string> = {
+  sm: 'h-8.5 px-3.5 text-xs gap-1.5 rounded-xl',
+  md: 'h-10 px-4.5 text-xs font-bold gap-2 rounded-xl',
+  lg: 'h-12 px-6 text-sm font-bold gap-2.5 rounded-2xl',
+};
+
 export function Button({
   className = '',
   variant = 'primary',
@@ -24,23 +38,19 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const variantClass = `ui-btn-${variant}`;
-  const sizeClass = `ui-btn-${size}`;
-  const loadingClass = loading ? 'ui-btn-loading' : '';
-
   return (
     <button
-      className={`ui-btn ${variantClass} ${sizeClass} ${loadingClass} ${className}`.trim()}
+      className={`inline-flex items-center justify-center font-bold border border-solid whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none cursor-pointer ${variantStyles[variant]} ${sizeStyles[size]} ${className}`.trim()}
       disabled={disabled || loading}
       {...props}
     >
       {loading ? (
-        <span className="ui-btn-spinner" aria-hidden="true" />
+        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true" />
       ) : (
-        leftIcon && <span className="ui-btn-icon-left">{leftIcon}</span>
+        leftIcon && <span className="inline-flex shrink-0 items-center justify-center">{leftIcon}</span>
       )}
-      {children && <span className="ui-btn-text">{children}</span>}
-      {!loading && rightIcon && <span className="ui-btn-icon-right">{rightIcon}</span>}
+      {children && <span>{children}</span>}
+      {!loading && rightIcon && <span className="inline-flex shrink-0 items-center justify-center">{rightIcon}</span>}
     </button>
   );
 }

@@ -80,10 +80,12 @@ export const demoMentors: Mentor[] = [
 ];
 
 export const dashboardStories = [
-  { id: 'mentor-sarah-chen', name: 'Sarah Chen' },
-  { id: 'mentor-alex-kim', name: 'Alex Kim' },
-  { id: 'member-minh-duc', name: 'Minh Duc' },
-  { id: 'member-thu-ha', name: 'Thu Ha' },
+  { id: 'story-kookoo', name: 'KooKoo AI', avatarUrl: '/images/Koko.png', isOfficial: true },
+  { id: 'mentor-sarah-chen', name: 'Sarah Chen', avatarUrl: null },
+  { id: 'mentor-alex-kim', name: 'Alex Kim', avatarUrl: null },
+  { id: 'member-minh-duc', name: 'Minh Duc', avatarUrl: null },
+  { id: 'member-thu-ha', name: 'Thu Ha', avatarUrl: null },
+  { id: 'story-promo-event', name: 'SkillSwap Pro', avatarUrl: null, isAd: true },
 ];
 
 export function mergeMentors(repositoryMentors: Mentor[], seededMentors = demoMentors) {
