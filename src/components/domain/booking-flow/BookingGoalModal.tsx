@@ -99,15 +99,14 @@ export function BookingGoalModal({
         {/* Form Field 1: Tiêu đề buổi học (learningGoalTitle) */}
         <div className="ui-form-field" style={{ gap: '8px' }}>
           <label className="ui-form-label" style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Tiêu đề buổi học <span className="ui-required-asterisk">*</span>
+            Tiêu đề buổi học
           </label>
           <input
             type="text"
-            className="ui-input"
+            className="ui-input w-full !border-gray-300 focus:!border-primary focus:!ring-primary"
             value={learningGoalTitle}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="Review lộ trình học Spring Boot và chuẩn bị phỏng vấn intern"
-            required
             style={{ fontSize: '13px', padding: '0 16px', height: '44px', borderRadius: '10px' }}
           />
           <p className="ui-form-helper" style={{ marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
@@ -122,7 +121,7 @@ export function BookingGoalModal({
           </label>
           <textarea
             rows={4}
-            className="ui-textarea"
+            className="ui-textarea w-full !border-gray-300 focus:!border-primary focus:!ring-primary"
             value={learningGoalDescription}
             onChange={(e) => onDescriptionChange(e.target.value)}
             placeholder="Em muốn được góp ý CV backend, định hướng học PRJ301 và cách làm project REST API với PostgreSQL."
@@ -166,7 +165,7 @@ export function BookingGoalModal({
           </Button>
           <Button
             variant="primary"
-            disabled={!learningGoalTitle.trim() || isSubmitting}
+            disabled={isSubmitting}
             onClick={onConfirm}
             style={{ height: '44px', padding: '0 28px', borderRadius: '12px', minWidth: '160px', fontSize: '14px', fontWeight: '600' }}
           >

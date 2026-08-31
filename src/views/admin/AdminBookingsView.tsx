@@ -20,21 +20,13 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-const pageSize = 10;
+import { BookingStatusBadge, BOOKING_STATUS_MAP, getBookingStatusConfig } from '@/components/ui/BookingStatusBadge';
 
-const bookingStatusLabels: Record<string, string> = {
-  REQUESTED: 'Chờ phản hồi mentor',
-  ACCEPTED: 'Đã chấp nhận',
-  CONFIRMED: 'Đã xác nhận',
-  COMPLETED: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
-  REJECTED: 'Đã từ chối',
-  EXPIRED: 'Đã hết hạn',
-};
+const pageSize = 10;
 
 function getLabel(value: string | null) {
   if (!value) return 'Chưa cập nhật';
-  return bookingStatusLabels[value] ?? value.replaceAll('_', ' ').toLocaleLowerCase('vi-VN');
+  return getBookingStatusConfig(value).label;
 }
 
 function formatDate(value: string | null) {
@@ -165,9 +157,9 @@ export function AdminBookingsView() {
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
                   <option value="">Tất cả</option>
-                  {Object.entries(bookingStatusLabels).map(([status, label]) => (
-                    <option key={status} value={status}>
-                      {label}
+                  {Object.entries(BOOKING_STATUS_MAP).map(([statusKey, config]) => (
+                    <option key={statusKey} value={statusKey}>
+                      {config.label}
                     </option>
                   ))}
                 </select>
@@ -317,11 +309,7 @@ function BookingRow({ booking }: { booking: AdminBooking }) {
         </small>
       </td>
       <td>
-        <span
-          className={`admin-booking-status ${booking.bookingStatus.toLowerCase().replaceAll('_', '-')}`}
-        >
-          {getLabel(booking.bookingStatus)}
-        </span>
+        <BookingStatusBadge status={booking.bookingStatus} />
         {booking.issueType && (
           <small className="admin-booking-issue">Sự cố: {getLabel(booking.issueType)}</small>
         )}

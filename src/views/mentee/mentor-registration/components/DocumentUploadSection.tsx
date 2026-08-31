@@ -71,35 +71,29 @@ export function DocumentUploadSection({
 
   return (
     <fieldset
-      className="card mentor-reg-card"
       disabled={disabled}
-      style={{
-        border: '1px solid #e2e8f0',
-        display: 'grid',
-        gap: '24px',
-        opacity: disabled ? 0.75 : 1,
-      }}
+      className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6 disabled:opacity-75"
     >
-      <div>
-        <h2 className="mentor-section-title" style={{ margin: 0, marginBottom: '4px' }}>
+      <div className="space-y-1">
+        <h2 className="text-lg font-bold text-slate-900">
           Tải lên Minh chứng Xác thực Hồ sơ
         </h2>
-        <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
+        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
           Tải lên tài liệu minh chứng tư cách sinh viên FPTU và các chứng chỉ chuyên môn để Admin
           đối soát xác thực (Hỗ trợ JPG, PNG, WEBP, PDF - Tối đa 15MB/file).
         </p>
       </div>
 
       {/* Ô 1: MINH CHỨNG SINH VIÊN / CỰU SINH VIÊN FPTU */}
-      <div style={{ display: 'grid', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <GraduationCap size={18} color="#0095f6" />
-          <strong style={{ fontSize: '14px', color: '#0f172a' }}>
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2">
+          <GraduationCap className="w-5 h-5 text-sky-600 shrink-0" />
+          <strong className="text-sm font-bold text-slate-900">
             1. Minh chứng Sinh viên / Cựu sinh viên FPTU{' '}
-            <span className="required-asterisk">*</span>
+            <span className="text-red-500 font-bold ml-0.5">*</span>
           </strong>
         </div>
-        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+        <p className="text-xs text-slate-500">
           Tải lên hình ảnh thẻ sinh viên, bằng tốt nghiệp hoặc bảng điểm FPTU để xác nhận vai trò
           Mentor (`FPTU_AFFILIATION_PROOF`).
         </p>
@@ -112,48 +106,26 @@ export function DocumentUploadSection({
             const f = e.target.files?.[0];
             if (f) onSelectFptuFile(f);
           }}
-          style={{ display: 'none' }}
+          className="hidden"
           disabled={disabled}
         />
 
         {/* Hiển thị File FPTU vừa chọn local */}
         {selectedFptuFile ? (
-          <div
-            style={{
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: '1px solid #bbf7d0',
-              background: '#f0fdf4',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: '#dcfce7',
-                  color: '#16a34a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+          <div className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/70 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                 {selectedFptuFile.type.includes('pdf') ? (
-                  <FileText size={18} />
+                  <FileText className="w-5 h-5" />
                 ) : (
-                  <FileCheck size={18} />
+                  <FileCheck className="w-5 h-5" />
                 )}
               </div>
-              <div>
-                <strong style={{ fontSize: '13px', color: '#15803d', display: 'block' }}>
+              <div className="min-w-0">
+                <strong className="text-sm font-bold text-emerald-800 truncate block">
                   {selectedFptuFile.name}
                 </strong>
-                <span style={{ fontSize: '12px', color: '#166534' }}>
+                <span className="text-xs text-emerald-600">
                   {formatFileSize(selectedFptuFile.size)} • FPTU Affiliation Proof (File mới)
                 </span>
               </div>
@@ -166,58 +138,24 @@ export function DocumentUploadSection({
                   onSelectFptuFile(null);
                   if (fptuInputRef.current) fptuInputRef.current.value = '';
                 }}
-                style={{
-                  border: 'none',
-                  background: '#fee2e2',
-                  color: '#ef4444',
-                  borderRadius: '8px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
+                className="shrink-0 border-0 bg-red-100 text-red-600 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer hover:bg-red-200 transition-colors flex items-center gap-1"
               >
-                <X size={14} /> Chọn lại
+                <X className="w-3.5 h-3.5" /> Chọn lại
               </button>
             )}
           </div>
         ) : existingFptuDoc ? (
           /* Hiển thị File FPTU đã nộp từ API CSDL */
-          <div
-            style={{
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: '1px solid #bbf7d0',
-              background: '#f0fdf4',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: '#dcfce7',
-                  color: '#16a34a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <FileCheck size={18} />
+          <div className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/70 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <FileCheck className="w-5 h-5" />
               </div>
-              <div>
-                <strong style={{ fontSize: '13px', color: '#15803d', display: 'block' }}>
+              <div className="min-w-0">
+                <strong className="text-sm font-bold text-emerald-800 truncate block">
                   {existingFptuDoc.originalFilename || 'FPTU_AFFILIATION_PROOF'}
                 </strong>
-                <span style={{ fontSize: '12px', color: '#166534' }}>
+                <span className="text-xs text-emerald-600">
                   {formatFileSize(existingFptuDoc.sizeBytes)} • Đã nộp thành công (Trạng thái:{' '}
                   {existingFptuDoc.status || 'UPLOADED'})
                 </span>
@@ -229,17 +167,9 @@ export function DocumentUploadSection({
                 href={existingFptuDoc.fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#16a34a',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
+                className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
               >
-                Xem file <ExternalLink size={14} />
+                Xem file <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
           </div>
@@ -247,39 +177,18 @@ export function DocumentUploadSection({
           /* Nút chọn file khi chưa có file nào */
           <div
             onClick={() => !disabled && fptuInputRef.current?.click()}
-            style={{
-              border: '2px dashed #cbd5e1',
-              borderRadius: '12px',
-              padding: '24px 20px',
-              textAlign: 'center',
-              background: disabled ? '#f8fafc' : '#f1f5f9',
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '8px',
-            }}
+            className={`border-2 border-dashed border-slate-300 hover:border-sky-400 bg-slate-50/50 hover:bg-sky-50/30 rounded-xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 ${
+              disabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: '#ebf5fe',
-                color: '#0095f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Upload size={20} />
+            <div className="w-10 h-10 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center">
+              <Upload className="w-5 h-5" />
             </div>
             <div>
-              <strong style={{ fontSize: '13px', color: '#0f172a' }}>
+              <strong className="text-xs sm:text-sm font-bold text-slate-800 block">
                 Nhấn để chọn file minh chứng FPTU (Thẻ SV, Bảng điểm, Bằng TN)
               </strong>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+              <p className="text-xs text-slate-500 mt-0.5">
                 PNG, JPG, WEBP hoặc PDF (Tối đa 15MB)
               </p>
             </div>
@@ -288,20 +197,20 @@ export function DocumentUploadSection({
       </div>
 
       {/* Ô 2: CHỨNG CHỈ / MINH CHỨNG CHUYÊN MÔN (BẮT BUỘC ÍT NHẤT 1 FILE, TỐI ĐA 3 FILES) */}
-      <div style={{ display: 'grid', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Award size={18} color="#8b5cf6" />
-            <strong style={{ fontSize: '14px', color: '#0f172a' }}>
-              2. Chứng chỉ / Minh chứng chuyên môn <span className="required-asterisk">*</span>
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-purple-600 shrink-0" />
+            <strong className="text-sm font-bold text-slate-900">
+              2. Chứng chỉ / Minh chứng chuyên môn <span className="text-red-500 font-bold ml-0.5">*</span>
             </strong>
           </div>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#8b5cf6' }}>
+          <span className="text-xs font-semibold text-purple-600">
             Đã có {selectedExpertiseFiles.length + existingExpertiseDocs.length}/3 file
           </span>
         </div>
 
-        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+        <p className="text-xs text-slate-500">
           Tải lên các chứng chỉ quốc tế, bằng cấp chuyên ngành hoặc chứng nhận năng lực chuyên môn
           (`EXPERTISE_PROOF`). Bắt buộc từ 1 đến 3 files.
         </p>
@@ -312,47 +221,27 @@ export function DocumentUploadSection({
           multiple
           accept="image/jpeg,image/png,image/webp,application/pdf"
           onChange={handleExpertiseChange}
-          style={{ display: 'none' }}
+          className="hidden"
           disabled={disabled || selectedExpertiseFiles.length + existingExpertiseDocs.length >= 3}
         />
 
         {/* DANH SÁCH FILE ĐÃ NỘP TRÊN CSDL */}
         {existingExpertiseDocs.length > 0 && selectedExpertiseFiles.length === 0 && (
-          <div style={{ display: 'grid', gap: '10px' }}>
+          <div className="space-y-2.5">
             {existingExpertiseDocs.map((doc, index) => (
               <div
                 key={doc.id || index}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  border: '1px solid #ddd6fe',
-                  background: '#faf5ff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                }}
+                className="p-4 rounded-xl border border-purple-200/80 bg-purple-50/70 flex items-center justify-between gap-3"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: '#f3e8ff',
-                      color: '#7c3aed',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <FileCheck size={18} />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                    <FileCheck className="w-5 h-5" />
                   </div>
-                  <div>
-                    <strong style={{ fontSize: '13px', color: '#6d28d9', display: 'block' }}>
+                  <div className="min-w-0">
+                    <strong className="text-sm font-bold text-purple-900 truncate block">
                       {doc.originalFilename || `Chứng chỉ chuyên môn #${index + 1}`}
                     </strong>
-                    <span style={{ fontSize: '12px', color: '#5b21b6' }}>
+                    <span className="text-xs text-purple-600">
                       {formatFileSize(doc.sizeBytes)} • Đã nộp thành công (Trạng thái:{' '}
                       {doc.status || 'UPLOADED'})
                     </span>
@@ -364,17 +253,9 @@ export function DocumentUploadSection({
                     href={doc.fileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      color: '#7c3aed',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
+                    className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"
                   >
-                    Xem file <ExternalLink size={14} />
+                    Xem file <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 )}
               </div>
@@ -384,41 +265,25 @@ export function DocumentUploadSection({
 
         {/* DANH SÁCH FILE LOCAL VỪA CHỌN THÊM */}
         {selectedExpertiseFiles.length > 0 && (
-          <div style={{ display: 'grid', gap: '10px' }}>
+          <div className="space-y-2.5">
             {selectedExpertiseFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  border: '1px solid #ddd6fe',
-                  background: '#faf5ff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                }}
+                className="p-4 rounded-xl border border-purple-200/80 bg-purple-50/70 flex items-center justify-between gap-3"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: '#f3e8ff',
-                      color: '#7c3aed',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {file.type.includes('pdf') ? <FileText size={18} /> : <FileCheck size={18} />}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                    {file.type.includes('pdf') ? (
+                      <FileText className="w-5 h-5" />
+                    ) : (
+                      <FileCheck className="w-5 h-5" />
+                    )}
                   </div>
-                  <div>
-                    <strong style={{ fontSize: '13px', color: '#6d28d9', display: 'block' }}>
+                  <div className="min-w-0">
+                    <strong className="text-sm font-bold text-purple-900 truncate block">
                       {file.name}
                     </strong>
-                    <span style={{ fontSize: '12px', color: '#5b21b6' }}>
+                    <span className="text-xs text-purple-600">
                       {formatFileSize(file.size)} • Expertise Proof #{index + 1} (File mới)
                     </span>
                   </div>
@@ -428,21 +293,9 @@ export function DocumentUploadSection({
                   <button
                     type="button"
                     onClick={() => onRemoveExpertiseFile(index)}
-                    style={{
-                      border: 'none',
-                      background: '#fee2e2',
-                      color: '#ef4444',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
+                    className="shrink-0 border-0 bg-red-100 text-red-600 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer hover:bg-red-200 transition-colors flex items-center gap-1"
                   >
-                    <X size={14} /> Xóa
+                    <X className="w-3.5 h-3.5" /> Xóa
                   </button>
                 )}
               </div>
@@ -454,58 +307,24 @@ export function DocumentUploadSection({
         {!disabled && selectedExpertiseFiles.length + existingExpertiseDocs.length < 3 && (
           <div
             onClick={() => expertiseInputRef.current?.click()}
-            style={{
-              border: '2px dashed #cbd5e1',
-              borderRadius: '12px',
-              padding:
-                selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0
-                  ? '16px'
-                  : '24px 20px',
-              textAlign: 'center',
-              background: '#faf5ff',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              flexDirection:
-                selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0
-                  ? 'row'
-                  : 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
+            className={`border-2 border-dashed border-purple-200/80 hover:border-purple-300 bg-purple-50/30 hover:bg-purple-50/60 rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col sm:flex-row items-center justify-center gap-3 ${
+              selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0 ? 'p-4' : 'p-6'
+            }`}
           >
-            <div
-              style={{
-                width:
-                  selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0
-                    ? '32px'
-                    : '40px',
-                height:
-                  selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0
-                    ? '32px'
-                    : '40px',
-                borderRadius: '50%',
-                background: '#f3e8ff',
-                color: '#8b5cf6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 font-bold text-lg">
               {selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0 ? (
-                <Plus size={18} />
+                <Plus className="w-5 h-5" />
               ) : (
-                <Upload size={20} />
+                <Upload className="w-5 h-5" />
               )}
             </div>
-            <div>
-              <strong style={{ fontSize: '13px', color: '#0f172a' }}>
+            <div className="text-center sm:text-left">
+              <strong className="text-xs sm:text-sm font-bold text-slate-800 block">
                 {selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0
                   ? '+ Thêm file chứng chỉ chuyên môn khác'
                   : 'Nhấn để chọn file chứng chỉ chuyên môn (AWS, IELTS, Coursera,...)'}
               </strong>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+              <p className="text-xs text-slate-500 mt-0.5">
                 PNG, JPG, WEBP hoặc PDF (Tối đa 15MB/file - Tối đa 3 files)
               </p>
             </div>
@@ -514,9 +333,7 @@ export function DocumentUploadSection({
       </div>
 
       {error && (
-        <p className="error" style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>
-          {error}
-        </p>
+        <p className="text-xs font-medium text-red-500">{error}</p>
       )}
     </fieldset>
   );

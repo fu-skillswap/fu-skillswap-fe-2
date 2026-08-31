@@ -115,10 +115,10 @@ export function NotificationMenu() {
   };
 
   return (
-    <div className="figma-notifications" ref={menuRef}>
+    <div className="relative" ref={menuRef}>
       <button
         type="button"
-        className="figma-icon-button"
+        className="w-9.5 h-9.5 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer relative"
         aria-label="Thông báo"
         aria-expanded={isOpen}
         onClick={() => {
@@ -129,47 +129,67 @@ export function NotificationMenu() {
           }
         }}
       >
-        <Bell className="figma-bell" aria-hidden="true" />
-        {unreadCount > 0 && <span className="figma-notification-dot" aria-hidden="true" />}
+        <Bell className="w-4.5 h-4.5" aria-hidden="true" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger ring-2 ring-white" aria-hidden="true" />
+        )}
       </button>
 
       {isOpen && (
-        <section className="figma-notification-panel" aria-label="Danh sách thông báo">
-          <header>
-            <div>
-              <strong>Thông báo</strong>
-              {unreadCount > 0 && <span>{unreadCount} chưa đọc</span>}
+        <section
+          className="absolute right-0 top-full mt-2 w-80 max-h-[420px] overflow-y-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-3 z-50 flex flex-col gap-2 animate-in fade-in-0 zoom-in-95 duration-150"
+          aria-label="Danh sách thông báo"
+        >
+          <header className="flex items-center justify-between pb-2 border-b border-solid border-border-light">
+            <div className="flex items-center gap-2">
+              <strong className="text-xs font-bold text-text-main">Thông báo</strong>
+              {unreadCount > 0 && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary-light text-primary">
+                  {unreadCount} chưa đọc
+                </span>
+              )}
             </div>
             <button
               type="button"
               onClick={() => void markAllRead()}
               disabled={!unreadCount}
               aria-label="Đánh dấu tất cả đã đọc"
+              className="p-1 rounded-lg text-text-muted hover:text-primary hover:bg-primary-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors border-none bg-transparent cursor-pointer"
+              title="Đánh dấu tất cả đã đọc"
             >
-              <CheckCheck aria-hidden="true" />
+              <CheckCheck className="w-4 h-4" aria-hidden="true" />
             </button>
           </header>
           {loading ? (
-            <p>Đang tải thông báo...</p>
+            <p className="text-xs text-text-muted text-center py-4 m-0">Đang tải thông báo...</p>
           ) : error ? (
-            <p>{error}</p>
+            <p className="text-xs text-danger text-center py-4 m-0">{error}</p>
           ) : items.length ? (
-            <div>
+            <div className="flex flex-col gap-1">
               {items.map((item) => (
                 <button
                   key={item.notificationId}
                   type="button"
-                  className={item.read ? 'is-read' : 'is-unread'}
+                  className={`w-full text-left p-2.5 rounded-xl transition-all border-none cursor-pointer flex flex-col gap-1 ${
+                    item.read
+                      ? 'bg-transparent text-text-secondary hover:bg-surface-subtle'
+                      : 'bg-primary-light/50 text-text-main font-semibold hover:bg-primary-light'
+                  }`}
                   onClick={() => void markRead(item)}
                 >
-                  <strong>{item.title}</strong>
-                  <span>{item.message}</span>
-                  <small>{formatDate(item.createdAt)}</small>
+                  <div className="flex items-center justify-between gap-2">
+                    <strong className="text-xs font-bold leading-tight">{item.title}</strong>
+                    {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                  </div>
+                  <span className="text-[11px] leading-snug line-clamp-2 text-text-secondary">
+                    {item.message}
+                  </span>
+                  <small className="text-[10px] text-text-muted">{formatDate(item.createdAt)}</small>
                 </button>
               ))}
             </div>
           ) : (
-            <p>Chưa có thông báo nào.</p>
+            <p className="text-xs text-text-muted text-center py-6 m-0">Chưa có thông báo nào.</p>
           )}
         </section>
       )}

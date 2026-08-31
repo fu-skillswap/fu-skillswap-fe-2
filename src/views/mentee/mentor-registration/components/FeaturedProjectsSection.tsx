@@ -33,14 +33,13 @@ export function FeaturedProjectsSection({
 }: FeaturedProjectsSectionProps) {
   return (
     <fieldset
-      className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
+      className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5 disabled:opacity-75"
     >
-      <h2 className="mentor-section-title">4. Dự án tiêu biểu (Không bắt buộc)</h2>
+      <h2 className="text-lg font-bold text-slate-900">4. Dự án tiêu biểu (Không bắt buộc)</h2>
 
       {projectFields.length === 0 && (
-        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+        <p className="text-sm text-slate-500">
           Chưa có dự án nào được thêm. Nhấn nút bên dưới để thêm dự án thực tế nổi bật của bạn nếu
           muốn.
         </p>
@@ -49,112 +48,113 @@ export function FeaturedProjectsSection({
       {projectFields.map((field, index) => (
         <div
           key={field.id}
-          style={{
-            padding: '14px',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0',
-            background: '#f8fafc',
-            display: 'grid',
-            gap: '12px',
-          }}
+          className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-5 space-y-4"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong style={{ fontSize: '13px', color: '#334155' }}>Dự án #{index + 1}</strong>
+          <div className="flex items-center justify-between">
+            <strong className="text-sm font-bold text-slate-700">Dự án #{index + 1}</strong>
             <button
               type="button"
               onClick={() => removeProject(index)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: '#ef4444',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 700,
-              }}
+              className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-0"
             >
               ✕ Xóa
             </button>
           </div>
 
-          <div className="field">
-            <label htmlFor={`projectTitle-${index}`}>
-              Tên dự án <span className="required-asterisk">*</span>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`projectTitle-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Tên dự án <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <input
               id={`projectTitle-${index}`}
               placeholder="VD: SWP391 Booking Platform"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
               {...register(`projects.${index}.title`)}
             />
             {errors.projects?.[index]?.title && (
-              <p className="error">{errors.projects[index]?.title?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.projects[index]?.title?.message}
+              </p>
             )}
           </div>
 
-          <div className="field">
-            <label htmlFor={`projectContent-${index}`}>
-              Vai trò, công nghệ hoặc điểm nổi bật <span className="required-asterisk">*</span>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`projectContent-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Vai trò, công nghệ hoặc điểm nổi bật <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <input
               id={`projectContent-${index}`}
               placeholder="VD: Fullstack Developer | Spring Boot, React, Tailwind"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
               {...register(`projects.${index}.content`)}
             />
             {errors.projects?.[index]?.content && (
-              <p className="error">{errors.projects[index]?.content?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.projects[index]?.content?.message}
+              </p>
             )}
           </div>
 
-          <div className="field">
-            <label htmlFor={`projectDescription-${index}`}>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`projectDescription-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
               Mô tả dự án (Vấn đề, cách làm & kết quả)
             </label>
             <textarea
               id={`projectDescription-${index}`}
               rows={3}
-              style={{ resize: 'none' }}
               placeholder="Mô tả ngắn gọn kết quả dự án..."
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm resize-none disabled:bg-slate-50"
               {...register(`projects.${index}.projectDescription`)}
             />
             {errors.projects?.[index]?.projectDescription && (
-              <p className="error">{errors.projects[index]?.projectDescription?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.projects[index]?.projectDescription?.message}
+              </p>
             )}
           </div>
 
-          <div className="field">
-            <label htmlFor={`liveDemoUrl-${index}`}>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`liveDemoUrl-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
               Đường dẫn Live Demo / Repository (Không bắt buộc)
             </label>
             <input
               id={`liveDemoUrl-${index}`}
               placeholder="https://demo.example.com"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
               {...register(`projects.${index}.liveDemoUrl`)}
             />
             {errors.projects?.[index]?.liveDemoUrl && (
-              <p className="error">{errors.projects[index]?.liveDemoUrl?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.projects[index]?.liveDemoUrl?.message}
+              </p>
             )}
           </div>
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={() =>
-          appendProject({ title: '', content: '', projectDescription: '', liveDemoUrl: '' })
-        }
-        style={{
-          justifySelf: 'start',
-          padding: '8px 16px',
-          borderRadius: '10px',
-          border: '1px dashed #0095f6',
-          background: '#ebf5fe',
-          color: '#0095f6',
-          fontWeight: 700,
-          fontSize: '13px',
-          cursor: 'pointer',
-        }}
-      >
-        + Thêm dự án tiêu biểu
-      </button>
+      <div>
+        <button
+          type="button"
+          onClick={() =>
+            appendProject({ title: '', content: '', projectDescription: '', liveDemoUrl: '' })
+          }
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-100 text-xs font-bold transition-colors cursor-pointer"
+        >
+          + Thêm dự án tiêu biểu
+        </button>
+      </div>
     </fieldset>
   );
 }

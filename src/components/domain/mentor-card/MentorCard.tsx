@@ -63,7 +63,7 @@ export function MentorCard({ mentor, onSelect }: MentorCardProps) {
           <p className="text-xs text-text-muted m-0 leading-tight">
             {mentor.headline ?? (mentor.expertise[0] ? `${mentor.expertise[0]} mentor` : 'Mentor')}
           </p>
-          {mentor.organization && <strong className="text-xs text-primary font-semibold">@ {mentor.organization}</strong>}
+          {/* {mentor.organization && <strong className="text-xs text-primary font-semibold">@ {mentor.organization}</strong>} */}
         </div>
         <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold bg-amber-50/60 px-2.5 py-1 rounded-lg w-fit border border-solid border-amber-200/50">
           <span aria-hidden="true">★</span>
@@ -90,7 +90,7 @@ export function MentorCard({ mentor, onSelect }: MentorCardProps) {
         )}
       </div>
       <button type="button" className="w-full h-10 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] transition-all border-none cursor-pointer flex items-center justify-center" onClick={() => onSelect(mentor)}>
-        View Profile
+        Xem thêm
       </button>
     </article>
   );

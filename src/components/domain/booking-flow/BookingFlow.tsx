@@ -205,11 +205,8 @@ export function BookingFlow({
       slotId,
       serviceId: service.id,
       startAt: formatIso8601(rawStartAt),
-      learningGoalTitle:
-        learningGoalTitle.trim() || 'Review lộ trình học Spring Boot và chuẩn bị phỏng vấn intern',
-      learningGoalDescription:
-        learningGoalDescription.trim() ||
-        'Em muốn được góp ý CV backend, định hướng học PRJ301 và cách làm project REST API với PostgreSQL.',
+      learningGoalTitle: learningGoalTitle.trim(),
+      learningGoalDescription: learningGoalDescription.trim(),
     };
 
     if (onConfirmWithPayload) {
@@ -222,52 +219,26 @@ export function BookingFlow({
 
   if (success)
     return (
-      <section className="figma-booking-success" aria-live="polite">
-        <span className="figma-booking-success-icon" aria-hidden="true">
-          <CheckCircle2 aria-hidden="true" />
-        </span>
-        <h2>Tạo yêu cầu đặt lịch thành công!</h2>
-        <p>
-          Yêu cầu đặt lịch của bạn đã được gửi ở trạng thái <strong>PENDING</strong>. Mentor sẽ phản
-          hồi lại thông báo đặt lịch của bạn.
+      <section className="flex flex-col items-center text-center p-6 space-y-4" aria-live="polite">
+        <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-extrabold text-slate-900 m-0">Tạo yêu cầu đặt lịch thành công!</h2>
+        <p className="text-xs sm:text-sm text-slate-600 max-w-md m-0 leading-relaxed">
+          Yêu cầu đặt lịch của bạn đã được gửi ở trạng thái <strong className="text-slate-900">PENDING</strong>. Mentor sẽ phản hồi lại thông báo đặt lịch của bạn.
         </p>
-        <div
-          style={{
-            display: 'flex',
-            gap: '12px',
-            marginTop: '20px',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
+        <div className="flex items-center gap-3 pt-4">
           <Link
             href={`/${locale}/my-bookings`}
-            className="ui-btn ui-btn-primary"
             onClick={onClose}
-            style={{
-              height: '44px',
-              padding: '0 26px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '600',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-xs sm:text-sm hover:bg-primary-hover shadow-sm transition-all decoration-0 inline-flex items-center justify-center"
           >
             Xem Booking của tôi
           </Link>
           <Button
             variant="secondary"
             onClick={onClose}
-            style={{
-              height: '44px',
-              padding: '0 24px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '500',
-            }}
+            className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold"
           >
             Đóng
           </Button>
@@ -276,79 +247,78 @@ export function BookingFlow({
     );
 
   return (
-    <section className="figma-booking-flow" aria-label="Booking flow">
+    <div className="space-y-5 max-w-full overflow-x-hidden">
       {/* Tóm tắt thông tin Mentor */}
-      <article className="figma-booking-mentor-summary">
+      <article className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex items-center gap-3.5">
         {mentor.avatarUrl ? (
-          <img src={mentor.avatarUrl} alt={mentor.name} className="figma-booking-mentor-avatar" />
+          <img src={mentor.avatarUrl} alt={mentor.name} className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0" />
         ) : (
-          <span className="figma-booking-mentor-avatar" aria-hidden="true">
+          <span className="w-12 h-12 rounded-full bg-sky-100 text-sky-600 font-extrabold text-sm flex items-center justify-center shrink-0">
             {initials(mentor.name)}
           </span>
         )}
-        <div>
-          <h2>{mentor.name}</h2>
-          <p>{mentor.headline || mentor.organization || 'Mentor'}</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-bold text-slate-900 m-0 leading-tight truncate">{mentor.name}</h2>
+          <p className="text-xs text-slate-500 m-0 mt-0.5 truncate">{mentor.headline || mentor.organization || 'Mentor'}</p>
         </div>
       </article>
 
-      {/* Lịch đặt dạng Google Calendar Tuần hiển thị Candidate Segments từ API GET /api/mentors/{mentorUserId}/availability-slots/{slotId}/candidates */}
-      <BookingCalendar
-        candidates={candidateSegments}
-        selectedServiceId={service.id}
-        selectedServiceName={service.name}
-        value={slot}
-        isLoading={isLoadingSlots}
-        onRangeChange={(fromDate, toDate) => {
-          loadSlotsAndCandidates({ fromDate, toDate });
-        }}
-        onSelectSlot={(candidateObj, slotTimeStr) => {
-          setSelectedSlotObj(candidateObj);
-          onSlotChange(
-            candidateObj.segmentId ||
-              candidateObj.candidateId ||
-              candidateObj.slotId ||
-              slotTimeStr,
-            candidateObj,
-          );
-        }}
-      />
+      {/* Lịch đặt dạng Google Calendar */}
+      <div className="w-full overflow-x-auto">
+        <BookingCalendar
+          candidates={candidateSegments}
+          selectedServiceId={service.id}
+          selectedServiceName={service.name}
+          value={slot}
+          isLoading={isLoadingSlots}
+          onRangeChange={(fromDate, toDate) => {
+            loadSlotsAndCandidates({ fromDate, toDate });
+          }}
+          onSelectSlot={(candidateObj, slotTimeStr) => {
+            setSelectedSlotObj(candidateObj);
+            onSlotChange(
+              candidateObj.segmentId ||
+                candidateObj.candidateId ||
+                candidateObj.slotId ||
+                slotTimeStr,
+              candidateObj,
+            );
+          }}
+        />
+      </div>
 
-      <section
-        className="figma-booking-summary"
-        aria-label="Booking summary"
-        style={{ marginTop: '16px' }}
-      >
-        <h3>Tóm tắt lịch đặt</h3>
-        <dl>
+      {/* Tóm tắt lịch đặt */}
+      <section className="bg-sky-50/60 border border-sky-100 p-4 sm:p-5 rounded-2xl space-y-3">
+        <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wider m-0">Tóm tắt lịch đặt</h3>
+        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm m-0">
           <div>
-            <dt>Dịch vụ</dt>
-            <dd>{service.name}</dd>
+            <dt className="text-slate-400 font-medium">Dịch vụ</dt>
+            <dd className="font-bold text-slate-900 m-0 mt-0.5">{service.name}</dd>
           </div>
           <div>
-            <dt>Thời lượng</dt>
-            <dd>{service.durationMinutes} phút</dd>
+            <dt className="text-slate-400 font-medium">Thời lượng</dt>
+            <dd className="font-bold text-slate-900 m-0 mt-0.5">{service.durationMinutes} phút</dd>
           </div>
           <div>
-            <dt>Thời gian</dt>
-            <dd>{slotLabel(slot, selectedSlotObj)}</dd>
+            <dt className="text-slate-400 font-medium">Thời gian</dt>
+            <dd className="font-bold text-sky-600 m-0 mt-0.5">{slotLabel(slot, selectedSlotObj)}</dd>
           </div>
           <div>
-            <dt>Tổng cộng</dt>
-            <dd>{priceLabel(service.priceScoins)} S-coins</dd>
+            <dt className="text-slate-400 font-medium">Tổng cộng</dt>
+            <dd className="font-black text-slate-900 m-0 mt-0.5">{priceLabel(service.priceScoins)} S-coins</dd>
           </div>
         </dl>
       </section>
 
       {error && (
-        <p className="figma-booking-error" role="alert">
+        <p className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-medium m-0" role="alert">
           {error}
         </p>
       )}
 
-      {/* Nút bật Pop-up Modal xác nhận */}
+      {/* Nút đặt lịch */}
       <Button
-        className="figma-booking-confirm"
+        className="w-full h-11 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-sm shadow-sm transition-all border-0"
         disabled={!slot || isSubmitting}
         onClick={handleOpenConfirmModal}
       >
@@ -368,6 +338,6 @@ export function BookingFlow({
         isSubmitting={isSubmitting}
         onConfirm={handleConfirmBookingSubmit}
       />
-    </section>
+    </div>
   );
 }

@@ -31,6 +31,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const pathname = usePathname();
   const feedHref = `/${locale}/dashboard`;
   const bookingHref = `/${locale}/mentor-booking`;
+  const myBookingsHref = `/${locale}/my-bookings`;
   const dashboardHref = `/${locale}/mentor/dashboard`;
   const scheduleHref = `/${locale}/mentor/schedule-manage`;
   const mentorBookingsHref = `/${locale}/mentor/bookings`;
@@ -70,8 +71,8 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname === dashboardHref || pathname.includes('/mentor/dashboard')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <LayoutDashboard className="w-5 h-5 shrink-0" aria-hidden="true" />
@@ -83,8 +84,8 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname === feedHref
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <Home className="w-5 h-5 shrink-0" aria-hidden="true" />
@@ -96,12 +97,25 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname.includes('/mentor-booking')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <Search className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Tìm Mentor</span>
+        </Link>
+
+        <Link
+          href={myBookingsHref}
+          onClick={onClose}
+          className={
+            pathname.startsWith(myBookingsHref)
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+          }
+        >
+          <BookOpen className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <span>Booking của tôi</span>
         </Link>
 
         {/* Phần dành riêng cho Mentor */}
@@ -111,8 +125,8 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname.includes('/mentor/schedule-manage')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <Settings className="w-5 h-5 shrink-0" aria-hidden="true" />
@@ -124,8 +138,8 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname.includes('/mentor/bookings')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <Calendar className="w-5 h-5 shrink-0" aria-hidden="true" />
@@ -137,8 +151,8 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname.includes('/mentor/posts')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <FileText className="w-5 h-5 shrink-0" aria-hidden="true" />
@@ -150,15 +164,15 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           onClick={onClose}
           className={
             pathname.includes('/mentor/my-courses')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
           <GraduationCap className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Khóa học của tôi</span>
         </Link>
 
-        <button type="button" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-disabled bg-transparent border border-solid border-transparent opacity-50 cursor-not-allowed text-left w-full" tabIndex={-1}>
+        <button type="button" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-disabled bg-transparent border border-solid border-transparent opacity-50 cursor-not-allowed text-left w-full" tabIndex={-1}>
           <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Ví S-coins</span>
         </button>
@@ -168,7 +182,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
       <Link
         href={`${mentorPostsHref}?create=1`}
         onClick={onClose}
-        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer flex items-center justify-center gap-2 text-center"
+        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer flex items-center justify-center gap-2 text-center"
       >
         + Bài viết mới
       </Link>

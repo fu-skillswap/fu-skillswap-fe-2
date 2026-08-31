@@ -8,7 +8,8 @@
 
 import Link from 'next/link';
 import { Calendar, Clock, FileText, RefreshCw, User, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
-import { useMyBookings } from './useMyBookings';
+import { FILTER_TABS, useMyBookings } from './useMyBookings';
+import { BookingStatusBadge } from '@/components/ui/BookingStatusBadge';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { useEffect } from 'react';
 
@@ -45,41 +46,8 @@ function formatDateTimeRange(startAt?: string, endAt?: string) {
   }
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const upper = (status || 'PENDING').toUpperCase();
-
-  if (upper === 'CONFIRMED' || upper === 'ACCEPTED') {
-    return (
-      <span
-        className="ui-badge ui-badge-success"
-        style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12.5px', gap: '6px', fontWeight: '600' }}
-      >
-        <CheckCircle2 className="w-4 h-4" /> Đã xác nhận
-      </span>
-    );
-  }
-  if (upper === 'CANCELLED' || upper === 'REJECTED') {
-    return (
-      <span
-        className="ui-badge ui-badge-danger"
-        style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12.5px', gap: '6px', fontWeight: '600' }}
-      >
-        <XCircle className="w-4 h-4" /> Đã hủy
-      </span>
-    );
-  }
-  return (
-    <span
-      className="ui-badge ui-badge-warning"
-      style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12.5px', gap: '6px', fontWeight: '600' }}
-    >
-      <AlertCircle className="w-4 h-4" /> Đang chờ
-    </span>
-  );
-}
-
 export function MyBookingsView({ locale }: { locale: string }) {
-  const { bookings, totalCount, isLoading, error, activeTab, setActiveTab, refresh } = useMyBookings();
+  const { bookings, totalCount, counts, isLoading, error, activeTab, setActiveTab, refresh } = useMyBookings();
   const { setHeaderTitle } = useMenteeShell();
 
   useEffect(() => {
@@ -118,43 +86,34 @@ export function MyBookingsView({ locale }: { locale: string }) {
       </header>
 
       {/* Tabs lọc trạng thái */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-solid border-border-light shadow-xs">
-        <button
-          type="button"
-          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'ALL' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
-          }`}
-          onClick={() => setActiveTab('ALL')}
-        >
-          Tất cả ({totalCount})
-        </button>
-        <button
-          type="button"
-          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'PENDING' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
-          }`}
-          onClick={() => setActiveTab('PENDING')}
-        >
-          Chờ xác nhận (PENDING)
-        </button>
-        <button
-          type="button"
-          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'CONFIRMED' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
-          }`}
-          onClick={() => setActiveTab('CONFIRMED')}
-        >
-          Đã xác nhận
-        </button>
-        <button
-          type="button"
-          className={`h-9 px-4 rounded-xl text-xs font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'CANCELLED' ? 'bg-primary-light text-primary font-bold shadow-xs' : 'bg-transparent text-text-muted hover:text-text-main'
-          }`}
-          onClick={() => setActiveTab('CANCELLED')}
-        >
-          Đã hủy
-        </button>
+      <div className="flex items-center gap-2 p-2 bg-white rounded-2xl border border-solid border-border-light shadow-xs overflow-x-auto">
+        {FILTER_TABS.map((tab) => {
+          const count = counts[tab.key] || 0;
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              type="button"
+              key={tab.key}
+              className={`h-9 px-4 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-solid cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                isActive
+                  ? 'bg-primary-light border-primary-border text-primary font-bold shadow-xs'
+                  : 'bg-surface-subtle border-transparent text-text-secondary hover:text-text-main hover:bg-slate-200/50'
+              }`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <span>{tab.label}</span>
+              {count > 0 && (
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                    isActive ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Error state */}
@@ -238,7 +197,7 @@ export function MyBookingsView({ locale }: { locale: string }) {
                     </p>
                   </div>
                 </div>
-                <StatusBadge status={item.status} />
+                <BookingStatusBadge status={item.bookingStatus || item.status} />
               </div>
 
               {/* Time & Duration row */}

@@ -16,15 +16,15 @@ type NavIcon = 'home' | 'search' | 'wallet' | 'calendar';
 /** Helper render Icon tương ứng từ lucide-react cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
   if (name === 'search') {
-    return <Search aria-hidden="true" />;
+    return <Search className="w-5 h-5 shrink-0" aria-hidden="true" />;
   }
   if (name === 'wallet') {
-    return <Wallet aria-hidden="true" />;
+    return <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />;
   }
   if (name === 'calendar') {
-    return <Calendar aria-hidden="true" />;
+    return <Calendar className="w-5 h-5 shrink-0" aria-hidden="true" />;
   }
-  return <Home aria-hidden="true" />;
+  return <Home className="w-5 h-5 shrink-0" aria-hidden="true" />;
 }
 
 /** Props của DashboardNavigation Component */
@@ -73,7 +73,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           <img
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
-            className="w-full max-w-[165px] max-h-[90px] object-contain mx-auto"
+            className="w-full max-w-[130px] max-h-[90px] object-contain mx-auto"
           />
         </Link>
         <button
@@ -90,7 +90,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <Link
           href={dashboardHref}
           onClick={onClose}
-          className={dashboardActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
+          className={dashboardActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
         >
           <Icon name="home" />
           <span>Bảng tin</span>
@@ -98,7 +98,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <Link
           href={mentorHref}
           onClick={onClose}
-          className={mentorActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
+          className={mentorActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
         >
           <Icon name="search" />
           <span>Tìm Mentor</span>
@@ -106,7 +106,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <button
           type="button"
           onClick={() => handleProtectedAction('Ví S-Coin')}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all text-left bg-transparent cursor-pointer"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all text-left bg-transparent cursor-pointer"
         >
           <Icon name="wallet" />
           <span>S-coin</span>
@@ -114,7 +114,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <Link
           href={bookingsHref}
           onClick={onClose}
-          className={bookingsActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
+          className={bookingsActive ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all' : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'}
         >
           <Icon name="calendar" />
           <span>Booking của tôi</span>
@@ -123,7 +123,7 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
       <button
         type="button"
         onClick={() => handleProtectedAction('Tạo bài viết mới')}
-        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer flex items-center justify-center gap-2"
+        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer flex items-center justify-center gap-2"
       >
         + Bài viết mới
       </button>

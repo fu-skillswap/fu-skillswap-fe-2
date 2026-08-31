@@ -33,14 +33,15 @@ export function AchievementsSection({
 }: AchievementsSectionProps) {
   return (
     <fieldset
-      className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
+      className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5 disabled:opacity-75"
     >
-      <h2 className="mentor-section-title">5. Học vấn & Giải thưởng nổi bật (Không bắt buộc)</h2>
+      <h2 className="text-lg font-bold text-slate-900">
+        5. Học vấn & Giải thưởng nổi bật (Không bắt buộc)
+      </h2>
 
       {achievementFields.length === 0 && (
-        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+        <p className="text-sm text-slate-500">
           Chưa có học vấn hoặc giải thưởng nào được thêm. Nhấn nút bên dưới để thêm thành tích tiêu
           biểu của bạn nếu muốn.
         </p>
@@ -49,159 +50,165 @@ export function AchievementsSection({
       {achievementFields.map((field, index) => (
         <div
           key={field.id}
-          style={{
-            padding: '14px',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0',
-            background: '#f8fafc',
-            display: 'grid',
-            gap: '12px',
-          }}
+          className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-5 space-y-4"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong style={{ fontSize: '13px', color: '#334155' }}>
+          <div className="flex items-center justify-between">
+            <strong className="text-sm font-bold text-slate-700">
               Giải thưởng / Thành tích #{index + 1}
             </strong>
             <button
               type="button"
               onClick={() => removeAchievement(index)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: '#ef4444',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 700,
-              }}
+              className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-0"
             >
               ✕ Xóa
             </button>
           </div>
 
-          <div className="field">
-            <label htmlFor={`achievementTitle-${index}`}>
-              Tên giải thưởng / thành tích <span className="required-asterisk">*</span>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`achievementTitle-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Tên giải thưởng / thành tích <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <input
               id={`achievementTitle-${index}`}
               placeholder="VD: Top 10 Hackathon FPTU"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
               {...register(`achievements.${index}.title`)}
             />
             {errors.achievements?.[index]?.title && (
-              <p className="error">{errors.achievements[index]?.title?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.achievements[index]?.title?.message}
+              </p>
             )}
           </div>
 
-          <div className="field">
-            <label htmlFor={`awardDescription-${index}`}>
-              Mô tả giải thưởng / thành tích <span className="required-asterisk">*</span>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`awardDescription-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Mô tả giải thưởng / thành tích <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <textarea
               id={`awardDescription-${index}`}
               rows={2}
-              style={{ resize: 'none' }}
               placeholder="Mô tả ngắn giải thưởng hoặc thành tích..."
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm resize-none disabled:bg-slate-50"
               {...register(`achievements.${index}.awardDescription`)}
             />
             {errors.achievements?.[index]?.awardDescription && (
-              <p className="error">{errors.achievements[index]?.awardDescription?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.achievements[index]?.awardDescription?.message}
+              </p>
             )}
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-            }}
-          >
-            <div className="field">
-              <label htmlFor={`achievedAt-${index}`}>
-                Thời điểm đạt được <span className="required-asterisk">*</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label
+                htmlFor={`achievedAt-${index}`}
+                className="block text-sm font-semibold text-slate-700"
+              >
+                Thời điểm đạt được <span className="text-red-500 font-bold ml-0.5">*</span>
               </label>
               <input
                 id={`achievedAt-${index}`}
                 type="date"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
                 {...register(`achievements.${index}.achievedAt`)}
               />
               {errors.achievements?.[index]?.achievedAt && (
-                <p className="error">{errors.achievements[index]?.achievedAt?.message}</p>
+                <p className="text-xs font-medium text-red-500 mt-1">
+                  {errors.achievements[index]?.achievedAt?.message}
+                </p>
               )}
             </div>
 
-            <div className="field">
-              <label htmlFor={`productHeader-${index}`}>
-                Tiêu đề sản phẩm / Case study <span className="required-asterisk">*</span>
+            <div className="space-y-1.5">
+              <label
+                htmlFor={`productHeader-${index}`}
+                className="block text-sm font-semibold text-slate-700"
+              >
+                Tiêu đề sản phẩm / Case study <span className="text-red-500 font-bold ml-0.5">*</span>
               </label>
               <input
                 id={`productHeader-${index}`}
                 placeholder="VD: Case study: Growth campaign"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
                 {...register(`achievements.${index}.productHeader`)}
               />
               {errors.achievements?.[index]?.productHeader && (
-                <p className="error">{errors.achievements[index]?.productHeader?.message}</p>
+                <p className="text-xs font-medium text-red-500 mt-1">
+                  {errors.achievements[index]?.productHeader?.message}
+                </p>
               )}
             </div>
           </div>
 
-          <div className="field">
-            <label htmlFor={`achievementProductDescription-${index}`}>
-              Mô tả sản phẩm / Case study đi kèm <span className="required-asterisk">*</span>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`achievementProductDescription-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Mô tả sản phẩm / Case study đi kèm <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <textarea
               id={`achievementProductDescription-${index}`}
               rows={2}
-              style={{ resize: 'none' }}
               placeholder="Mô tả sản phẩm/case đi kèm thành tích..."
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm resize-none disabled:bg-slate-50"
               {...register(`achievements.${index}.productDescription`)}
             />
             {errors.achievements?.[index]?.productDescription && (
-              <p className="error">{errors.achievements[index]?.productDescription?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.achievements[index]?.productDescription?.message}
+              </p>
             )}
           </div>
 
-          <div className="field">
-            <label htmlFor={`achievementDemoUrl-${index}`}>
+          <div className="space-y-1.5">
+            <label
+              htmlFor={`achievementDemoUrl-${index}`}
+              className="block text-sm font-semibold text-slate-700"
+            >
               Đường dẫn Demo / Chứng nhận (Không bắt buộc)
             </label>
             <input
               id={`achievementDemoUrl-${index}`}
               placeholder="https://demo.example.com"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50"
               {...register(`achievements.${index}.demoUrl`)}
             />
             {errors.achievements?.[index]?.demoUrl && (
-              <p className="error">{errors.achievements[index]?.demoUrl?.message}</p>
+              <p className="text-xs font-medium text-red-500 mt-1">
+                {errors.achievements[index]?.demoUrl?.message}
+              </p>
             )}
           </div>
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={() =>
-          appendAchievement({
-            title: '',
-            awardDescription: '',
-            achievedAt: '',
-            productHeader: '',
-            productDescription: '',
-            demoUrl: '',
-          })
-        }
-        style={{
-          justifySelf: 'start',
-          padding: '8px 16px',
-          borderRadius: '10px',
-          border: '1px dashed #0095f6',
-          background: '#ebf5fe',
-          color: '#0095f6',
-          fontWeight: 700,
-          fontSize: '13px',
-          cursor: 'pointer',
-        }}
-      >
-        + Thêm học vấn / giải thưởng
-      </button>
+      <div>
+        <button
+          type="button"
+          onClick={() =>
+            appendAchievement({
+              title: '',
+              awardDescription: '',
+              achievedAt: '',
+              productHeader: '',
+              productDescription: '',
+              demoUrl: '',
+            })
+          }
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-100 text-xs font-bold transition-colors cursor-pointer"
+        >
+          + Thêm học vấn / giải thưởng
+        </button>
+      </div>
     </fieldset>
   );
 }

@@ -26,26 +26,21 @@ export function SupportLevelsSection({
 }: SupportLevelsSectionProps) {
   return (
     <fieldset
-      className="card mentor-reg-card"
       disabled={disabled}
-      style={{ border: '1px solid #e2e8f0', display: 'grid', gap: '16px' }}
+      className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5 disabled:opacity-75"
     >
-      <h2 className="mentor-section-title">3. Cấp độ năng lực hỗ trợ (Thang điểm 1 - 5)</h2>
+      <h2 className="text-lg font-bold text-slate-900">
+        3. Cấp độ năng lực hỗ trợ (Thang điểm 1 - 5)
+      </h2>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Controller
           name="foundationSupportLevel"
           control={control}
           render={({ field }) => (
             <SelectField
               id="foundationSupportLevel"
-              label="Kiến thức căn bản (1-5)"
+              label={<span className="text-sm font-semibold text-slate-700">Kiến thức căn bản (1-5)</span>}
               required
               disabled={disabled}
               error={errors.foundationSupportLevel?.message}
@@ -65,7 +60,7 @@ export function SupportLevelsSection({
           render={({ field }) => (
             <SelectField
               id="outputReviewSupportLevel"
-              label="Review Đồ án / Code (1-5)"
+              label={<span className="text-sm font-semibold text-slate-700">Review Đồ án / Code (1-5)</span>}
               required
               disabled={disabled}
               error={errors.outputReviewSupportLevel?.message}
@@ -85,7 +80,7 @@ export function SupportLevelsSection({
           render={({ field }) => (
             <SelectField
               id="directionSupportLevel"
-              label="Định hướng phát triển (1-5)"
+              label={<span className="text-sm font-semibold text-slate-700">Định hướng phát triển (1-5)</span>}
               required
               disabled={disabled}
               error={errors.directionSupportLevel?.message}

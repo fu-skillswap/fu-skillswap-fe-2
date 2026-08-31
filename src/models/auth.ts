@@ -375,13 +375,28 @@ export interface UserBookingItem {
   endsAt?: string;
   selectedStartTime?: string;
   selectedEndTime?: string;
-  status: 'PENDING' | 'CONFIRMED' | 'ACCEPTED' | 'CANCELLED' | 'REJECTED' | string;
+  bookingStatus: MentorBookingStatus | string;
+  status?: MentorBookingStatus | string;
   learningGoalTitle?: string;
   learningGoalDescription?: string;
   createdAt?: string;
 }
 
 export type MentorBookingStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'NO_SHOW'
+  | 'CANCELLED_BY_MENTOR'
+  | 'AWAITING_MENTOR_COMPLETION'
+  | 'AWAITING_MENTEE_CONFIRMATION'
+  | 'COMPLETED'
+  | 'AUTO_CLOSED'
+  | 'UNDER_REVIEW'
+  | 'EXPIRED_PENDING_MENTOR'
+  | 'ACCEPTED_AWAITING_PAYMENT'
+  | 'EXPIRED_AWAITING_PAYMENT'
+  | 'CANCELLED_BY_MENTEE'
+  | 'REJECTED'
   | 'REQUESTED'
   | 'WAITING_PAYMENT'
   | 'CONFIRMED'
@@ -389,9 +404,7 @@ export type MentorBookingStatus =
   | 'CANCELED_BY_MENTEE'
   | 'CANCELED_BY_MENTOR'
   | 'REQUEST_EXPIRED'
-  | 'PAYMENT_EXPIRED'
-  | 'UNDER_REVIEW'
-  | 'COMPLETED';
+  | 'PAYMENT_EXPIRED';
 
 export type MentorBookingDisplayState =
   | 'PENDING_MENTOR_RESPONSE'

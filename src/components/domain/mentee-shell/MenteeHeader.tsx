@@ -187,41 +187,43 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
               aria-expanded={isProfileOpen}
               aria-label="User profile menu"
             >
-              <span className="w-8 h-8 rounded-full bg-primary-light border border-solid border-primary-border text-primary font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
+              <span className="w-9.5 h-9.5 rounded-full bg-primary-light border border-solid border-primary-border text-primary font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
                 {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" /> : profile.initials}
               </span>
               <span className="hidden sm:flex flex-col text-left">
-                <strong className="text-xs font-bold text-text-main leading-tight">{profile.fullName}</strong>
-                <small className="text-[10px] text-text-muted">{profile.role}</small>
+                <strong className="text-sm sm:text-base font-extrabold text-text-main leading-tight">{profile.fullName}</strong>
+                <small className="text-xs text-text-muted font-medium">{profile.role}</small>
               </span>
               <ChevronDown
-                className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
+                className={`w-4.5 h-4.5 text-text-muted transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </button>
 
             {isProfileOpen && (
-              <section className="absolute right-0 top-full mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-2 z-50 flex flex-col gap-1 animate-in fade-in-0 zoom-in-95 duration-150" aria-label="User profile menu">
+              <section className="absolute right-0 top-full mt-2 w-60 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-2.5 z-50 flex flex-col gap-1 animate-in fade-in-0 zoom-in-95 duration-150" aria-label="User profile menu">
                 <div className="flex flex-col gap-1">
-                  <button type="button" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left" onClick={openProfile}>
-                    <User className="w-4 h-4 shrink-0 text-text-muted" aria-hidden="true" />
+                  <button type="button" className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left" onClick={openProfile}>
+                    <User className="w-4.5 h-4.5 shrink-0 text-text-muted" aria-hidden="true" />
                     Hồ sơ của tôi
                   </button>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
-                    onClick={openMentorRegistration}
-                  >
-                    <UserCheck className="w-4 h-4 shrink-0 text-text-muted" aria-hidden="true" />
-                    Đăng ký làm mentor
-                  </button>
+                  {!isMentor && (
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
+                      onClick={openMentorRegistration}
+                    >
+                      <UserCheck className="w-4.5 h-4.5 shrink-0 text-text-muted" aria-hidden="true" />
+                      Đăng ký làm mentor
+                    </button>
+                  )}
                 </div>
                 <button
                   type="button"
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-danger hover:bg-danger-soft transition-colors border-none bg-transparent cursor-pointer text-left mt-1 border-t border-solid border-border-light/60 pt-2"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-danger hover:bg-danger-soft transition-colors border-none bg-transparent cursor-pointer text-left mt-1 border-t border-solid border-border-light/60 pt-2.5"
                   onClick={handleLogout}
                 >
-                  <LogOut className="w-4 h-4 shrink-0 text-danger" aria-hidden="true" />
+                  <LogOut className="w-4.5 h-4.5 shrink-0 text-danger" aria-hidden="true" />
                   Đăng xuất
                 </button>
               </section>
