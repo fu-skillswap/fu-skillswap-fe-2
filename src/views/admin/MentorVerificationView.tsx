@@ -5,11 +5,11 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { MentorVerificationRequest, MentorVerificationStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { RefreshCw, Search, X } from 'lucide-react';
+import { showError } from '@/utils/toast';
+import { RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -43,12 +43,6 @@ const allRequestStatuses: MentorVerificationStatus[] = [
 ];
 const pageSize = 10;
 const allStatusesBatchSize = 100;
-
-function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError
-    ? reason.message
-    : 'Không thể tải danh sách hồ sơ mentor.';
-}
 
 function formatDate(value: string | null) {
   if (!value) return 'Chưa gửi';
@@ -114,7 +108,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
   );
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -139,7 +132,7 @@ export function MentorVerificationView({ locale }: { locale: string }) {
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể tải hồ sơ xác minh' });
     } finally {
       setLoading(false);
     }
@@ -148,12 +141,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
   useEffect(() => {
     void loadRequests();
   }, [loadRequests]);
-
-  useEffect(() => {
-    if (!error) return;
-    const timer = window.setTimeout(() => setError(undefined), 5000);
-    return () => window.clearTimeout(timer);
-  }, [error]);
 
   return (
     <main className="admin-dashboard mentor-verification-page">
@@ -203,18 +190,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
             <h1>Xác minh mentor</h1>
             <p>Rà soát hồ sơ mentor và xác minh thông tin đã gửi.</p>
           </section>
-          {error && (
-            <div className="admin-dashboard-toast" role="alert">
-              <span>{error}</span>
-              <button
-                type="button"
-                aria-label="Đóng thông báo lỗi"
-                onClick={() => setError(undefined)}
-              >
-                <X aria-hidden="true" />
-              </button>
-            </div>
-          )}
           <section className="mentor-verification-table">
             <div className="mentor-tabs" role="tablist">
               {tabs.map((tab) => (

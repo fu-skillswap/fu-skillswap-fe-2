@@ -87,15 +87,27 @@ export function GoogleCalendarCallbackView() {
     // 5. Valid OAuth response -> Call Backend connect API
     const performConnect = async () => {
       try {
-        await mentorSchedulingRepo.connectGoogleCalendar({
+        const connection = await mentorSchedulingRepo.connectGoogleCalendar({
           authorizationCode: code,
           redirectUri: redirectUriToUse,
           codeVerifier: storedVerifier,
           state: state,
         });
 
+        if (!connection.connected || !connection.syncEnabled || connection.needsReconnect) {
+          setStatus('ERROR');
+          setErrorMessage(
+            connection.lastSyncErrorMessage ||
+              'Google Calendar đã xác thực nhưng chưa sẵn sàng đồng bộ. Vui lòng kết nối lại và cấp đầy đủ quyền lịch.',
+          );
+          return;
+        }
+
         setStatus('SUCCESS');
-        showSuccess('Đã kết nối Google Calendar.');
+        showSuccess({
+          title: 'Đã kết nối Google Calendar',
+          description: 'Lịch của bạn đã được kết nối thành công.',
+        });
         router.push(`/${locale}/mentor/schedule-manage`);
       } catch (reason) {
         if (reason instanceof ApiClientError) {

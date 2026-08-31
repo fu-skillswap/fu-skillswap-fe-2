@@ -6,6 +6,7 @@
 import type {
   AvailabilitySlotsResponse,
   AvailabilityTemplateResponse,
+  MentorBookingResponse,
   WeekdayEnum,
 } from '@/models/auth';
 import { localDateTimeToUtcIso } from './mentorScheduleDateTime';
@@ -19,7 +20,9 @@ export interface MentorCalendarEvent {
   end: Date;
   type: 'availability';
   status: MentorCalendarEventStatus;
-  source: 'slot' | 'template';
+  source: 'slot' | 'template' | 'booking';
+  slotId?: string;
+  bookingId?: string;
   note?: string;
   serviceTitle?: string;
 }
@@ -158,18 +161,79 @@ export function toMentorScheduleCalendarData(
       start,
       end,
       type: 'availability',
-      status: getEventStatus(
-        start,
-        end,
-        (slot.pendingBookingCount as number) > 0 || (slot.lockingBookingCount as number) > 0,
-      ),
+      status: getEventStatus(start, end, false),
       source: 'slot',
+      slotId: slot.slotId as string,
       note: noteStr || undefined,
       serviceTitle,
     });
   }
 
   return { events, isEmpty: false };
+}
+
+const inactiveBookingStatuses = new Set([
+  'REJECTED_BY_MENTOR',
+  'CANCELED_BY_MENTEE',
+  'CANCELED_BY_MENTOR',
+  'REQUEST_EXPIRED',
+  'PAYMENT_EXPIRED',
+]);
+
+/** Splits availability around real booking intervals so only the reserved duration is marked booked. */
+export function mergeBookingsIntoCalendar(
+  availabilityEvents: MentorCalendarEvent[],
+  bookings: MentorBookingResponse[] = [],
+): MentorCalendarEvent[] {
+  const bookingEvents = bookings.flatMap((booking) => {
+    if (inactiveBookingStatuses.has(booking.bookingStatus)) return [];
+
+    const start = new Date(booking.selectedStartTime);
+    const end = new Date(booking.selectedEndTime);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return [];
+
+    return [
+      {
+        id: `booking-${booking.bookingId}`,
+        start,
+        end,
+        type: 'availability' as const,
+        status: getEventStatus(start, end, true),
+        source: 'booking' as const,
+        bookingId: booking.bookingId,
+        serviceTitle: booking.serviceTitle ?? undefined,
+      },
+    ];
+  });
+
+  const availableFragments = availabilityEvents.flatMap((event) => {
+    let fragments = [{ start: event.start, end: event.end }];
+
+    bookingEvents.forEach((booking) => {
+      fragments = fragments.flatMap((fragment) => {
+        if (booking.end <= fragment.start || booking.start >= fragment.end) return [fragment];
+
+        const remaining: Array<{ start: Date; end: Date }> = [];
+        if (booking.start > fragment.start) {
+          remaining.push({ start: fragment.start, end: booking.start });
+        }
+        if (booking.end < fragment.end) {
+          remaining.push({ start: booking.end, end: fragment.end });
+        }
+        return remaining;
+      });
+    });
+
+    return fragments.map((fragment) => ({
+      ...event,
+      id: `${event.id}-${fragment.start.getTime()}-${fragment.end.getTime()}`,
+      start: fragment.start,
+      end: fragment.end,
+      status: getEventStatus(fragment.start, fragment.end, false),
+    }));
+  });
+
+  return [...availableFragments, ...bookingEvents];
 }
 
 /** Projects active weekly templates into a concrete week and merges them with generated slots. */

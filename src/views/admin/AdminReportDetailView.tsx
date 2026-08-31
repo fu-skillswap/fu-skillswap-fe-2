@@ -9,7 +9,8 @@ import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions
 import { ApiClientError } from '@/models/apiClient';
 import type { AdminCaseActivity, AdminCaseOwnership, AdminForumReport } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { ArrowLeft, ClipboardCheck, LoaderCircle, UserRound, X } from 'lucide-react';
+import { showError } from '@/utils/toast';
+import { ArrowLeft, ClipboardCheck, LoaderCircle, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -89,7 +90,7 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
       });
       setActivity(latestActivity.content);
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể cập nhật báo cáo' });
     } finally {
       setUpdating(false);
     }
@@ -131,14 +132,6 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
             {labelOf(report.status)}
           </span>
         </div>
-        {error && (
-          <div className="admin-dashboard-toast" role="alert">
-            <span>{error}</span>
-            <button type="button" onClick={() => setError(undefined)} aria-label="Đóng thông báo">
-              <X aria-hidden="true" />
-            </button>
-          </div>
-        )}
         <div className="admin-report-detail-grid">
           <div>
             <section className="admin-report-card">

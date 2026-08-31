@@ -13,6 +13,12 @@ import type {
   RejectMentorBookingRequest,
 } from '@/models/auth';
 
+function createIdempotencyKey(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `idem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
 export const mentorBookingRepo = {
   list: (): Promise<MentorBookingPageResponse> =>
     apiClient<MentorBookingPageResponse>(
@@ -24,6 +30,9 @@ export const mentorBookingRepo = {
     apiClient<MentorBookingResponse>(`/api/mentor/bookings/${bookingId}/accept`, {
       method: 'POST',
       data,
+      headers: {
+        'Idempotency-Key': createIdempotencyKey(),
+      },
     }),
   reject: (bookingId: string, data: RejectMentorBookingRequest): Promise<MentorBookingResponse> =>
     apiClient<MentorBookingResponse>(`/api/mentor/bookings/${bookingId}/reject`, {

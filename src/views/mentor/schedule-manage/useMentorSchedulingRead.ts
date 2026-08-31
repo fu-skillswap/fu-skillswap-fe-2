@@ -10,9 +10,11 @@ import type {
   AvailabilitySlotsQuery,
   AvailabilitySlotsResponse,
   GoogleCalendarStatusResponse,
+  MentorBookingResponse,
   MentorBookingPolicyResponse,
   MentorSchedulingConstraintsResponse,
 } from '@/models/auth';
+import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -21,6 +23,7 @@ export interface MentorSchedulingReadData {
   constraints?: MentorSchedulingConstraintsResponse;
   googleCalendarStatus?: GoogleCalendarStatusResponse;
   availabilitySlots?: AvailabilitySlotsResponse;
+  bookings?: MentorBookingResponse[];
 }
 
 interface SchedulingReadErrors {
@@ -62,13 +65,19 @@ export function useMentorSchedulingRead(availabilityQuery: AvailabilitySlotsQuer
     setErrors({});
     setData((current) => ({ ...current, availabilitySlots: undefined }));
 
-    const [bookingPolicyResult, constraintsResult, googleCalendarResult, availabilityResult] =
-      await Promise.allSettled([
-        mentorSchedulingRepo.getBookingPolicy(),
-        mentorSchedulingRepo.getConstraints(),
-        mentorSchedulingRepo.getGoogleCalendarStatus(),
-        mentorSchedulingRepo.listAvailabilitySlots({ fromDate, isActive, toDate }),
-      ]);
+    const [
+      bookingPolicyResult,
+      constraintsResult,
+      googleCalendarResult,
+      availabilityResult,
+      bookingsResult,
+    ] = await Promise.allSettled([
+      mentorSchedulingRepo.getBookingPolicy(),
+      mentorSchedulingRepo.getConstraints(),
+      mentorSchedulingRepo.getGoogleCalendarStatus(),
+      mentorSchedulingRepo.listAvailabilitySlots({ fromDate, isActive, toDate }),
+      mentorBookingRepo.list(),
+    ]);
 
     setData((current) => ({
       bookingPolicy:
@@ -83,12 +92,15 @@ export function useMentorSchedulingRead(availabilityQuery: AvailabilitySlotsQuer
           : current.googleCalendarStatus,
       availabilitySlots:
         availabilityResult.status === 'fulfilled' ? availabilityResult.value : undefined,
+      bookings: bookingsResult.status === 'fulfilled' ? bookingsResult.value.content : undefined,
     }));
     setErrors({
       availability:
         availabilityResult.status === 'rejected'
           ? getErrorMessage(availabilityResult.reason)
-          : undefined,
+          : bookingsResult.status === 'rejected'
+            ? getErrorMessage(bookingsResult.reason)
+            : undefined,
       configuration:
         bookingPolicyResult.status === 'rejected'
           ? getErrorMessage(bookingPolicyResult.reason)

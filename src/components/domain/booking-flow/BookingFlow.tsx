@@ -82,6 +82,25 @@ function formatIso8601(input?: string): string {
   return new Date().toISOString().replace(/Z$/, '');
 }
 
+function getCurrentWeekRange() {
+  const current = new Date();
+  const dayOfWeek = current.getDay();
+  const monday = new Date(current);
+  monday.setDate(current.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  return { fromDate: formatDate(monday), toDate: formatDate(sunday) };
+}
+
 /** Props của BookingFlow Component */
 interface BookingFlowProps {
   /** Thông tin Mentor được chọn */
@@ -152,7 +171,7 @@ export function BookingFlow({
   );
 
   useEffect(() => {
-    loadSlotsAndCandidates();
+    loadSlotsAndCandidates(getCurrentWeekRange());
   }, [loadSlotsAndCandidates]);
 
   // Tự động refresh tải lại danh sách slot khi có lỗi (ví dụ slot bị trùng/người khác chọn mất)

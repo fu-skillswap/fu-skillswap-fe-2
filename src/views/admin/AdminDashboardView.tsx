@@ -5,7 +5,6 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type {
   AdminDashboardOverviewResponse,
@@ -14,6 +13,7 @@ import type {
   AdminQueueKey,
 } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
+import { showError } from '@/utils/toast';
 import {
   Bell,
   CalendarDays,
@@ -124,10 +124,6 @@ function formatTime(value: string) {
       : `${Math.round(minutes / 1440)}d ago`;
 }
 
-function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError ? reason.message : 'Không thể tải dữ liệu quản trị.';
-}
-
 const queueIcon: Record<AdminQueueKey, IconName> = {
   MENTOR_VERIFICATION: 'clipboard',
   FORUM_REPORT: 'report',
@@ -146,10 +142,8 @@ export function AdminDashboardView() {
   const [mentorVerificationCount, setMentorVerificationCount] = useState<number>();
   const [loading, setLoading] = useState(true);
   const [assigningCase, setAssigningCase] = useState<string>();
-  const [error, setError] = useState<string>();
   const loadDashboard = useCallback(async () => {
     setLoading(true);
-    setError(undefined);
     try {
       const [overviewResult, queueResult] = await Promise.allSettled([
         adminRepo.getOverview(),
@@ -173,7 +167,7 @@ export function AdminDashboardView() {
       const response = await adminRepo.getMentorVerificationRequests({ page: 0, size: 1 });
       setMentorVerificationCount(response.totalElements);
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể tải dữ liệu quản trị' });
     }
   }, []);
   const loadQueueItems = useCallback(async () => {
@@ -182,7 +176,7 @@ export function AdminDashboardView() {
       const page = await adminRepo.getQueueItems({ queueKey: activeQueue, page: 0, size: 4 });
       setQueueItems(page.content);
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể tải dữ liệu xác minh' });
     }
   }, [activeQueue]);
   useEffect(() => {
@@ -195,12 +189,6 @@ export function AdminDashboardView() {
     void loadQueueItems();
   }, [loadQueueItems]);
 
-  useEffect(() => {
-    if (!error) return;
-
-    const timer = window.setTimeout(() => setError(undefined), 5000);
-    return () => window.clearTimeout(timer);
-  }, [error]);
   const assignToMe = async (item: AdminQueueItem) => {
     setAssigningCase(item.caseId);
     try {
@@ -209,7 +197,7 @@ export function AdminDashboardView() {
       await loadDashboard();
       await loadMentorVerificationSummary();
     } catch (reason) {
-      setError(getErrorMessage(reason));
+      showError(reason, { title: 'Không thể cập nhật hàng đợi' });
     } finally {
       setAssigningCase(undefined);
     }
@@ -309,18 +297,6 @@ export function AdminDashboardView() {
               </button>
             </div>
           </section>
-          {error && (
-            <div className="admin-dashboard-toast" role="alert">
-              <span>{error}</span>
-              <button
-                type="button"
-                aria-label="Đóng thông báo lỗi"
-                onClick={() => setError(undefined)}
-              >
-                ×
-              </button>
-            </div>
-          )}
           <section className="admin-metric-grid" aria-label="Platform overview">
             {metrics.map((metric) => (
               <article key={metric.label}>

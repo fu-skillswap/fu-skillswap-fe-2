@@ -4579,82 +4579,139 @@ textarea:focus,
   }
 }
 
-.figma-toast {
-  position: fixed;
-  z-index: 1000;
-  right: 24px;
-  top: 24px;
-  width: min(calc(100vw - 32px), 420px);
+.skillswap-toast {
+  --toast-accent: #119cf7;
+  width: min(400px, calc(100vw - 48px));
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
+  grid-template-columns: 20px minmax(0, 1fr) 34px;
   align-items: start;
-  padding: 15px;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 14px 36px rgb(31 41 55 / 18%);
-  animation: figma-toast-in 0.22s ease-out;
+  gap: 12px;
+  padding: 15px 10px 15px 15px;
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid var(--toast-accent);
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 14%);
+  color: var(--ui-text);
+  animation: skillswap-toast-enter 0.2s ease-out both;
 }
 
-.figma-toast-icon {
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #dc2626;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 800;
+.skillswap-toast[data-visible='false'] {
+  animation: skillswap-toast-exit 0.18s ease-in both;
 }
 
-.figma-toast strong {
+.skillswap-toast-success {
+  --toast-accent: var(--ui-success);
+}
+
+.skillswap-toast-error {
+  --toast-accent: var(--ui-danger);
+}
+
+.skillswap-toast-warning {
+  --toast-accent: var(--ui-warning);
+}
+
+.skillswap-toast-info {
+  --toast-accent: #119cf7;
+}
+
+.skillswap-toast-icon {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--toast-accent);
+}
+
+.skillswap-toast-content {
+  min-width: 0;
+}
+
+.skillswap-toast-content strong {
   display: block;
-  color: #991b1b;
+  overflow-wrap: anywhere;
+  color: var(--ui-text);
   font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
-.figma-toast p {
+.skillswap-toast-content p {
+  display: -webkit-box;
+  overflow: hidden;
   margin: 4px 0 0;
-  color: #7f1d1d;
+  color: var(--ui-text-secondary);
   font-size: 13px;
+  font-weight: 500;
   line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.figma-toast button {
-  width: 24px;
-  height: 24px;
+.skillswap-toast > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin: -7px -2px 0 0;
   padding: 0;
+  place-items: center;
   border: 0;
-  border-radius: 5px;
+  border-radius: 8px;
   background: transparent;
-  color: #991b1b;
-  font-size: 22px;
-  line-height: 1;
+  color: var(--ui-text-muted);
   cursor: pointer;
 }
 
-.figma-toast button:hover {
-  background: #fee2e2;
+.skillswap-toast > button:hover {
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text);
 }
 
-@keyframes figma-toast-in {
+.skillswap-toast > button:focus-visible {
+  outline: 2px solid #119cf7;
+  outline-offset: 1px;
+}
+
+.skillswap-toast > button svg {
+  width: 17px;
+  height: 17px;
+}
+
+@keyframes skillswap-toast-enter {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(16px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes skillswap-toast-exit {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skillswap-toast,
+  .skillswap-toast[data-visible='false'] {
+    animation-duration: 0.01ms;
   }
 }
 
 @media (max-width: 640px) {
-  .figma-toast {
-    right: 16px;
-    top: 16px;
+  [data-rht-toaster] {
+    top: 16px !important;
+    right: 16px !important;
+    left: 16px !important;
+  }
+
+  .skillswap-toast {
+    width: calc(100vw - 32px);
   }
 }
 
@@ -7216,44 +7273,6 @@ textarea:focus,
   .mentor-service-detail-page-actions {
     align-items: center;
   }
-}
-
-.admin-dashboard-toast {
-  position: fixed;
-  z-index: 1000;
-  top: 24px;
-  right: 24px;
-  width: min(calc(100vw - 32px), 400px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 15px 16px;
-  border: 1px solid #ffb4ab;
-  border-radius: 8px;
-  background: #ffdad6;
-  box-shadow: 0 12px 28px rgb(11 28 48 / 18%);
-  color: #93000a;
-  font-size: 14px;
-  line-height: 20px;
-  animation: admin-toast-in 0.2s ease-out;
-}
-
-.admin-dashboard-toast button {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  margin: -2px -4px 0 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-  font-size: 22px;
-  line-height: 1;
-}
-
-.admin-dashboard-toast button:hover {
-  background: rgb(147 0 10 / 10%);
 }
 
 .admin-area-shell {
@@ -10048,25 +10067,6 @@ textarea:focus,
   }
 }
 
-@keyframes admin-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 560px) {
-  .admin-dashboard-toast {
-    top: 16px;
-    right: 16px;
-  }
-}
-
 /* Sắc xanh nhạt dùng thống nhất cho các nút thao tác quản trị. */
 .admin-area-shell {
   --admin-action: #1f7ae0;
@@ -12846,19 +12846,6 @@ textarea:focus,
   }
 }
 
-.mentor-service-status-toast {
-  width: min(320px, calc(100vw - 32px));
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid #c8e6fd;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 10px 28px rgb(0 149 246 / 16%);
-  color: #183153;
-}
-
 /* Mentor scheduling calendar */
 .mentor-app .mentor-schedule-section-heading {
   display: flex;
@@ -13564,6 +13551,273 @@ textarea:focus,
   height: 24px;
 }
 
+.mentor-app .bookingAvailabilityDetailModalShell {
+  width: min(740px, calc(100vw - 32px));
+}
+
+.mentor-app .bookingAvailabilityDetailModal {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  color: var(--ui-text);
+}
+
+.mentor-app .bookingDetailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.mentor-app .bookingDetailHeader h2 {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.mentor-app .bookingDetailHeader button {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+}
+
+.mentor-app .bookingDetailHeader button:hover {
+  background: var(--ui-surface-subtle);
+  color: var(--ui-primary);
+}
+
+.mentor-app .bookingDetailHeader button:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+.mentor-app .bookingDetailHeader svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mentor-app .bookingDetailSummary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 20px;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.mentor-app .bookingDetailInfoItem {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 11px;
+  min-width: 0;
+}
+
+.mentor-app .bookingDetailInfoIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--ui-primary-soft);
+  color: #119cf7;
+}
+
+.mentor-app .bookingDetailInfoIcon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.mentor-app .bookingDetailInfoItem > div {
+  min-width: 0;
+}
+
+.mentor-app .bookingDetailInfoItem > span:not(.bookingDetailInfoIcon),
+.mentor-app .bookingDetailInfoItem > div > span,
+.mentor-app .bookingDetailSession article > span,
+.mentor-app .bookingDetailMentee > div > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mentor-app .bookingDetailInfoItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ui-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.mentor-app .bookingDetailInfoItem small,
+.mentor-app .bookingDetailInfoItem a {
+  display: block;
+  margin-top: 3px;
+  color: #119cf7;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.mentor-app .bookingDetailStatus {
+  display: flex;
+  min-height: 76px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12px 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+}
+
+.mentor-app .bookingDetailSession {
+  padding: 22px 28px 0;
+}
+
+.mentor-app .bookingDetailSession h3 {
+  margin: 0 0 13px;
+  color: var(--ui-text);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.mentor-app .bookingDetailSession > div {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+
+.mentor-app .bookingDetailSession article {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.mentor-app .bookingDetailSession article strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ui-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mentor-app .bookingDetailSession article:last-child strong {
+  color: #119cf7;
+}
+
+.mentor-app .bookingDetailMentee {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 16px 28px 0;
+  padding: 13px 15px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.mentor-app .bookingDetailMenteeAvatar {
+  display: grid;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 50%;
+  background: #119cf7;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mentor-app .bookingDetailMenteeAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mentor-app .bookingDetailMentee strong {
+  color: var(--ui-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mentor-app .bookingDetailCapabilityNote {
+  margin: 12px 28px 0;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+}
+
+.mentor-app .bookingDetailFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 22px;
+  padding: 17px 28px 22px;
+  border-top: 1px solid var(--ui-border);
+}
+
+.mentor-app .bookingDetailFooter > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .mentor-app .bookingDetailSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .mentor-app .bookingDetailHeader,
+  .mentor-app .bookingDetailSummary,
+  .mentor-app .bookingDetailSession {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .mentor-app .bookingDetailSummary,
+  .mentor-app .bookingDetailSession > div {
+    grid-template-columns: 1fr;
+  }
+
+  .mentor-app .bookingDetailMentee,
+  .mentor-app .bookingDetailCapabilityNote {
+    margin-right: 18px;
+    margin-left: 18px;
+  }
+
+  .mentor-app .bookingDetailFooter {
+    align-items: stretch;
+    padding-right: 18px;
+    padding-left: 18px;
+    flex-direction: column;
+  }
+
+  .mentor-app .bookingDetailFooter > div,
+  .mentor-app .bookingDetailFooter button {
+    width: 100%;
+  }
+}
+
 .mentor-app .availability-detail-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -13725,24 +13979,10 @@ textarea:focus,
   height: 16px;
 }
 
-.mentor-app .availability-detail-notice.is-warning,
-.mentor-app .availability-detail-restriction {
-  border-color: #fde68a;
-  background: var(--ui-warning-soft);
-  color: var(--ui-warning);
-}
-
 .mentor-app .availability-detail-notice.is-info {
   border-color: var(--ui-primary-border);
   background: var(--ui-primary-soft);
   color: var(--ui-primary-hover);
-}
-
-.mentor-app .availability-detail-restriction {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  border-radius: var(--ui-radius-lg);
-  font-size: 12px;
 }
 
 .mentor-app .availability-detail-footer {
@@ -13895,46 +14135,6 @@ textarea:focus,
   .mentor-app .mentor-availability-time-fields {
     grid-template-columns: 1fr;
   }
-}
-
-.mentor-service-status-toast-icon {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 8px;
-  background: #eaf5ff;
-  color: #0095f6;
-}
-
-.mentor-service-status-toast p {
-  flex: 1;
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
-}
-
-.mentor-service-status-toast button {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  flex: 0 0 auto;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: #7c91aa;
-  cursor: pointer;
-}
-
-.mentor-service-status-toast button:hover,
-.mentor-service-status-toast button:focus-visible {
-  background: #eaf5ff;
-  color: #0095f6;
-  outline: none;
 }
 
 .mentor-app .schedule-service-card[role='button'] {
@@ -15054,6 +15254,49 @@ textarea:focus,
   color: #42526b;
   font-size: 14px;
   font-weight: 600;
+}
+
+.mentor-booking-google-meet-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #a9ddff;
+  border-radius: 11px;
+  background: #eef8ff;
+  color: #17345c;
+}
+
+.mentor-booking-google-meet-notice > svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: var(--booking-primary);
+}
+
+.mentor-booking-google-meet-notice > div {
+  display: grid;
+  gap: 4px;
+}
+
+.mentor-booking-google-meet-notice strong {
+  font-size: 14px;
+}
+
+.mentor-booking-google-meet-notice span {
+  color: #536b88;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mentor-booking-calendar-warning {
+  padding: 12px 14px;
+  border: 1px solid #f5d38a;
+  border-radius: 10px;
+  background: #fff9e9;
+  color: #8a5b08;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .mentor-booking-action-form input,

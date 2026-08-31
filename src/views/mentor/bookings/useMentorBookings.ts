@@ -11,11 +11,13 @@ import type {
   AcceptMentorBookingRequest,
   CancelMentorBookingRequest,
   CompleteMentorBookingRequest,
+  GoogleCalendarStatusResponse,
   MentorBookingResponse,
   RejectMentorBookingRequest,
 } from '@/models/auth';
 import { useAuth } from '@/providers/AuthProvider';
 import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
+import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 
 export type MentorBookingFilter =
   'NEW' | 'UPCOMING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ALL';
@@ -70,13 +72,18 @@ export function useMentorBookings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const [googleCalendarStatus, setGoogleCalendarStatus] = useState<GoogleCalendarStatusResponse>();
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(undefined);
     try {
-      const page = await mentorBookingRepo.list();
+      const [page, calendarStatus] = await Promise.all([
+        mentorBookingRepo.list(),
+        mentorSchedulingRepo.getGoogleCalendarStatus().catch(() => undefined),
+      ]);
       setAllBookings(page.content ?? []);
+      setGoogleCalendarStatus(calendarStatus);
     } catch (reason) {
       setAllBookings([]);
       setError(
@@ -144,6 +151,7 @@ export function useMentorBookings() {
     bookings,
     counts,
     error,
+    googleCalendarStatus,
     isLoading: isLoading || isBootstrapping,
     isSaving,
     loadDetail,

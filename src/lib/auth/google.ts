@@ -54,3 +54,17 @@ export function getGoogleCalendarRedirectUri(locale: string): string {
   }
   return `/${locale}/mentor/google-calendar/callback`;
 }
+
+/**
+ * Lấy OAuth client dành riêng cho quyền Google Calendar.
+ * Không dùng client đăng nhập làm fallback để tránh gửi người dùng sang nhầm OAuth consent app.
+ */
+export function getGoogleCalendarClientId(): string {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID?.trim();
+  if (!clientId) {
+    throw new Error(
+      'Chưa cấu hình OAuth Client cho Google Calendar. Vui lòng thiết lập NEXT_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID.',
+    );
+  }
+  return clientId;
+}

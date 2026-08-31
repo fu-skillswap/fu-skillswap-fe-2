@@ -74,36 +74,19 @@ export function ToastProvider({ children }: { children?: React.ReactNode }) {
       {/* CONTAINER THÔNG BÁO TOAST */}
       <Toaster
         position="top-right"
+        gutter={8}
+        containerStyle={{
+          top: 24,
+          right: 24,
+          zIndex: 100000,
+        }}
         toastOptions={{
-          duration: 4000,
+          duration: 5000,
           style: {
-            background: '#ffffff',
-            color: '#0f172a',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0',
-            padding: '12px 16px',
-            fontSize: '14px',
-            fontWeight: 500,
-            maxWidth: '420px',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#ffffff',
-            },
-            style: {
-              borderLeft: '4px solid #10b981',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#ffffff',
-            },
-            style: {
-              borderLeft: '4px solid #ef4444',
-            },
+            maxWidth: 'none',
+            padding: 0,
+            background: 'transparent',
+            boxShadow: 'none',
           },
         }}
       />

@@ -24,6 +24,7 @@ interface MentorScheduleCalendarProps {
   onRetry: () => void;
   onUnavailableAction: () => void;
   onSelectSlot?: (slotId: string) => void;
+  onSelectBooking?: (bookingId: string) => void;
 }
 
 function addDays(date: Date, days: number) {
@@ -112,6 +113,7 @@ export function MentorScheduleCalendar({
   onRetry,
   onUnavailableAction,
   onSelectSlot,
+  onSelectBooking,
 }: MentorScheduleCalendarProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -237,15 +239,25 @@ export function MentorScheduleCalendar({
                         <article
                           className={`mentor-schedule-calendar-event event-availability event-${segment.event.status}`}
                           key={`${segment.event.id}-${dayIndex}`}
-                          role={segment.event.source === 'slot' ? 'button' : undefined}
-                          tabIndex={segment.event.source === 'slot' ? 0 : undefined}
-                          onClick={() =>
-                            segment.event.source === 'slot' && onSelectSlot?.(segment.event.id)
+                          role={
+                            segment.event.slotId || segment.event.bookingId ? 'button' : undefined
                           }
+                          tabIndex={segment.event.slotId || segment.event.bookingId ? 0 : undefined}
+                          onClick={() => {
+                            if (segment.event.bookingId) {
+                              onSelectBooking?.(segment.event.bookingId);
+                            } else if (segment.event.slotId) {
+                              onSelectSlot?.(segment.event.slotId);
+                            }
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              if (segment.event.source === 'slot') onSelectSlot?.(segment.event.id);
+                              if (segment.event.bookingId) {
+                                onSelectBooking?.(segment.event.bookingId);
+                              } else if (segment.event.slotId) {
+                                onSelectSlot?.(segment.event.slotId);
+                              }
                             }
                           }}
                           style={{

@@ -124,11 +124,15 @@ export function useMentorPosts() {
       if (shouldPublish) {
         await mentorPostRepo.publish(saved.id, { expectedVersion: saved.version });
       }
-      showSuccess(shouldPublish ? 'Đã đăng bài viết.' : 'Đã lưu bản nháp.');
+      showSuccess(
+        shouldPublish
+          ? { title: 'Đã đăng bài', description: 'Bài viết của bạn đã được xuất bản.' }
+          : { title: 'Đã lưu bản nháp', description: 'Bạn có thể tiếp tục chỉnh sửa sau.' },
+      );
       setEditingPost(undefined);
       await refresh();
     } catch (reason) {
-      showError(reason instanceof Error ? reason.message : 'Không thể lưu bài viết.');
+      showError(reason, { title: 'Không thể lưu bài viết' });
     } finally {
       setIsSaving(false);
     }
@@ -142,11 +146,14 @@ export function useMentorPosts() {
     setIsSaving(true);
     try {
       await mentorPostRepo.archive(archiveTarget.id, { expectedVersion: archiveTarget.version });
-      showSuccess('Đã chuyển bài viết vào lưu trữ.');
+      showSuccess({
+        title: 'Đã lưu trữ bài viết',
+        description: 'Bài viết đã được chuyển khỏi danh sách đang hoạt động.',
+      });
       setArchiveTarget(undefined);
       await refresh();
     } catch (reason) {
-      showError(reason instanceof Error ? reason.message : 'Không thể lưu trữ bài viết.');
+      showError(reason, { title: 'Không thể lưu trữ bài viết' });
     } finally {
       setIsSaving(false);
     }

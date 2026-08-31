@@ -8,9 +8,9 @@
 import { ApiClientError } from '@/models/apiClient';
 import type { Notification } from '@/models/notification';
 import { notificationRepo } from '@/repositories/notificationRepo';
+import { showInfo } from '@/utils/toast';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import toast from 'react-hot-toast';
 
 const POLLING_INTERVAL_MS = 30_000;
 const NOTIFICATION_LIMIT = 20;
@@ -42,7 +42,7 @@ export function NotificationMenu() {
         result.items
           .filter((item) => !knownNotificationIdsRef.current.has(item.notificationId))
           .forEach((item) => {
-            toast(`${item.title}: ${item.message}`, { duration: 5000 });
+            showInfo({ title: item.title, description: item.message });
           });
       }
 

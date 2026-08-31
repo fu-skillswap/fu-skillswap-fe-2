@@ -82,9 +82,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           href={feedHref}
           onClick={onClose}
           className={
-            pathname === feedHref || pathname.includes('/posts')
-              ? 'figma-nav-link figma-nav-link-active'
-              : 'figma-nav-link'
+            pathname === feedHref ? 'figma-nav-link figma-nav-link-active' : 'figma-nav-link'
           }
         >
           <Home className="w-5 h-5" aria-hidden="true" />
