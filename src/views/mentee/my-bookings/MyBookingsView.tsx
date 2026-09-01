@@ -1,255 +1,355 @@
 /**
  * @file MyBookingsView.tsx
- * @description Màn hình danh sách Booking của tôi (Mentee My Bookings View).
- * Lấy dữ liệu từ API GET /api/me/bookings và hiển thị dạng danh sách thẻ lịch đặt.
+ * @description Danh sách booking và các CTA theo capability backend dành cho Mentee.
  */
 
 'use client';
 
-import Link from 'next/link';
-import { Calendar, Clock, FileText, RefreshCw, User, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
-import { FILTER_TABS, useMyBookings } from './useMyBookings';
-import { BookingStatusBadge } from '@/components/ui/BookingStatusBadge';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  CreditCard,
+  LogIn,
+  MessageSquare,
+  RefreshCw,
+  Video,
+  XCircle,
+} from 'lucide-react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
-import { useEffect } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import type { BookingIssueType, MentorBookingResponse } from '@/models/auth';
+import { showError, showSuccess } from '@/utils/toast';
+import { type MenteeBookingMutation, type MenteeBookingTab, useMyBookings } from './useMyBookings';
 
-function formatDateTimeRange(startAt?: string, endAt?: string) {
-  if (!startAt) return '—';
-  try {
-    const trimmed = String(startAt).trim();
-    const hasOffset = /[+-]\d{2}:\d{2}$/.test(trimmed);
-    const isoCandidate = trimmed.includes('Z') || hasOffset ? trimmed : `${trimmed}Z`;
-    const startD = new Date(isoCandidate);
-    if (isNaN(startD.getTime())) return startAt;
+const TABS: Array<{ value: MenteeBookingTab; label: string }> = [
+  { value: 'ALL', label: 'Tất cả' },
+  { value: 'PENDING', label: 'Đang chờ' },
+  { value: 'CONFIRMED', label: 'Đã xác nhận' },
+  { value: 'COMPLETED', label: 'Hoàn thành' },
+  { value: 'CANCELLED', label: 'Đã hủy' },
+];
 
-    const dateStr = startD.toLocaleDateString('vi-VN', {
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    const startTime = startD.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+type FormAction = 'cancel' | 'confirm' | 'reportIssue' | 'respondIssue';
 
-    if (endAt) {
-      const endTrimmed = String(endAt).trim();
-      const endHasOffset = /[+-]\d{2}:\d{2}$/.test(endTrimmed);
-      const endIsoCandidate = endTrimmed.includes('Z') || endHasOffset ? endTrimmed : `${endTrimmed}Z`;
-      const endD = new Date(endIsoCandidate);
-      if (!isNaN(endD.getTime())) {
-        const endTime = endD.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-        return `${dateStr} · ${startTime} – ${endTime}`;
-      }
-    }
-    return `${dateStr} · ${startTime}`;
-  } catch {
-    return startAt;
-  }
+function formatSchedule(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('vi-VN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
-export function MyBookingsView({ locale }: { locale: string }) {
-  const { bookings, totalCount, counts, isLoading, error, activeTab, setActiveTab, refresh } = useMyBookings();
+function statusOf(booking: MentorBookingResponse) {
+  if (booking.displayState === 'CANCELED_OR_EXPIRED') {
+    return { label: 'Đã hủy hoặc hết hạn', variant: 'danger' as const };
+  }
+  if (booking.displayState === 'COMPLETED' || booking.displayState === 'FEEDBACK_REQUIRED') {
+    return { label: 'Hoàn thành', variant: 'success' as const };
+  }
+  if (booking.displayState === 'PAYMENT_REQUIRED') {
+    return { label: 'Chờ thanh toán', variant: 'warning' as const };
+  }
+  if (booking.displayState === 'PENDING_MENTOR_RESPONSE') {
+    return { label: 'Chờ Mentor xác nhận', variant: 'warning' as const };
+  }
+  if (booking.displayState === 'UNDER_REVIEW') {
+    return { label: 'Đang xem xét', variant: 'warning' as const };
+  }
+  if (booking.displayState === 'WAITING_CONFIRMATION') {
+    return { label: 'Chờ xác nhận hoàn tất', variant: 'info' as const };
+  }
+  return {
+    label: booking.displayState === 'IN_SESSION' ? 'Đang diễn ra' : 'Sắp tới',
+    variant: 'info' as const,
+  };
+}
+
+export function MyBookingsView({ locale: _locale }: { locale: string }) {
+  const router = useRouter();
+  const params = useParams<{ locale: string }>();
   const { setHeaderTitle } = useMenteeShell();
+  const { activeTab, bookings, error, isLoading, isSaving, mutate, refresh, setActiveTab } =
+    useMyBookings();
+  const [formAction, setFormAction] = useState<{
+    type: FormAction;
+    booking: MentorBookingResponse;
+  }>();
 
   useEffect(() => {
-    setHeaderTitle('Booking của tôi');
+    setHeaderTitle('Lịch đặt');
     return () => setHeaderTitle(undefined);
   }, [setHeaderTitle]);
 
-  return (
-    <section className="space-y-6 max-w-7xl mx-auto">
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-solid border-border-light shadow-xs">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-text-main m-0">
-            Booking của tôi
-          </h1>
-          <p className="text-xs text-text-muted mt-1 m-0">
-            Quản lý và theo dõi trạng thái các buổi tư vấn mentoring đã đặt ({totalCount} booking)
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={refresh}
-            className="h-10 px-4 rounded-xl border border-solid border-border-color bg-white hover:bg-surface-subtle text-text-secondary font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Làm mới
-          </button>
-          <Link
-            href={`/${locale}/mentor-booking`}
-            className="h-10 px-5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors inline-flex items-center justify-center text-center cursor-pointer"
-          >
-            + Đặt lịch mới
-          </Link>
-        </div>
-      </header>
+  const execute = async (booking: MentorBookingResponse, mutation: MenteeBookingMutation) => {
+    try {
+      await mutate(booking.bookingId, mutation);
+      showSuccess({ title: 'Đã cập nhật lịch đặt', description: 'Thay đổi của bạn đã được lưu.' });
+      setFormAction(undefined);
+    } catch (reason) {
+      showError(reason, { title: 'Không thể cập nhật lịch đặt' });
+    }
+  };
 
-      {/* Tabs lọc trạng thái */}
-      <div className="flex items-center gap-2 p-2 bg-white rounded-2xl border border-solid border-border-light shadow-xs overflow-x-auto">
-        {FILTER_TABS.map((tab) => {
-          const count = counts[tab.key] || 0;
-          const isActive = activeTab === tab.key;
-          return (
+  return (
+    <section className="mx-auto max-w-7xl space-y-6">
+      <header className="rounded-3xl border border-border-light bg-white p-6 shadow-xs">
+        <h1 className="m-0 text-2xl font-extrabold text-text-main">Lịch đặt của tôi</h1>
+        <p className="mt-1 text-sm text-text-muted">
+          Theo dõi và thực hiện các bước tiếp theo của buổi mentoring.
+        </p>
+      </header>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Lọc lịch đặt">
+          {TABS.map((tab) => (
             <button
               type="button"
-              key={tab.key}
-              className={`h-9 px-4 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-solid cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                isActive
-                  ? 'bg-primary-light border-primary-border text-primary font-bold shadow-xs'
-                  : 'bg-surface-subtle border-transparent text-text-secondary hover:text-text-main hover:bg-slate-200/50'
-              }`}
-              onClick={() => setActiveTab(tab.key)}
+              role="tab"
+              aria-selected={activeTab === tab.value}
+              className={`h-10 rounded-xl border px-4 text-sm font-semibold transition-colors ${activeTab === tab.value ? 'border-primary bg-primary text-white' : 'border-border-color bg-white text-text-secondary hover:border-primary hover:text-primary'}`}
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
             >
-              <span>{tab.label}</span>
-              {count > 0 && (
-                <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                    isActive ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {count}
-                </span>
-              )}
+              {tab.label}
             </button>
-          );
-        })}
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          leftIcon={<RefreshCw />}
+          onClick={() => void refresh()}
+          disabled={isLoading}
+        >
+          Làm mới
+        </Button>
       </div>
 
-      {/* Error state */}
       {error && (
-        <div className="p-4 rounded-2xl bg-danger-soft border border-solid border-red-200 text-danger text-xs font-medium" role="alert">
+        <div
+          className="rounded-xl border border-red-200 bg-danger-soft p-4 text-sm text-danger"
+          role="alert"
+        >
           {error}
         </div>
       )}
-
-      {/* Loading state */}
       {isLoading ? (
-        <div className="text-center py-12 text-xs text-text-muted">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
-          <p>Đang tải danh sách đặt lịch từ hệ thống...</p>
+        <div className="grid gap-4" aria-label="Đang tải lịch đặt">
+          {[1, 2, 3].map((item) => (
+            <div className="h-32 animate-pulse rounded-2xl bg-slate-100" key={item} />
+          ))}
         </div>
       ) : bookings.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-3xl border border-solid border-border-light shadow-xs flex flex-col items-center gap-3">
-          <Calendar className="w-12 h-12 text-text-disabled mb-1" />
-          <h3 className="text-base font-bold text-text-main m-0">
-            Hiện tại chưa có booking nào
-          </h3>
-          <p className="text-xs text-text-muted m-0">
-            Không tìm thấy lịch đặt nào từ hệ thống. Hãy chọn Mentor và gửi yêu cầu đặt lịch!
-          </p>
-          <Link
-            href={`/${locale}/mentor-booking`}
-            className="mt-2 h-10 px-6 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-colors inline-flex items-center justify-center"
-          >
-            Tìm Mentor ngay
-          </Link>
+        <div className="flex flex-col items-center gap-2 rounded-3xl border border-border-light bg-white p-12 text-center shadow-xs">
+          <CalendarDays className="h-10 w-10 text-text-disabled" aria-hidden="true" />
+          <strong className="text-text-main">Không có lịch đặt phù hợp.</strong>
+          <span className="text-sm text-text-muted">Các booking của bạn sẽ xuất hiện tại đây.</span>
         </div>
       ) : (
-        /* Danh sách thẻ Booking */
-        <div className="grid grid-cols-1 gap-4">
-          {bookings.map((item) => (
-            <div
-              key={item.id}
-              className="card"
-              style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '16px',
-                padding: '22px 24px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              {/* Card Top: Avatar Mentor + Service Title + Status Badge */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  {item.mentorAvatarUrl ? (
-                    <img
-                      src={item.mentorAvatarUrl}
-                      alt={item.mentorDisplayName || item.mentorName || 'Mentor'}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        background: 'var(--primary-light)',
-                        color: 'var(--primary)',
-                        display: 'grid',
-                        placeItems: 'center',
-                        fontWeight: '700',
-                      }}
-                    >
-                      <User className="w-5 h-5" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                      {item.serviceTitle || item.serviceName || 'Dịch vụ tư vấn Mentoring'}
-                    </h3>
-                    <p style={{ margin: '3px 0 0', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                      Mentor: <strong>{item.mentorDisplayName || item.mentorName || 'Mentor'}</strong>
-                    </p>
-                  </div>
-                </div>
-                <BookingStatusBadge status={item.bookingStatus || item.status} />
-              </div>
-
-              {/* Time & Duration row */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  background: 'var(--surface-subtle)',
-                  padding: '12px 18px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-light)',
-                  fontSize: '0.875rem',
-                  color: 'var(--text-main)',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                  <Calendar className="w-4 h-4 text-[var(--primary)]" />
-                  <span>
-                    {formatDateTimeRange(
-                      item.selectedStartTime || item.startAt || item.startsAt,
-                      item.selectedEndTime || item.endAt || item.endsAt,
-                    )}
-                  </span>
-                </div>
-                {item.durationMinutes && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)' }}>
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{item.durationMinutes} phút</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Goal Title & Description */}
-              {(item.learningGoalTitle || item.learningGoalDescription) && (
-                <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                    <FileText className="w-4.5 h-4.5 text-[var(--primary)] flex-shrink-0" />
-                    <span>{item.learningGoalTitle || 'Mục tiêu học tập'}</span>
-                  </div>
-                  {item.learningGoalDescription && (
-                    <p style={{ margin: '6px 0 0 26px', fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.55' }}>
-                      {item.learningGoalDescription}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+        <div className="grid gap-4">
+          {bookings.map((booking) => (
+            <BookingCard
+              booking={booking}
+              key={booking.bookingId}
+              onAction={(type) => setFormAction({ type, booking })}
+              onImmediate={(mutation) => void execute(booking, mutation)}
+              onMessage={() =>
+                router.push(
+                  `/${params.locale || 'vi'}/messages?participantId=${encodeURIComponent(booking.mentorUserId || '')}`,
+                )
+              }
+            />
           ))}
         </div>
       )}
+      <ActionModal
+        action={formAction}
+        isSaving={isSaving}
+        onClose={() => setFormAction(undefined)}
+        onSubmit={(mutation) => formAction && void execute(formAction.booking, mutation)}
+      />
     </section>
+  );
+}
+
+function BookingCard({
+  booking,
+  onAction,
+  onImmediate,
+  onMessage,
+}: {
+  booking: MentorBookingResponse;
+  onAction: (type: FormAction) => void;
+  onImmediate: (mutation: MenteeBookingMutation) => void;
+  onMessage: () => void;
+}) {
+  const status = statusOf(booking);
+  const canCheckIn = Boolean(
+    booking.attendance?.canCheckIn && !booking.attendance.currentUserCheckedIn,
+  );
+  const canMessage =
+    Boolean(booking.conversationId || booking.mentorUserId) &&
+    [
+      'UPCOMING',
+      'IN_SESSION',
+      'WAITING_CONFIRMATION',
+      'UNDER_REVIEW',
+      'FEEDBACK_REQUIRED',
+      'COMPLETED',
+    ].includes(booking.displayState);
+  return (
+    <article className="grid gap-4 rounded-2xl border border-border-color bg-white p-5 shadow-xs">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="grid gap-1">
+          <strong className="text-base text-text-main">
+            {booking.serviceTitle || 'Dịch vụ mentoring'}
+          </strong>
+          <span className="text-sm text-text-muted">
+            với {booking.mentorDisplayName || 'Mentor'}
+          </span>
+        </div>
+        <Badge variant={status.variant}>{status.label}</Badge>
+      </div>
+      <div className="flex items-center gap-2 text-sm text-text-muted">
+        <CalendarDays className="h-4 w-4 text-primary" />
+        {formatSchedule(booking.selectedStartTime)}
+      </div>
+      <div className="flex flex-wrap justify-end gap-2 border-t border-border-light pt-4">
+        {booking.canPay && (
+          <Button leftIcon={<CreditCard />} onClick={() => onImmediate({ type: 'pay' })}>
+            Thanh toán
+          </Button>
+        )}
+        {canCheckIn && (
+          <Button leftIcon={<LogIn />} onClick={() => onImmediate({ type: 'checkIn' })}>
+            Check-in
+          </Button>
+        )}
+        {booking.canJoin && booking.meetingLink && (
+          <Button
+            leftIcon={<Video />}
+            onClick={() => window.open(booking.meetingLink || '', '_blank', 'noopener,noreferrer')}
+          >
+            Tham gia
+          </Button>
+        )}
+        {booking.canConfirmByMentee && (
+          <Button leftIcon={<CheckCircle2 />} onClick={() => onAction('confirm')}>
+            Xác nhận hoàn tất
+          </Button>
+        )}
+        {canMessage && (
+          <Button variant="outline" leftIcon={<MessageSquare />} onClick={onMessage}>
+            Nhắn tin
+          </Button>
+        )}
+        {booking.canReportIssue && (
+          <Button
+            variant="outline"
+            leftIcon={<AlertTriangle />}
+            onClick={() => onAction('reportIssue')}
+          >
+            Báo vấn đề
+          </Button>
+        )}
+        {booking.canRespondIssue && (
+          <Button variant="outline" onClick={() => onAction('respondIssue')}>
+            Phản hồi vấn đề
+          </Button>
+        )}
+        {booking.canCancel && (
+          <Button variant="destructive" leftIcon={<XCircle />} onClick={() => onAction('cancel')}>
+            Hủy lịch
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ActionModal({
+  action,
+  isSaving,
+  onClose,
+  onSubmit,
+}: {
+  action?: { type: FormAction; booking: MentorBookingResponse };
+  isSaving: boolean;
+  onClose: () => void;
+  onSubmit: (mutation: MenteeBookingMutation) => void;
+}) {
+  const [note, setNote] = useState('');
+  const [issueType, setIssueType] = useState<BookingIssueType>('OTHER');
+  useEffect(() => {
+    setNote('');
+    setIssueType('OTHER');
+  }, [action]);
+  if (!action) return null;
+  const titles = {
+    cancel: 'Hủy lịch đặt',
+    confirm: 'Xác nhận hoàn tất',
+    reportIssue: 'Báo vấn đề',
+    respondIssue: 'Phản hồi vấn đề',
+  };
+  const submit = () => {
+    const value = note.trim();
+    if (action.type !== 'confirm' && !value) return;
+    if (action.type === 'cancel') onSubmit({ type: 'cancel', reason: value });
+    if (action.type === 'confirm')
+      onSubmit({ type: 'confirm', data: { confirmationNote: value || undefined } });
+    if (action.type === 'reportIssue')
+      onSubmit({ type: 'reportIssue', data: { issueType, description: value, evidenceIds: [] } });
+    if (action.type === 'respondIssue') onSubmit({ type: 'respondIssue', responseNote: value });
+  };
+  return (
+    <Modal open title={titles[action.type]} onClose={onClose}>
+      <div className="grid gap-4">
+        {action.type === 'reportIssue' && (
+          <label className="grid gap-2 text-sm font-semibold text-text-main">
+            <span>
+              Loại vấn đề <b>*</b>
+            </span>
+            <select
+              className="h-11 rounded-xl border border-border-color bg-white px-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+              value={issueType}
+              onChange={(event) => setIssueType(event.target.value as BookingIssueType)}
+            >
+              <option value="MENTOR_NO_SHOW">Mentor không tham gia</option>
+              <option value="QUALITY_ISSUE">Chất lượng buổi học</option>
+              <option value="TECHNICAL_PROBLEM">Sự cố kỹ thuật</option>
+              <option value="OTHER">Vấn đề khác</option>
+            </select>
+          </label>
+        )}
+        <label className="grid gap-2 text-sm font-semibold text-text-main">
+          <span>
+            {action.type === 'cancel' ? 'Lý do hủy' : 'Ghi chú'}{' '}
+            {action.type !== 'confirm' && <b>*</b>}
+          </span>
+          <textarea
+            className="min-h-28 resize-y rounded-xl border border-border-color p-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+            value={note}
+            maxLength={2000}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </label>
+      </div>
+      <footer className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border-light pt-4">
+        <Button variant="outline" onClick={onClose}>
+          Đóng
+        </Button>
+        <Button onClick={submit} disabled={isSaving || (action.type !== 'confirm' && !note.trim())}>
+          {isSaving ? 'Đang xử lý...' : 'Xác nhận'}
+        </Button>
+      </footer>
+    </Modal>
   );
 }

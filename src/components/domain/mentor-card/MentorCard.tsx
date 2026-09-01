@@ -1,97 +1,127 @@
 /**
  * @file MentorCard.tsx
- * @description Component Thẻ hiển thị tóm tắt thông tin Chuyên gia (Mentor Card Component).
- * Hiển thị tên, lĩnh vực chuyên môn, đánh giá sao, mức giá tham khảo và nút xem hồ sơ chi tiết.
+ * @description Thẻ khám phá Mentor dạng dọc, hiển thị thông tin cốt lõi để Mentee dễ so sánh.
  */
 
+import { BadgeCheck, Star } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import type { Mentor } from '@/models/entities';
 
-/** Tạo chữ cái đầu từ tên làm avatar */
 function initials(name: string) {
   return name
     .split(' ')
+    .filter(Boolean)
     .map((part) => part[0])
     .slice(0, 2)
     .join('');
 }
 
-/** Định dạng hiển thị giá điểm S-Coins */
-function priceLabel(price?: number) {
-  return price ? new Intl.NumberFormat('en-US').format(price) : undefined;
-}
-
-/** Props của MentorCard Component */
 interface MentorCardProps {
-  /** Thông tin đối tượng Mentor */
   mentor: Mentor;
-  /** Callback khi Mentee bấm nút xem hồ sơ Mentor */
   onSelect: (mentor: Mentor) => void;
 }
 
-/**
- * Component hiển thị thẻ thông tin Mentor trên giao diện danh sách tìm kiếm.
- */
+/** Thẻ thông tin tóm tắt dùng trong danh sách khám phá Mentor. */
 export function MentorCard({ mentor, onSelect }: MentorCardProps) {
-  const price = priceLabel(mentor.startingPrice);
+  const headlineParts = mentor.headline
+    ?.split('|')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const role = headlineParts?.[0] || mentor.expertise[0] || 'Mentor';
+  const headlineSkills = (headlineParts?.slice(1).join(',') || '')
+    .split(',')
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+  const hasCombinedHeadline = (headlineParts?.length || 0) > 1;
+  const skills = [...new Set([...headlineSkills, ...mentor.expertise])].filter(
+    (skill) => !hasCombinedHeadline || skill !== mentor.headline,
+  );
+  const visibleSkillCount = skills.length > 3 ? 2 : 3;
+  const visibleSkills = skills.slice(0, visibleSkillCount);
+  const remainingSkillCount = Math.max(skills.length - visibleSkills.length, 0);
+  const description = mentor.bio && mentor.bio !== mentor.headline ? mentor.bio : undefined;
 
   return (
-    <article className="bg-white rounded-3xl p-6 border border-solid border-border-light/80 shadow-xs hover:shadow-xl hover:-translate-y-1.5 hover:border-primary-border/80 transition-all duration-300 flex flex-col justify-between gap-5 h-full group">
-      <div className="flex flex-col gap-3.5">
+    <article className="group mx-auto flex h-full min-h-[430px] w-full max-w-[280px] flex-col rounded-2xl border border-solid border-border-color/70 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-border hover:shadow-md">
+      <div className="flex flex-1 flex-col items-center text-center">
         {mentor.avatarUrl ? (
           <img
             src={mentor.avatarUrl}
-            alt={mentor.name}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-light to-blue-100 border border-solid border-primary-border/60 object-cover shrink-0 ring-2 ring-primary/10 group-hover:ring-primary/40 transition-all"
+            alt={`Ảnh đại diện của ${mentor.name}`}
+            className="h-24 w-24 shrink-0 rounded-full border border-solid border-primary-border/60 bg-primary-light object-cover ring-4 ring-primary-light"
           />
         ) : (
-          <span className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-light to-blue-100 text-primary font-black text-lg border border-solid border-primary-border/60 flex items-center justify-center shrink-0 ring-2 ring-primary/10 group-hover:ring-primary/40 transition-all">
+          <span
+            className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-solid border-primary-border/60 bg-primary-light text-2xl font-bold text-primary ring-4 ring-primary-light"
+            aria-label={`Ảnh đại diện mặc định của ${mentor.name}`}
+          >
             {initials(mentor.name)}
           </span>
         )}
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-extrabold text-text-main m-0 flex items-center gap-1.5 tracking-tight group-hover:text-primary transition-colors">
-            {mentor.name}
+
+        <div className="mt-4 w-full min-w-0">
+          <h2 className="m-0 flex min-w-0 items-center justify-center gap-1.5 text-lg font-bold tracking-tight text-text-main">
+            <span className="truncate">{mentor.name}</span>
             {mentor.isVerified && (
-              <span
-                title="Đã xác thực Mentor"
-                className="inline-flex items-center justify-center w-4.5 h-4.5 rounded-full bg-primary text-white text-[10px] shadow-xs shrink-0"
-              >
-                ✓
-              </span>
+              <BadgeCheck
+                className="h-[18px] w-[18px] shrink-0 fill-primary text-white"
+                aria-label="Mentor đã xác thực"
+              />
             )}
           </h2>
-          <p className="text-xs text-text-muted m-0 leading-tight">
-            {mentor.headline ?? (mentor.expertise[0] ? `${mentor.expertise[0]} mentor` : 'Mentor')}
+          <p className="mt-1 min-h-10 break-words text-sm font-semibold leading-5 text-primary">
+            {role}
           </p>
-          {/* {mentor.organization && <strong className="text-xs text-primary font-semibold">@ {mentor.organization}</strong>} */}
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold bg-amber-50/60 px-2.5 py-1 rounded-lg w-fit border border-solid border-amber-200/50">
-          <span aria-hidden="true">★</span>
-          <strong className="text-text-main">
-            {mentor.rating !== null && mentor.rating !== undefined ? mentor.rating : '--'}
+
+        <div className="mt-3 flex min-h-6 items-center justify-center gap-1.5 text-sm text-text-secondary">
+          <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
+          <strong className="font-semibold text-text-main">
+            {mentor.rating !== null ? mentor.rating.toFixed(1) : 'Chưa có đánh giá'}
           </strong>
-          {mentor.reviewCount !== undefined && <small className="text-text-muted font-normal">({mentor.reviewCount})</small>}
+          {mentor.reviewCount !== undefined && (
+            <span className="text-text-muted">({mentor.reviewCount})</span>
+          )}
         </div>
-        {mentor.expertise.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {mentor.expertise.slice(0, 2).map((skill) => (
-              <span key={skill} className="px-2.5 py-1 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color/80">
-                {skill}
-              </span>
-            ))}
-          </div>
-        )}
-        {price ? (
-          <p className="text-xs text-text-muted m-0">
-            From <strong className="text-sm font-black text-primary">{price}</strong> S-coins/30min
-          </p>
-        ) : (
-          mentor.bio && <p className="text-xs text-text-muted line-clamp-2 m-0 leading-relaxed">{mentor.bio}</p>
-        )}
+
+        <div className="mt-3 flex min-h-[64px] flex-wrap content-start justify-center gap-1.5">
+          {visibleSkills.length > 0 && (
+            <>
+              {visibleSkills.map((skill, index) => (
+                <span
+                  key={`${skill}-${index}`}
+                  className="max-w-full break-words rounded-full border border-solid border-border-color bg-surface-subtle px-3 py-1.5 text-xs font-medium leading-4 text-text-secondary"
+                >
+                  {skill}
+                </span>
+              ))}
+              {remainingSkillCount > 0 && (
+                <span className="rounded-full border border-solid border-border-color bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-text-secondary">
+                  +{remainingSkillCount}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="mt-5 min-h-[44px]">
+          {description && (
+            <p className="m-0 line-clamp-2 text-sm leading-relaxed text-text-muted">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
-      <button type="button" className="w-full h-10 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] transition-all border-none cursor-pointer flex items-center justify-center" onClick={() => onSelect(mentor)}>
+
+      <Button
+        type="button"
+        size="lg"
+        className="mt-5 h-11 w-full rounded-xl"
+        onClick={() => onSelect(mentor)}
+        aria-label={`Xem hồ sơ của ${mentor.name}`}
+      >
         Xem thêm
-      </button>
+      </Button>
     </article>
   );
 }

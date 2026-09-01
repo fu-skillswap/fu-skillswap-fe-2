@@ -17,41 +17,28 @@ import type {
 } from '@/models/auth';
 import { useAuth } from '@/providers/AuthProvider';
 import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
+import { bookingRepo } from '@/repositories/bookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 
 export type MentorBookingFilter =
-  'NEW' | 'UPCOMING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ALL';
+  'ALL' | 'REQUESTED' | 'WAITING_PAYMENT' | 'CONFIRMED' | 'UNDER_REVIEW' | 'COMPLETED' | 'CLOSED';
 
 export type MentorBookingMutation =
   | { type: 'accept'; data: AcceptMentorBookingRequest }
   | { type: 'reject'; data: RejectMentorBookingRequest }
   | { type: 'complete'; data: CompleteMentorBookingRequest }
-  | { type: 'cancel'; data: CancelMentorBookingRequest };
+  | { type: 'cancel'; data: CancelMentorBookingRequest }
+  | { type: 'checkIn' };
+
+const PAGE_SIZE = 5;
 
 export function bookingFilterOf(booking: MentorBookingResponse): MentorBookingFilter {
-  if (booking.canAccept || booking.displayState === 'PENDING_MENTOR_RESPONSE') return 'NEW';
-  if (
-    booking.displayState === 'IN_SESSION' ||
-    booking.displayState === 'WAITING_CONFIRMATION' ||
-    booking.displayState === 'UNDER_REVIEW' ||
-    booking.actualSessionStatus === 'IN_PROGRESS'
-  ) {
-    return 'IN_PROGRESS';
-  }
-  if (booking.displayState === 'COMPLETED' || booking.bookingStatus === 'COMPLETED') {
-    return 'COMPLETED';
-  }
-  if (
-    booking.displayState === 'CANCELED_OR_EXPIRED' ||
-    booking.bookingStatus === 'REJECTED_BY_MENTOR' ||
-    booking.bookingStatus === 'CANCELED_BY_MENTEE' ||
-    booking.bookingStatus === 'CANCELED_BY_MENTOR' ||
-    booking.bookingStatus === 'REQUEST_EXPIRED' ||
-    booking.bookingStatus === 'PAYMENT_EXPIRED'
-  ) {
-    return 'CANCELLED';
-  }
-  return 'UPCOMING';
+  if (booking.bookingStatus === 'REQUESTED') return 'REQUESTED';
+  if (booking.bookingStatus === 'WAITING_PAYMENT') return 'WAITING_PAYMENT';
+  if (booking.bookingStatus === 'CONFIRMED') return 'CONFIRMED';
+  if (booking.bookingStatus === 'UNDER_REVIEW') return 'UNDER_REVIEW';
+  if (booking.bookingStatus === 'COMPLETED') return 'COMPLETED';
+  return 'CLOSED';
 }
 
 function localDateKey(value: string) {
@@ -66,9 +53,10 @@ function localDateKey(value: string) {
 export function useMentorBookings() {
   const { isBootstrapping } = useAuth();
   const [allBookings, setAllBookings] = useState<MentorBookingResponse[]>([]);
-  const [activeFilter, setActiveFilter] = useState<MentorBookingFilter>('NEW');
+  const [activeFilter, setActiveFilter] = useState<MentorBookingFilter>('ALL');
   const [selectedDate, setSelectedDate] = useState('');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('ASC');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
@@ -102,12 +90,13 @@ export function useMentorBookings() {
 
   const counts = useMemo(() => {
     const result: Record<MentorBookingFilter, number> = {
-      NEW: 0,
-      UPCOMING: 0,
-      IN_PROGRESS: 0,
-      COMPLETED: 0,
-      CANCELLED: 0,
       ALL: allBookings.length,
+      REQUESTED: 0,
+      WAITING_PAYMENT: 0,
+      CONFIRMED: 0,
+      UNDER_REVIEW: 0,
+      COMPLETED: 0,
+      CLOSED: 0,
     };
     allBookings.forEach((booking) => {
       result[bookingFilterOf(booking)] += 1;
@@ -115,7 +104,7 @@ export function useMentorBookings() {
     return result;
   }, [allBookings]);
 
-  const bookings = useMemo(() => {
+  const filteredBookings = useMemo(() => {
     return allBookings
       .filter((booking) => {
         const matchesStatus = activeFilter === 'ALL' || bookingFilterOf(booking) === activeFilter;
@@ -130,6 +119,21 @@ export function useMentorBookings() {
       });
   }, [activeFilter, allBookings, selectedDate, sortDirection]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / PAGE_SIZE));
+  const bookings = useMemo(() => {
+    const safePage = Math.min(currentPage, totalPages);
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredBookings.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredBookings, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, selectedDate, sortDirection]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
   const loadDetail = (bookingId: string) => mentorBookingRepo.detail(bookingId);
 
   const mutate = async (bookingId: string, mutation: MentorBookingMutation) => {
@@ -139,6 +143,7 @@ export function useMentorBookings() {
       if (mutation.type === 'reject') await mentorBookingRepo.reject(bookingId, mutation.data);
       if (mutation.type === 'complete') await mentorBookingRepo.complete(bookingId, mutation.data);
       if (mutation.type === 'cancel') await mentorBookingRepo.cancel(bookingId, mutation.data);
+      if (mutation.type === 'checkIn') await bookingRepo.checkIn(bookingId);
       await refresh();
       return true;
     } finally {
@@ -150,6 +155,7 @@ export function useMentorBookings() {
     activeFilter,
     bookings,
     counts,
+    currentPage,
     error,
     googleCalendarStatus,
     isLoading: isLoading || isBootstrapping,
@@ -159,8 +165,10 @@ export function useMentorBookings() {
     refresh,
     selectedDate,
     setActiveFilter,
+    setCurrentPage,
     setSelectedDate,
     setSortDirection,
     sortDirection,
+    totalPages,
   };
 }

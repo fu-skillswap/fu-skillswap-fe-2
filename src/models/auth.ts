@@ -431,6 +431,9 @@ export type MentorBookingNextAction =
 /** Booking hiển thị trong khu vực quản lý của Mentor. */
 export interface MentorBookingResponse {
   bookingId: string;
+  mentorUserId?: string | null;
+  mentorDisplayName?: string | null;
+  mentorAvatarUrl?: string | null;
   menteeUserId: string;
   menteeDisplayName: string;
   menteeAvatarUrl?: string | null;
@@ -461,8 +464,20 @@ export interface MentorBookingResponse {
   canAccept: boolean;
   canReject: boolean;
   canCompleteByMentor: boolean;
+  canComplete?: boolean;
+  canConfirmByMentee?: boolean;
   canCancel: boolean;
   canJoin: boolean;
+  canPay?: boolean;
+  canReportIssue?: boolean;
+  canRespondIssue?: boolean;
+  conversationId?: string | null;
+  attendance?: {
+    currentUserCheckedIn?: boolean | null;
+    canCheckIn?: boolean | null;
+    checkInOpensAt?: string | null;
+    checkInClosesAt?: string | null;
+  } | null;
   joinAvailableAt?: string | null;
   createdAt: string;
 }
@@ -490,6 +505,36 @@ export interface RejectMentorBookingRequest {
 
 export interface CompleteMentorBookingRequest {
   completionNote?: string;
+}
+
+export interface ConfirmBookingRequest {
+  confirmationNote?: string;
+}
+
+export type BookingIssueType =
+  | 'MENTOR_NO_SHOW'
+  | 'MENTEE_NO_SHOW'
+  | 'QUALITY_ISSUE'
+  | 'TECHNICAL_PROBLEM'
+  | 'OTHER'
+  | 'NO_SHOW_OR_QUALITY_OR_OTHER';
+
+export interface SubmitBookingIssueRequest {
+  issueType: BookingIssueType;
+  description: string;
+  evidenceIds: string[];
+}
+
+export interface RespondBookingIssueRequest {
+  responseNote: string;
+  evidenceIds?: string[];
+}
+
+export interface PaymentCheckoutResponse {
+  bookingId: string;
+  status: string;
+  checkoutUrl?: string | null;
+  paymentLink?: string | null;
 }
 
 export interface CancelMentorBookingRequest {

@@ -37,6 +37,7 @@ function getInitialSidebarOpen(): boolean {
 
 /** Helper tự động xác định tiêu đề hiển thị mặc định theo path */
 function routeTitle(pathname: string) {
+  if (pathname.endsWith('/messages')) return 'Tin nhắn';
   if (pathname.endsWith('/profile')) return 'Hồ sơ của tôi';
   if (pathname.includes('/my-bookings')) return 'Booking của tôi';
   if (pathname.includes('/mentor-booking')) return 'Tìm Mentor';
@@ -107,7 +108,10 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
     <MenteeShellContext.Provider value={contextValue}>
       <div className="min-h-screen bg-bg text-text-main flex relative overflow-x-clip">
         {/* Background Watermark KooKoo Mascot (phóng to chiếm trọn màn hình dưới sidebar & bài post) */}
-        <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden" aria-hidden="true">
+        <div
+          className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
+          aria-hidden="true"
+        >
           <img
             src="/images/Koko.png"
             alt=""
