@@ -603,6 +603,9 @@ export function ScheduleManageView() {
     },
   });
   const selectedAvailabilityServiceIds = availabilityForm.watch('serviceIds') ?? [];
+  const selectedAvailabilityServices = activeOneToOneServices.filter((service) =>
+    selectedAvailabilityServiceIds.includes(service.serviceId),
+  );
 
   // Form chỉnh sửa lịch rảnh
   const editAvailabilityForm = useForm<AvailabilitySlotFormValues>({
@@ -1249,18 +1252,22 @@ export function ScheduleManageView() {
     if (isCreatingAvailability || availabilityRetryUntil) return;
 
     if (!bookingPolicy) {
-      availabilityForm.setError('root', {
+      const message = 'Chưa tải được múi giờ đặt lịch. Vui lòng thử lại sau.';
+      availabilityForm.setError('startTime', {
         type: 'validate',
-        message: 'Chưa tải được múi giờ đặt lịch. Vui lòng thử lại sau.',
+        message,
       });
+      showError(message, { title: 'Chưa thể tạo lịch rảnh' });
       return;
     }
 
     if (values.startTime >= values.endTime) {
+      const message = 'Giờ kết thúc phải sau giờ bắt đầu.';
       availabilityForm.setError('endTime', {
         type: 'validate',
-        message: 'Giờ kết thúc phải sau giờ bắt đầu.',
+        message,
       });
+      showError(message, { title: 'Thời gian chưa hợp lệ' });
       return;
     }
 
@@ -1270,10 +1277,20 @@ export function ScheduleManageView() {
       startAt = localDateTimeToUtcIso({ date: values.date, time: values.startTime }, timezone);
       endAt = localDateTimeToUtcIso({ date: values.date, time: values.endTime }, timezone);
     } catch (reason) {
-      availabilityForm.setError('root', {
+      const message =
+        reason instanceof Error ? reason.message : 'Không thể xử lý thời gian đã chọn.';
+      availabilityForm.setError('startTime', {
         type: 'validate',
-        message: reason instanceof Error ? reason.message : 'Không thể xử lý thời gian đã chọn.',
+        message,
       });
+      showError(message, { title: 'Thời gian chưa hợp lệ' });
+      return;
+    }
+
+    if (new Date(startAt).getTime() <= Date.now()) {
+      const message = 'Thời gian bắt đầu phải ở tương lai.';
+      availabilityForm.setError('startTime', { type: 'validate', message });
+      showError(message, { title: 'Không thể tạo lịch rảnh' });
       return;
     }
 
@@ -1282,10 +1299,12 @@ export function ScheduleManageView() {
       schedulingConstraints &&
       durationMinutes > schedulingConstraints.maximumParentSlotDurationMinutes
     ) {
+      const message = `Thời lượng tối đa là ${schedulingConstraints.maximumParentSlotDurationMinutes} phút.`;
       availabilityForm.setError('endTime', {
         type: 'validate',
-        message: `Thời lượng tối đa là ${schedulingConstraints.maximumParentSlotDurationMinutes} phút.`,
+        message,
       });
+      showError(message, { title: 'Thời lượng chưa hợp lệ' });
       return;
     }
 
@@ -1306,7 +1325,17 @@ export function ScheduleManageView() {
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
-        if (reason.status === 400 && reason.data?.length) {
+        const serverErrorText = [
+          reason.code,
+          reason.message,
+          ...(reason.data?.map((error) => error.message) ?? []),
+        ].join(' ');
+        const isPastTimeError = /past|quá khứ/i.test(serverErrorText);
+        if (isPastTimeError) {
+          const message = 'Thời gian bắt đầu phải ở tương lai.';
+          availabilityForm.setError('startTime', { type: 'server', message });
+          showError(message, { title: 'Không thể tạo lịch rảnh' });
+        } else if (reason.status === 400 && reason.data?.length) {
           const fieldMap: Partial<Record<string, keyof AvailabilitySlotFormValues>> = {
             startAt: 'startTime',
             endAt: 'endTime',
@@ -1319,29 +1348,27 @@ export function ScheduleManageView() {
               availabilityForm.setError(field, { type: 'server', message: error.message });
             }
           });
-          availabilityForm.setError('root', {
-            type: 'server',
-            message: reason.message,
+          const firstFieldMessage = reason.data.find((error) => error.message)?.message;
+          showError(firstFieldMessage || reason.message, {
+            title: 'Thông tin lịch rảnh chưa hợp lệ',
           });
         } else if (reason.status === 429) {
           const retryAfterSeconds = reason.retryAfterSeconds ?? 0;
           if (retryAfterSeconds > 0) {
             setAvailabilityRetryUntil(Date.now() + retryAfterSeconds * 1000);
           }
-          availabilityForm.setError('root', {
-            type: 'server',
-            message:
-              retryAfterSeconds > 0
-                ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-                : reason.message,
-          });
+          const message =
+            retryAfterSeconds > 0
+              ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
+              : reason.message;
+          showError(message, { title: 'Chưa thể tạo lịch rảnh' });
         } else {
-          availabilityForm.setError('root', { type: 'server', message: reason.message });
+          showError(reason, { title: 'Không thể tạo lịch rảnh' });
         }
       } else {
-        availabilityForm.setError('root', {
-          type: 'server',
-          message: 'Không thể tạo lịch rảnh. Vui lòng thử lại.',
+        showError(reason, {
+          title: 'Không thể tạo lịch rảnh',
+          description: 'Vui lòng thử lại sau.',
         });
       }
     } finally {
@@ -1947,7 +1974,7 @@ export function ScheduleManageView() {
         open={isAvailabilityModalOpen}
         title="Thêm lịch rảnh"
         onClose={() => !isCreatingAvailability && setIsAvailabilityModalOpen(false)}
-        className="max-w-2xl"
+        className="max-h-[95vh] max-w-2xl"
       >
         {loading ? (
           <div className="space-y-4" aria-label="Đang tải dịch vụ" aria-busy="true">
@@ -1960,13 +1987,17 @@ export function ScheduleManageView() {
           </div>
         ) : activeOneToOneServices.length ? (
           <form
-            className="space-y-5"
-            onSubmit={availabilityForm.handleSubmit(onSubmitAvailabilitySlot)}
+            className="space-y-3"
+            onSubmit={availabilityForm.handleSubmit(onSubmitAvailabilitySlot, () =>
+              showError('Vui lòng kiểm tra các trường được đánh dấu màu đỏ.', {
+                title: 'Thông tin chưa hợp lệ',
+              }),
+            )}
             noValidate
           >
             <div>
               <label
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
                 htmlFor="availability-date"
               >
                 Ngày <span className="text-red-500">*</span>
@@ -1979,7 +2010,8 @@ export function ScheduleManageView() {
                 <input
                   id="availability-date"
                   type="date"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                  min={getLocalDateTimeParts(new Date().toISOString(), timezone).date}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
                   {...availabilityForm.register('date')}
                 />
               </div>
@@ -1991,10 +2023,10 @@ export function ScheduleManageView() {
             </div>
 
             <div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label
-                    className="mb-2 block text-sm font-semibold text-slate-700"
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
                     htmlFor="availability-start-time"
                   >
                     Bắt đầu <span className="text-red-500">*</span>
@@ -2007,7 +2039,8 @@ export function ScheduleManageView() {
                     <input
                       id="availability-start-time"
                       type="time"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                      aria-invalid={Boolean(availabilityForm.formState.errors.startTime)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
                       {...availabilityForm.register('startTime')}
                     />
                   </div>
@@ -2019,7 +2052,7 @@ export function ScheduleManageView() {
                 </div>
                 <div>
                   <label
-                    className="mb-2 block text-sm font-semibold text-slate-700"
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
                     htmlFor="availability-end-time"
                   >
                     Kết thúc <span className="text-red-500">*</span>
@@ -2032,7 +2065,8 @@ export function ScheduleManageView() {
                     <input
                       id="availability-end-time"
                       type="time"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                      aria-invalid={Boolean(availabilityForm.formState.errors.endTime)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
                       {...availabilityForm.register('endTime')}
                     />
                   </div>
@@ -2044,7 +2078,7 @@ export function ScheduleManageView() {
                 </div>
               </div>
               {schedulingConstraints && (
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
                   <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                   Thời lượng tối đa: {schedulingConstraints.maximumParentSlotDurationMinutes} phút.
                 </p>
@@ -2052,25 +2086,25 @@ export function ScheduleManageView() {
             </div>
 
             <fieldset>
-              <legend className="mb-2 text-sm font-semibold text-slate-700">
+              <legend className="mb-1.5 text-sm font-semibold text-slate-700">
                 Dịch vụ áp dụng <span className="text-red-500">*</span>
               </legend>
-              <details className="group relative w-full">
-                <summary className="flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left outline-none transition hover:border-sky-300 focus-visible:border-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/10 [&::-webkit-details-marker]:hidden">
-                  <span className="min-w-0">
+              <details className="group relative min-w-0 max-w-full">
+                <summary className="flex min-h-11 w-full max-w-full cursor-pointer list-none items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-left outline-none transition hover:border-sky-300 focus-visible:border-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/10 [&::-webkit-details-marker]:hidden">
+                  <span className="min-w-0 flex-1 overflow-hidden">
                     <span className="block truncate text-sm font-medium text-slate-800">
                       {selectedAvailabilityServiceIds.length
                         ? `${selectedAvailabilityServiceIds.length} dịch vụ đã chọn`
                         : 'Chọn dịch vụ áp dụng'}
                     </span>
-                    {selectedAvailabilityServiceIds.length > 0 && (
-                      <span className="mt-0.5 block truncate text-xs text-slate-500">
-                        {activeOneToOneServices
-                          .filter((service) =>
-                            selectedAvailabilityServiceIds.includes(service.serviceId),
-                          )
-                          .map((service) => service.title)
-                          .join(', ')}
+                    {selectedAvailabilityServices.length > 0 && (
+                      <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                        <span className="truncate">{selectedAvailabilityServices[0].title}</span>
+                        {selectedAvailabilityServices.length > 1 && (
+                          <span className="shrink-0 rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-primary">
+                            +{selectedAvailabilityServices.length - 1} khác
+                          </span>
+                        )}
                       </span>
                     )}
                   </span>
@@ -2080,11 +2114,11 @@ export function ScheduleManageView() {
                   />
                 </summary>
 
-                <div className="absolute left-0 right-0 z-20 mt-2 max-h-64 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10">
+                <div className="absolute inset-x-0 z-20 mt-1.5 max-h-52 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10">
                   {activeOneToOneServices.map((service) => (
                     <label
                       key={service.serviceId}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg p-3 outline-none transition hover:bg-sky-50 has-[:checked]:bg-sky-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#119CF7]/30"
+                      className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 outline-none transition hover:bg-sky-50 has-[:checked]:bg-sky-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#119CF7]/30"
                     >
                       <input
                         type="checkbox"
@@ -2119,15 +2153,15 @@ export function ScheduleManageView() {
 
             <div>
               <label
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
                 htmlFor="availability-note"
               >
                 Ghi chú
               </label>
               <textarea
                 id="availability-note"
-                className="min-h-24 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
-                rows={3}
+                className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                rows={2}
                 maxLength={200}
                 placeholder="Thêm ghi chú cho khung giờ này (không bắt buộc)..."
                 {...availabilityForm.register('note')}
@@ -2139,25 +2173,17 @@ export function ScheduleManageView() {
               )}
             </div>
 
-            {availabilityForm.formState.errors.root?.message && (
-              <p
-                className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700"
-                role="alert"
-              >
-                {availabilityForm.formState.errors.root.message}
-              </p>
-            )}
             {!canCreateAvailability && (
               <p className="text-xs text-slate-500" role="status">
                 Đang tải múi giờ đặt lịch...
               </p>
             )}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
+                className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
                 disabled={isCreatingAvailability}
                 onClick={() => setIsAvailabilityModalOpen(false)}
               >
@@ -2166,7 +2192,7 @@ export function ScheduleManageView() {
               <Button
                 type="submit"
                 loading={isCreatingAvailability}
-                className="h-11 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-36"
+                className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-36"
                 disabled={
                   !canCreateAvailability ||
                   isCreatingAvailability ||

@@ -8,11 +8,11 @@
 import { Calendar, ChevronLeft, ChevronRight, Info, Repeat2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
-import { useEffect, useRef } from 'react';
 import type { MentorCalendarEvent } from './mentorScheduleCalendarData';
 
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
-const HOUR_HEIGHT = 60;
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 20;
+const HOUR_HEIGHT = 30;
 
 const CALENDAR_STATUS_STYLES = {
   inactive: {
@@ -180,14 +180,6 @@ export function MentorScheduleCalendar({
   onSelectSlot,
   onSelectBooking,
 }: MentorScheduleCalendarProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = 7 * HOUR_HEIGHT;
-    }
-  }, []);
-
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   let eventSegments: Array<{
     dayIndex: number;
@@ -201,6 +193,20 @@ export function MentorScheduleCalendar({
     eventSegments = [];
   }
 
+  const earliestEventHour = eventSegments.length
+    ? Math.floor(Math.min(...eventSegments.map((segment) => segment.startMinutes)) / 60)
+    : DEFAULT_START_HOUR;
+  const latestEventHour = eventSegments.length
+    ? Math.ceil(Math.max(...eventSegments.map((segment) => segment.endMinutes)) / 60)
+    : DEFAULT_END_HOUR;
+  const visibleStartHour = Math.max(0, Math.min(DEFAULT_START_HOUR, earliestEventHour));
+  const visibleEndHour = Math.min(24, Math.max(DEFAULT_END_HOUR, latestEventHour));
+  const visibleHours = Array.from(
+    { length: visibleEndHour - visibleStartHour },
+    (_, index) => visibleStartHour + index,
+  );
+  const calendarHeight = visibleHours.length * HOUR_HEIGHT;
+
   const hasActiveRecurringEvents = events.some(
     (event) => (event.isRecurring || event.source === 'template') && event.status !== 'inactive',
   );
@@ -211,12 +217,12 @@ export function MentorScheduleCalendar({
 
   return (
     <div className="mentor-schedule-surface overflow-hidden rounded-2xl border border-border-color bg-white shadow-xs">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-light px-4 py-3 md:px-5">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light px-4 py-2 md:px-5">
         <div className="flex items-center gap-2">
           <IconButton
             variant="ghost"
             size="md"
-            className="h-10 w-10 rounded-xl border-border-color bg-white"
+            className="h-9 w-9 rounded-xl border-border-color bg-white"
             aria-label="Tuần trước"
             icon={<ChevronLeft className="h-4 w-4" aria-hidden="true" />}
             onClick={onPreviousWeek}
@@ -224,7 +230,7 @@ export function MentorScheduleCalendar({
           <Button
             variant="secondary"
             size="md"
-            className="h-10 border-border-color bg-white px-4 text-sm font-semibold text-text-secondary shadow-none"
+            className="h-9 border-border-color bg-white px-3.5 text-xs font-semibold text-text-secondary shadow-none"
             onClick={onToday}
           >
             Hôm nay
@@ -232,7 +238,7 @@ export function MentorScheduleCalendar({
           <IconButton
             variant="ghost"
             size="md"
-            className="h-10 w-10 rounded-xl border-border-color bg-white"
+            className="h-9 w-9 rounded-xl border-border-color bg-white"
             aria-label="Tuần sau"
             icon={<ChevronRight className="h-4 w-4" aria-hidden="true" />}
             onClick={onNextWeek}
@@ -253,10 +259,7 @@ export function MentorScheduleCalendar({
       </header>
 
       <div className="relative">
-        <div
-          className="h-[520px] overflow-auto [scrollbar-color:var(--border-strong)_var(--surface-subtle)] [scrollbar-width:thin] lg:h-[540px]"
-          ref={scrollRef}
-        >
+        <div className="overflow-x-auto overflow-y-hidden [scrollbar-color:var(--border-strong)_var(--surface-subtle)] [scrollbar-width:thin]">
           <div className="min-w-[900px]">
             <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(112px,1fr))] border-b border-border-color bg-white">
               <div className="border-r border-border-color bg-surface-subtle" aria-hidden="true" />
@@ -270,7 +273,7 @@ export function MentorScheduleCalendar({
                 return (
                   <div
                     key={day.toISOString()}
-                    className={`border-r border-border-light px-2 py-2.5 text-center last:border-r-0 ${isToday ? 'bg-primary-light' : 'bg-white'}`}
+                    className={`border-r border-border-light px-2 py-1.5 text-center last:border-r-0 ${isToday ? 'bg-primary-light' : 'bg-white'}`}
                   >
                     <span
                       className={`block text-xs font-medium uppercase ${isToday ? 'text-primary' : 'text-text-muted'}`}
@@ -287,12 +290,13 @@ export function MentorScheduleCalendar({
               })}
             </div>
 
-            <div className="relative h-[1440px] bg-white">
+            <div className="relative bg-white" style={{ height: `${calendarHeight}px` }}>
               <div className="absolute inset-0">
-                {HOURS.map((hour) => (
+                {visibleHours.map((hour) => (
                   <div
-                    className="grid h-[60px] grid-cols-[60px_repeat(7,minmax(112px,1fr))]"
+                    className="grid grid-cols-[60px_repeat(7,minmax(112px,1fr))]"
                     key={hour}
+                    style={{ height: `${HOUR_HEIGHT}px` }}
                   >
                     <div className="border-r border-b border-border-color bg-white pr-2 pt-2 text-right text-xs font-medium text-text-muted">
                       {formatHour(hour)}
@@ -318,11 +322,13 @@ export function MentorScheduleCalendar({
                       .filter((segment) => segment.dayIndex === dayIndex)
                       .map((segment) => {
                         const durationMinutes = segment.endMinutes - segment.startMinutes;
+                        const isCompactEvent = durationMinutes < 60;
                         const calculatedHeight = Math.max(
-                          32,
-                          (durationMinutes / 60) * HOUR_HEIGHT - 6,
+                          13,
+                          (durationMinutes / 60) * HOUR_HEIGHT - 2,
                         );
-                        const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 3;
+                        const calculatedTop =
+                          ((segment.startMinutes - visibleStartHour * 60) / 60) * HOUR_HEIGHT + 1;
                         const startTimeStr = formatSlotTime(segment.startMinutes);
                         const endTimeStr = formatSlotTime(segment.endMinutes);
 
@@ -336,9 +342,11 @@ export function MentorScheduleCalendar({
                         return (
                           <button
                             type="button"
-                            className={`mentor-calendar-event absolute left-1 right-1 z-10 overflow-hidden rounded-xl border px-2.5 py-2 text-left text-xs font-semibold outline-none transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${eventClasses(
-                              segment.event,
-                            )}`}
+                            className={`mentor-calendar-event absolute left-1 right-1 z-10 overflow-hidden border text-left font-semibold outline-none transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                              isCompactEvent
+                                ? 'rounded-sm px-1 py-0 text-[9px] leading-3'
+                                : 'rounded-xl px-2.5 py-2 text-xs'
+                            } ${eventClasses(segment.event)}`}
                             key={`${segment.event.id}-${dayIndex}`}
                             aria-label={`${accessibleDay}, ${startTimeStr} đến ${endTimeStr}, ${eventStatusLabel(segment.event)}`}
                             disabled={!segment.event.slotId && !segment.event.bookingId}
@@ -354,10 +362,17 @@ export function MentorScheduleCalendar({
                               top: `${calculatedTop}px`,
                             }}
                           >
-                            <span className="flex items-center justify-start gap-1.5 truncate">
+                            <span
+                              className={`flex items-center justify-start truncate ${isCompactEvent ? 'gap-1' : 'gap-1.5'}`}
+                            >
                               {(segment.event.isRecurring ||
                                 segment.event.source === 'template') && (
-                                <Repeat2 className="h-3 w-3 shrink-0" aria-hidden="true" />
+                                <Repeat2
+                                  className={
+                                    isCompactEvent ? 'h-2 w-2 shrink-0' : 'h-3 w-3 shrink-0'
+                                  }
+                                  aria-hidden="true"
+                                />
                               )}
                               {startTimeStr}–{endTimeStr}
                             </span>
@@ -409,7 +424,7 @@ export function MentorScheduleCalendar({
         ) : null}
       </div>
 
-      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-color px-4 py-3 text-xs text-text-secondary md:px-5">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border-color px-4 py-2 text-[11px] text-text-secondary md:px-5">
         <div className="flex items-center gap-2">
           <span
             className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.available.legend}`}
