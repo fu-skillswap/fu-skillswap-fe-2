@@ -12,7 +12,7 @@ import type {
 import { localDateTimeToUtcIso } from './mentorScheduleDateTime';
 import { formatLocalTime } from './mentorTemplateHelpers';
 
-export type MentorCalendarEventStatus = 'available' | 'booked' | 'ongoing' | 'past';
+export type MentorCalendarEventStatus = 'available' | 'booked' | 'ongoing' | 'past' | 'inactive';
 
 export interface MentorCalendarEvent {
   id: string;
@@ -21,6 +21,7 @@ export interface MentorCalendarEvent {
   type: 'availability';
   status: MentorCalendarEventStatus;
   source: 'slot' | 'template' | 'booking';
+  isRecurring?: boolean;
   slotId?: string;
   bookingId?: string;
   note?: string;
@@ -49,6 +50,17 @@ function addDays(date: Date, days: number) {
   const result = new Date(date);
   result.setUTCDate(result.getUTCDate() + days);
   return result;
+}
+
+function getDateInTimezone(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function getEventStatus(start: Date, end: Date, isBooked: boolean): MentorCalendarEventStatus {
@@ -242,13 +254,13 @@ export function mergeAvailabilityTemplatesIntoCalendar(
   templates: AvailabilityTemplateResponse[],
   weekStart: Date,
 ): MentorCalendarEvent[] {
-  const occupiedTimes = new Set(
-    slotEvents.map((event) => `${event.start.getTime()}-${event.end.getTime()}`),
-  );
+  let mergedSlotEvents = slotEvents;
   const templateEvents: MentorCalendarEvent[] = [];
 
   templates.forEach((template) => {
-    if (template.effectiveStatus !== 'ACTIVE' || template.configuredStatus !== 'ACTIVE') return;
+    const isActive =
+      template.effectiveStatus === 'ACTIVE' && template.configuredStatus === 'ACTIVE';
+    const today = getDateInTimezone(new Date(), template.timezone);
 
     WEEKDAYS.forEach((weekday, dayIndex) => {
       if (!template.weekdays.includes(weekday)) return;
@@ -257,10 +269,11 @@ export function mergeAvailabilityTemplatesIntoCalendar(
       const isOutsideEffectiveRange =
         date < template.effectiveFrom ||
         Boolean(template.effectiveTo && date > template.effectiveTo);
+      const isInactiveFutureOccurrence = !isActive && date > today;
       const isSkipped =
         template.skippedDates?.includes(date) ||
         template.blockedOccurrences?.some((occurrence) => occurrence.date === date);
-      if (isOutsideEffectiveRange || isSkipped) return;
+      if (isOutsideEffectiveRange || isInactiveFutureOccurrence || isSkipped) return;
 
       try {
         const start = new Date(
@@ -275,17 +288,28 @@ export function mergeAvailabilityTemplatesIntoCalendar(
             template.timezone,
           ),
         );
-        const timeKey = `${start.getTime()}-${end.getTime()}`;
-        if (end <= start || occupiedTimes.has(timeKey)) return;
+        if (end <= start) return;
 
-        occupiedTimes.add(timeKey);
+        const overlappingSlotIds = new Set(
+          mergedSlotEvents
+            .filter((event) => event.source === 'slot' && event.start < end && event.end > start)
+            .map((event) => event.id),
+        );
+        if (overlappingSlotIds.size > 0) {
+          mergedSlotEvents = mergedSlotEvents.map((event) =>
+            overlappingSlotIds.has(event.id) ? { ...event, isRecurring: true } : event,
+          );
+          return;
+        }
+
         templateEvents.push({
           id: `template-${template.templateId}-${date}`,
           start,
           end,
           type: 'availability',
-          status: getEventStatus(start, end, false),
+          status: isActive ? getEventStatus(start, end, false) : 'inactive',
           source: 'template',
+          isRecurring: true,
           note: template.note?.trim() || undefined,
           serviceTitle: template.services[0]?.title,
         });
@@ -295,5 +319,5 @@ export function mergeAvailabilityTemplatesIntoCalendar(
     });
   });
 
-  return [...slotEvents, ...templateEvents];
+  return [...mergedSlotEvents, ...templateEvents];
 }

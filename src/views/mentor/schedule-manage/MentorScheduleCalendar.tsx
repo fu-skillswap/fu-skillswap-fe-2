@@ -101,26 +101,30 @@ function getEventSegments(event: MentorCalendarEvent, days: Date[], timezone: st
 }
 
 function eventClasses(event: MentorCalendarEvent) {
-  if (event.source === 'template') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400';
-  }
-  if (event.status === 'booked') {
-    return 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-400';
-  }
-  if (event.status === 'ongoing') {
-    return 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400';
+  if (event.status === 'inactive') {
+    return 'border-dashed border-slate-300 bg-slate-100 text-slate-500';
   }
   if (event.status === 'past') {
-    return 'border-rose-200 bg-rose-50 text-rose-600 hover:border-rose-300';
+    return 'border-slate-200 bg-slate-50 text-slate-400 hover:border-slate-300 hover:bg-slate-100';
+  }
+  if (event.status === 'booked') {
+    return 'border-blue-700 bg-blue-600 text-white hover:border-blue-800 hover:bg-blue-700';
+  }
+  if (event.status === 'ongoing') {
+    return 'border-emerald-300 bg-emerald-100 text-emerald-800 hover:border-emerald-500 hover:bg-emerald-200';
+  }
+  if (event.isRecurring || event.source === 'template') {
+    return 'border-dashed border-sky-300 bg-sky-50 text-[#087fc5] hover:border-[#119CF7] hover:bg-sky-100';
   }
   return 'border-sky-200 bg-sky-50 text-[#087fc5] hover:border-[#119CF7] hover:bg-sky-100';
 }
 
 function eventStatusLabel(event: MentorCalendarEvent) {
-  if (event.source === 'template') return 'lịch lặp';
+  if (event.status === 'inactive') return 'lịch lặp đã dừng hoạt động';
+  if (event.status === 'past') return 'đã diễn ra';
   if (event.status === 'booked') return 'đã được đặt';
   if (event.status === 'ongoing') return 'đang diễn ra';
-  if (event.status === 'past') return 'đã diễn ra';
+  if (event.isRecurring || event.source === 'template') return 'lịch lặp, có thể đặt';
   return 'có thể đặt';
 }
 
@@ -161,7 +165,12 @@ export function MentorScheduleCalendar({
     eventSegments = [];
   }
 
-  const hasRecurringEvents = events.some((event) => event.source === 'template');
+  const hasActiveRecurringEvents = events.some(
+    (event) => (event.isRecurring || event.source === 'template') && event.status !== 'inactive',
+  );
+  const hasInactiveRecurringEvents = events.some(
+    (event) => event.source === 'template' && event.status === 'inactive',
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -367,30 +376,39 @@ export function MentorScheduleCalendar({
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="h-3.5 w-6 rounded border border-slate-200 bg-slate-100"
+            className="h-3.5 w-6 rounded border border-blue-700 bg-blue-600"
             aria-hidden="true"
           />
           <span>Đã đặt</span>
         </div>
-        {hasRecurringEvents && (
+        {hasActiveRecurringEvents && (
           <div className="flex items-center gap-2">
             <span
-              className="h-3.5 w-6 rounded border border-emerald-200 bg-emerald-50"
+              className="h-3.5 w-6 rounded border border-dashed border-sky-300 bg-sky-50"
               aria-hidden="true"
             />
             <span>Lịch lặp</span>
           </div>
         )}
+        {hasInactiveRecurringEvents && (
+          <div className="flex items-center gap-2">
+            <span
+              className="h-3.5 w-6 rounded border border-dashed border-slate-300 bg-slate-100"
+              aria-hidden="true"
+            />
+            <span>Lịch lặp đã dừng</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <span
-            className="h-3.5 w-6 rounded border border-amber-200 bg-amber-50"
+            className="h-3.5 w-6 rounded border border-emerald-300 bg-emerald-100"
             aria-hidden="true"
           />
           <span>Đang diễn ra</span>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="h-3.5 w-6 rounded border border-rose-200 bg-rose-50"
+            className="h-3.5 w-6 rounded border border-slate-200 bg-slate-50"
             aria-hidden="true"
           />
           <span>Đã diễn ra</span>
