@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowDownUp,
+  Ban,
   CalendarDays,
   CalendarX,
   Check,
@@ -17,27 +18,33 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  CreditCard,
   EllipsisVertical,
   ExternalLink,
-  PlayCircle,
   Eye,
   Filter,
-  Mail,
-  MessageSquare,
+  HelpCircle,
+  Hourglass,
   LogIn,
+  Mail,
   MapPin,
+  MessageSquare,
+  PlayCircle,
   RefreshCw,
+  ShieldAlert,
   Square,
   Target,
   UserRound,
+  UserX,
   Video,
   XCircle,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
-import { Badge } from '@/components/ui/Badge';
+import { BookingStatusBadge } from '@/components/ui/BookingStatusBadge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { SelectField } from '@/components/ui/SelectField';
 import { ApiClientError } from '@/models/apiClient';
 import type { GoogleCalendarStatusResponse, MentorBookingResponse } from '@/models/auth';
 import { showError, showSuccess } from '@/utils/toast';
@@ -54,12 +61,14 @@ const FILTERS: Array<{
   icon: typeof Mail;
 }> = [
   { value: 'ALL', label: 'Tất cả', icon: Filter },
-  { value: 'REQUESTED', label: 'Chờ xác nhận', icon: Mail },
-  { value: 'WAITING_PAYMENT', label: 'Chờ thanh toán', icon: Clock3 },
-  { value: 'CONFIRMED', label: 'Đã xác nhận', icon: CalendarDays },
-  { value: 'UNDER_REVIEW', label: 'Đang xem xét', icon: Eye },
-  { value: 'COMPLETED', label: 'Hoàn thành', icon: CheckCircle2 },
-  { value: 'CLOSED', label: 'Đã đóng', icon: XCircle },
+  { value: 'WAITING', label: 'Đang chờ', icon: Clock3 },
+  { value: 'IN_PROGRESS', label: 'Đang diễn ra', icon: PlayCircle },
+  { value: 'COMPLETED', label: 'Đã hoàn thành', icon: CheckCircle2 },
+  { value: 'NO_SHOW', label: 'Vắng mặt', icon: UserX },
+  { value: 'REJECTED', label: 'Bị từ chối', icon: Ban },
+  { value: 'EXPIRED', label: 'Quá hạn', icon: Hourglass },
+  { value: 'CANCELLED_BY_MENTEE', label: 'Mentee hủy', icon: XCircle },
+  { value: 'CANCELLED_BY_MENTOR', label: 'Mentor hủy', icon: XCircle },
 ];
 
 type BookingAction = 'accept' | 'reject' | 'complete' | 'cancel';
@@ -119,10 +128,13 @@ function formatSchedule(value: string) {
 
 function formatScheduleParts(value: string) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return { date: value || 'Chưa xác định', time: '' };
+  if (Number.isNaN(date.getTime())) {
+    return { date: value || 'Chưa xác định', time: '' };
+  }
+
   return {
     date: new Intl.DateTimeFormat('vi-VN', {
-      weekday: 'short',
+      weekday: 'long',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -135,39 +147,8 @@ function formatScheduleParts(value: string) {
   };
 }
 
-function statusPresentation(booking: MentorBookingResponse) {
-  const group = bookingFilterOf(booking);
-  if (group === 'REQUESTED') {
-    return { label: 'Chờ Mentor xác nhận', variant: 'info' as const };
-  }
-  if (group === 'WAITING_PAYMENT') {
-    return { label: 'Chờ thanh toán', variant: 'warning' as const };
-  }
-  if (group === 'CONFIRMED') {
-    const label = booking.actualSessionStatus === 'IN_PROGRESS' ? 'Đang diễn ra' : 'Đã xác nhận';
-    return { label, variant: 'info' as const };
-  }
-  if (group === 'UNDER_REVIEW') {
-    return { label: 'Đang xem xét', variant: 'neutral' as const };
-  }
-  if (group === 'COMPLETED') {
-    return { label: 'Hoàn thành', variant: 'success' as const };
-  }
-  const closedLabels: Partial<Record<MentorBookingResponse['bookingStatus'], string>> = {
-    REJECTED_BY_MENTOR: 'Mentor đã từ chối',
-    CANCELED_BY_MENTEE: 'Mentee đã hủy',
-    CANCELED_BY_MENTOR: 'Mentor đã hủy',
-    REQUEST_EXPIRED: 'Yêu cầu đã hết hạn',
-    PAYMENT_EXPIRED: 'Thanh toán đã hết hạn',
-  };
-  return {
-    label: closedLabels[booking.bookingStatus] || 'Đã đóng',
-    variant: 'danger' as const,
-  };
-}
-
 function emptyText(filter: MentorBookingFilter) {
-  if (filter === 'REQUESTED') {
+  if (filter === 'WAITING') {
     return ['Hiện chưa có booking mới.', 'Các yêu cầu đặt lịch mới sẽ xuất hiện tại đây.'];
   }
   const label = FILTERS.find((item) => item.value === filter)?.label.toLowerCase() ?? 'phù hợp';
@@ -307,7 +288,7 @@ export function MentorBookingsView() {
               onClick={() => setActiveFilter(filter.value)}
             >
               <Icon className="h-4.5 w-4.5" aria-hidden="true" />
-              {filter.label} ({counts[filter.value]})
+              {filter.label} ({counts[filter.value] ?? 0})
             </button>
           );
         })}
@@ -340,22 +321,15 @@ export function MentorBookingsView() {
             />
           </button>
         </div>
-        <div className="relative inline-flex h-11 items-center gap-2 rounded-xl border border-border-color bg-white px-4 text-sm font-medium text-text-secondary transition-colors hover:border-primary-border hover:bg-primary-light/40">
-          <ArrowDownUp className="h-5 w-5 text-primary" aria-hidden="true" />
-          <span>Sắp xếp:</span>
-          <strong className="font-semibold text-text-main">
-            {sortDirection === 'DESC' ? 'Xa nhất' : 'Gần nhất'}
-          </strong>
-          <ChevronDown className="h-4 w-4" aria-hidden="true" />
-          <select
-            className="absolute inset-0 cursor-pointer opacity-0"
+        <div className="w-52">
+          <SelectField
             value={sortDirection}
-            aria-label="Sắp xếp booking theo thời gian"
-            onChange={(event) => setSortDirection(event.target.value as 'ASC' | 'DESC')}
-          >
-            <option value="ASC">Gần nhất trước</option>
-            <option value="DESC">Xa nhất trước</option>
-          </select>
+            onValueChange={(val) => setSortDirection(val as 'ASC' | 'DESC')}
+            options={[
+              { value: 'ASC', label: 'Sắp xếp: Gần nhất trước' },
+              { value: 'DESC', label: 'Sắp xếp: Xa nhất trước' },
+            ]}
+          />
         </div>
       </div>
 
@@ -525,7 +499,6 @@ function BookingRow({
   onMessage: () => void;
   onCheckIn: () => void;
 }) {
-  const status = statusPresentation(booking);
   const bookingGroup = bookingFilterOf(booking);
   const schedule = formatScheduleParts(booking.selectedStartTime);
   const meetingLabel = meetingPlatformLabel(booking.meetingPlatform);
@@ -602,12 +575,7 @@ function BookingRow({
       </div>
 
       <div className="flex min-w-0 justify-self-end md:justify-self-start xl:justify-self-auto xl:justify-center">
-        <Badge
-          variant={status.variant}
-          className="max-w-full px-3 py-1.5 text-xs font-medium [&>span:last-child]:truncate"
-        >
-          {status.label}
-        </Badge>
+        <BookingStatusBadge status={booking.bookingStatus || booking.displayState} />
       </div>
 
       <div className="col-span-2 flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-slate-100 pt-3 md:col-span-1 md:justify-end md:border-t-0 md:pt-0 xl:flex-nowrap">
@@ -690,7 +658,6 @@ function BookingDetailModal({
   onClose: () => void;
 }) {
   if (!booking) return null;
-  const status = statusPresentation(booking);
   const meetingLabel = meetingPlatformLabel(booking.meetingPlatform) || 'Chưa thiết lập';
   return (
     <Modal open onClose={onClose} title="Chi tiết lịch đặt" className="max-w-2xl">
@@ -714,9 +681,7 @@ function BookingDetailModal({
               <strong className="font-semibold text-slate-800">{booking.menteeDisplayName}</strong>
             </p>
           </div>
-          <Badge variant={status.variant} className="px-3 py-1.5 text-xs">
-            {status.label}
-          </Badge>
+          <BookingStatusBadge status={booking.bookingStatus || booking.displayState} />
         </div>
 
         <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
@@ -923,24 +888,21 @@ function BookingActionModal({
       <div className="grid gap-4 [&_input]:h-11 [&_input]:rounded-xl [&_input]:border [&_input]:border-border-color [&_input]:px-3 [&_label]:grid [&_label]:gap-2 [&_label]:text-sm [&_select]:h-11 [&_select]:rounded-xl [&_select]:border [&_select]:border-border-color [&_select]:bg-white [&_select]:px-3 [&_textarea]:min-h-28 [&_textarea]:rounded-xl [&_textarea]:border [&_textarea]:border-border-color [&_textarea]:p-3">
         {action.type === 'accept' && (
           <>
-            <label>
-              <span>
-                Nền tảng buổi mentoring <span className="text-danger">*</span>
-              </span>
-              <select
-                required
-                value={meetingPlatform}
-                onChange={(event) => setMeetingPlatform(event.target.value)}
-              >
-                <option value="">Chọn nền tảng</option>
-                <option value="GOOGLE_MEET">Google Meet</option>
-                <option value="ZOOM">Zoom</option>
-                <option value="MICROSOFT_TEAMS">Microsoft Teams</option>
-                <option value="DISCORD">Discord</option>
-                <option value="OFFLINE">Trực tiếp</option>
-                <option value="OTHER">Khác</option>
-              </select>
-            </label>
+            <SelectField
+              label="Nền tảng buổi mentoring"
+              required
+              placeholder="Chọn nền tảng"
+              value={meetingPlatform}
+              onValueChange={(val) => setMeetingPlatform(val)}
+              options={[
+                { value: 'GOOGLE_MEET', label: 'Google Meet' },
+                { value: 'ZOOM', label: 'Zoom' },
+                { value: 'MICROSOFT_TEAMS', label: 'Microsoft Teams' },
+                { value: 'DISCORD', label: 'Discord' },
+                { value: 'OFFLINE', label: 'Trực tiếp' },
+                { value: 'OTHER', label: 'Khác' },
+              ]}
+            />
             {shouldAutoGenerateGoogleMeet ? (
               <div className="flex gap-3 rounded-xl border border-primary-border bg-primary-light p-3 text-sm text-primary">
                 <CalendarDays aria-hidden="true" />

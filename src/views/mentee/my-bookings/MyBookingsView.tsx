@@ -19,19 +19,24 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
-import { Badge } from '@/components/ui/Badge';
+import { BookingStatusBadge } from '@/components/ui/BookingStatusBadge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { SelectField } from '@/components/ui/SelectField';
 import type { BookingIssueType, MentorBookingResponse } from '@/models/auth';
 import { showError, showSuccess } from '@/utils/toast';
 import { type MenteeBookingMutation, type MenteeBookingTab, useMyBookings } from './useMyBookings';
 
 const TABS: Array<{ value: MenteeBookingTab; label: string }> = [
   { value: 'ALL', label: 'Tất cả' },
-  { value: 'PENDING', label: 'Đang chờ' },
-  { value: 'CONFIRMED', label: 'Đã xác nhận' },
-  { value: 'COMPLETED', label: 'Hoàn thành' },
-  { value: 'CANCELLED', label: 'Đã hủy' },
+  { value: 'WAITING', label: 'Đang chờ' },
+  { value: 'IN_PROGRESS', label: 'Đang diễn ra' },
+  { value: 'COMPLETED', label: 'Đã hoàn thành' },
+  { value: 'NO_SHOW', label: 'Vắng mặt' },
+  { value: 'REJECTED', label: 'Bị từ chối' },
+  { value: 'EXPIRED', label: 'Quá hạn' },
+  { value: 'CANCELLED_BY_MENTEE', label: 'Mentee hủy' },
+  { value: 'CANCELLED_BY_MENTOR', label: 'Mentor hủy' },
 ];
 
 type FormAction = 'cancel' | 'confirm' | 'reportIssue' | 'respondIssue';
@@ -49,37 +54,23 @@ function formatSchedule(value: string) {
   }).format(date);
 }
 
-function statusOf(booking: MentorBookingResponse) {
-  if (booking.displayState === 'CANCELED_OR_EXPIRED') {
-    return { label: 'Đã hủy hoặc hết hạn', variant: 'danger' as const };
-  }
-  if (booking.displayState === 'COMPLETED' || booking.displayState === 'FEEDBACK_REQUIRED') {
-    return { label: 'Hoàn thành', variant: 'success' as const };
-  }
-  if (booking.displayState === 'PAYMENT_REQUIRED') {
-    return { label: 'Chờ thanh toán', variant: 'warning' as const };
-  }
-  if (booking.displayState === 'PENDING_MENTOR_RESPONSE') {
-    return { label: 'Chờ Mentor xác nhận', variant: 'warning' as const };
-  }
-  if (booking.displayState === 'UNDER_REVIEW') {
-    return { label: 'Đang xem xét', variant: 'warning' as const };
-  }
-  if (booking.displayState === 'WAITING_CONFIRMATION') {
-    return { label: 'Chờ xác nhận hoàn tất', variant: 'info' as const };
-  }
-  return {
-    label: booking.displayState === 'IN_SESSION' ? 'Đang diễn ra' : 'Sắp tới',
-    variant: 'info' as const,
-  };
-}
-
 export function MyBookingsView({ locale: _locale }: { locale: string }) {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
   const { setHeaderTitle } = useMenteeShell();
-  const { activeTab, bookings, error, isLoading, isSaving, mutate, refresh, setActiveTab } =
-    useMyBookings();
+  const {
+    activeTab,
+    bookings,
+    counts,
+    error,
+    isLoading,
+    isSaving,
+    mutate,
+    refresh,
+    setActiveTab,
+    setSortDirection,
+    sortDirection,
+  } = useMyBookings();
   const [formAction, setFormAction] = useState<{
     type: FormAction;
     booking: MentorBookingResponse;
@@ -108,24 +99,42 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
           Theo dõi và thực hiện các bước tiếp theo của buổi mentoring.
         </p>
       </header>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Lọc lịch đặt">
-          {TABS.map((tab) => (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.value}
-              className={`h-10 rounded-xl border px-4 text-sm font-semibold transition-colors ${activeTab === tab.value ? 'border-primary bg-primary text-white' : 'border-border-color bg-white text-text-secondary hover:border-primary hover:text-primary'}`}
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
+      {/* Line 1: Status Filter Tags */}
+      <div
+        className="flex max-w-full gap-2 overflow-x-auto pb-1"
+        role="tablist"
+        aria-label="Lọc lịch đặt"
+      >
+        {TABS.map((tab) => (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.value}
+            className={`inline-flex h-12 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-primary/20 ${activeTab === tab.value ? 'border-primary bg-primary text-white' : 'border-border-color bg-white text-text-secondary hover:border-primary-border hover:bg-primary-light hover:text-primary'}`}
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+          >
+            {tab.label} ({counts[tab.value] ?? 0})
+          </button>
+        ))}
+      </div>
+
+      {/* Line 2: Sort Filter & Refresh Button */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border-color/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full sm:w-64">
+          <SelectField
+            value={sortDirection}
+            onValueChange={(val) => setSortDirection(val as 'ASC' | 'DESC')}
+            options={[
+              { value: 'ASC', label: 'Sắp xếp: Gần nhất trước' },
+              { value: 'DESC', label: 'Sắp xếp: Xa nhất trước' },
+            ]}
+          />
         </div>
         <Button
           variant="outline"
-          leftIcon={<RefreshCw />}
+          className="h-11 justify-center shrink-0 self-end sm:self-auto"
+          leftIcon={<RefreshCw className="h-4 w-4" />}
           onClick={() => void refresh()}
           disabled={isLoading}
         >
@@ -191,7 +200,6 @@ function BookingCard({
   onImmediate: (mutation: MenteeBookingMutation) => void;
   onMessage: () => void;
 }) {
-  const status = statusOf(booking);
   const canCheckIn = Boolean(
     booking.attendance?.canCheckIn && !booking.attendance.currentUserCheckedIn,
   );
@@ -205,6 +213,13 @@ function BookingCard({
       'FEEDBACK_REQUIRED',
       'COMPLETED',
     ].includes(booking.displayState);
+
+  const isPendingStatus =
+    booking.bookingStatus === 'PENDING' ||
+    booking.bookingStatus === 'REQUESTED' ||
+    booking.displayState === 'PENDING_MENTOR_RESPONSE';
+  const canCancel = booking.canCancel && isPendingStatus;
+
   return (
     <article className="grid gap-4 rounded-2xl border border-border-color bg-white p-5 shadow-xs">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -216,7 +231,7 @@ function BookingCard({
             với {booking.mentorDisplayName || 'Mentor'}
           </span>
         </div>
-        <Badge variant={status.variant}>{status.label}</Badge>
+        <BookingStatusBadge status={booking.bookingStatus || booking.displayState} />
       </div>
       <div className="flex items-center gap-2 text-sm text-text-muted">
         <CalendarDays className="h-4 w-4 text-primary" />
@@ -265,7 +280,7 @@ function BookingCard({
             Phản hồi vấn đề
           </Button>
         )}
-        {booking.canCancel && (
+        {canCancel && (
           <Button variant="destructive" leftIcon={<XCircle />} onClick={() => onAction('cancel')}>
             Hủy lịch
           </Button>
@@ -313,21 +328,18 @@ function ActionModal({
     <Modal open title={titles[action.type]} onClose={onClose}>
       <div className="grid gap-4">
         {action.type === 'reportIssue' && (
-          <label className="grid gap-2 text-sm font-semibold text-text-main">
-            <span>
-              Loại vấn đề <b>*</b>
-            </span>
-            <select
-              className="h-11 rounded-xl border border-border-color bg-white px-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-              value={issueType}
-              onChange={(event) => setIssueType(event.target.value as BookingIssueType)}
-            >
-              <option value="MENTOR_NO_SHOW">Mentor không tham gia</option>
-              <option value="QUALITY_ISSUE">Chất lượng buổi học</option>
-              <option value="TECHNICAL_PROBLEM">Sự cố kỹ thuật</option>
-              <option value="OTHER">Vấn đề khác</option>
-            </select>
-          </label>
+          <SelectField
+            label="Loại vấn đề"
+            required
+            value={issueType}
+            onValueChange={(val) => setIssueType(val as BookingIssueType)}
+            options={[
+              { value: 'MENTOR_NO_SHOW', label: 'Mentor không tham gia' },
+              { value: 'QUALITY_ISSUE', label: 'Chất lượng buổi học' },
+              { value: 'TECHNICAL_PROBLEM', label: 'Sự cố kỹ thuật' },
+              { value: 'OTHER', label: 'Vấn đề khác' },
+            ]}
+          />
         )}
         <label className="grid gap-2 text-sm font-semibold text-text-main">
           <span>

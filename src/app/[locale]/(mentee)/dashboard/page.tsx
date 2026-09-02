@@ -36,11 +36,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             return (
               <div className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group" key={person.id}>
                 <div
-                  className={`p-0.5 rounded-full shadow-xs group-hover:scale-105 transition-all ${
-                    person.isAd
+                  className={`p-0.5 rounded-full shadow-xs group-hover:scale-105 transition-all ${person.isAd
                       ? 'bg-gradient-to-tr from-blue-600 to-indigo-600'
                       : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600'
-                  }`}
+                    }`}
                 >
                   <div className="w-14 h-14 rounded-full bg-white p-0.5 flex items-center justify-center">
                     {person.avatarUrl ? (
@@ -57,7 +56,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   </div>
                 </div>
                 <span className="text-xs font-semibold text-text-main text-center truncate max-w-[70px]">
-                  {person.isAd ? 'Quảng cáo' : person.name.split(' ')[0]}
+                  {person.isAd ? 'Khóa học mới' : person.name.split(' ')[0]}
                 </span>
               </div>
             );

@@ -152,17 +152,15 @@ function menteeInitials(name: string) {
 
 function bookingStatusPresentation(booking: MentorBookingResponse) {
   const filter = bookingFilterOf(booking);
-  if (filter === 'REQUESTED') return { label: 'Chờ xác nhận', variant: 'warning' as const };
-  if (filter === 'WAITING_PAYMENT') return { label: 'Chờ thanh toán', variant: 'warning' as const };
-  if (filter === 'CONFIRMED') {
-    return {
-      label: booking.actualSessionStatus === 'IN_PROGRESS' ? 'Đang diễn ra' : 'Đã xác nhận',
-      variant: 'success' as const,
-    };
-  }
-  if (filter === 'UNDER_REVIEW') return { label: 'Đang xem xét', variant: 'warning' as const };
-  if (filter === 'COMPLETED') return { label: 'Hoàn thành', variant: 'success' as const };
-  return { label: 'Đã hủy', variant: 'danger' as const };
+  if (filter === 'WAITING') return { label: 'Đang chờ', variant: 'warning' as const };
+  if (filter === 'IN_PROGRESS') return { label: 'Đang diễn ra', variant: 'info' as const };
+  if (filter === 'COMPLETED') return { label: 'Đã hoàn thành', variant: 'success' as const };
+  if (filter === 'NO_SHOW') return { label: 'Vắng mặt', variant: 'danger' as const };
+  if (filter === 'REJECTED') return { label: 'Bị từ chối', variant: 'danger' as const };
+  if (filter === 'EXPIRED') return { label: 'Quá hạn', variant: 'danger' as const };
+  if (filter === 'CANCELLED_BY_MENTEE') return { label: 'Mentee hủy', variant: 'danger' as const };
+  if (filter === 'CANCELLED_BY_MENTOR') return { label: 'Mentor hủy', variant: 'danger' as const };
+  return { label: 'Đã đóng', variant: 'danger' as const };
 }
 
 function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']) {

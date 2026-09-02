@@ -37,7 +37,7 @@ export const demoPosts: Post[] = [
     id: 'demo-pm-resume',
     title: '3 lỗi sai phổ biến nhất trên CV vị trí Product Manager',
     content:
-      'Top 3 lỗi sai mình thường thấy nhất trên CV của các bạn ứng tuyển PM:\n\n1. Liệt kê trách nhiệm công việc thay vì tập trung vào kết quả đạt được\n2. Thiếu các con số chứng minh tác động thực tế (% tăng trưởng, số lượng người dùng)\n3. Dùng quá nhiều thuật ngữ chuyên ngành phức tạp thay vì kể một câu chuyện thuyết phục\n\nSửa lại những điểm này và tỷ lệ nhận được phản hồi từ nhà tuyển dụng sẽ tăng rõ rệt đấy!',
+      'Top 3 lỗi sai mình thường thấy nhất trên CV của các bạn ứng tuyển PM:\n1. Liệt kê trách nhiệm công việc thay vì tập trung vào kết quả đạt được\n2. Thiếu các con số chứng minh tác động thực tế (% tăng trưởng, số lượng người dùng)\n3. Dùng quá nhiều thuật ngữ chuyên ngành phức tạp thay vì kể một câu chuyện thuyết phục\n\nSửa lại những điểm này và tỷ lệ nhận được phản hồi từ nhà tuyển dụng sẽ tăng lên rõ rệt nha!',
     author: { id: 'mentor-sarah-chen', name: 'Sarah Chen' },
     tags: ['Product Management', 'Tư vấn sự nghiệp'],
     createdAt: '6 giờ trước',
@@ -47,7 +47,7 @@ export const demoPosts: Post[] = [
       {
         id: 'comment-resume-minh',
         authorName: 'Minh Đức',
-        content: 'Bài viết quá hữu ích! Mình phải sửa lại mục số 2 trên CV ngay lập tức.',
+        content: 'Cảm ơn chia sẻ của chị ạ.',
         createdAt: '6 giờ trước',
       },
     ],
@@ -56,9 +56,9 @@ export const demoPosts: Post[] = [
   },
   {
     id: 'demo-system-design',
-    title: 'Kinh nghiệm chuẩn bị phỏng vấn System Design',
+    title: 'Kinh nghiệm chuẩn bị phỏng vấn đồ án tốt nghiệp',
     content:
-      'Mọi người thường chuẩn bị cho các buổi phỏng vấn Thiết kế Hệ thống (System Design) như thế nào vậy? Tuần tới mình có buổi phỏng vấn vị trí Senior Backend mà thấy ngợp quá. Có ai có phương pháp học hệ thống hiệu quả không ạ?',
+      'Mọi người thường chuẩn bị cho đồ án tốt nghiệp ngành Thiết kế mỹ thuật số thế nào vậy ạ? Tuần tới mình bắt đầu vào kì học cuối rồi mà thấy ngợp quá. Có ai có phương pháp hoặc lộ trình hiệu quả không ạ?',
     author: { id: 'member-thu-ha', name: 'Thu Hà' },
     tags: ['System Design', 'Phỏng vấn Tech'],
     createdAt: '1 ngày trước',
@@ -67,14 +67,14 @@ export const demoPosts: Post[] = [
     previewComments: [
       {
         id: 'comment-system-alex',
-        authorName: 'Alex Kim',
-        content: 'Hãy bắt đầu bằng một khung tư duy rõ ràng, sau đó thực hành vẽ sơ đồ kiến trúc hệ thống trên bảng trắng nhiều vào nhé.',
+        authorName: 'Koo Koo',
+        content: 'Hãy bắt đầu bằng một chủ đề tiềm năng, bạn có thể tham khảo từ các anh chị khóa trước hoặc GVHD, sau đó thực hành vẽ các tính năng chính của hệ thống, sau đó lên timeline cho nhóm nhé.',
         createdAt: '1 ngày trước',
       },
       {
         id: 'comment-system-sarah',
         authorName: 'Sarah Chen',
-        content: 'Chị có mở dịch vụ Phỏng vấn thử (Mock Interview) chuyên sâu về mảng này đấy. Nhắn tin cho chị nhé!',
+        content: 'Chị có mở dịch vụ tư vấn đồ án chuyên sâu đấy. Nếu em cần thì đặt lịch chị nhé!',
         createdAt: '1 ngày trước',
       },
     ],
@@ -84,7 +84,7 @@ export const demoPosts: Post[] = [
     id: 'demo-learning-plan',
     title: 'Lộ trình học tập hiệu quả giúp duy trì động lực',
     content:
-      'Khoe với mọi người một thành tích nhỏ: Mình vừa hoàn thành lộ trình 30 ngày học Python đầu tiên! Nhờ có sự đồng hành và kiểm tra tiến độ hàng tuần từ Mentor mà mục tiêu học tập không còn thấy quá sức nữa.',
+      'Khoe với mọi người một thành tích nhỏ đây: Mình vừa hoàn thành lộ trình 30 ngày học Python đầu tiên! Nhờ có sự đồng hành và kiểm tra tiến độ hàng tuần từ Mentor mà mục tiêu học tập không còn thấy quá sức nữa.',
     author: { id: 'mentor-alex-kim', name: 'Alex Kim' },
     tags: ['Python', 'Tiến độ học tập'],
     createdAt: '2 ngày trước',

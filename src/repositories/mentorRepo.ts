@@ -9,7 +9,7 @@ import type {
   PublicAvailabilitySlotResponse,
   UserBookingItem,
 } from '@/models/auth';
-import type { Booking, Mentor } from '@/models/entities';
+import type { Mentor } from '@/models/entities';
 import { apiClient } from '@/models/apiClient';
 
 /** Parameters tùy chọn cho API GET /api/mentors */
@@ -220,9 +220,6 @@ export function mapApiMentorToEntity(raw: any): Mentor {
     category,
   };
 }
-
-/** Mảng lưu trữ các lịch hẹn đã tạo trong phiên */
-const bookings: Booking[] = [];
 
 // Cache cho các request đang xử lý (in-flight) để chống gọi lặp trùng lặp API khi re-render
 const inFlightRequests = new Map<string, Promise<any>>();
@@ -535,31 +532,5 @@ export const mentorRepo = {
     } catch {
       return [];
     }
-  },
-
-  /**
-   * Tạo lịch hẹn mới giữa Mentee và Mentor.
-   * @param mentorId - ID của Mentor được đặt lịch
-   * @param startsAt - Thời điểm bắt đầu buổi tư vấn (ISO String)
-   * @returns Promise chứa thông tin Lịch hẹn đã tạo
-   */
-  async createBooking(mentorId: string, startsAt: string): Promise<Booking> {
-    const booking: Booking = {
-      id: crypto.randomUUID(),
-      mentorId,
-      menteeId: 'u-1',
-      startsAt: formatIso8601(startsAt),
-      status: 'confirmed',
-    };
-    bookings.push(booking);
-    return booking;
-  },
-
-  /**
-   * Lấy danh sách tất cả các lịch hẹn đã được đặt.
-   * @returns Promise chứa mảng danh sách lịch hẹn (`Booking[]`)
-   */
-  async listBookings(): Promise<Booking[]> {
-    return bookings;
   },
 };

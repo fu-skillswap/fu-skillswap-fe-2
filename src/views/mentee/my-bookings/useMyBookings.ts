@@ -14,7 +14,17 @@ import type {
 import { useAuth } from '@/providers/AuthProvider';
 import { bookingRepo } from '@/repositories/bookingRepo';
 
-export type MenteeBookingTab = 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+export type MenteeBookingTab =
+  | 'ALL'
+  | 'WAITING'
+  | 'COMPLETED'
+  | 'NO_SHOW'
+  | 'REJECTED'
+  | 'EXPIRED'
+  | 'IN_PROGRESS'
+  | 'CANCELLED_BY_MENTEE'
+  | 'CANCELLED_BY_MENTOR';
+
 export type MenteeBookingMutation =
   | { type: 'cancel'; reason: string }
   | { type: 'checkIn' }
@@ -24,17 +34,69 @@ export type MenteeBookingMutation =
   | { type: 'pay' };
 
 function tabOf(booking: MentorBookingResponse): MenteeBookingTab {
-  if (booking.displayState === 'COMPLETED' || booking.displayState === 'FEEDBACK_REQUIRED') {
+  const status = String(booking.bookingStatus || booking.displayState || 'PENDING').toUpperCase();
+
+  // 1. Đang chờ: PENDING, ACCEPTED_AWAITING_PAYMENT, UNDER_REVIEW, AWAITING_MENTEE_CONFIRMATION
+  if (
+    [
+      'PENDING',
+      'REQUESTED',
+      'PENDING_MENTOR_RESPONSE',
+      'ACCEPTED_AWAITING_PAYMENT',
+      'WAITING_PAYMENT',
+      'PAYMENT_REQUIRED',
+      'UNDER_REVIEW',
+      'AWAITING_MENTEE_CONFIRMATION',
+      'WAITING_CONFIRMATION',
+    ].includes(status)
+  ) {
+    return 'WAITING';
+  }
+
+  // 2. Đã hoàn thành: COMPLETED, AUTO_CLOSED
+  if (['COMPLETED', 'AUTO_CLOSED', 'FEEDBACK_REQUIRED'].includes(status)) {
     return 'COMPLETED';
   }
-  if (booking.displayState === 'CANCELED_OR_EXPIRED') return 'CANCELLED';
-  if (
-    booking.displayState === 'PENDING_MENTOR_RESPONSE' ||
-    booking.displayState === 'PAYMENT_REQUIRED'
-  ) {
-    return 'PENDING';
+
+  // 3. Vắng mặt: NO_SHOW
+  if (status === 'NO_SHOW') {
+    return 'NO_SHOW';
   }
-  return 'CONFIRMED';
+
+  // 4. Bị từ chối: REJECTED
+  if (['REJECTED', 'REJECTED_BY_MENTOR'].includes(status)) {
+    return 'REJECTED';
+  }
+
+  // 5. Quá hạn: REQUEST_EXPIRED, EXPIRED_PENDING_MENTOR, EXPIRED_AWAITING_PAYMENT
+  if (
+    [
+      'REQUEST_EXPIRED',
+      'EXPIRED_PENDING_MENTOR',
+      'EXPIRED_AWAITING_PAYMENT',
+      'PAYMENT_EXPIRED',
+      'CANCELED_OR_EXPIRED',
+    ].includes(status)
+  ) {
+    return 'EXPIRED';
+  }
+
+  // 6. Đang diễn ra: PAID, AWAITING_MENTOR_COMPLETION
+  if (['PAID', 'AWAITING_MENTOR_COMPLETION', 'CONFIRMED', 'IN_SESSION', 'UPCOMING'].includes(status)) {
+    return 'IN_PROGRESS';
+  }
+
+  // 7. Mentee hủy: CANCELLED_BY_MENTEE
+  if (['CANCELLED_BY_MENTEE', 'CANCELED_BY_MENTEE'].includes(status)) {
+    return 'CANCELLED_BY_MENTEE';
+  }
+
+  // 8. Mentor hủy: CANCELLED_BY_MENTOR
+  if (['CANCELLED_BY_MENTOR', 'CANCELED_BY_MENTOR'].includes(status)) {
+    return 'CANCELLED_BY_MENTOR';
+  }
+
+  return 'WAITING';
 }
 
 export function useMyBookings() {
@@ -44,6 +106,7 @@ export function useMyBookings() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [activeTab, setActiveTab] = useState<MenteeBookingTab>('ALL');
+  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('ASC');
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -64,9 +127,37 @@ export function useMyBookings() {
   }, [isBootstrapping, refresh]);
 
   const bookings = useMemo(
-    () => allBookings.filter((booking) => activeTab === 'ALL' || tabOf(booking) === activeTab),
-    [activeTab, allBookings],
+    () =>
+      allBookings
+        .filter((booking) => activeTab === 'ALL' || tabOf(booking) === activeTab)
+        .sort((left, right) => {
+          const diff =
+            new Date(left.selectedStartTime).getTime() - new Date(right.selectedStartTime).getTime();
+          return sortDirection === 'ASC' ? diff : -diff;
+        }),
+    [activeTab, allBookings, sortDirection],
   );
+
+  const counts = useMemo(() => {
+    const result: Record<MenteeBookingTab, number> = {
+      ALL: allBookings.length,
+      WAITING: 0,
+      IN_PROGRESS: 0,
+      COMPLETED: 0,
+      NO_SHOW: 0,
+      REJECTED: 0,
+      EXPIRED: 0,
+      CANCELLED_BY_MENTEE: 0,
+      CANCELLED_BY_MENTOR: 0,
+    };
+    allBookings.forEach((booking) => {
+      const tab = tabOf(booking);
+      if (result[tab] !== undefined) {
+        result[tab] += 1;
+      }
+    });
+    return result;
+  }, [allBookings]);
 
   const mutate = async (bookingId: string, mutation: MenteeBookingMutation) => {
     setIsSaving(true);
@@ -92,12 +183,15 @@ export function useMyBookings() {
   return {
     activeTab,
     bookings,
+    counts,
     error,
     isLoading: isLoading || isBootstrapping,
     isSaving,
     mutate,
     refresh,
     setActiveTab,
+    setSortDirection,
+    sortDirection,
     totalCount: allBookings.length,
   };
 }

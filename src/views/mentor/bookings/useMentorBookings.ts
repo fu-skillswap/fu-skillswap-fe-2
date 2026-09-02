@@ -21,7 +21,15 @@ import { bookingRepo } from '@/repositories/bookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 
 export type MentorBookingFilter =
-  'ALL' | 'REQUESTED' | 'WAITING_PAYMENT' | 'CONFIRMED' | 'UNDER_REVIEW' | 'COMPLETED' | 'CLOSED';
+  | 'ALL'
+  | 'WAITING'
+  | 'COMPLETED'
+  | 'NO_SHOW'
+  | 'REJECTED'
+  | 'EXPIRED'
+  | 'IN_PROGRESS'
+  | 'CANCELLED_BY_MENTEE'
+  | 'CANCELLED_BY_MENTOR';
 
 export type MentorBookingMutation =
   | { type: 'accept'; data: AcceptMentorBookingRequest }
@@ -33,12 +41,69 @@ export type MentorBookingMutation =
 const PAGE_SIZE = 5;
 
 export function bookingFilterOf(booking: MentorBookingResponse): MentorBookingFilter {
-  if (booking.bookingStatus === 'REQUESTED') return 'REQUESTED';
-  if (booking.bookingStatus === 'WAITING_PAYMENT') return 'WAITING_PAYMENT';
-  if (booking.bookingStatus === 'CONFIRMED') return 'CONFIRMED';
-  if (booking.bookingStatus === 'UNDER_REVIEW') return 'UNDER_REVIEW';
-  if (booking.bookingStatus === 'COMPLETED') return 'COMPLETED';
-  return 'CLOSED';
+  const status = String(booking.bookingStatus || booking.displayState || 'PENDING').toUpperCase();
+
+  // 1. Đang chờ: PENDING, ACCEPTED_AWAITING_PAYMENT, UNDER_REVIEW, AWAITING_MENTEE_CONFIRMATION
+  if (
+    [
+      'PENDING',
+      'REQUESTED',
+      'PENDING_MENTOR_RESPONSE',
+      'ACCEPTED_AWAITING_PAYMENT',
+      'WAITING_PAYMENT',
+      'PAYMENT_REQUIRED',
+      'UNDER_REVIEW',
+      'AWAITING_MENTEE_CONFIRMATION',
+      'WAITING_CONFIRMATION',
+    ].includes(status)
+  ) {
+    return 'WAITING';
+  }
+
+  // 2. Đã hoàn thành: COMPLETED, AUTO_CLOSED
+  if (['COMPLETED', 'AUTO_CLOSED', 'FEEDBACK_REQUIRED'].includes(status)) {
+    return 'COMPLETED';
+  }
+
+  // 3. Vắng mặt: NO_SHOW
+  if (status === 'NO_SHOW') {
+    return 'NO_SHOW';
+  }
+
+  // 4. Bị từ chối: REJECTED
+  if (['REJECTED', 'REJECTED_BY_MENTOR'].includes(status)) {
+    return 'REJECTED';
+  }
+
+  // 5. Quá hạn: REQUEST_EXPIRED, EXPIRED_PENDING_MENTOR, EXPIRED_AWAITING_PAYMENT
+  if (
+    [
+      'REQUEST_EXPIRED',
+      'EXPIRED_PENDING_MENTOR',
+      'EXPIRED_AWAITING_PAYMENT',
+      'PAYMENT_EXPIRED',
+      'CANCELED_OR_EXPIRED',
+    ].includes(status)
+  ) {
+    return 'EXPIRED';
+  }
+
+  // 6. Đang diễn ra: PAID, AWAITING_MENTOR_COMPLETION
+  if (['PAID', 'AWAITING_MENTOR_COMPLETION', 'CONFIRMED', 'IN_SESSION', 'UPCOMING'].includes(status)) {
+    return 'IN_PROGRESS';
+  }
+
+  // 7. Mentee hủy: CANCELLED_BY_MENTEE
+  if (['CANCELLED_BY_MENTEE', 'CANCELED_BY_MENTEE'].includes(status)) {
+    return 'CANCELLED_BY_MENTEE';
+  }
+
+  // 8. Mentor hủy: CANCELLED_BY_MENTOR
+  if (['CANCELLED_BY_MENTOR', 'CANCELED_BY_MENTOR'].includes(status)) {
+    return 'CANCELLED_BY_MENTOR';
+  }
+
+  return 'WAITING';
 }
 
 function localDateKey(value: string) {
@@ -91,12 +156,14 @@ export function useMentorBookings() {
   const counts = useMemo(() => {
     const result: Record<MentorBookingFilter, number> = {
       ALL: allBookings.length,
-      REQUESTED: 0,
-      WAITING_PAYMENT: 0,
-      CONFIRMED: 0,
-      UNDER_REVIEW: 0,
+      WAITING: 0,
+      IN_PROGRESS: 0,
       COMPLETED: 0,
-      CLOSED: 0,
+      NO_SHOW: 0,
+      REJECTED: 0,
+      EXPIRED: 0,
+      CANCELLED_BY_MENTEE: 0,
+      CANCELLED_BY_MENTOR: 0,
     };
     allBookings.forEach((booking) => {
       result[bookingFilterOf(booking)] += 1;
