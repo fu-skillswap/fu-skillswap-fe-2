@@ -131,16 +131,19 @@ export function NotificationMenu() {
       >
         <Bell className="w-4.5 h-4.5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger ring-2 ring-white" aria-hidden="true" />
+          <span
+            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger ring-2 ring-white"
+            aria-hidden="true"
+          />
         )}
       </button>
 
       {isOpen && (
         <section
-          className="absolute right-0 top-full mt-2 w-80 max-h-[420px] overflow-y-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-3 z-50 flex flex-col gap-2 animate-in fade-in-0 zoom-in-95 duration-150"
+          className="fixed inset-x-2 top-[4.25rem] z-50 flex max-h-[calc(100dvh-4.75rem)] w-auto flex-col gap-2 overflow-hidden rounded-xl border border-solid border-border-light/80 bg-white p-3 shadow-2xl backdrop-blur-md duration-150 animate-in fade-in-0 zoom-in-95 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[420px] sm:w-80 sm:bg-white/95"
           aria-label="Danh sách thông báo"
         >
-          <header className="flex items-center justify-between pb-2 border-b border-solid border-border-light">
+          <header className="flex shrink-0 items-center justify-between border-b border-solid border-border-light pb-2">
             <div className="flex items-center gap-2">
               <strong className="text-xs font-bold text-text-main">Thông báo</strong>
               {unreadCount > 0 && (
@@ -160,37 +163,45 @@ export function NotificationMenu() {
               <CheckCheck className="w-4 h-4" aria-hidden="true" />
             </button>
           </header>
-          {loading ? (
-            <p className="text-xs text-text-muted text-center py-4 m-0">Đang tải thông báo...</p>
-          ) : error ? (
-            <p className="text-xs text-danger text-center py-4 m-0">{error}</p>
-          ) : items.length ? (
-            <div className="flex flex-col gap-1">
-              {items.map((item) => (
-                <button
-                  key={item.notificationId}
-                  type="button"
-                  className={`w-full text-left p-2.5 rounded-xl transition-all border-none cursor-pointer flex flex-col gap-1 ${
-                    item.read
-                      ? 'bg-transparent text-text-secondary hover:bg-surface-subtle'
-                      : 'bg-primary-light/50 text-text-main font-semibold hover:bg-primary-light'
-                  }`}
-                  onClick={() => void markRead(item)}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <strong className="text-xs font-bold leading-tight">{item.title}</strong>
-                    {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-                  </div>
-                  <span className="text-[11px] leading-snug line-clamp-2 text-text-secondary">
-                    {item.message}
-                  </span>
-                  <small className="text-[10px] text-text-muted">{formatDate(item.createdAt)}</small>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted text-center py-6 m-0">Chưa có thông báo nào.</p>
-          )}
+          <div className="min-h-0 overflow-y-auto overscroll-contain">
+            {loading ? (
+              <p className="m-0 py-4 text-center text-xs text-text-muted">Đang tải thông báo...</p>
+            ) : error ? (
+              <p className="m-0 py-4 text-center text-xs text-danger">{error}</p>
+            ) : items.length ? (
+              <div className="flex flex-col gap-1">
+                {items.map((item) => (
+                  <button
+                    key={item.notificationId}
+                    type="button"
+                    className={`flex w-full min-w-0 cursor-pointer flex-col gap-1 rounded-lg border-none p-2.5 text-left transition-all ${
+                      item.read
+                        ? 'bg-transparent text-text-secondary hover:bg-surface-subtle'
+                        : 'bg-primary-light/50 font-semibold text-text-main hover:bg-primary-light'
+                    }`}
+                    onClick={() => void markRead(item)}
+                  >
+                    <div className="flex w-full min-w-0 items-start justify-between gap-2">
+                      <strong className="min-w-0 break-words text-xs font-bold leading-tight">
+                        {item.title}
+                      </strong>
+                      {!item.read && (
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <span className="line-clamp-2 break-words text-[11px] leading-snug text-text-secondary">
+                      {item.message}
+                    </span>
+                    <small className="text-[10px] text-text-muted">
+                      {formatDate(item.createdAt)}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="m-0 py-6 text-center text-xs text-text-muted">Chưa có thông báo nào.</p>
+            )}
+          </div>
         </section>
       )}
     </div>
