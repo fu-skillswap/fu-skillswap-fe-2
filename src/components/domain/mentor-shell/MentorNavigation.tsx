@@ -35,6 +35,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const mentorBookingsHref = `/${locale}/mentor/bookings`;
   const mentorPostsHref = `/${locale}/mentor/posts`;
   const coursesHref = `/${locale}/mentor/my-courses`;
+  const walletHref = `/${locale}/mentor/wallet`;
 
   return (
     <aside
@@ -159,14 +160,18 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           <span>Khóa học của tôi</span>
         </Link>
 
-        <button
-          type="button"
-          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-disabled bg-transparent border border-solid border-transparent opacity-50 cursor-not-allowed text-left w-full"
-          tabIndex={-1}
+        <Link
+          href={walletHref}
+          onClick={onClose}
+          className={
+            pathname.startsWith(walletHref)
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+          }
         >
           <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Ví S-coins</span>
-        </button>
+        </Link>
       </nav>
 
       {/* Bottom Action Button: + Bài viết mới */}

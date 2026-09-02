@@ -74,6 +74,8 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
       title = 'Lịch đặt';
     } else if (pathname.includes('/mentor/posts')) {
       title = 'Bài viết của tôi';
+    } else if (pathname.includes('/mentor/wallet')) {
+      title = 'Ví S-coins';
     }
   }
 
