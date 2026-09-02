@@ -62,7 +62,9 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
 
   let title = headerTitle ?? 'Bảng điều khiển Mentor';
   if (!headerTitle) {
-    if (pathname.includes('/my-courses')) {
+    if (pathname.endsWith('/messages')) {
+      title = 'Tin nhắn';
+    } else if (pathname.includes('/my-courses')) {
       title = 'Khóa học của tôi';
     } else if (pathname.includes('/mentor/services/')) {
       title = 'Chi tiết dịch vụ';
@@ -79,7 +81,10 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
     <MenteeShellContext.Provider value={contextValue}>
       <div className="min-h-screen bg-bg text-text-main flex relative overflow-x-clip">
         {/* Background Watermark KooKoo Mascot (phóng to chiếm trọn màn hình dưới sidebar & bài post) */}
-        <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden" aria-hidden="true">
+        <div
+          className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
+          aria-hidden="true"
+        >
           <img
             src="/images/Koko.png"
             alt=""

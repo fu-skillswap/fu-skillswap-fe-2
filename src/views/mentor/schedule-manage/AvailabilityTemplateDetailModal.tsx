@@ -18,6 +18,9 @@ import {
   Clock,
   FileText,
   Globe,
+  Pause,
+  Pencil,
+  Play,
   Plus,
   RotateCcw,
   X,
@@ -116,186 +119,256 @@ export function AvailabilityTemplateDetailModal({
         title="Chi tiết lịch lặp hàng tuần"
         hideHeader
         onClose={onClose}
-        className="weekly-schedule-detail-modal"
+        className="max-w-2xl"
       >
-        <div className="weekly-schedule-detail-content">
-          <header className="weekly-schedule-detail-header">
-            <h2>Chi tiết lịch lặp hàng tuần</h2>
+        <div className="-m-4 sm:-m-6">
+          <header className="flex items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-3.5">
+            <div>
+              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
+                Chi tiết lịch lặp hàng tuần
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Thông tin cấu hình và các ngày ngoại lệ của lịch.
+              </p>
+            </div>
             <button
               type="button"
-              className="weekly-schedule-detail-close"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 outline-none transition hover:bg-slate-200/70 hover:text-slate-800 focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
               aria-label="Đóng"
               onClick={onClose}
             >
-              <X aria-hidden="true" />
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </header>
 
-          <section className="weekly-schedule-detail-grid" aria-label="Thông tin lịch lặp">
-            <div className="weekly-schedule-detail-item">
-              <span className="weekly-schedule-detail-icon" aria-hidden="true">
-                <Globe />
-              </span>
-              <div>
-                <span className="weekly-schedule-detail-label">Múi giờ</span>
-                <strong>{template.timezone}</strong>
-              </div>
-            </div>
-
-            <div className="weekly-schedule-detail-item">
-              <span className="weekly-schedule-detail-icon" aria-hidden="true">
-                <Calendar />
-              </span>
-              <div>
-                <span className="weekly-schedule-detail-label">Ngày lặp</span>
-                <strong>{formatWeekdays(template.weekdays)}</strong>
-              </div>
-            </div>
-
-            <div className="weekly-schedule-detail-item">
-              <span className="weekly-schedule-detail-icon" aria-hidden="true">
-                <Clock />
-              </span>
-              <div>
-                <span className="weekly-schedule-detail-label">Thời gian</span>
-                <strong>
-                  {formatLocalTime(template.startTime)} – {formatLocalTime(template.endTime)}
-                </strong>
-              </div>
-            </div>
-
-            <div className="weekly-schedule-detail-item">
-              <span className="weekly-schedule-detail-icon" aria-hidden="true">
-                <FileText />
-              </span>
-              <div>
-                <span className="weekly-schedule-detail-label">Dịch vụ áp dụng</span>
-                <strong className="weekly-schedule-detail-services">
-                  {template.services.map((service) => service.title).join(', ') ||
-                    'Chưa gắn dịch vụ'}
-                </strong>
-              </div>
-            </div>
-
-            <div className="weekly-schedule-detail-item is-full-width">
-              <span className="weekly-schedule-detail-icon" aria-hidden="true">
-                <Calendar />
-              </span>
-              <div>
-                <span className="weekly-schedule-detail-label">Thời gian áp dụng</span>
-                <strong>
-                  {formatDateVi(template.effectiveFrom)} →{' '}
-                  {template.effectiveTo ? formatDateVi(template.effectiveTo) : 'Không giới hạn'}
-                </strong>
-              </div>
-            </div>
-          </section>
-
-          {template.generationBlockedReason && (
-            <div className="weekly-schedule-detail-warning">
-              <AlertTriangle aria-hidden="true" />
-              <div>
-                <strong>Lý do không thể tạo lịch tự động:</strong>
-                <p>{template.generationBlockedReason}</p>
-              </div>
-            </div>
-          )}
-
-          <section className="weekly-schedule-exception-section">
-            <h3>
-              <Calendar aria-hidden="true" />
-              <span>Ngày ngoại lệ</span>
-            </h3>
-            <Button
-              variant="outline"
-              size="lg"
-              leftIcon={<Plus aria-hidden="true" />}
-              onClick={handleOpenSkipModal}
+          <div className="mx-auto max-h-[calc(90vh-74px)] w-full max-w-2xl overflow-y-auto px-5 py-4">
+            <section
+              className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+              aria-label="Thông tin lịch lặp"
             >
-              Bỏ qua một ngày
-            </Button>
-
-            {!template.skippedDates || template.skippedDates.length === 0 ? (
-              <div className="weekly-schedule-exception-empty">
-                <Calendar aria-hidden="true" />
-                <span>Chưa có ngày ngoại lệ.</span>
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Globe className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Múi giờ
+                  </span>
+                  <strong className="mt-1 block break-words text-sm text-slate-900">
+                    {template.timezone}
+                  </strong>
+                </div>
               </div>
-            ) : (
-              <div className="weekly-schedule-exception-list">
-                {template.skippedDates.map((dateStr) => (
-                  <div key={dateStr} className="weekly-schedule-exception-row">
-                    <div>
-                      <strong>{formatDateVi(dateStr)}</strong>
-                      <Badge variant="info">Đã bỏ qua</Badge>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      leftIcon={<RotateCcw aria-hidden="true" />}
-                      onClick={() => setRestoreConfirmDate(dateStr)}
-                    >
-                      Khôi phục
-                    </Button>
-                  </div>
-                ))}
+
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Calendar className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Ngày lặp
+                  </span>
+                  <strong className="mt-1 block text-sm text-slate-900">
+                    {formatWeekdays(template.weekdays)}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Clock className="h-5 w-5" />
+                </span>
+                <div>
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Thời gian
+                  </span>
+                  <strong className="mt-0.5 block text-sm text-slate-900">
+                    {formatLocalTime(template.startTime)} – {formatLocalTime(template.endTime)}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <FileText className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Dịch vụ áp dụng
+                  </span>
+                  <strong className="mt-1 block break-words text-sm leading-5 text-slate-900">
+                    {template.services.map((service) => service.title).join(', ') ||
+                      'Chưa gắn dịch vụ'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-3 sm:col-span-2">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Calendar className="h-5 w-5" />
+                </span>
+                <div>
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Thời gian áp dụng
+                  </span>
+                  <strong className="mt-1 block text-sm text-slate-900">
+                    {formatDateVi(template.effectiveFrom)}
+                    <span className="mx-2 text-slate-300">→</span>
+                    {template.effectiveTo
+                      ? formatDateVi(template.effectiveTo)
+                      : 'Không giới hạn ngày kết thúc'}
+                  </strong>
+                </div>
+              </div>
+            </section>
+
+            {template.generationBlockedReason && (
+              <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                <div>
+                  <strong>Lý do không thể tạo lịch tự động</strong>
+                  <p className="mt-1 leading-5">{template.generationBlockedReason}</p>
+                </div>
               </div>
             )}
-          </section>
 
-          {template.blockedOccurrences && template.blockedOccurrences.length > 0 && (
-            <section className="weekly-schedule-blocked-section">
-              <h3>
-                <AlertTriangle aria-hidden="true" />
-                Không thể tạo lịch tự động ({template.blockedOccurrences.length})
-              </h3>
-              {template.blockedOccurrences.map((blocked) => (
-                <div className="weekly-schedule-blocked-row" key={blocked.date}>
-                  <div>
-                    <strong>{formatDateVi(blocked.date)}</strong>
-                    {blocked.reason && <p>{blocked.reason}</p>}
-                  </div>
-                  <Badge variant="warning">Bị chặn</Badge>
+            <section className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <Calendar className="h-4 w-4 text-[#119CF7]" aria-hidden="true" />
+                    Ngày ngoại lệ
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Những ngày lịch lặp sẽ tạm thời không được tạo.
+                  </p>
                 </div>
-              ))}
-            </section>
-          )}
-
-          <footer className="weekly-schedule-detail-footer">
-            <Button variant="secondary" size="lg" onClick={onClose}>
-              Đóng
-            </Button>
-
-            {!isArchived && (
-              <div className="weekly-schedule-detail-actions">
                 <Button
                   variant="outline"
-                  size="lg"
-                  leftIcon={<Archive aria-hidden="true" />}
-                  onClick={() => onArchive(template)}
+                  size="sm"
+                  className="border-[#119CF7]/40 text-[#119CF7] hover:border-[#119CF7] hover:bg-sky-50"
+                  leftIcon={<Plus className="h-4 w-4" aria-hidden="true" />}
+                  onClick={handleOpenSkipModal}
                 >
-                  Lưu trữ
-                </Button>
-                {isPaused ? (
-                  <Button variant="outline" size="lg" onClick={() => onResume(template)}>
-                    Tiếp tục
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="lg" onClick={() => onPause(template)}>
-                    Tạm dừng
-                  </Button>
-                )}
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    onClose();
-                    onOpenEdit(template);
-                  }}
-                >
-                  Chỉnh sửa
+                  Bỏ qua một ngày
                 </Button>
               </div>
+
+              {!template.skippedDates || template.skippedDates.length === 0 ? (
+                <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-500">
+                  <Calendar className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                  <span>Chưa có ngày ngoại lệ.</span>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  {template.skippedDates.map((dateStr) => (
+                    <div
+                      key={dateStr}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <strong className="text-sm text-slate-900">{formatDateVi(dateStr)}</strong>
+                        <Badge variant="info">Đã bỏ qua</Badge>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />}
+                        onClick={() => setRestoreConfirmDate(dateStr)}
+                      >
+                        Khôi phục
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {template.blockedOccurrences && template.blockedOccurrences.length > 0 && (
+              <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 sm:p-5">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-amber-900">
+                  <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                  Không thể tạo lịch tự động ({template.blockedOccurrences.length})
+                </h3>
+                <div className="mt-3 space-y-2">
+                  {template.blockedOccurrences.map((blocked) => (
+                    <div
+                      className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-amber-200 bg-white px-4 py-3"
+                      key={blocked.date}
+                    >
+                      <div>
+                        <strong className="text-sm text-slate-900">
+                          {formatDateVi(blocked.date)}
+                        </strong>
+                        {blocked.reason && (
+                          <p className="mt-1 text-xs text-slate-500">{blocked.reason}</p>
+                        )}
+                      </div>
+                      <Badge variant="warning">Bị chặn</Badge>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
-          </footer>
+
+            <footer className="mt-4 flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <Button variant="secondary" className="h-10 sm:min-w-24" onClick={onClose}>
+                Đóng
+              </Button>
+
+              {!isArchived && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                  <Button
+                    variant="outline"
+                    className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                    leftIcon={<Archive className="h-4 w-4" aria-hidden="true" />}
+                    onClick={() => onArchive(template)}
+                  >
+                    Lưu trữ
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-10 border-slate-300 text-slate-700 hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7]"
+                    leftIcon={
+                      isPaused ? (
+                        <Play className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Pause className="h-4 w-4" aria-hidden="true" />
+                      )
+                    }
+                    onClick={() => (isPaused ? onResume(template) : onPause(template))}
+                  >
+                    {isPaused ? 'Tiếp tục' : 'Tạm dừng'}
+                  </Button>
+                  <Button
+                    className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
+                    leftIcon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+                    onClick={() => {
+                      onClose();
+                      onOpenEdit(template);
+                    }}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                </div>
+              )}
+            </footer>
+          </div>
         </div>
       </Modal>
 

@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BookOpen,
-  Calendar,
   FileText,
   GraduationCap,
   Home,
@@ -31,7 +30,6 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const pathname = usePathname();
   const feedHref = `/${locale}/dashboard`;
   const bookingHref = `/${locale}/mentor-booking`;
-  const myBookingsHref = `/${locale}/my-bookings`;
   const dashboardHref = `/${locale}/mentor/dashboard`;
   const scheduleHref = `/${locale}/mentor/schedule-manage`;
   const mentorBookingsHref = `/${locale}/mentor/bookings`;
@@ -39,7 +37,9 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const coursesHref = `/${locale}/mentor/my-courses`;
 
   return (
-    <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-solid border-border-light z-50 flex flex-col p-4 transition-transform duration-300 ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}`}>
+    <aside
+      className={`fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-solid border-border-light z-50 flex flex-col p-4 transition-transform duration-300 ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}`}
+    >
       <div className="relative flex items-center justify-center text-center py-0.5 pb-1 mb-1 border-b border-solid border-border-light/60 w-full">
         <Link
           href={dashboardHref}
@@ -106,10 +106,10 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         </Link>
 
         <Link
-          href={myBookingsHref}
+          href={mentorBookingsHref}
           onClick={onClose}
           className={
-            pathname.startsWith(myBookingsHref)
+            pathname.startsWith(mentorBookingsHref)
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
@@ -131,19 +131,6 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         >
           <Settings className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Dịch vụ & Lịch dạy</span>
-        </Link>
-
-        <Link
-          href={mentorBookingsHref}
-          onClick={onClose}
-          className={
-            pathname.includes('/mentor/bookings')
-              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
-              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
-          }
-        >
-          <Calendar className="w-5 h-5 shrink-0" aria-hidden="true" />
-          <span>Lịch đặt</span>
         </Link>
 
         <Link
@@ -172,7 +159,11 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           <span>Khóa học của tôi</span>
         </Link>
 
-        <button type="button" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-disabled bg-transparent border border-solid border-transparent opacity-50 cursor-not-allowed text-left w-full" tabIndex={-1}>
+        <button
+          type="button"
+          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-disabled bg-transparent border border-solid border-transparent opacity-50 cursor-not-allowed text-left w-full"
+          tabIndex={-1}
+        >
           <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Ví S-coins</span>
         </button>

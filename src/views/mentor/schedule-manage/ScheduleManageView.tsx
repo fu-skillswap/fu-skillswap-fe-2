@@ -152,9 +152,15 @@ function menteeInitials(name: string) {
 
 function bookingStatusPresentation(booking: MentorBookingResponse) {
   const filter = bookingFilterOf(booking);
-  if (filter === 'NEW') return { label: 'Chờ xác nhận', variant: 'warning' as const };
-  if (filter === 'UPCOMING') return { label: 'Sắp tới', variant: 'success' as const };
-  if (filter === 'IN_PROGRESS') return { label: 'Đang diễn ra', variant: 'info' as const };
+  if (filter === 'REQUESTED') return { label: 'Chờ xác nhận', variant: 'warning' as const };
+  if (filter === 'WAITING_PAYMENT') return { label: 'Chờ thanh toán', variant: 'warning' as const };
+  if (filter === 'CONFIRMED') {
+    return {
+      label: booking.actualSessionStatus === 'IN_PROGRESS' ? 'Đang diễn ra' : 'Đã xác nhận',
+      variant: 'success' as const,
+    };
+  }
+  if (filter === 'UNDER_REVIEW') return { label: 'Đang xem xét', variant: 'warning' as const };
   if (filter === 'COMPLETED') return { label: 'Hoàn thành', variant: 'success' as const };
   return { label: 'Đã hủy', variant: 'danger' as const };
 }
@@ -1490,17 +1496,23 @@ export function ScheduleManageView() {
     : 0;
 
   return (
-    <div className="schedule-page-wrapper">
-      {/* SECTION 1: Dịch vụ của tôi */}
-      <section className="schedule-section" ref={serviceSectionRef}>
-        <div className="schedule-section-header">
+    <div className="mx-auto w-full max-w-[1480px] space-y-8 pb-8 [--schedule-primary:#119CF7]">
+      <section ref={serviceSectionRef} aria-labelledby="mentor-services-heading">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="schedule-section-title">Dịch vụ của tôi</h2>
+            <h2
+              id="mentor-services-heading"
+              className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl"
+            >
+              Dịch vụ của tôi
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">Bật/tắt dịch vụ và quản lý giá.</p>
           </div>
           <Button
             variant="primary"
             size="md"
-            leftIcon={<Plus className="w-4 h-4" />}
+            className="h-11 bg-[var(--schedule-primary)] px-5 hover:bg-[#0789dc] focus-visible:ring-[#119CF7]/25"
+            leftIcon={<Plus className="h-4 w-4" />}
             onClick={() => setOpenModal(true)}
           >
             Thêm dịch vụ
@@ -1508,12 +1520,38 @@ export function ScheduleManageView() {
         </div>
 
         {loading ? (
-          <div className="schedule-loading-card">
-            <div className="mentor-spinner" />
-            <p>Đang tải danh sách dịch vụ...</p>
+          <div
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            aria-label="Đang tải danh sách dịch vụ"
+            aria-busy="true"
+          >
+            {[0, 1, 2].map((item) => (
+              <div
+                key={item}
+                className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-white p-5"
+              >
+                <div className="flex gap-3">
+                  <span className="h-11 w-11 rounded-xl bg-slate-100" />
+                  <span className="mt-1 h-4 w-36 rounded bg-slate-100" />
+                </div>
+                <span className="mt-7 block h-6 w-32 rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        ) : services.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+            <p className="text-sm font-semibold text-slate-700">Bạn chưa có dịch vụ nào.</p>
+            <Button
+              type="button"
+              className="mt-4 bg-[var(--schedule-primary)] hover:bg-[#0789dc]"
+              leftIcon={<Plus className="h-4 w-4" />}
+              onClick={() => setOpenModal(true)}
+            >
+              Thêm dịch vụ
+            </Button>
           </div>
         ) : (
-          <div className="schedule-services-grid">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {services.map((service) => {
               const isToggling = togglingId === service.serviceId;
               const priceText = service.isFree
@@ -1521,68 +1559,90 @@ export function ScheduleManageView() {
                 : `${new Intl.NumberFormat('vi-VN').format(service.publicPriceScoin ?? 0)} S-coins`;
 
               return (
-                <div
+                <article
                   key={service.serviceId}
-                  className={`schedule-service-card ${service.isActive ? 'card-active' : 'card-inactive'}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => router.push(`/${locale}/mentor/services/${service.serviceId}`)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      router.push(`/${locale}/mentor/services/${service.serviceId}`);
-                    }
-                  }}
+                  className={`min-h-36 rounded-2xl border bg-white p-5 shadow-sm transition duration-200 hover:shadow-md ${
+                    service.isActive
+                      ? 'border-[#119CF7]'
+                      : 'border-slate-200 bg-slate-50/80 text-slate-500'
+                  }`}
                 >
-                  <div className="service-card-top">
-                    <div className="service-icon-box">{getServiceIcon(service.title)}</div>
-                    <div className="service-info-box">
-                      <h3 className="service-card-title">{service.title}</h3>
-                      <p className="service-card-meta">
-                        {service.durationMinutes} min ·{' '}
-                        {service.description?.includes('sessions')
-                          ? (service.description.split('·')[1]?.trim() ?? '0 sessions')
-                          : '0 sessions'}
-                      </p>
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                        service.isActive
+                          ? 'bg-sky-50 text-[var(--schedule-primary)]'
+                          : 'bg-slate-200/70 text-slate-400'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {getServiceIcon(service.title)}
                     </div>
-
-                    {/* iOS Style Switch Button */}
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-[#119CF7] focus-visible:ring-offset-2"
+                      onClick={() => router.push(`/${locale}/mentor/services/${service.serviceId}`)}
+                    >
+                      <h3 className="truncate text-base font-bold text-slate-900">
+                        {service.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {formatDuration(service.durationMinutes)} ·{' '}
+                        {service.deliveryMode === 'ONE_TO_ONE' ? '1 kèm 1' : service.deliveryMode}
+                      </p>
+                    </button>
                     <button
                       type="button"
                       disabled={isToggling}
-                      className={`ios-toggle-switch ${service.isActive ? 'switch-on' : 'switch-off'}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setPendingStatusChange(service);
-                      }}
-                      aria-label={`Toggle ${service.title}`}
+                      role="switch"
+                      aria-checked={service.isActive}
+                      aria-label={`${service.isActive ? 'Tắt' : 'Bật'} dịch vụ ${service.title}`}
+                      className={`relative h-7 w-12 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-4 focus-visible:ring-[#119CF7]/25 disabled:cursor-wait disabled:opacity-60 ${
+                        service.isActive ? 'bg-[var(--schedule-primary)]' : 'bg-slate-300'
+                      }`}
+                      onClick={() => setPendingStatusChange(service)}
                     >
-                      <span className="ios-toggle-thumb" />
+                      <span
+                        aria-hidden="true"
+                        className={`absolute left-0.5 top-0.5 h-6 w-6 rounded-full border border-slate-100 bg-white shadow-md transition-transform ${
+                          service.isActive ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
                     </button>
                   </div>
-
-                  <div className="service-card-bottom">
-                    <span className="service-price-text">{priceText}</span>
-                  </div>
-                </div>
+                  <p
+                    className={`mt-6 text-xl font-extrabold tracking-tight ${
+                      service.isActive ? 'text-[var(--schedule-primary)]' : 'text-slate-400'
+                    }`}
+                  >
+                    {priceText}
+                  </p>
+                </article>
               );
             })}
           </div>
         )}
       </section>
 
-      {/* SECTION 2: Lịch dạy của tôi */}
-      <section className="schedule-section margin-top-32">
-        <div className="mentor-schedule-section-heading">
+      <section aria-labelledby="mentor-schedule-heading">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="schedule-section-title">Lịch dạy của tôi</h2>
-            <p className="schedule-section-subtitle">Quản lý thời gian mentee có thể đặt lịch.</p>
+            <h2
+              id="mentor-schedule-heading"
+              className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl"
+            >
+              Lịch dạy của tôi
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Quản lý các khung giờ mentee có thể đặt lịch với bạn.
+            </p>
           </div>
-          <div className="mentor-schedule-actions">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="md"
-              leftIcon={<Settings className="w-4 h-4 text-slate-500" />}
+              className="h-11 border-[#119CF7]/40 text-[var(--schedule-primary)] hover:border-[#119CF7] hover:bg-sky-50"
+              leftIcon={<Settings className="h-4 w-4" />}
               onClick={() => setIsScheduleSettingsOpen(true)}
             >
               Cài đặt lịch
@@ -1591,16 +1651,18 @@ export function ScheduleManageView() {
               <Button
                 variant="primary"
                 size="md"
-                leftIcon={<Plus className="w-4 h-4" />}
+                className="h-11 bg-[var(--schedule-primary)] hover:bg-[#0789dc]"
+                leftIcon={<Plus className="h-4 w-4" />}
                 onClick={openAvailabilityModal}
               >
-                Lịch rảnh
+                Thêm lịch rảnh
               </Button>
             ) : (
               <Button
                 variant="primary"
                 size="md"
-                leftIcon={<CalendarDays className="w-4 h-4" />}
+                className="h-11 bg-[var(--schedule-primary)] hover:bg-[#0789dc]"
+                leftIcon={<CalendarDays className="h-4 w-4" />}
                 onClick={handleOpenCreateTemplate}
               >
                 Tạo lịch hàng tuần
@@ -1609,7 +1671,7 @@ export function ScheduleManageView() {
           </div>
         </div>
 
-        <div className="mb-5">
+        <div className="mb-4 overflow-x-auto pb-1">
           <Tabs
             tabs={[
               { id: 'calendar', label: 'Lịch' },
@@ -2659,24 +2721,53 @@ export function ScheduleManageView() {
         open={pendingStatusChange !== null}
         title={pendingStatusChange?.isActive ? 'Tắt dịch vụ' : 'Bật dịch vụ'}
         onClose={() => setPendingStatusChange(null)}
-        className="mentor-service-status-modal"
+        className="max-w-md"
       >
         {pendingStatusChange && (
-          <div className="mentor-service-status-modal-content">
-            <p>
-              {pendingStatusChange.isActive
-                ? `Bạn có muốn tắt dịch vụ “${pendingStatusChange.title}” không?`
-                : `Bạn có muốn bật dịch vụ “${pendingStatusChange.title}” không?`}
-            </p>
-            <div className="form-modal-footer">
-              <button
+          <div>
+            <div className="flex items-start gap-4">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                  pendingStatusChange.isActive
+                    ? 'bg-amber-50 text-amber-600'
+                    : 'bg-sky-50 text-[#119CF7]'
+                }`}
+              >
+                {pendingStatusChange.isActive ? (
+                  <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm leading-6 text-slate-600">
+                  {pendingStatusChange.isActive
+                    ? 'Mentee sẽ tạm thời không thể đặt dịch vụ này.'
+                    : 'Dịch vụ sẽ xuất hiện để mentee có thể đặt lịch.'}
+                </p>
+                <p className="mt-2 break-words text-base font-bold text-slate-900">
+                  {pendingStatusChange.title}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+              <Button
                 type="button"
-                className="btn-modal-cancel"
+                variant="outline"
+                className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
                 onClick={() => setPendingStatusChange(null)}
               >
                 Hủy
-              </button>
-              <Button type="button" className="btn-modal-submit" onClick={confirmStatusChange}>
+              </Button>
+              <Button
+                type="button"
+                className={`h-10 sm:min-w-32 ${
+                  pendingStatusChange.isActive
+                    ? 'border-amber-500 bg-amber-500 hover:bg-amber-600'
+                    : 'border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]'
+                }`}
+                onClick={confirmStatusChange}
+              >
                 {pendingStatusChange.isActive ? 'Tắt dịch vụ' : 'Bật dịch vụ'}
               </Button>
             </div>

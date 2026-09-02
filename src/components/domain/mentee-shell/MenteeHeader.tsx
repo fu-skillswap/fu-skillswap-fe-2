@@ -156,7 +156,9 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
         >
           <Menu className="w-5 h-5" aria-hidden="true" />
         </button>
-        <h1 className="m-0 text-base md:text-lg font-extrabold text-text-main truncate tracking-tight">{title}</h1>
+        <h1 className="m-0 text-base md:text-lg font-extrabold text-text-main truncate tracking-tight">
+          {title}
+        </h1>
       </div>
       <div className="flex items-center gap-3 shrink-0" aria-label="Account actions">
         {!isGuest && (
@@ -165,7 +167,8 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
             <button
               type="button"
               className="w-9.5 h-9.5 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer"
-              aria-label="Messages"
+              aria-label="Tin nhắn"
+              onClick={() => router.push(`/${locale}/messages`)}
             >
               <MessageSquare className="w-4.5 h-4.5" aria-hidden="true" />
             </button>
@@ -174,7 +177,10 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
 
         {isGuest ? (
           /* Nút Đăng nhập / Đăng ký dành cho Guest Mode khi chưa đăng nhập */
-          <Link href={`/${locale}/login`} className="px-4 py-2 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 transition-all border-none cursor-pointer inline-flex items-center justify-center">
+          <Link
+            href={`/${locale}/login`}
+            className="px-4 py-2 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 transition-all border-none cursor-pointer inline-flex items-center justify-center"
+          >
             Đăng nhập / Đăng ký
           </Link>
         ) : (

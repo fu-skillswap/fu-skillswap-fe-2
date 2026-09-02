@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { MentorCalendarEvent } from './mentorScheduleCalendarData';
 
@@ -100,6 +100,30 @@ function getEventSegments(event: MentorCalendarEvent, days: Date[], timezone: st
   });
 }
 
+function eventClasses(event: MentorCalendarEvent) {
+  if (event.source === 'template') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400';
+  }
+  if (event.status === 'booked') {
+    return 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-400';
+  }
+  if (event.status === 'ongoing') {
+    return 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400';
+  }
+  if (event.status === 'past') {
+    return 'border-rose-200 bg-rose-50 text-rose-600 hover:border-rose-300';
+  }
+  return 'border-sky-200 bg-sky-50 text-[#087fc5] hover:border-[#119CF7] hover:bg-sky-100';
+}
+
+function eventStatusLabel(event: MentorCalendarEvent) {
+  if (event.source === 'template') return 'lịch lặp';
+  if (event.status === 'booked') return 'đã được đặt';
+  if (event.status === 'ongoing') return 'đang diễn ra';
+  if (event.status === 'past') return 'đã diễn ra';
+  return 'có thể đặt';
+}
+
 export function MentorScheduleCalendar({
   weekStart,
   timezone,
@@ -137,195 +161,243 @@ export function MentorScheduleCalendar({
     eventSegments = [];
   }
 
+  const hasRecurringEvents = events.some((event) => event.source === 'template');
+
   return (
-    <div className="mentor-schedule-calendar-card">
-      <header className="mentor-schedule-calendar-toolbar">
-        <div className="mentor-schedule-calendar-navigation">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:px-5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            className="mentor-schedule-nav-btn"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 outline-none transition hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
             aria-label="Tuần trước"
             onClick={onPreviousWeek}
           >
-            <ChevronLeft aria-hidden="true" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
-          <button type="button" className="mentor-schedule-today-button" onClick={onToday}>
+          <button
+            type="button"
+            className="h-10 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 outline-none transition hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
+            onClick={onToday}
+          >
             Hôm nay
           </button>
           <button
             type="button"
-            className="mentor-schedule-nav-btn"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 outline-none transition hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
             aria-label="Tuần sau"
             onClick={onNextWeek}
           >
-            <ChevronRight aria-hidden="true" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="mentor-schedule-calendar-period-group">
-          <div className="mentor-schedule-calendar-period">
-            <strong>{formatWeekRange(weekStart)}</strong>
-            <span>{timezone}</span>
-          </div>
-          <button type="button" className="mentor-schedule-icon-btn" aria-label="Xem lịch">
-            <Calendar className="w-4 h-4" aria-hidden="true" />
-          </button>
-          <div className="mentor-schedule-dropdown">
-            <button
-              type="button"
-              className="mentor-schedule-dropdown-btn"
-              aria-label="Chọn chế độ hiển thị"
-            >
-              <span>Tuần</span>
-              <ChevronDown className="w-4 h-4" aria-hidden="true" />
-            </button>
+        <div className="flex items-center gap-3">
+          <Calendar className="h-5 w-5 text-[#119CF7]" aria-hidden="true" />
+          <div className="text-right">
+            <strong className="block text-sm font-bold text-slate-800">
+              {formatWeekRange(weekStart)}
+            </strong>
+            <span className="block max-w-52 truncate text-xs text-slate-500">{timezone}</span>
           </div>
         </div>
       </header>
 
-      <div className="mentor-schedule-calendar-content">
-        <div className="mentor-schedule-calendar-scroll" ref={scrollRef}>
-          <div className="mentor-schedule-calendar-grid" aria-label="Lịch dạy theo tuần">
-            <div className="mentor-schedule-calendar-corner" />
-            {days.map((day) => {
-              const isWeekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
-              const weekdayName = new Intl.DateTimeFormat('en-US', {
-                timeZone: 'UTC',
-                weekday: 'long',
-              }).format(day);
+      <div className="relative">
+        <div className="max-h-[620px] overflow-auto" ref={scrollRef}>
+          <div className="min-w-[960px]">
+            <div className="sticky top-0 z-20 grid grid-cols-[72px_repeat(7,minmax(120px,1fr))] border-b border-slate-200 bg-white">
+              <div className="border-r border-slate-200" aria-hidden="true" />
+              {days.map((day) => {
+                const isWeekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+                const weekdayName = new Intl.DateTimeFormat('vi-VN', {
+                  timeZone: 'UTC',
+                  weekday: 'short',
+                }).format(day);
 
-              return (
-                <div
-                  key={day.toISOString()}
-                  className={`mentor-schedule-calendar-day ${isWeekend ? 'is-weekend' : ''}`}
-                >
-                  <span className="weekday-name">{weekdayName}</span>
-                  <strong className="day-date">{formatDate(day)}</strong>
-                </div>
-              );
-            })}
-
-            {HOURS.map((hour) => (
-              <div className="mentor-schedule-calendar-row" key={hour}>
-                <div className="mentor-schedule-calendar-time">{formatHour(hour)}</div>
-                {days.map((day) => (
+                return (
                   <div
-                    className="mentor-schedule-calendar-hour"
-                    key={`${day.toISOString()}-${hour}`}
-                    aria-hidden="true"
-                  />
+                    key={day.toISOString()}
+                    className={`border-r border-slate-200 px-2 py-3 text-center last:border-r-0 ${
+                      isWeekend ? 'bg-slate-50' : 'bg-white'
+                    }`}
+                  >
+                    <span className="block text-xs font-semibold uppercase text-slate-500">
+                      {weekdayName}
+                    </span>
+                    <strong className="mt-0.5 block text-sm text-slate-800">
+                      {formatDate(day)}
+                    </strong>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="relative h-[1440px]">
+              <div className="absolute inset-0">
+                {HOURS.map((hour) => (
+                  <div
+                    className="grid h-[60px] grid-cols-[72px_repeat(7,minmax(120px,1fr))]"
+                    key={hour}
+                  >
+                    <div className="border-r border-b border-slate-200 bg-white pr-3 pt-2 text-right text-xs font-medium text-slate-500">
+                      {formatHour(hour)}
+                    </div>
+                    {days.map((day) => (
+                      <div
+                        className="border-r border-b border-slate-100 bg-white last:border-r-0"
+                        key={`${day.toISOString()}-${hour}`}
+                        aria-hidden="true"
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
 
-            <div className="mentor-schedule-calendar-event-layer" aria-label="Lịch rảnh">
-              <div />
-              {days.map((day, dayIndex) => (
-                <div className="mentor-schedule-calendar-event-column" key={day.toISOString()}>
-                  {eventSegments
-                    .filter((segment) => segment.dayIndex === dayIndex)
-                    .map((segment) => {
-                      const durationMinutes = segment.endMinutes - segment.startMinutes;
-                      const HOUR_HEIGHT = 60;
-                      const calculatedHeight = Math.max(
-                        32,
-                        (durationMinutes / 60) * HOUR_HEIGHT - 6,
-                      );
-                      const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 3;
-                      const startTimeStr = formatSlotTime(segment.startMinutes);
-                      const endTimeStr = formatSlotTime(segment.endMinutes);
+              <div
+                className="absolute inset-y-0 left-[72px] right-0 grid grid-cols-7"
+                aria-label="Lịch dạy theo tuần"
+              >
+                {days.map((day, dayIndex) => (
+                  <div className="relative min-w-0 px-1" key={day.toISOString()}>
+                    {eventSegments
+                      .filter((segment) => segment.dayIndex === dayIndex)
+                      .map((segment) => {
+                        const durationMinutes = segment.endMinutes - segment.startMinutes;
+                        const HOUR_HEIGHT = 60;
+                        const calculatedHeight = Math.max(
+                          32,
+                          (durationMinutes / 60) * HOUR_HEIGHT - 6,
+                        );
+                        const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 3;
+                        const startTimeStr = formatSlotTime(segment.startMinutes);
+                        const endTimeStr = formatSlotTime(segment.endMinutes);
 
-                      return (
-                        <article
-                          className={`mentor-schedule-calendar-event event-availability event-${segment.event.status}`}
-                          key={`${segment.event.id}-${dayIndex}`}
-                          role={
-                            segment.event.slotId || segment.event.bookingId ? 'button' : undefined
-                          }
-                          tabIndex={segment.event.slotId || segment.event.bookingId ? 0 : undefined}
-                          onClick={() => {
-                            if (segment.event.bookingId) {
-                              onSelectBooking?.(segment.event.bookingId);
-                            } else if (segment.event.slotId) {
-                              onSelectSlot?.(segment.event.slotId);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
+                        const accessibleDay = new Intl.DateTimeFormat('vi-VN', {
+                          timeZone: 'UTC',
+                          weekday: 'long',
+                          day: '2-digit',
+                          month: '2-digit',
+                        }).format(day);
+
+                        return (
+                          <button
+                            type="button"
+                            className={`absolute left-1 right-1 z-10 overflow-hidden rounded-lg border px-2 py-1 text-center text-xs font-semibold outline-none transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-[#119CF7] focus-visible:ring-offset-1 ${eventClasses(
+                              segment.event,
+                            )}`}
+                            key={`${segment.event.id}-${dayIndex}`}
+                            aria-label={`${accessibleDay}, ${startTimeStr} đến ${endTimeStr}, ${eventStatusLabel(segment.event)}`}
+                            disabled={!segment.event.slotId && !segment.event.bookingId}
+                            onClick={() => {
                               if (segment.event.bookingId) {
                                 onSelectBooking?.(segment.event.bookingId);
                               } else if (segment.event.slotId) {
                                 onSelectSlot?.(segment.event.slotId);
                               }
-                            }
-                          }}
-                          style={{
-                            height: `${calculatedHeight}px`,
-                            top: `${calculatedTop}px`,
-                          }}
-                        >
-                          <div className="event-time font-bold">
-                            {startTimeStr} – {endTimeStr}
-                          </div>
-                        </article>
-                      );
-                    })}
-                </div>
-              ))}
+                            }}
+                            style={{
+                              height: `${calculatedHeight}px`,
+                              top: `${calculatedTop}px`,
+                            }}
+                          >
+                            <span className="block truncate">
+                              {startTimeStr}–{endTimeStr}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {isLoading ? (
           <div
-            className="mentor-schedule-calendar-state mentor-schedule-calendar-skeleton"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-white/85 px-6"
             aria-live="polite"
           >
-            <span />
-            <span />
-            <span />
+            <div className="w-full max-w-sm animate-pulse space-y-3" aria-label="Đang tải lịch">
+              <span className="block h-4 rounded bg-slate-200" />
+              <span className="block h-4 rounded bg-slate-200" />
+              <span className="block h-4 w-2/3 rounded bg-slate-200" />
+            </div>
           </div>
         ) : error ? (
-          <div className="mentor-schedule-calendar-state" role="alert">
-            <strong>Không thể tải lịch.</strong>
-            <span>{error}</span>
-            <button type="button" onClick={onRetry}>
+          <div
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-white/95 px-6 text-center"
+            role="alert"
+          >
+            <strong className="text-base text-slate-800">Không thể tải lịch.</strong>
+            <span className="text-sm text-slate-500">Vui lòng thử lại.</span>
+            <button
+              type="button"
+              className="mt-2 h-10 rounded-xl bg-[#119CF7] px-4 text-sm font-semibold text-white outline-none hover:bg-[#0789dc] focus-visible:ring-4 focus-visible:ring-[#119CF7]/25"
+              onClick={onRetry}
+            >
               Thử lại
             </button>
           </div>
         ) : isAvailabilityResponseEmpty ? (
-          <div className="mentor-schedule-calendar-state mentor-schedule-calendar-empty">
-            <strong>Bạn chưa mở lịch rảnh trong tuần này.</strong>
-            <span>Thêm thời gian rảnh để mentee có thể đặt lịch với bạn.</span>
-            <button type="button" onClick={onUnavailableAction}>
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-white/95 px-6 text-center">
+            <Calendar className="mb-1 h-9 w-9 text-slate-300" aria-hidden="true" />
+            <strong className="text-base text-slate-800">
+              Bạn chưa thiết lập lịch rảnh trong tuần này.
+            </strong>
+            <span className="text-sm text-slate-500">
+              Thêm thời gian rảnh để mentee có thể đặt lịch với bạn.
+            </span>
+            <button
+              type="button"
+              className="mt-2 h-10 rounded-xl bg-[#119CF7] px-4 text-sm font-semibold text-white outline-none hover:bg-[#0789dc] focus-visible:ring-4 focus-visible:ring-[#119CF7]/25"
+              onClick={onUnavailableAction}
+            >
               + Thêm lịch rảnh
             </button>
           </div>
         ) : null}
       </div>
 
-      {/* Legend footer matching reference spec */}
-      <footer className="mentor-schedule-calendar-legend">
-        <div className="legend-item">
-          <span className="legend-box legend-box-available" aria-hidden="true" />
-          <span>Khung giờ rảnh, chờ mentee đặt</span>
+      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-600 md:px-5">
+        <div className="flex items-center gap-2">
+          <span className="h-3.5 w-6 rounded border border-sky-200 bg-sky-50" aria-hidden="true" />
+          <span>Có thể đặt</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-box legend-box-booked" aria-hidden="true" />
-          <span>Khung giờ đã có mentee đặt</span>
+        <div className="flex items-center gap-2">
+          <span
+            className="h-3.5 w-6 rounded border border-slate-200 bg-slate-100"
+            aria-hidden="true"
+          />
+          <span>Đã đặt</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-box legend-box-ongoing" aria-hidden="true" />
-          <span>Khung giờ đang diễn ra</span>
+        {hasRecurringEvents && (
+          <div className="flex items-center gap-2">
+            <span
+              className="h-3.5 w-6 rounded border border-emerald-200 bg-emerald-50"
+              aria-hidden="true"
+            />
+            <span>Lịch lặp</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <span
+            className="h-3.5 w-6 rounded border border-amber-200 bg-amber-50"
+            aria-hidden="true"
+          />
+          <span>Đang diễn ra</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-box legend-box-past" aria-hidden="true" />
-          <span>Khung giờ đã diễn ra</span>
+        <div className="flex items-center gap-2">
+          <span
+            className="h-3.5 w-6 rounded border border-rose-200 bg-rose-50"
+            aria-hidden="true"
+          />
+          <span>Đã diễn ra</span>
         </div>
-        <div className="legend-item legend-info">
-          <Info className="legend-info-icon" aria-hidden="true" />
-          <span>Mentee có thể đặt lịch trong các khung giờ mentor đã mở.</span>
+        <div className="ml-auto flex items-center gap-2 text-slate-500">
+          <Info className="h-4 w-4 text-[#119CF7]" aria-hidden="true" />
+          <span>Nhấn vào khung giờ để xem hoặc quản lý lịch.</span>
         </div>
       </footer>
     </div>

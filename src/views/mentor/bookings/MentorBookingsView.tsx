@@ -6,6 +6,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowDownUp,
   CalendarDays,
@@ -13,18 +14,31 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  EllipsisVertical,
+  ExternalLink,
   PlayCircle,
   Eye,
   Filter,
   Mail,
+  MessageSquare,
+  LogIn,
+  MapPin,
   RefreshCw,
   Square,
+  Target,
+  UserRound,
+  Video,
   XCircle,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { ApiClientError } from '@/models/apiClient';
 import type { GoogleCalendarStatusResponse, MentorBookingResponse } from '@/models/auth';
 import { showError, showSuccess } from '@/utils/toast';
 import {
@@ -39,12 +53,13 @@ const FILTERS: Array<{
   label: string;
   icon: typeof Mail;
 }> = [
-  { value: 'NEW', label: 'Booking mới', icon: Mail },
-  { value: 'UPCOMING', label: 'Sắp tới', icon: CalendarDays },
-  { value: 'IN_PROGRESS', label: 'Đang diễn ra', icon: PlayCircle },
-  { value: 'COMPLETED', label: 'Hoàn thành', icon: CheckCircle2 },
-  { value: 'CANCELLED', label: 'Đã hủy', icon: XCircle },
   { value: 'ALL', label: 'Tất cả', icon: Filter },
+  { value: 'REQUESTED', label: 'Chờ xác nhận', icon: Mail },
+  { value: 'WAITING_PAYMENT', label: 'Chờ thanh toán', icon: Clock3 },
+  { value: 'CONFIRMED', label: 'Đã xác nhận', icon: CalendarDays },
+  { value: 'UNDER_REVIEW', label: 'Đang xem xét', icon: Eye },
+  { value: 'COMPLETED', label: 'Hoàn thành', icon: CheckCircle2 },
+  { value: 'CLOSED', label: 'Đã đóng', icon: XCircle },
 ];
 
 type BookingAction = 'accept' | 'reject' | 'complete' | 'cancel';
@@ -61,6 +76,16 @@ const MEETING_PLATFORMS: MeetingPlatform[] = [
 
 function meetingPlatformOf(value: string): MeetingPlatform | undefined {
   return MEETING_PLATFORMS.find((platform) => platform === value);
+}
+
+function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']) {
+  if (platform === 'GOOGLE_MEET') return 'Google Meet';
+  if (platform === 'MICROSOFT_TEAMS') return 'Microsoft Teams';
+  if (platform === 'ZOOM') return 'Zoom';
+  if (platform === 'DISCORD') return 'Discord';
+  if (platform === 'OFFLINE') return 'Trực tiếp';
+  if (platform === 'OTHER') return 'Khác';
+  return undefined;
 }
 
 function initials(name: string) {
@@ -92,23 +117,57 @@ function formatSchedule(value: string) {
   return `${weekday}, ${day} · ${time}`;
 }
 
+function formatScheduleParts(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { date: value || 'Chưa xác định', time: '' };
+  return {
+    date: new Intl.DateTimeFormat('vi-VN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(date),
+    time: new Intl.DateTimeFormat('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date),
+  };
+}
+
 function statusPresentation(booking: MentorBookingResponse) {
   const group = bookingFilterOf(booking);
-  if (group === 'NEW') return { label: 'Booking mới', variant: 'info' as const, icon: <Mail /> };
-  if (group === 'UPCOMING') {
-    return { label: 'Sắp tới', variant: 'info' as const, icon: <CalendarDays /> };
+  if (group === 'REQUESTED') {
+    return { label: 'Chờ Mentor xác nhận', variant: 'info' as const };
   }
-  if (group === 'IN_PROGRESS') {
-    return { label: 'Đang diễn ra', variant: 'info' as const, icon: <PlayCircle /> };
+  if (group === 'WAITING_PAYMENT') {
+    return { label: 'Chờ thanh toán', variant: 'warning' as const };
+  }
+  if (group === 'CONFIRMED') {
+    const label = booking.actualSessionStatus === 'IN_PROGRESS' ? 'Đang diễn ra' : 'Đã xác nhận';
+    return { label, variant: 'info' as const };
+  }
+  if (group === 'UNDER_REVIEW') {
+    return { label: 'Đang xem xét', variant: 'neutral' as const };
   }
   if (group === 'COMPLETED') {
-    return { label: 'Hoàn thành', variant: 'success' as const, icon: <CheckCircle2 /> };
+    return { label: 'Hoàn thành', variant: 'success' as const };
   }
-  return { label: 'Đã hủy', variant: 'danger' as const, icon: <XCircle /> };
+  const closedLabels: Partial<Record<MentorBookingResponse['bookingStatus'], string>> = {
+    REJECTED_BY_MENTOR: 'Mentor đã từ chối',
+    CANCELED_BY_MENTEE: 'Mentee đã hủy',
+    CANCELED_BY_MENTOR: 'Mentor đã hủy',
+    REQUEST_EXPIRED: 'Yêu cầu đã hết hạn',
+    PAYMENT_EXPIRED: 'Thanh toán đã hết hạn',
+  };
+  return {
+    label: closedLabels[booking.bookingStatus] || 'Đã đóng',
+    variant: 'danger' as const,
+  };
 }
 
 function emptyText(filter: MentorBookingFilter) {
-  if (filter === 'NEW') {
+  if (filter === 'REQUESTED') {
     return ['Hiện chưa có booking mới.', 'Các yêu cầu đặt lịch mới sẽ xuất hiện tại đây.'];
   }
   const label = FILTERS.find((item) => item.value === filter)?.label.toLowerCase() ?? 'phù hợp';
@@ -117,10 +176,13 @@ function emptyText(filter: MentorBookingFilter) {
 
 export function MentorBookingsView() {
   const { setHeaderTitle } = useMenteeShell();
+  const router = useRouter();
+  const params = useParams<{ locale: string }>();
   const {
     activeFilter,
     bookings,
     counts,
+    currentPage,
     error,
     googleCalendarStatus,
     isLoading,
@@ -130,9 +192,11 @@ export function MentorBookingsView() {
     refresh,
     selectedDate,
     setActiveFilter,
+    setCurrentPage,
     setSelectedDate,
     setSortDirection,
     sortDirection,
+    totalPages,
   } = useMentorBookings();
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [detail, setDetail] = useState<MentorBookingResponse>();
@@ -180,80 +244,129 @@ export function MentorBookingsView() {
             description: 'Trạng thái buổi mentoring đã được cập nhật.',
           },
           cancel: { title: 'Đã hủy lịch', description: 'Buổi mentoring đã được hủy.' },
-        }[mutation.type];
+        }[mutation.type === 'checkIn' ? 'complete' : mutation.type];
         showSuccess(successContent);
         setAction(undefined);
         setDetail(undefined);
       }
     } catch (reason) {
-      showError(reason, { title: 'Không thể cập nhật booking' });
+      if (reason instanceof ApiClientError) {
+        const validationMessage = reason.data
+          ?.map((item) => item.message)
+          .filter(Boolean)
+          .join(' ');
+        const isMissingIdempotencyKey =
+          reason.code === 'SYS_0002' || reason.message === 'IDEMPOTENCY_KEY_REQUIRED';
+        const isGenericValidationMessage =
+          reason.status === 400 &&
+          /invalid|validation|bad request|không hợp lệ|chưa hợp lệ/i.test(reason.message);
+        showError(
+          validationMessage ||
+            (isMissingIdempotencyKey
+              ? 'Yêu cầu chưa có mã xác nhận an toàn. Vui lòng thử lại; hệ thống đã tự bổ sung mã cho thao tác này.'
+              : mutation.type === 'complete' && isGenericValidationMessage
+                ? 'Hệ thống chưa cho phép kết thúc booking ở trạng thái hiện tại. Dữ liệu booking sẽ được tải lại để bạn kiểm tra.'
+                : reason.message),
+          {
+            title:
+              mutation.type === 'complete'
+                ? 'Chưa thể kết thúc buổi mentoring'
+                : 'Không thể cập nhật booking',
+          },
+        );
+        await refresh();
+      } else {
+        showError(reason, { title: 'Không thể cập nhật booking' });
+      }
     }
   };
 
   return (
-    <section className="mentor-bookings-page">
-      <header className="mentor-bookings-heading">
-        <h1>Lịch đặt</h1>
-        <p>Quản lý và theo dõi các lịch mentoring của bạn.</p>
+    <section className="mx-auto max-w-7xl space-y-5 [font-family:inherit]">
+      <header className="space-y-1 pb-2">
+        <h1 className="m-0 text-3xl font-bold tracking-tight text-text-main">Lịch đặt</h1>
+        <p className="m-0 text-sm font-normal text-text-muted">
+          Quản lý và theo dõi các lịch mentoring của bạn.
+        </p>
       </header>
 
-      <div className="mentor-booking-toolbar">
-        <div className="mentor-booking-filters" role="tablist" aria-label="Lọc lịch đặt">
-          {FILTERS.map((filter) => {
-            const Icon = filter.icon;
-            return (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeFilter === filter.value}
-                className={activeFilter === filter.value ? 'is-active' : ''}
-                key={filter.value}
-                onClick={() => setActiveFilter(filter.value)}
-              >
-                <Icon aria-hidden="true" />
-                {filter.label} ({counts[filter.value]})
-              </button>
-            );
-          })}
-        </div>
-        <div className="mentor-booking-filter-actions">
-          <label className="mentor-booking-date-filter">
-            <CalendarDays aria-hidden="true" />
+      <div
+        className="flex max-w-full gap-2 overflow-x-auto pb-1"
+        role="tablist"
+        aria-label="Lọc lịch đặt"
+      >
+        {FILTERS.map((filter) => {
+          const Icon = filter.icon;
+          return (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeFilter === filter.value}
+              className={`inline-flex h-12 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-primary/20 ${activeFilter === filter.value ? 'border-primary bg-primary text-white' : 'border-border-color bg-white text-text-secondary hover:border-primary-border hover:bg-primary-light hover:text-primary'}`}
+              key={filter.value}
+              onClick={() => setActiveFilter(filter.value)}
+            >
+              <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+              {filter.label} ({counts[filter.value]})
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-border-color/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-3">
+          <label className="relative inline-flex h-11 min-w-44 items-center gap-2 rounded-xl border border-border-color bg-white px-4 text-sm font-medium text-text-secondary transition-colors hover:border-primary-border hover:bg-primary-light/40">
+            <CalendarDays className="h-5 w-5 text-primary" aria-hidden="true" />
             <span>{selectedDate || 'Chọn ngày'}</span>
             <input
               type="date"
+              className="absolute inset-0 cursor-pointer opacity-0"
               value={selectedDate}
               aria-label="Chọn ngày booking"
               onChange={(event) => setSelectedDate(event.target.value)}
             />
           </label>
-          <button type="button" onClick={() => setShowAdvancedFilter((value) => !value)}>
-            <Filter aria-hidden="true" /> Bộ lọc
+          <button
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-border-color bg-white px-4 text-sm font-medium text-text-secondary outline-none transition-colors hover:border-primary-border hover:bg-primary-light/40 hover:text-primary focus-visible:ring-3 focus-visible:ring-primary/20"
+            type="button"
+            aria-expanded={showAdvancedFilter}
+            onClick={() => setShowAdvancedFilter((value) => !value)}
+          >
+            <Filter className="h-5 w-5" aria-hidden="true" />
+            Bộ lọc
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${showAdvancedFilter ? 'rotate-180' : ''}`}
+              aria-hidden="true"
+            />
           </button>
+        </div>
+        <div className="relative inline-flex h-11 items-center gap-2 rounded-xl border border-border-color bg-white px-4 text-sm font-medium text-text-secondary transition-colors hover:border-primary-border hover:bg-primary-light/40">
+          <ArrowDownUp className="h-5 w-5 text-primary" aria-hidden="true" />
+          <span>Sắp xếp:</span>
+          <strong className="font-semibold text-text-main">
+            {sortDirection === 'DESC' ? 'Xa nhất' : 'Gần nhất'}
+          </strong>
+          <ChevronDown className="h-4 w-4" aria-hidden="true" />
+          <select
+            className="absolute inset-0 cursor-pointer opacity-0"
+            value={sortDirection}
+            aria-label="Sắp xếp booking theo thời gian"
+            onChange={(event) => setSortDirection(event.target.value as 'ASC' | 'DESC')}
+          >
+            <option value="ASC">Gần nhất trước</option>
+            <option value="DESC">Xa nhất trước</option>
+          </select>
         </div>
       </div>
 
       {showAdvancedFilter && (
-        <div className="mentor-booking-advanced-filter">
-          <label>
-            <span className="mentor-booking-advanced-label">
-              <ArrowDownUp aria-hidden="true" />
-              Sắp xếp theo thời gian
-            </span>
-            <span className="mentor-booking-sort-select">
-              <select
-                value={sortDirection}
-                onChange={(event) => setSortDirection(event.target.value as 'ASC' | 'DESC')}
-              >
-                <option value="ASC">Gần nhất trước</option>
-                <option value="DESC">Xa nhất trước</option>
-              </select>
-              <ChevronDown aria-hidden="true" />
-            </span>
-          </label>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-border/50 bg-primary-light/50 px-4 py-3">
+          <span className="text-sm text-text-secondary">
+            {selectedDate ? `Đang lọc booking ngày ${selectedDate}` : 'Chưa áp dụng bộ lọc ngày.'}
+          </span>
           <button
             type="button"
-            className="mentor-booking-clear-date"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-primary-border bg-white px-3 text-sm font-semibold text-primary outline-none hover:bg-primary-light focus-visible:ring-3 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => setSelectedDate('')}
             disabled={!selectedDate}
           >
@@ -264,7 +377,10 @@ export function MentorBookingsView() {
       )}
 
       {error && (
-        <div className="mentor-booking-error" role="alert">
+        <div
+          className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-danger-soft p-4 text-sm text-danger"
+          role="alert"
+        >
           <span>{error}</span>
           <Button variant="outline" size="sm" onClick={() => void refresh()}>
             Thử lại
@@ -273,28 +389,45 @@ export function MentorBookingsView() {
       )}
 
       {isLoading ? (
-        <div className="mentor-booking-list" aria-label="Đang tải lịch đặt">
+        <div className="grid gap-3" aria-label="Đang tải lịch đặt">
           {[1, 2, 3, 4].map((item) => (
-            <div className="mentor-booking-row-skeleton" key={item} />
+            <div
+              className="h-28 animate-pulse rounded-2xl border border-border-light bg-white shadow-xs"
+              key={item}
+            />
           ))}
         </div>
       ) : bookings.length === 0 ? (
-        <div className="mentor-booking-empty">
-          <CalendarDays aria-hidden="true" />
-          <strong>{empty[0]}</strong>
+        <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border border-border-color/80 bg-white p-8 text-center text-sm text-text-muted shadow-xs">
+          <CalendarDays className="h-9 w-9 text-text-disabled" aria-hidden="true" />
+          <strong className="text-base font-semibold text-text-main">{empty[0]}</strong>
           <span>{empty[1]}</span>
         </div>
       ) : (
-        <div className="mentor-booking-list">
+        <div className="grid gap-3">
           {bookings.map((booking) => (
             <BookingRow
               booking={booking}
               key={booking.bookingId}
               onAction={(type) => setAction({ type, booking })}
               onDetail={() => void openDetail(booking)}
+              onMessage={() =>
+                router.push(
+                  `/${params.locale || 'vi'}/messages?participantId=${encodeURIComponent(booking.menteeUserId)}`,
+                )
+              }
+              onCheckIn={() => void executeDirectAction(booking, { type: 'checkIn' })}
             />
           ))}
         </div>
+      )}
+
+      {!isLoading && bookings.length > 0 && totalPages > 1 && (
+        <BookingPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       <BookingDetailModal
@@ -312,58 +445,233 @@ export function MentorBookingsView() {
       />
     </section>
   );
+
+  async function executeDirectAction(
+    booking: MentorBookingResponse,
+    mutation: MentorBookingMutation,
+  ) {
+    try {
+      await mutate(booking.bookingId, mutation);
+      showSuccess({ title: 'Đã check-in', description: 'Hệ thống đã ghi nhận bạn có mặt.' });
+    } catch (reason) {
+      showError(reason, { title: 'Không thể check-in' });
+    }
+  }
+}
+
+function BookingPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const firstPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+  const visiblePages = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, index) => firstPage + index,
+  );
+
+  return (
+    <nav
+      className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-border-color/70 bg-white p-4 shadow-xs"
+      aria-label="Phân trang booking"
+    >
+      <button
+        type="button"
+        className="inline-flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-primary outline-none hover:bg-primary-light focus-visible:ring-3 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:text-text-disabled disabled:hover:bg-transparent"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+      >
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        Trước
+      </button>
+      {visiblePages.map((page) => (
+        <button
+          type="button"
+          className={`h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-primary/20 ${page === currentPage ? 'border-primary bg-primary text-white' : 'border-primary-border bg-white text-primary hover:border-primary hover:bg-primary-light'}`}
+          aria-current={page === currentPage ? 'page' : undefined}
+          key={page}
+          onClick={() => onPageChange(page)}
+        >
+          {page}
+        </button>
+      ))}
+      <button
+        type="button"
+        className="inline-flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-primary outline-none hover:bg-primary-light focus-visible:ring-3 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:text-text-disabled disabled:hover:bg-transparent"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+      >
+        Sau
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </button>
+    </nav>
+  );
 }
 
 function BookingRow({
   booking,
   onAction,
   onDetail,
+  onMessage,
+  onCheckIn,
 }: {
   booking: MentorBookingResponse;
   onAction: (type: BookingAction) => void;
   onDetail: () => void;
+  onMessage: () => void;
+  onCheckIn: () => void;
 }) {
   const status = statusPresentation(booking);
+  const bookingGroup = bookingFilterOf(booking);
+  const schedule = formatScheduleParts(booking.selectedStartTime);
+  const meetingLabel = meetingPlatformLabel(booking.meetingPlatform);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const hasConfirmedBooking = ['CONFIRMED', 'UNDER_REVIEW', 'COMPLETED'].includes(
+    booking.bookingStatus,
+  );
+  const canOpenMessages =
+    hasConfirmedBooking && ['CONFIRMED', 'UNDER_REVIEW', 'COMPLETED'].includes(bookingGroup);
+  const canCheckIn = Boolean(
+    booking.attendance?.canCheckIn && !booking.attendance.currentUserCheckedIn,
+  );
   const primaryAction = booking.canAccept
     ? { label: 'Xác nhận', icon: <Check />, action: () => onAction('accept') }
     : booking.canCompleteByMentor
       ? { label: 'Kết thúc', icon: <Square />, action: () => onAction('complete') }
       : booking.canJoin && booking.meetingLink
         ? {
-            label: 'Tham gia',
+            label: 'Bắt đầu',
             icon: <PlayCircle />,
             action: () => window.open(booking.meetingLink ?? '', '_blank', 'noopener,noreferrer'),
           }
         : undefined;
 
   return (
-    <article className="mentor-booking-row">
-      <div className="mentor-booking-identity">
+    <article className="grid min-h-32 w-full grid-cols-2 items-center gap-4 rounded-2xl border border-border-color/70 bg-white px-4 py-4 shadow-xs transition-all duration-200 hover:border-primary-border/70 hover:shadow-md sm:px-5 md:grid-cols-[minmax(0,1fr)_minmax(220px,.75fr)] md:gap-x-6 md:gap-y-5 xl:min-h-36 xl:grid-cols-[minmax(280px,1.35fr)_minmax(190px,.8fr)_minmax(150px,.6fr)_minmax(224px,auto)]">
+      <div className="col-span-2 flex min-w-0 items-center gap-3 sm:gap-4 md:col-span-1">
         {booking.menteeAvatarUrl ? (
-          <img src={booking.menteeAvatarUrl} alt={booking.menteeDisplayName} />
+          <img
+            className="h-14 w-14 shrink-0 rounded-full object-cover"
+            src={booking.menteeAvatarUrl}
+            alt={`Ảnh đại diện của ${booking.menteeDisplayName}`}
+          />
         ) : (
-          <span aria-hidden="true">{initials(booking.menteeDisplayName)}</span>
+          <span
+            className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-primary-light font-bold text-primary"
+            aria-hidden="true"
+          >
+            {initials(booking.menteeDisplayName)}
+          </span>
         )}
-        <div>
-          <strong>{booking.serviceTitle || 'Dịch vụ mentoring'}</strong>
-          <small>với {booking.menteeDisplayName}</small>
+        <div className="min-w-0">
+          <strong className="block truncate text-base font-semibold text-text-main">
+            {booking.serviceTitle || 'Dịch vụ mentoring'}
+          </strong>
+          <span className="mt-0.5 block truncate text-sm text-text-secondary">
+            với {booking.menteeDisplayName || 'Mentee'}
+          </span>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+            <span className="font-semibold text-primary">Mentee</span>
+            {booking.serviceDurationSnapshot ? (
+              <>
+                <span aria-hidden="true">•</span>
+                <span>{booking.serviceDurationSnapshot} phút</span>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
-      <div className="mentor-booking-schedule">
-        <CalendarDays aria-hidden="true" />
-        <span>{formatSchedule(booking.selectedStartTime)}</span>
+
+      <div className="flex min-h-18 min-w-0 items-start gap-2.5 text-sm text-text-secondary md:justify-self-end xl:min-h-0 xl:justify-self-start">
+        <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <div className="min-w-0">
+          <strong className="block truncate font-medium text-text-secondary">
+            {schedule.date}
+          </strong>
+          {schedule.time && <span className="mt-0.5 block">{schedule.time}</span>}
+          {meetingLabel && (
+            <span className="mt-2 inline-flex rounded-md bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
+              {meetingLabel}
+            </span>
+          )}
+        </div>
       </div>
-      <Badge variant={status.variant} icon={status.icon} className="mentor-booking-status">
-        {status.label}
-      </Badge>
-      <div className="mentor-booking-actions">
-        <Button variant="outline" leftIcon={<Eye />} onClick={onDetail}>
-          Chi tiết
-        </Button>
+
+      <div className="flex min-w-0 justify-self-end md:justify-self-start xl:justify-self-auto xl:justify-center">
+        <Badge
+          variant={status.variant}
+          className="max-w-full px-3 py-1.5 text-xs font-medium [&>span:last-child]:truncate"
+        >
+          {status.label}
+        </Badge>
+      </div>
+
+      <div className="col-span-2 flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-slate-100 pt-3 md:col-span-1 md:justify-end md:border-t-0 md:pt-0 xl:flex-nowrap">
         {primaryAction && (
-          <Button leftIcon={primaryAction.icon} onClick={primaryAction.action}>
+          <Button
+            className="min-w-24 flex-1 sm:flex-none"
+            leftIcon={primaryAction.icon}
+            onClick={primaryAction.action}
+          >
             {primaryAction.label}
           </Button>
+        )}
+        <Button className="min-w-24 flex-1 sm:flex-none" variant="outline" onClick={onDetail}>
+          Chi tiết
+        </Button>
+        {canOpenMessages || canCheckIn ? (
+          <div className="relative">
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-xl border border-transparent bg-transparent text-text-secondary outline-none transition-colors hover:border-border-color hover:bg-surface-subtle hover:text-primary focus-visible:ring-3 focus-visible:ring-primary/20"
+              aria-label="Mở thêm tùy chọn"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen((value) => !value)}
+            >
+              <EllipsisVertical className="h-5 w-5" aria-hidden="true" />
+            </button>
+            {isMenuOpen && (
+              <div
+                className="absolute right-0 top-full z-20 mt-1 min-w-40 rounded-xl border border-border-color bg-white p-1.5 shadow-md"
+                role="menu"
+              >
+                {canOpenMessages && (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-secondary hover:bg-primary-light hover:text-primary"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onMessage();
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4" aria-hidden="true" />
+                    Nhắn tin
+                  </button>
+                )}
+                {canCheckIn && (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-secondary hover:bg-primary-light hover:text-primary"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onCheckIn();
+                    }}
+                  >
+                    <LogIn className="h-4 w-4" aria-hidden="true" />
+                    Check-in
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <span className="hidden h-10 w-10 shrink-0 xl:block" aria-hidden="true" />
         )}
       </div>
     </article>
@@ -383,56 +691,135 @@ function BookingDetailModal({
 }) {
   if (!booking) return null;
   const status = statusPresentation(booking);
+  const meetingLabel = meetingPlatformLabel(booking.meetingPlatform) || 'Chưa thiết lập';
   return (
-    <Modal open onClose={onClose} title="Chi tiết lịch đặt" className="mentor-booking-modal">
-      <div className="mentor-booking-detail-content">
-        {isLoading && <RefreshCw className="mentor-booking-detail-spinner" aria-label="Đang tải" />}
-        <div className="mentor-booking-detail-grid">
-          <Info label="Dịch vụ" value={booking.serviceTitle || 'Dịch vụ mentoring'} />
-          <Info label="Mentee" value={booking.menteeDisplayName} />
-          <Info label="Thời gian bắt đầu" value={formatSchedule(booking.selectedStartTime)} />
-          <Info label="Thời gian kết thúc" value={formatSchedule(booking.selectedEndTime)} />
-          <Info label="Trạng thái" value={status.label} />
-          <Info label="Nền tảng" value={booking.meetingPlatform || 'Chưa thiết lập'} />
-          {booking.googleCalendarManaged && (
-            <Info label="Google Calendar" value={booking.calendarSyncStatus || 'Đang đồng bộ'} />
-          )}
-          {booking.googleMeetAutoGenerated && <Info label="Google Meet" value="Được tạo tự động" />}
-        </div>
-        <Info label="Mục tiêu" value={booking.learningGoalTitle || 'Không có'} />
-        {booking.learningGoalDescription && (
-          <Info label="Mô tả mục tiêu" value={booking.learningGoalDescription} />
+    <Modal open onClose={onClose} title="Chi tiết lịch đặt" className="max-w-2xl">
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-[1px]">
+            <RefreshCw className="h-6 w-6 animate-spin text-[#119CF7]" aria-label="Đang tải" />
+          </div>
         )}
+
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
+          <div className="min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Dịch vụ mentoring
+            </span>
+            <h3 className="mt-1 truncate text-lg font-extrabold tracking-tight text-slate-900">
+              {booking.serviceTitle || 'Dịch vụ mentoring'}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              với{' '}
+              <strong className="font-semibold text-slate-800">{booking.menteeDisplayName}</strong>
+            </p>
+          </div>
+          <Badge variant={status.variant} className="px-3 py-1.5 text-xs">
+            {status.label}
+          </Badge>
+        </div>
+
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+          <Info
+            icon={<CalendarDays />}
+            label="Thời gian bắt đầu"
+            value={formatSchedule(booking.selectedStartTime)}
+          />
+          <Info
+            icon={<Clock3 />}
+            label="Thời gian kết thúc"
+            value={formatSchedule(booking.selectedEndTime)}
+          />
+          <Info icon={<UserRound />} label="Mentee" value={booking.menteeDisplayName} />
+          <Info icon={<Video />} label="Nền tảng" value={meetingLabel} />
+          {booking.googleCalendarManaged && (
+            <Info
+              icon={<CalendarDays />}
+              label="Google Calendar"
+              value={booking.calendarSyncStatus || 'Đang đồng bộ'}
+            />
+          )}
+          {booking.googleMeetAutoGenerated && (
+            <Info icon={<Video />} label="Google Meet" value="Được tạo tự động" />
+          )}
+        </div>
+
+        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-[#119CF7]">
+              <Target className="h-4.5 w-4.5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Mục tiêu buổi mentoring
+              </span>
+              <strong className="mt-1 block break-words text-sm text-slate-900">
+                {booking.learningGoalTitle || 'Không có mục tiêu cụ thể'}
+              </strong>
+              {booking.learningGoalDescription && (
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                  {booking.learningGoalDescription}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
         {booking.meetingLink && (
-          <a href={booking.meetingLink} target="_blank" rel="noreferrer">
+          <a
+            className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#119CF7] px-4 text-sm font-bold text-white outline-none transition hover:bg-[#0789dc] focus-visible:ring-4 focus-visible:ring-[#119CF7]/25"
+            href={booking.meetingLink}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
             Mở liên kết buổi mentoring
           </a>
         )}
-        {booking.location && <Info label="Địa điểm" value={booking.location} />}
+        {booking.location && (
+          <div className="mt-3">
+            <Info icon={<MapPin />} label="Địa điểm" value={booking.location} />
+          </div>
+        )}
         {booking.calendarSyncErrorMessage && (
-          <div className="mentor-booking-calendar-warning" role="status">
+          <div
+            className="mt-3 rounded-xl border border-amber-200 bg-warning-soft p-3 text-sm text-amber-700"
+            role="status"
+          >
             Đồng bộ Google Calendar chưa thành công: {booking.calendarSyncErrorMessage}
           </div>
         )}
       </div>
-      <footer className="mentor-booking-modal-footer">
-        <Button variant="outline" onClick={onClose}>
+      <footer className="mt-5 flex flex-col-reverse gap-2 border-t border-border-light pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button variant="outline" className="h-10 sm:min-w-24" onClick={onClose}>
           Đóng
         </Button>
-        <div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           {booking.canReject && (
-            <Button variant="destructive" onClick={() => onAction('reject')}>
+            <Button variant="destructive" className="h-10" onClick={() => onAction('reject')}>
               Từ chối
             </Button>
           )}
           {booking.canCancel && !booking.canReject && (
-            <Button variant="destructive" onClick={() => onAction('cancel')}>
+            <Button variant="destructive" className="h-10" onClick={() => onAction('cancel')}>
               Hủy lịch
             </Button>
           )}
-          {booking.canAccept && <Button onClick={() => onAction('accept')}>Xác nhận</Button>}
+          {booking.canAccept && (
+            <Button
+              className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
+              onClick={() => onAction('accept')}
+            >
+              Xác nhận
+            </Button>
+          )}
           {booking.canCompleteByMentor && (
-            <Button onClick={() => onAction('complete')}>Kết thúc</Button>
+            <Button
+              className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
+              onClick={() => onAction('complete')}
+            >
+              Kết thúc
+            </Button>
           )}
         </div>
       </footer>
@@ -440,11 +827,19 @@ function BookingDetailModal({
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="mentor-booking-detail-info">
-      <small>{label}</small>
-      <strong>{value}</strong>
+    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#119CF7] shadow-xs [&_svg]:h-4 [&_svg]:w-4"
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <small className="block text-xs text-slate-500">{label}</small>
+        <strong className="mt-1 block break-words text-sm leading-5 text-slate-900">{value}</strong>
+      </div>
     </div>
   );
 }
@@ -524,13 +919,13 @@ function BookingActionModal({
   };
 
   return (
-    <Modal open onClose={onClose} title={title} className="mentor-booking-action-modal">
-      <div className="mentor-booking-action-form">
+    <Modal open onClose={onClose} title={title}>
+      <div className="grid gap-4 [&_input]:h-11 [&_input]:rounded-xl [&_input]:border [&_input]:border-border-color [&_input]:px-3 [&_label]:grid [&_label]:gap-2 [&_label]:text-sm [&_select]:h-11 [&_select]:rounded-xl [&_select]:border [&_select]:border-border-color [&_select]:bg-white [&_select]:px-3 [&_textarea]:min-h-28 [&_textarea]:rounded-xl [&_textarea]:border [&_textarea]:border-border-color [&_textarea]:p-3">
         {action.type === 'accept' && (
           <>
             <label>
               <span>
-                Nền tảng buổi mentoring <span className="ui-required-asterisk">*</span>
+                Nền tảng buổi mentoring <span className="text-danger">*</span>
               </span>
               <select
                 required
@@ -547,7 +942,7 @@ function BookingActionModal({
               </select>
             </label>
             {shouldAutoGenerateGoogleMeet ? (
-              <div className="mentor-booking-google-meet-notice">
+              <div className="flex gap-3 rounded-xl border border-primary-border bg-primary-light p-3 text-sm text-primary">
                 <CalendarDays aria-hidden="true" />
                 <div>
                   <strong>Google Meet sẽ được tạo tự động</strong>
@@ -558,7 +953,7 @@ function BookingActionModal({
                 </div>
               </div>
             ) : googleCalendarStatus?.needsReconnect && meetingPlatform === 'GOOGLE_MEET' ? (
-              <div className="mentor-booking-calendar-warning">
+              <div className="rounded-xl border border-amber-200 bg-warning-soft p-3 text-sm text-amber-700">
                 Kết nối Google Calendar cần được xác thực lại. Vui lòng kết nối lại trong Cài đặt
                 lịch để tự động tạo Google Meet.
               </div>
@@ -566,7 +961,7 @@ function BookingActionModal({
             {requiresMeetingLink && (
               <label>
                 <span>
-                  Liên kết cuộc họp <span className="ui-required-asterisk">*</span>
+                  Liên kết cuộc họp <span className="text-danger">*</span>
                 </span>
                 <input
                   required
@@ -580,7 +975,7 @@ function BookingActionModal({
             {requiresLocation && (
               <label>
                 <span>
-                  Địa điểm <span className="ui-required-asterisk">*</span>
+                  Địa điểm <span className="text-danger">*</span>
                 </span>
                 <input
                   required
@@ -597,12 +992,13 @@ function BookingActionModal({
           <textarea
             value={note}
             required={requiresReason}
+            maxLength={action.type === 'complete' ? 2000 : undefined}
             onChange={(event) => setNote(event.target.value)}
             placeholder={requiresReason ? 'Nhập lý do để người học biết...' : 'Nhập ghi chú...'}
           />
         </label>
       </div>
-      <footer className="mentor-booking-modal-footer">
+      <footer className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border-light pt-4">
         <Button variant="outline" onClick={onClose} disabled={isSaving}>
           Đóng
         </Button>
