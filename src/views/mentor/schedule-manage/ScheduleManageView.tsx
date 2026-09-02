@@ -506,6 +506,7 @@ export function ScheduleManageView() {
       note: '',
     },
   });
+  const selectedAvailabilityServiceIds = availabilityForm.watch('serviceIds') ?? [];
 
   // Form chỉnh sửa lịch rảnh
   const editAvailabilityForm = useForm<AvailabilitySlotFormValues>({
@@ -1719,155 +1720,247 @@ export function ScheduleManageView() {
         open={isAvailabilityModalOpen}
         title="Thêm lịch rảnh"
         onClose={() => !isCreatingAvailability && setIsAvailabilityModalOpen(false)}
-        className="mentor-availability-slot-modal"
+        className="max-w-2xl"
       >
         {loading ? (
-          <div className="mentor-availability-no-services">Đang tải dịch vụ...</div>
+          <div className="space-y-4" aria-label="Đang tải dịch vụ" aria-busy="true">
+            <div className="h-20 animate-pulse rounded-xl bg-slate-100" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-20 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-20 animate-pulse rounded-xl bg-slate-100" />
+            </div>
+            <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+          </div>
         ) : activeOneToOneServices.length ? (
           <form
-            className="mentor-availability-slot-form"
+            className="space-y-5"
             onSubmit={availabilityForm.handleSubmit(onSubmitAvailabilitySlot)}
             noValidate
           >
-            <div className="form-field-group">
-              <label className="form-label" htmlFor="availability-date">
+            <div>
+              <label
+                className="mb-2 block text-sm font-semibold text-slate-700"
+                htmlFor="availability-date"
+              >
                 Ngày <span className="text-red-500">*</span>
               </label>
-              <input
-                id="availability-date"
-                type="date"
-                className="form-input"
-                {...availabilityForm.register('date')}
-              />
+              <div className="relative">
+                <CalendarDays
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                  aria-hidden="true"
+                />
+                <input
+                  id="availability-date"
+                  type="date"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                  {...availabilityForm.register('date')}
+                />
+              </div>
               {availabilityForm.formState.errors.date && (
-                <span className="form-error-msg">
+                <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
                   {availabilityForm.formState.errors.date.message}
                 </span>
               )}
             </div>
 
-            <div className="mentor-availability-time-fields">
-              <div className="form-field-group">
-                <label className="form-label" htmlFor="availability-start-time">
-                  Bắt đầu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="availability-start-time"
-                  type="time"
-                  className="form-input"
-                  {...availabilityForm.register('startTime')}
-                />
-                {schedulingConstraints && (
-                  <small className="mentor-availability-helper">
-                    Thời lượng tối đa: {schedulingConstraints.maximumParentSlotDurationMinutes}{' '}
-                    phút.
-                  </small>
-                )}
-                {availabilityForm.formState.errors.startTime && (
-                  <span className="form-error-msg">
-                    {availabilityForm.formState.errors.startTime.message}
-                  </span>
-                )}
+            <div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    className="mb-2 block text-sm font-semibold text-slate-700"
+                    htmlFor="availability-start-time"
+                  >
+                    Bắt đầu <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="availability-start-time"
+                      type="time"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                      {...availabilityForm.register('startTime')}
+                    />
+                  </div>
+                  {availabilityForm.formState.errors.startTime && (
+                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                      {availabilityForm.formState.errors.startTime.message}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <label
+                    className="mb-2 block text-sm font-semibold text-slate-700"
+                    htmlFor="availability-end-time"
+                  >
+                    Kết thúc <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="availability-end-time"
+                      type="time"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                      {...availabilityForm.register('endTime')}
+                    />
+                  </div>
+                  {availabilityForm.formState.errors.endTime && (
+                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                      {availabilityForm.formState.errors.endTime.message}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="form-field-group">
-                <label className="form-label" htmlFor="availability-end-time">
-                  Kết thúc <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="availability-end-time"
-                  type="time"
-                  className="form-input"
-                  {...availabilityForm.register('endTime')}
-                />
-                {availabilityForm.formState.errors.endTime && (
-                  <span className="form-error-msg">
-                    {availabilityForm.formState.errors.endTime.message}
-                  </span>
-                )}
-              </div>
+              {schedulingConstraints && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  Thời lượng tối đa: {schedulingConstraints.maximumParentSlotDurationMinutes} phút.
+                </p>
+              )}
             </div>
 
-            <fieldset className="mentor-availability-service-options">
-              <legend>
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-slate-700">
                 Dịch vụ áp dụng <span className="text-red-500">*</span>
               </legend>
-              {activeOneToOneServices.map((service) => (
-                <label key={service.serviceId}>
-                  <input
-                    type="checkbox"
-                    value={service.serviceId}
-                    {...availabilityForm.register('serviceIds')}
-                  />
-                  <span>
-                    <strong>{service.title}</strong>
-                    <small>
-                      {service.durationMinutes} phút · {formatServicePrice(service)}
-                    </small>
+              <details className="group relative w-full">
+                <summary className="flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left outline-none transition hover:border-sky-300 focus-visible:border-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/10 [&::-webkit-details-marker]:hidden">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-slate-800">
+                      {selectedAvailabilityServiceIds.length
+                        ? `${selectedAvailabilityServiceIds.length} dịch vụ đã chọn`
+                        : 'Chọn dịch vụ áp dụng'}
+                    </span>
+                    {selectedAvailabilityServiceIds.length > 0 && (
+                      <span className="mt-0.5 block truncate text-xs text-slate-500">
+                        {activeOneToOneServices
+                          .filter((service) =>
+                            selectedAvailabilityServiceIds.includes(service.serviceId),
+                          )
+                          .map((service) => service.title)
+                          .join(', ')}
+                      </span>
+                    )}
                   </span>
-                </label>
-              ))}
+                  <ChevronDown
+                    className="h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180"
+                    aria-hidden="true"
+                  />
+                </summary>
+
+                <div className="absolute left-0 right-0 z-20 mt-2 max-h-64 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10">
+                  {activeOneToOneServices.map((service) => (
+                    <label
+                      key={service.serviceId}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg p-3 outline-none transition hover:bg-sky-50 has-[:checked]:bg-sky-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#119CF7]/30"
+                    >
+                      <input
+                        type="checkbox"
+                        value={service.serviceId}
+                        className="peer sr-only"
+                        {...availabilityForm.register('serviceIds')}
+                      />
+                      <span
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white transition peer-checked:border-[#119CF7] peer-checked:bg-[#119CF7] peer-checked:[&_svg]:opacity-100"
+                        aria-hidden="true"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-white opacity-0 transition-opacity" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <strong className="block truncate text-sm font-semibold text-slate-900">
+                          {service.title}
+                        </strong>
+                        <small className="mt-0.5 block text-xs text-slate-500">
+                          {service.durationMinutes} phút · {formatServicePrice(service)}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
               {availabilityForm.formState.errors.serviceIds && (
-                <span className="form-error-msg">
+                <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
                   {availabilityForm.formState.errors.serviceIds.message}
                 </span>
               )}
             </fieldset>
 
-            <div className="form-field-group">
-              <label className="form-label" htmlFor="availability-note">
+            <div>
+              <label
+                className="mb-2 block text-sm font-semibold text-slate-700"
+                htmlFor="availability-note"
+              >
                 Ghi chú
               </label>
               <textarea
                 id="availability-note"
-                className="form-textarea"
+                className="min-h-24 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
                 rows={3}
                 maxLength={200}
+                placeholder="Thêm ghi chú cho khung giờ này (không bắt buộc)..."
                 {...availabilityForm.register('note')}
               />
               {availabilityForm.formState.errors.note && (
-                <span className="form-error-msg">
+                <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
                   {availabilityForm.formState.errors.note.message}
                 </span>
               )}
             </div>
 
             {availabilityForm.formState.errors.root?.message && (
-              <p className="mentor-availability-form-error" role="alert">
+              <p
+                className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700"
+                role="alert"
+              >
                 {availabilityForm.formState.errors.root.message}
               </p>
             )}
             {!canCreateAvailability && (
-              <p className="mentor-availability-helper" role="status">
+              <p className="text-xs text-slate-500" role="status">
                 Đang tải múi giờ đặt lịch...
               </p>
             )}
 
-            <div className="form-modal-footer">
-              <button
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+              <Button
                 type="button"
-                className="btn-modal-cancel"
+                variant="outline"
+                className="h-11 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
                 disabled={isCreatingAvailability}
                 onClick={() => setIsAvailabilityModalOpen(false)}
               >
                 Hủy
-              </button>
+              </Button>
               <Button
                 type="submit"
-                className="btn-modal-submit"
+                loading={isCreatingAvailability}
+                className="h-11 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-36"
                 disabled={
                   !canCreateAvailability ||
                   isCreatingAvailability ||
                   Boolean(availabilityRetryUntil)
                 }
               >
-                {isCreatingAvailability ? 'Đang tạo...' : 'Tạo lịch rảnh'}
+                Tạo lịch rảnh
               </Button>
             </div>
           </form>
         ) : (
-          <div className="mentor-availability-no-services">
-            <p>Bạn cần có ít nhất một dịch vụ đang hoạt động trước khi mở lịch.</p>
-            <Button type="button" className="btn-modal-submit" onClick={showServicesSection}>
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+            <CalendarDays className="mx-auto h-10 w-10 text-slate-300" aria-hidden="true" />
+            <p className="mt-3 text-sm font-semibold text-slate-700">
+              Bạn cần có ít nhất một dịch vụ đang hoạt động trước khi mở lịch.
+            </p>
+            <Button
+              type="button"
+              className="mt-4 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
+              onClick={showServicesSection}
+            >
               Quản lý dịch vụ
             </Button>
           </div>
