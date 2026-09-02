@@ -12,7 +12,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
 import { getGoogleCalendarClientId, getGoogleCalendarRedirectUri } from '@/lib/auth/google';
-import { formatDateVi } from './mentorTemplateHelpers';
+import { formatDateVi, formatLocalTime } from './mentorTemplateHelpers';
 import { ApiClientError } from '@/models/apiClient';
 import type {
   AvailabilityTemplateResponse,
@@ -56,6 +56,7 @@ import {
   Lock,
   Plus,
   RefreshCw,
+  Search,
   Settings,
   ShieldCheck,
   Target,
@@ -64,7 +65,7 @@ import {
   X,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { MentorScheduleCalendar } from './MentorScheduleCalendar';
 import {
@@ -352,15 +353,15 @@ function BookingAvailabilityDetail({
 function getServiceIcon(title: string) {
   const lower = title.toLowerCase();
   if (lower.includes('cv') || lower.includes('resume')) {
-    return <FileText className="w-5 h-5 text-blue-600" />;
+    return <FileText className="h-5 w-5 text-primary" />;
   }
   if (lower.includes('interview') || lower.includes('phỏng vấn')) {
-    return <Target className="w-5 h-5 text-blue-600" />;
+    return <Target className="h-5 w-5 text-primary" />;
   }
   if (lower.includes('career') || lower.includes('định hướng') || lower.includes('strategy')) {
-    return <Compass className="w-5 h-5 text-blue-600" />;
+    return <Compass className="h-5 w-5 text-primary" />;
   }
-  return <BookOpen className="w-5 h-5 text-blue-600" />;
+  return <BookOpen className="h-5 w-5 text-primary" />;
 }
 
 function showServiceStatusSuccess(isActive: boolean) {
@@ -372,6 +373,97 @@ function showServiceStatusSuccess(isActive: boolean) {
   });
 }
 
+const SERVICE_PREVIEW_LIMIT = 4;
+
+type ServiceStatusFilter = 'all' | 'active' | 'inactive';
+
+interface MentorServiceCardProps {
+  service: MentorServiceManagementResponse;
+  isToggling: boolean;
+  compact?: boolean;
+  onOpen: (serviceId: string) => void;
+  onRequestStatusChange: (service: MentorServiceManagementResponse) => void;
+}
+
+function MentorServiceCard({
+  service,
+  isToggling,
+  compact = false,
+  onOpen,
+  onRequestStatusChange,
+}: MentorServiceCardProps) {
+  const priceText = service.isFree
+    ? 'Miễn phí'
+    : `${new Intl.NumberFormat('vi-VN').format(service.publicPriceScoin ?? 0)} S-coins`;
+
+  return (
+    <article
+      className={`mentor-schedule-card group relative rounded-xl border border-border-color shadow-xs ${
+        compact ? 'p-4' : 'min-h-40 p-5'
+      } ${service.isActive ? 'bg-white' : 'bg-surface-subtle text-text-muted'}`}
+    >
+      <button
+        type="button"
+        className="absolute inset-0 z-0 cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        aria-label={`Xem chi tiết dịch vụ ${service.title}`}
+        onClick={() => onOpen(service.serviceId)}
+      />
+      <div
+        className={`pointer-events-none relative z-[1] flex items-start ${compact ? 'gap-2.5' : 'gap-3'}`}
+      >
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-xl ${
+            compact ? 'h-9 w-9' : 'h-12 w-12'
+          } ${
+            service.isActive ? 'bg-primary-light text-primary' : 'bg-slate-200/70 text-slate-400'
+          }`}
+          aria-hidden="true"
+        >
+          {getServiceIcon(service.title)}
+        </div>
+        <div className="min-w-0 flex-1 text-left">
+          <h3
+            className={`truncate font-semibold text-text-main ${compact ? 'text-sm' : 'text-base'}`}
+          >
+            {service.title}
+          </h3>
+          <p className={`${compact ? 'mt-0.5 text-xs' : 'mt-1 text-sm'} text-text-muted`}>
+            {formatDuration(service.durationMinutes)} ·{' '}
+            {service.deliveryMode === 'ONE_TO_ONE' ? '1 kèm 1' : service.deliveryMode}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={isToggling}
+          role="switch"
+          aria-checked={service.isActive}
+          aria-label={`${service.isActive ? 'Tắt' : 'Bật'} dịch vụ ${service.title}`}
+          className={`pointer-events-auto relative z-10 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-wait disabled:opacity-60 ${
+            compact ? 'h-5 w-9' : 'h-6 w-11'
+          } ${service.isActive ? 'bg-primary' : 'bg-slate-300'}`}
+          onClick={() => onRequestStatusChange(service)}
+        >
+          <span
+            aria-hidden="true"
+            className={`absolute left-0.5 top-0.5 rounded-full border border-slate-100 bg-white shadow-sm transition-transform ${
+              compact ? 'h-4 w-4' : 'h-5 w-5'
+            } ${
+              service.isActive ? (compact ? 'translate-x-4' : 'translate-x-5') : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
+      <p
+        className={`pointer-events-none relative z-[1] ${compact ? 'mt-2.5 text-sm' : 'mt-5 text-base'} truncate font-semibold ${
+          service.isActive ? 'text-primary' : 'text-slate-400'
+        }`}
+      >
+        {priceText}
+      </p>
+    </article>
+  );
+}
+
 export function ScheduleManageView() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
@@ -381,6 +473,9 @@ export function ScheduleManageView() {
   const [pendingStatusChange, setPendingStatusChange] =
     useState<MentorServiceManagementResponse | null>(null);
   const [openModal, setOpenModal] = useState(false);
+  const [isServicesDrawerOpen, setIsServicesDrawerOpen] = useState(false);
+  const [serviceSearchQuery, setServiceSearchQuery] = useState('');
+  const [serviceStatusFilter, setServiceStatusFilter] = useState<ServiceStatusFilter>('all');
   const [isSaving, setIsSaving] = useState(false);
   const [constraints, setConstraints] = useState<{ allowedDurationMinutes: number[] }>();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -433,6 +528,7 @@ export function ScheduleManageView() {
     useState<AvailabilityTemplateResponse | null>(null);
   const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false);
   const [isSubmittingTemplate, setIsSubmittingTemplate] = useState(false);
+  const isCreatingTemplateRef = useRef(false);
   const [templateStaleNotice, setTemplateStaleNotice] = useState<string | null>(null);
 
   const [pendingTemplateActionConfirm, setPendingTemplateActionConfirm] = useState<{
@@ -644,6 +740,28 @@ export function ScheduleManageView() {
   };
 
   const onSubmitCreateTemplate = async (data: CreateAvailabilityTemplateRequest) => {
+    if (isCreatingTemplateRef.current) return;
+
+    const normalizedWeekdays = [...data.weekdays].sort().join(',');
+    const duplicateTemplate = templates.find(
+      (template) =>
+        template.configuredStatus !== 'ARCHIVED' &&
+        template.effectiveStatus !== 'ARCHIVED' &&
+        [...template.weekdays].sort().join(',') === normalizedWeekdays &&
+        formatLocalTime(template.startTime) === data.startTime.slice(0, 5) &&
+        formatLocalTime(template.endTime) === data.endTime.slice(0, 5) &&
+        template.effectiveFrom === data.effectiveFrom &&
+        (template.effectiveTo ?? '') === (data.effectiveTo ?? ''),
+    );
+    if (duplicateTemplate) {
+      showInfo({
+        title: 'Lịch lặp đã tồn tại',
+        description: 'Hãy chỉnh sửa lịch hiện có thay vì tạo thêm một lịch trùng cấu hình.',
+      });
+      return;
+    }
+
+    isCreatingTemplateRef.current = true;
     setIsSubmittingTemplate(true);
     setTemplateStaleNotice(null);
     try {
@@ -663,6 +781,7 @@ export function ScheduleManageView() {
         showError('Không thể tạo mẫu lịch lặp. Vui lòng thử lại.');
       }
     } finally {
+      isCreatingTemplateRef.current = false;
       setIsSubmittingTemplate(false);
     }
   };
@@ -1495,24 +1614,64 @@ export function ScheduleManageView() {
         ),
       )
     : 0;
+  const activeServiceCount = services.filter((service) => service.isActive).length;
+  const previewServices = services.slice(0, SERVICE_PREVIEW_LIMIT);
+  const filteredServices = useMemo(() => {
+    const normalizedQuery = serviceSearchQuery.trim().toLocaleLowerCase('vi-VN');
+
+    return services.filter((service) => {
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        service.title.toLocaleLowerCase('vi-VN').includes(normalizedQuery);
+      const matchesStatus =
+        serviceStatusFilter === 'all' ||
+        (serviceStatusFilter === 'active' ? service.isActive : !service.isActive);
+
+      return matchesQuery && matchesStatus;
+    });
+  }, [serviceSearchQuery, serviceStatusFilter, services]);
+
+  useEffect(() => {
+    if (!isServicesDrawerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsServicesDrawerOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isServicesDrawerOpen]);
 
   return (
-    <div className="mx-auto w-full max-w-[1480px] space-y-8 pb-8 [--schedule-primary:#119CF7]">
-      <section ref={serviceSectionRef} aria-labelledby="mentor-services-heading">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+    <div className="mentor-schedule-page w-full space-y-10 pb-6">
+      <section
+        ref={serviceSectionRef}
+        className="mentor-schedule-section"
+        aria-labelledby="mentor-services-heading"
+      >
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2
               id="mentor-services-heading"
-              className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl"
+              className="text-xl font-bold tracking-tight text-text-main"
             >
               Dịch vụ của tôi
             </h2>
-            <p className="mt-1 text-sm text-slate-500">Bật/tắt dịch vụ và quản lý giá.</p>
+            {!loading && services.length > 0 && (
+              <p className="mt-1 text-sm text-text-muted">
+                {services.length} dịch vụ · {activeServiceCount} đang hoạt động
+              </p>
+            )}
           </div>
           <Button
             variant="primary"
             size="md"
-            className="h-11 bg-[var(--schedule-primary)] px-5 hover:bg-[#0789dc] focus-visible:ring-[#119CF7]/25"
+            className="h-11 px-5"
             leftIcon={<Plus className="h-4 w-4" />}
             onClick={() => setOpenModal(true)}
           >
@@ -1522,20 +1681,20 @@ export function ScheduleManageView() {
 
         {loading ? (
           <div
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
             aria-label="Đang tải danh sách dịch vụ"
             aria-busy="true"
           >
-            {[0, 1, 2].map((item) => (
+            {[0, 1].map((item) => (
               <div
                 key={item}
-                className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-white p-5"
+                className="h-28 animate-pulse rounded-xl border border-border-color bg-white p-4"
               >
-                <div className="flex gap-3">
-                  <span className="h-11 w-11 rounded-xl bg-slate-100" />
+                <div className="flex gap-2.5">
+                  <span className="h-9 w-9 rounded-lg bg-slate-100" />
                   <span className="mt-1 h-4 w-36 rounded bg-slate-100" />
                 </div>
-                <span className="mt-7 block h-6 w-32 rounded bg-slate-100" />
+                <span className="mt-4 block h-5 w-24 rounded bg-slate-100" />
               </div>
             ))}
           </div>
@@ -1552,97 +1711,57 @@ export function ScheduleManageView() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => {
-              const isToggling = togglingId === service.serviceId;
-              const priceText = service.isFree
-                ? 'Miễn phí'
-                : `${new Intl.NumberFormat('vi-VN').format(service.publicPriceScoin ?? 0)} S-coins`;
-
-              return (
-                <article
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {previewServices.map((service) => (
+                <MentorServiceCard
                   key={service.serviceId}
-                  className={`min-h-36 rounded-2xl border bg-white p-5 shadow-sm transition duration-200 hover:shadow-md ${
-                    service.isActive
-                      ? 'border-[#119CF7]'
-                      : 'border-slate-200 bg-slate-50/80 text-slate-500'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                        service.isActive
-                          ? 'bg-sky-50 text-[var(--schedule-primary)]'
-                          : 'bg-slate-200/70 text-slate-400'
-                      }`}
-                      aria-hidden="true"
-                    >
-                      {getServiceIcon(service.title)}
-                    </div>
-                    <button
-                      type="button"
-                      className="min-w-0 flex-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-[#119CF7] focus-visible:ring-offset-2"
-                      onClick={() => router.push(`/${locale}/mentor/services/${service.serviceId}`)}
-                    >
-                      <h3 className="truncate text-base font-bold text-slate-900">
-                        {service.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {formatDuration(service.durationMinutes)} ·{' '}
-                        {service.deliveryMode === 'ONE_TO_ONE' ? '1 kèm 1' : service.deliveryMode}
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isToggling}
-                      role="switch"
-                      aria-checked={service.isActive}
-                      aria-label={`${service.isActive ? 'Tắt' : 'Bật'} dịch vụ ${service.title}`}
-                      className={`relative h-7 w-12 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-4 focus-visible:ring-[#119CF7]/25 disabled:cursor-wait disabled:opacity-60 ${
-                        service.isActive ? 'bg-[var(--schedule-primary)]' : 'bg-slate-300'
-                      }`}
-                      onClick={() => setPendingStatusChange(service)}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={`absolute left-0.5 top-0.5 h-6 w-6 rounded-full border border-slate-100 bg-white shadow-md transition-transform ${
-                          service.isActive ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <p
-                    className={`mt-6 text-xl font-extrabold tracking-tight ${
-                      service.isActive ? 'text-[var(--schedule-primary)]' : 'text-slate-400'
-                    }`}
-                  >
-                    {priceText}
-                  </p>
-                </article>
-              );
-            })}
-          </div>
+                  service={service}
+                  compact
+                  isToggling={togglingId === service.serviceId}
+                  onOpen={(serviceId) => router.push(`/${locale}/mentor/services/${serviceId}`)}
+                  onRequestStatusChange={setPendingStatusChange}
+                />
+              ))}
+            </div>
+            {services.length > SERVICE_PREVIEW_LIMIT && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="mt-4 px-0 text-primary hover:bg-transparent hover:text-primary-hover"
+                onClick={() => setIsServicesDrawerOpen(true)}
+              >
+                Xem tất cả {services.length} dịch vụ →
+              </Button>
+            )}
+          </>
         )}
       </section>
 
-      <section aria-labelledby="mentor-schedule-heading">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2
-              id="mentor-schedule-heading"
-              className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl"
-            >
-              Lịch dạy của tôi
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Quản lý các khung giờ mentee có thể đặt lịch với bạn.
-            </p>
+      <section className="mentor-schedule-section" aria-labelledby="mentor-schedule-heading">
+        <h2
+          id="mentor-schedule-heading"
+          className="text-xl font-bold tracking-tight text-text-main"
+        >
+          Lịch dạy của tôi
+        </h2>
+
+        <div className="mb-4 mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="overflow-x-auto">
+            <Tabs
+              tabs={[
+                { id: 'calendar', label: 'Lịch' },
+                { id: 'recurring', label: 'Lịch lặp' },
+              ]}
+              activeTab={activeScheduleTab}
+              onChange={(tabId) => setActiveScheduleTab(tabId as 'calendar' | 'recurring')}
+              ariaLabel="Chế độ lịch dạy"
+            />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="md"
-              className="h-11 border-[#119CF7]/40 text-[var(--schedule-primary)] hover:border-[#119CF7] hover:bg-sky-50"
               leftIcon={<Settings className="h-4 w-4" />}
               onClick={() => setIsScheduleSettingsOpen(true)}
             >
@@ -1652,7 +1771,6 @@ export function ScheduleManageView() {
               <Button
                 variant="primary"
                 size="md"
-                className="h-11 bg-[var(--schedule-primary)] hover:bg-[#0789dc]"
                 leftIcon={<Plus className="h-4 w-4" />}
                 onClick={openAvailabilityModal}
               >
@@ -1662,7 +1780,6 @@ export function ScheduleManageView() {
               <Button
                 variant="primary"
                 size="md"
-                className="h-11 bg-[var(--schedule-primary)] hover:bg-[#0789dc]"
                 leftIcon={<CalendarDays className="h-4 w-4" />}
                 onClick={handleOpenCreateTemplate}
               >
@@ -1670,18 +1787,6 @@ export function ScheduleManageView() {
               </Button>
             )}
           </div>
-        </div>
-
-        <div className="mb-4 overflow-x-auto pb-1">
-          <Tabs
-            tabs={[
-              { id: 'calendar', label: 'Lịch' },
-              { id: 'recurring', label: 'Lịch lặp' },
-            ]}
-            activeTab={activeScheduleTab}
-            onChange={(tabId) => setActiveScheduleTab(tabId as 'calendar' | 'recurring')}
-            ariaLabel="Chế độ lịch dạy"
-          />
         </div>
 
         {activeScheduleTab === 'calendar' ? (
@@ -1715,6 +1820,128 @@ export function ScheduleManageView() {
           />
         )}
       </section>
+
+      {isServicesDrawerOpen && (
+        <div
+          className="fixed inset-0 z-[99990] flex justify-end bg-slate-950/45 backdrop-blur-[2px]"
+          role="presentation"
+          onMouseDown={() => setIsServicesDrawerOpen(false)}
+        >
+          <aside
+            className="flex h-full w-full flex-col bg-white shadow-2xl sm:max-w-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="services-drawer-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 sm:px-6">
+              <div>
+                <h2
+                  id="services-drawer-title"
+                  className="text-xl font-bold tracking-tight text-slate-900"
+                >
+                  Tất cả dịch vụ
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {services.length} dịch vụ · {activeServiceCount} đang hoạt động
+                </p>
+              </div>
+              <button
+                type="button"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 outline-none transition hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-4 focus-visible:ring-primary/20"
+                aria-label="Đóng danh sách dịch vụ"
+                onClick={() => setIsServicesDrawerOpen(false)}
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </header>
+
+            <div className="shrink-0 space-y-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+              <div className="relative">
+                <Search
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  value={serviceSearchQuery}
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
+                  placeholder="Tìm kiếm dịch vụ..."
+                  aria-label="Tìm kiếm dịch vụ"
+                  autoFocus
+                  onChange={(event) => setServiceSearchQuery(event.target.value)}
+                />
+              </div>
+              <div
+                className="flex gap-2 overflow-x-auto pb-1"
+                role="group"
+                aria-label="Lọc trạng thái"
+              >
+                {(
+                  [
+                    ['all', `Tất cả (${services.length})`],
+                    ['active', `Đang hoạt động (${activeServiceCount})`],
+                    ['inactive', `Đã tắt (${services.length - activeServiceCount})`],
+                  ] as const
+                ).map(([status, label]) => (
+                  <button
+                    key={status}
+                    type="button"
+                    className={`h-9 shrink-0 rounded-full border px-3.5 text-xs font-semibold transition ${
+                      serviceStatusFilter === status
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary-border hover:text-primary'
+                    }`}
+                    aria-pressed={serviceStatusFilter === status}
+                    onClick={() => setServiceStatusFilter(status)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+              {filteredServices.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredServices.map((service) => (
+                    <MentorServiceCard
+                      key={service.serviceId}
+                      service={service}
+                      compact
+                      isToggling={togglingId === service.serviceId}
+                      onOpen={(serviceId) => router.push(`/${locale}/mentor/services/${serviceId}`)}
+                      onRequestStatusChange={setPendingStatusChange}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
+                  <Search className="mb-3 h-8 w-8 text-slate-300" aria-hidden="true" />
+                  <p className="font-semibold text-slate-700">Không tìm thấy dịch vụ</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Hãy thử từ khóa hoặc trạng thái khác.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <footer className="shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
+              <Button
+                type="button"
+                className="w-full"
+                leftIcon={<Plus className="h-4 w-4" />}
+                onClick={() => {
+                  setIsServicesDrawerOpen(false);
+                  setOpenModal(true);
+                }}
+              >
+                Thêm dịch vụ
+              </Button>
+            </footer>
+          </aside>
+        </div>
+      )}
 
       <Modal
         open={isAvailabilityModalOpen}
@@ -1979,7 +2206,7 @@ export function ScheduleManageView() {
             setIsScheduleSettingsOpen(false);
           }
         }}
-        className="mentor-schedule-settings-modal"
+        className="max-w-4xl lg:ml-64"
       >
         <div style={{ width: '100%', fontFamily: 'inherit' }}>
           {/* Modal Header */}
@@ -1988,10 +2215,10 @@ export function ScheduleManageView() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '16px',
+              marginBottom: '12px',
             }}
           >
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
               Cài đặt lịch
             </h2>
             <button
@@ -2057,25 +2284,18 @@ export function ScheduleManageView() {
             )}
 
             {/* Main Content Grid: Left Column (Rules) & Right Column (Google Calendar Card) */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 340px',
-                gap: '28px',
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
               {/* Left Column: Quy tắc đặt lịch */}
               <div>
                 <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
                   Quy tắc đặt lịch
                 </h3>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 20px' }}>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '3px 0 12px' }}>
                   Quản lý cách mentee có thể đặt lịch với bạn.
                 </p>
 
                 {/* Field 1: Múi giờ */}
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '14px' }}>
                   <label
                     htmlFor="policy-timezone"
                     style={{
@@ -2091,7 +2311,7 @@ export function ScheduleManageView() {
                   <div
                     style={{
                       width: '100%',
-                      height: '44px',
+                      height: '40px',
                       padding: '0 14px',
                       backgroundColor: '#ffffff',
                       border: '1px solid #e2e8f0',
@@ -2107,7 +2327,7 @@ export function ScheduleManageView() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
-                        fontSize: '14px',
+                        fontSize: '13px',
                         fontWeight: 500,
                         color: '#1e293b',
                       }}
@@ -2129,10 +2349,10 @@ export function ScheduleManageView() {
                   </p>
                 </div>
 
-                <div style={{ borderBottom: '1px solid #f1f5f9', margin: '20px 0' }} />
+                <div style={{ borderBottom: '1px solid #f1f5f9', margin: '14px 0' }} />
 
                 {/* Field 2: Thời gian đặt trước tối thiểu */}
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '14px' }}>
                   <label
                     htmlFor="policy-lead-time"
                     style={{
@@ -2158,13 +2378,13 @@ export function ScheduleManageView() {
                         onChange={(e) => setLeadTimeInput(e.target.value)}
                         style={{
                           width: '100%',
-                          height: '44px',
+                          height: '40px',
                           paddingLeft: '14px',
                           paddingRight: '48px',
                           backgroundColor: '#ffffff',
                           border: '1px solid #cbd5e1',
                           borderRadius: '12px',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: 600,
                           color: '#0f172a',
                           outline: 'none',
@@ -2187,7 +2407,7 @@ export function ScheduleManageView() {
                     {Number(leadTimeInput) >= 0 && (
                       <span
                         style={{
-                          height: '44px',
+                          height: '40px',
                           padding: '0 14px',
                           backgroundColor: '#f0f9ff',
                           border: '1px solid #bae6fd',
@@ -2204,7 +2424,7 @@ export function ScheduleManageView() {
                       </span>
                     )}
                   </div>
-                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '6px 0 0' }}>
+                  <p style={{ fontSize: '11px', color: '#94a3b8', margin: '4px 0 0' }}>
                     Mentee cần đặt lịch trước ít nhất khoảng thời gian này.
                   </p>
                   {policyFormErrors.leadTime && (
@@ -2222,7 +2442,7 @@ export function ScheduleManageView() {
                 </div>
 
                 {/* Field 3: Cho phép đặt trước tối đa */}
-                <div style={{ marginBottom: '10px' }}>
+                <div>
                   <label
                     htmlFor="policy-horizon"
                     style={{
@@ -2245,13 +2465,13 @@ export function ScheduleManageView() {
                       onChange={(e) => setHorizonInput(e.target.value)}
                       style={{
                         width: '100%',
-                        height: '44px',
+                        height: '40px',
                         paddingLeft: '14px',
                         paddingRight: '48px',
                         backgroundColor: '#ffffff',
                         border: '1px solid #cbd5e1',
                         borderRadius: '12px',
-                        fontSize: '14px',
+                        fontSize: '13px',
                         fontWeight: 600,
                         color: '#0f172a',
                         outline: 'none',
@@ -2271,7 +2491,7 @@ export function ScheduleManageView() {
                       ngày
                     </span>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '6px 0 0' }}>
+                  <p style={{ fontSize: '11px', color: '#94a3b8', margin: '4px 0 0' }}>
                     Mentee chỉ có thể đặt lịch trong khoảng thời gian này.
                   </p>
                   {policyFormErrors.horizon && (
@@ -2294,8 +2514,8 @@ export function ScheduleManageView() {
                 style={{
                   backgroundColor: '#f4f8ff',
                   border: '1px solid #e2edff',
-                  borderRadius: '18px',
-                  padding: '22px',
+                  borderRadius: '16px',
+                  padding: '16px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -2308,10 +2528,10 @@ export function ScheduleManageView() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      fontSize: '16px',
+                      fontSize: '15px',
                       fontWeight: 700,
                       color: '#0f172a',
-                      marginBottom: '12px',
+                      marginBottom: '8px',
                     }}
                   >
                     <Calendar style={{ width: '22px', height: '22px', color: '#1a73e8' }} />
@@ -2323,7 +2543,7 @@ export function ScheduleManageView() {
                     style={{
                       position: 'relative',
                       width: '100%',
-                      padding: '16px 0',
+                      padding: '8px 0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -2368,8 +2588,8 @@ export function ScheduleManageView() {
                     <div
                       style={{
                         position: 'relative',
-                        width: '130px',
-                        height: '96px',
+                        width: '112px',
+                        height: '80px',
                         backgroundColor: '#ffffff',
                         borderRadius: '12px',
                         boxShadow: '0 8px 20px rgba(0, 112, 243, 0.12)',
@@ -2418,14 +2638,14 @@ export function ScheduleManageView() {
                         />
                       </div>
                       {/* Blue Top Banner */}
-                      <div style={{ height: '26px', backgroundColor: '#1a73e8', width: '100%' }} />
+                      <div style={{ height: '22px', backgroundColor: '#1a73e8', width: '100%' }} />
                       {/* Dots Grid */}
                       <div
                         style={{
-                          padding: '10px 12px',
+                          padding: '7px 10px',
                           display: 'grid',
                           gridTemplateColumns: 'repeat(4, 1fr)',
-                          gap: '8px',
+                          gap: '6px',
                           alignItems: 'center',
                           justifyItems: 'center',
                           flex: 1,
@@ -2535,7 +2755,7 @@ export function ScheduleManageView() {
                           fontSize: '15px',
                           fontWeight: 700,
                           color: '#0f172a',
-                          margin: '10px 0 4px',
+                          margin: '6px 0 3px',
                         }}
                       >
                         Chưa kết nối
@@ -2545,7 +2765,7 @@ export function ScheduleManageView() {
                           fontSize: '12px',
                           color: '#64748b',
                           lineHeight: 1.5,
-                          margin: '0 0 16px',
+                          margin: '0 0 10px',
                         }}
                       >
                         Kết nối để đồng bộ lịch cá nhân và hỗ trợ tránh trùng lịch.
@@ -2556,7 +2776,7 @@ export function ScheduleManageView() {
                         onClick={handleInitiateGoogleOAuth}
                         style={{
                           width: '100%',
-                          height: '44px',
+                          height: '40px',
                           backgroundColor: '#1a73e8',
                           color: '#ffffff',
                           border: 'none',
@@ -2718,12 +2938,12 @@ export function ScheduleManageView() {
                 <div
                   style={{
                     borderTop: '1px solid #dbeafe',
-                    paddingTop: '14px',
-                    marginTop: '16px',
+                    paddingTop: '10px',
+                    marginTop: '12px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
-                    fontSize: '12px',
+                    gap: '7px',
+                    fontSize: '11px',
                     fontWeight: 500,
                     color: '#334155',
                   }}
@@ -2754,8 +2974,8 @@ export function ScheduleManageView() {
             <div
               style={{
                 borderTop: '1px solid #f1f5f9',
-                paddingTop: '16px',
-                marginTop: '20px',
+                paddingTop: '12px',
+                marginTop: '14px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-end',
@@ -2773,8 +2993,8 @@ export function ScheduleManageView() {
                   setIsScheduleSettingsOpen(false);
                 }}
                 style={{
-                  height: '40px',
-                  padding: '0 22px',
+                  height: '38px',
+                  padding: '0 18px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '12px',
@@ -2790,8 +3010,8 @@ export function ScheduleManageView() {
                 type="submit"
                 disabled={!isPolicyDirty || isSavingPolicy || Boolean(policyRetryUntil)}
                 style={{
-                  height: '40px',
-                  padding: '0 22px',
+                  height: '38px',
+                  padding: '0 18px',
                   backgroundColor: !isPolicyDirty || isSavingPolicy ? '#94a3b8' : '#1a73e8',
                   border: 'none',
                   borderRadius: '12px',
@@ -2871,92 +3091,159 @@ export function ScheduleManageView() {
       <Modal
         open={openModal}
         title="Tạo mới Khóa học / Dịch vụ tư vấn"
-        onClose={() => setOpenModal(false)}
-        className="mentor-service-modal-custom"
+        onClose={() => !isSaving && setOpenModal(false)}
+        className="max-w-xl"
       >
-        <form
-          className="mentor-modal-form"
-          onSubmit={form.handleSubmit(onSubmitCreateService)}
-          noValidate
-        >
-          <div className="form-field-group">
-            <label className="form-label" htmlFor="new-service-title">
-              Tên dịch vụ / Khóa học <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="new-service-title"
-              className="form-input"
-              placeholder="VD: CV Review & Career Strategy"
-              {...form.register('title')}
-            />
-            {form.formState.errors.title && (
-              <span className="form-error-msg">{form.formState.errors.title.message}</span>
-            )}
-          </div>
+        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmitCreateService)} noValidate>
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-3.5 shadow-sm sm:p-4">
+            <div className="space-y-3.5">
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-semibold text-slate-700"
+                  htmlFor="new-service-title"
+                >
+                  Tên dịch vụ / Khóa học <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="new-service-title"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                  placeholder="VD: Review CV & định hướng nghề nghiệp"
+                  aria-invalid={Boolean(form.formState.errors.title)}
+                  {...form.register('title')}
+                />
+                {form.formState.errors.title && (
+                  <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                    {form.formState.errors.title.message}
+                  </span>
+                )}
+              </div>
 
-          <div className="form-field-group">
-            <label className="form-label" htmlFor="new-service-desc">
-              Mô tả dịch vụ <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              id="new-service-desc"
-              className="form-textarea"
-              rows={3}
-              placeholder="Mô tả nội dung các phần bạn sẽ tư vấn trực tiếp cho mentee..."
-              {...form.register('description')}
-            />
-            {form.formState.errors.description && (
-              <span className="form-error-msg">{form.formState.errors.description.message}</span>
-            )}
-          </div>
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-semibold text-slate-700"
+                  htmlFor="new-service-desc"
+                >
+                  Mô tả dịch vụ <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="new-service-desc"
+                  className="min-h-20 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                  rows={3}
+                  placeholder="Mô tả nội dung mentor sẽ hỗ trợ trong buổi tư vấn..."
+                  aria-invalid={Boolean(form.formState.errors.description)}
+                  {...form.register('description')}
+                />
+                {form.formState.errors.description && (
+                  <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                    {form.formState.errors.description.message}
+                  </span>
+                )}
+              </div>
 
-          <div className="form-grid-2">
-            <div className="form-field-group">
-              <label className="form-label" htmlFor="new-service-duration">
-                Thời lượng tư vấn <span className="text-red-500">*</span>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
+                    htmlFor="new-service-duration"
+                  >
+                    Thời lượng tư vấn <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                      aria-hidden="true"
+                    />
+                    <select
+                      id="new-service-duration"
+                      className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-900 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                      aria-invalid={Boolean(form.formState.errors.durationMinutes)}
+                      {...form.register('durationMinutes')}
+                    >
+                      <option value="">Chọn thời lượng</option>
+                      {(constraints?.allowedDurationMinutes ?? []).map((mins) => (
+                        <option key={mins} value={mins}>
+                          {mins} phút
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  {form.formState.errors.durationMinutes && (
+                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                      {form.formState.errors.durationMinutes.message}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
+                    htmlFor="new-service-price"
+                  >
+                    Học phí (S-coins)
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="new-service-price"
+                      type="number"
+                      min={0}
+                      disabled={isFreeWatched}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-20 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      placeholder="150000"
+                      aria-invalid={Boolean(form.formState.errors.priceScoin)}
+                      {...form.register('priceScoin')}
+                    />
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                      S-coins
+                    </span>
+                  </div>
+                  {form.formState.errors.priceScoin && (
+                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                      {form.formState.errors.priceScoin.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-sky-300 hover:bg-sky-50/40 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#119CF7]/15">
+                <input type="checkbox" className="peer sr-only" {...form.register('isFree')} />
+                <span
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white transition peer-checked:border-[#119CF7] peer-checked:bg-[#119CF7] peer-checked:[&_svg]:opacity-100"
+                  aria-hidden="true"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-white opacity-0 transition-opacity" />
+                </span>
+                <span>
+                  <strong className="block text-sm font-semibold text-slate-800">
+                    Cung cấp dịch vụ miễn phí
+                  </strong>
+                  <small className="mt-0.5 block text-xs leading-4 text-slate-500">
+                    Mentee sẽ không bị trừ S-coins khi đặt dịch vụ này.
+                  </small>
+                </span>
               </label>
-              <select
-                id="new-service-duration"
-                className="form-select"
-                {...form.register('durationMinutes')}
-              >
-                <option value="">Chọn thời lượng</option>
-                {(constraints?.allowedDurationMinutes ?? []).map((mins) => (
-                  <option key={mins} value={mins}>
-                    {mins} phút
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-field-group">
-              <label className="form-label" htmlFor="new-service-price">
-                Học phí (S-coins)
-              </label>
-              <input
-                id="new-service-price"
-                type="number"
-                disabled={isFreeWatched}
-                className="form-input"
-                placeholder="VD: 150000"
-                {...form.register('priceScoin')}
-              />
             </div>
           </div>
 
-          <div className="form-checkbox-row">
-            <label className="form-checkbox-label">
-              <input type="checkbox" className="form-checkbox" {...form.register('isFree')} />
-              <span>Miễn phí dịch vụ này cho mentee</span>
-            </label>
-          </div>
-
-          <div className="form-modal-footer">
-            <button type="button" className="btn-modal-cancel" onClick={() => setOpenModal(false)}>
-              Hủy bỏ
-            </button>
-            <Button type="submit" disabled={isSaving} className="btn-modal-submit">
-              {isSaving ? 'Đang tạo...' : 'Xác nhận tạo dịch vụ'}
+          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
+              disabled={isSaving}
+              onClick={() => setOpenModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              loading={isSaving}
+              className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-40"
+            >
+              Tạo dịch vụ
             </Button>
           </div>
         </form>
@@ -2972,7 +3259,7 @@ export function ScheduleManageView() {
           setSelectedSlotId(null);
           setSelectedBookingId(null);
         }}
-        className={`availability-detail-modal ${selectedBooking ? 'bookingAvailabilityDetailModalShell' : ''}`}
+        className={selectedBooking ? 'bookingAvailabilityDetailModalShell' : 'max-w-xl'}
       >
         {selectedBooking ? (
           <BookingAvailabilityDetail
@@ -2989,12 +3276,19 @@ export function ScheduleManageView() {
             onEdit={handleOpenEditModal}
           />
         ) : selectedSlot ? (
-          <div className="availability-detail-content">
-            <header className="availability-detail-header">
-              <h2>Chi tiết lịch rảnh</h2>
+          <div className="space-y-4">
+            <header className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                  Chi tiết lịch rảnh
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Thông tin khung giờ mentee có thể đặt lịch.
+                </p>
+              </div>
               <button
                 type="button"
-                className="availability-detail-close"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 outline-none transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
                 aria-label="Đóng"
                 onClick={() => {
                   setIsDetailModalOpen(false);
@@ -3002,33 +3296,48 @@ export function ScheduleManageView() {
                   setSelectedBookingId(null);
                 }}
               >
-                <X aria-hidden="true" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </header>
 
-            <section className="availability-detail-summary" aria-label="Thông tin lịch rảnh">
-              <div className="availability-detail-info-item">
-                <span className="availability-detail-info-icon" aria-hidden="true">
-                  <Calendar />
+            <section
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+              aria-label="Thông tin lịch rảnh"
+            >
+              <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Calendar className="h-5 w-5" />
                 </span>
-                <div>
-                  <span className="availability-detail-info-label">Ngày</span>
-                  <strong>{selectedSlotStart?.date.split('-').reverse().join('/')}</strong>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Ngày
+                  </span>
+                  <strong className="mt-1 block truncate text-sm text-slate-900">
+                    {selectedSlotStart?.date.split('-').reverse().join('/')}
+                  </strong>
                 </div>
               </div>
 
-              <div className="availability-detail-info-item">
-                <span className="availability-detail-info-icon" aria-hidden="true">
-                  <Clock />
+              <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Clock className="h-5 w-5" />
                 </span>
-                <div>
-                  <span className="availability-detail-info-label">Thời gian</span>
-                  <div className="availability-detail-time-value">
-                    <strong>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Thời gian
+                  </span>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <strong className="text-sm text-slate-900">
                       {selectedSlotStart?.time} – {selectedSlotEnd?.time}
                     </strong>
                     {selectedSlotDurationMinutes > 0 && (
-                      <span className="availability-detail-duration">
+                      <span className="text-xs text-slate-500">
                         {Math.floor(selectedSlotDurationMinutes / 60) > 0 &&
                           `${Math.floor(selectedSlotDurationMinutes / 60)} giờ `}
                         {selectedSlotDurationMinutes % 60 > 0 &&
@@ -3039,45 +3348,70 @@ export function ScheduleManageView() {
                 </div>
               </div>
 
-              <div className="availability-detail-info-item">
-                <span className="availability-detail-info-icon" aria-hidden="true">
-                  <Globe />
+              <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <Globe className="h-5 w-5" />
                 </span>
-                <div>
-                  <span className="availability-detail-info-label">Múi giờ</span>
-                  <strong>{selectedSlot.timezone}</strong>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Múi giờ
+                  </span>
+                  <strong className="mt-1 block truncate text-sm text-slate-900">
+                    {selectedSlot.timezone}
+                  </strong>
                 </div>
               </div>
 
-              <div className="availability-detail-info-item">
-                <span className="availability-detail-info-icon" aria-hidden="true">
-                  <FileText />
+              <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#119CF7]"
+                  aria-hidden="true"
+                >
+                  <FileText className="h-5 w-5" />
                 </span>
-                <div>
-                  <span className="availability-detail-info-label">Ghi chú</span>
-                  <strong>{selectedSlot.note?.trim() || 'Không có ghi chú'}</strong>
+                <div className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Ghi chú
+                  </span>
+                  <strong className="mt-1 block line-clamp-2 text-sm text-slate-900">
+                    {selectedSlot.note?.trim() || 'Không có ghi chú'}
+                  </strong>
                 </div>
               </div>
             </section>
 
-            <section className="availability-detail-services">
-              <div className="availability-detail-services-heading">
-                <h3>Dịch vụ có thể đặt trong khung giờ này</h3>
-                <span>{selectedSlot.services.length} dịch vụ</span>
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Dịch vụ có thể đặt trong khung giờ này
+                </h3>
+                <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-[#087fc5]">
+                  {selectedSlot.services.length} dịch vụ
+                </span>
               </div>
 
               {selectedSlot.services.length > 0 ? (
-                <div className="availability-detail-service-list">
+                <div className="mt-3 space-y-2">
                   {selectedSlot.services.map((service) => (
-                    <div className="availability-detail-service-row" key={service.serviceId}>
-                      <strong>{service.title}</strong>
-                      <div className="availability-detail-service-meta">
+                    <div
+                      className="rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3"
+                      key={service.serviceId}
+                    >
+                      <strong className="block text-sm font-semibold text-slate-900">
+                        {service.title}
+                      </strong>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <span>{service.durationMinutes} phút</span>
-                        {(service.isFree || service.priceScoin != null) && <i aria-hidden="true" />}
+                        {(service.isFree || service.priceScoin != null) && (
+                          <span className="h-1 w-1 rounded-full bg-slate-300" aria-hidden="true" />
+                        )}
                         {service.isFree ? (
-                          <span>Miễn phí</span>
+                          <span className="font-semibold text-emerald-600">Miễn phí</span>
                         ) : service.priceScoin != null ? (
-                          <span>
+                          <span className="font-semibold text-[#119CF7]">
                             {new Intl.NumberFormat('vi-VN').format(service.priceScoin)} S-coins
                           </span>
                         ) : null}
@@ -3086,7 +3420,7 @@ export function ScheduleManageView() {
                   ))}
                 </div>
               ) : (
-                <p className="availability-detail-empty">
+                <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-500">
                   Chưa có dịch vụ nào được áp dụng cho khung giờ này.
                 </p>
               )}
@@ -3095,24 +3429,28 @@ export function ScheduleManageView() {
             {(selectedSlot.pendingBookingCount > 0 ||
               selectedSlot.hasLockingBooking ||
               isTimeEditBlocked) && (
-              <div className="availability-detail-notice is-info">
-                <AlertTriangle aria-hidden="true" />
+              <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>Không thể thay đổi khung giờ rảnh này vì đã có mentee booking.</span>
               </div>
             )}
 
-            <footer className="availability-detail-footer">
+            <footer className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
-                size="lg"
+                className="h-10 border-slate-300 text-slate-700 hover:border-red-300 hover:bg-red-50 hover:text-red-600 sm:min-w-36"
                 disabled={!canDeactivate}
                 title={deactivationReason || undefined}
                 onClick={handleOpenDeactivateModal}
               >
                 Thu hồi lịch rảnh
               </Button>
-              <Button type="button" size="lg" onClick={handleOpenEditModal}>
+              <Button
+                type="button"
+                className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-28"
+                onClick={handleOpenEditModal}
+              >
                 Chỉnh sửa
               </Button>
             </footer>
