@@ -326,47 +326,62 @@ export function AvailabilityTemplateDetailModal({
               </section>
             )}
 
+            {isArchived && (
+              <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs leading-5 text-slate-600">
+                Lịch này đã được lưu trữ nên không thể chỉnh sửa. Bạn có thể tạo một lịch lặp mới
+                với khung giờ mong muốn.
+              </p>
+            )}
+
             <footer className="mt-4 flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <Button variant="secondary" className="h-10 sm:min-w-24" onClick={onClose}>
                 Đóng
               </Button>
 
-              {!isArchived && (
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-                  <Button
-                    variant="outline"
-                    className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
-                    leftIcon={<Archive className="h-4 w-4" aria-hidden="true" />}
-                    onClick={() => onArchive(template)}
-                  >
-                    Lưu trữ
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-10 border-slate-300 text-slate-700 hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7]"
-                    leftIcon={
-                      isPaused ? (
-                        <Play className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        <Pause className="h-4 w-4" aria-hidden="true" />
-                      )
-                    }
-                    onClick={() => (isPaused ? onResume(template) : onPause(template))}
-                  >
-                    {isPaused ? 'Tiếp tục' : 'Tạm dừng'}
-                  </Button>
-                  <Button
-                    className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
-                    leftIcon={<Pencil className="h-4 w-4" aria-hidden="true" />}
-                    onClick={() => {
-                      onClose();
-                      onOpenEdit(template);
-                    }}
-                  >
-                    Chỉnh sửa
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                {!isArchived && (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                      leftIcon={<Archive className="h-4 w-4" aria-hidden="true" />}
+                      onClick={() => onArchive(template)}
+                    >
+                      Lưu trữ
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-10 border-slate-300 text-slate-700 hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7]"
+                      leftIcon={
+                        isPaused ? (
+                          <Play className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          <Pause className="h-4 w-4" aria-hidden="true" />
+                        )
+                      }
+                      onClick={() => (isPaused ? onResume(template) : onPause(template))}
+                    >
+                      {isPaused ? 'Tiếp tục' : 'Tạm dừng'}
+                    </Button>
+                  </>
+                )}
+                <Button
+                  className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 sm:min-w-28"
+                  leftIcon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+                  disabled={isArchived}
+                  title={
+                    isArchived
+                      ? 'Lịch đã lưu trữ không thể chỉnh sửa. Hãy tạo một lịch lặp mới.'
+                      : undefined
+                  }
+                  onClick={() => {
+                    onClose();
+                    onOpenEdit(template);
+                  }}
+                >
+                  Chỉnh sửa
+                </Button>
+              </div>
             </footer>
           </div>
         </div>
