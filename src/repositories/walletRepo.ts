@@ -1,14 +1,42 @@
 /**
  * @file walletRepo.ts
- * @description Repository quản lý Ví điểm thưởng / S-Coins (Wallet Repository) giả lập.
+ * @description Repository ví thu nhập, tài khoản nhận tiền và yêu cầu rút tiền của mentor.
  */
 
+import { apiClient } from '@/models/apiClient';
+import type {
+  MentorPayoutProfileResponse,
+  MentorPayoutProfileUpsertRequest,
+  MentorWalletResponse,
+  PayoutRequestCreateRequest,
+  PayoutRequestResponse,
+} from '@/models/auth';
+
 export const walletRepo = {
-  /**
-   * Truy xuất số dư điểm thưởng tín chỉ (credits/S-Coins) hiện tại của người dùng.
-   * @returns Promise chứa số lượng tín chỉ và thời điểm cập nhật mới nhất
-   */
-  async getBalance() {
-    return { credits: 120, updatedAt: new Date().toISOString() };
-  },
+  getMentorWallet: (): Promise<MentorWalletResponse> =>
+    apiClient<MentorWalletResponse>('/api/me/mentor-wallet'),
+  listPayoutProfiles: (): Promise<MentorPayoutProfileResponse[]> =>
+    apiClient<MentorPayoutProfileResponse[]>('/api/mentor/payout-profiles'),
+  createPayoutProfile: (
+    data: MentorPayoutProfileUpsertRequest,
+  ): Promise<MentorPayoutProfileResponse> =>
+    apiClient<MentorPayoutProfileResponse>('/api/mentor/payout-profiles', {
+      method: 'POST',
+      data,
+    }),
+  updatePayoutProfile: (
+    payoutProfileId: string,
+    data: MentorPayoutProfileUpsertRequest,
+  ): Promise<MentorPayoutProfileResponse> =>
+    apiClient<MentorPayoutProfileResponse>(`/api/mentor/payout-profiles/${payoutProfileId}`, {
+      method: 'PUT',
+      data,
+    }),
+  listPayoutRequests: (): Promise<PayoutRequestResponse[]> =>
+    apiClient<PayoutRequestResponse[]>('/api/mentor/payout-requests'),
+  createPayoutRequest: (data: PayoutRequestCreateRequest): Promise<PayoutRequestResponse> =>
+    apiClient<PayoutRequestResponse>('/api/mentor/payout-requests', {
+      method: 'POST',
+      data,
+    }),
 };

@@ -106,7 +106,7 @@ export function useMyBookings() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [activeTab, setActiveTab] = useState<MenteeBookingTab>('ALL');
-  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
 
   const refresh = useCallback(async () => {
     setIsLoading(true);

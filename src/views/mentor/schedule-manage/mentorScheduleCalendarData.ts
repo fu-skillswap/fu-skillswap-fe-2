@@ -12,7 +12,7 @@ import type {
 import { localDateTimeToUtcIso } from './mentorScheduleDateTime';
 import { formatLocalTime } from './mentorTemplateHelpers';
 
-export type MentorCalendarEventStatus = 'available' | 'booked' | 'ongoing' | 'past';
+export type MentorCalendarEventStatus = 'available' | 'booked' | 'ongoing' | 'past' | 'inactive';
 
 export interface MentorCalendarEvent {
   id: string;
@@ -21,6 +21,7 @@ export interface MentorCalendarEvent {
   type: 'availability';
   status: MentorCalendarEventStatus;
   source: 'slot' | 'template' | 'booking';
+  isRecurring?: boolean;
   slotId?: string;
   bookingId?: string;
   note?: string;
@@ -51,10 +52,21 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
+function getDateInTimezone(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function getEventStatus(start: Date, end: Date, isBooked: boolean): MentorCalendarEventStatus {
   const now = Date.now();
   if (end.getTime() <= now) return 'past';
-  if (start.getTime() <= now) return 'ongoing';
+  if (isBooked && start.getTime() <= now) return 'ongoing';
   return isBooked ? 'booked' : 'available';
 }
 
@@ -242,58 +254,82 @@ export function mergeAvailabilityTemplatesIntoCalendar(
   templates: AvailabilityTemplateResponse[],
   weekStart: Date,
 ): MentorCalendarEvent[] {
-  const occupiedTimes = new Set(
-    slotEvents.map((event) => `${event.start.getTime()}-${event.end.getTime()}`),
-  );
+  let mergedSlotEvents = slotEvents;
   const templateEvents: MentorCalendarEvent[] = [];
 
-  templates.forEach((template) => {
-    if (template.effectiveStatus !== 'ACTIVE' || template.configuredStatus !== 'ACTIVE') return;
+  [...templates]
+    .sort((left, right) => {
+      const leftCreatedAt = new Date(left.createdAt).getTime();
+      const rightCreatedAt = new Date(right.createdAt).getTime();
+      if (Number.isNaN(leftCreatedAt) || Number.isNaN(rightCreatedAt)) return 0;
+      return leftCreatedAt - rightCreatedAt;
+    })
+    .forEach((template) => {
+      const isActive =
+        template.effectiveStatus === 'ACTIVE' && template.configuredStatus === 'ACTIVE';
+      const today = getDateInTimezone(new Date(), template.timezone);
 
-    WEEKDAYS.forEach((weekday, dayIndex) => {
-      if (!template.weekdays.includes(weekday)) return;
+      WEEKDAYS.forEach((weekday, dayIndex) => {
+        if (!template.weekdays.includes(weekday)) return;
 
-      const date = addDays(weekStart, dayIndex).toISOString().slice(0, 10);
-      const isOutsideEffectiveRange =
-        date < template.effectiveFrom ||
-        Boolean(template.effectiveTo && date > template.effectiveTo);
-      const isSkipped =
-        template.skippedDates?.includes(date) ||
-        template.blockedOccurrences?.some((occurrence) => occurrence.date === date);
-      if (isOutsideEffectiveRange || isSkipped) return;
+        const date = addDays(weekStart, dayIndex).toISOString().slice(0, 10);
+        const isOutsideEffectiveRange =
+          date < template.effectiveFrom ||
+          Boolean(template.effectiveTo && date > template.effectiveTo);
+        const isInactiveFutureOccurrence = !isActive && date > today;
+        const isSkipped =
+          template.skippedDates?.includes(date) ||
+          template.blockedOccurrences?.some((occurrence) => occurrence.date === date);
+        if (isOutsideEffectiveRange || isInactiveFutureOccurrence || isSkipped) return;
 
-      try {
-        const start = new Date(
-          localDateTimeToUtcIso(
-            { date, time: formatLocalTime(template.startTime) },
-            template.timezone,
-          ),
-        );
-        const end = new Date(
-          localDateTimeToUtcIso(
-            { date, time: formatLocalTime(template.endTime) },
-            template.timezone,
-          ),
-        );
-        const timeKey = `${start.getTime()}-${end.getTime()}`;
-        if (end <= start || occupiedTimes.has(timeKey)) return;
+        try {
+          const start = new Date(
+            localDateTimeToUtcIso(
+              { date, time: formatLocalTime(template.startTime) },
+              template.timezone,
+            ),
+          );
+          const end = new Date(
+            localDateTimeToUtcIso(
+              { date, time: formatLocalTime(template.endTime) },
+              template.timezone,
+            ),
+          );
+          if (end <= start) return;
 
-        occupiedTimes.add(timeKey);
-        templateEvents.push({
-          id: `template-${template.templateId}-${date}`,
-          start,
-          end,
-          type: 'availability',
-          status: getEventStatus(start, end, false),
-          source: 'template',
-          note: template.note?.trim() || undefined,
-          serviceTitle: template.services[0]?.title,
-        });
-      } catch {
-        // Ignore a template occurrence whose local time is invalid in its configured timezone.
-      }
+          const overlappingSlotIds = new Set(
+            mergedSlotEvents
+              .filter((event) => event.source === 'slot' && event.start < end && event.end > start)
+              .map((event) => event.id),
+          );
+          if (overlappingSlotIds.size > 0) {
+            mergedSlotEvents = mergedSlotEvents.map((event) =>
+              overlappingSlotIds.has(event.id) ? { ...event, isRecurring: true } : event,
+            );
+            return;
+          }
+
+          const overlapsProjectedTemplate = templateEvents.some(
+            (event) => event.start < end && event.end > start,
+          );
+          if (overlapsProjectedTemplate) return;
+
+          templateEvents.push({
+            id: `template-${template.templateId}-${date}`,
+            start,
+            end,
+            type: 'availability',
+            status: isActive ? getEventStatus(start, end, false) : 'inactive',
+            source: 'template',
+            isRecurring: true,
+            note: template.note?.trim() || undefined,
+            serviceTitle: template.services[0]?.title,
+          });
+        } catch {
+          // Ignore a template occurrence whose local time is invalid in its configured timezone.
+        }
+      });
     });
-  });
 
-  return [...slotEvents, ...templateEvents];
+  return [...mergedSlotEvents, ...templateEvents];
 }

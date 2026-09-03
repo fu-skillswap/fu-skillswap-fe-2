@@ -5,11 +5,50 @@
 
 'use client';
 
-import { Calendar, ChevronLeft, ChevronRight, Info } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Calendar, ChevronLeft, ChevronRight, Info, Repeat2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import type { MentorCalendarEvent } from './mentorScheduleCalendarData';
 
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 20;
+const HOUR_HEIGHT = 30;
+
+const CALENDAR_STATUS_STYLES = {
+  inactive: {
+    event: 'border-dashed border-slate-300 bg-slate-100 text-slate-500',
+    legend: 'border-dashed border-slate-300 bg-slate-100',
+  },
+  pastRecurring: {
+    event:
+      'border-dashed border-slate-300 bg-slate-50 text-slate-500 hover:border-slate-400 hover:bg-slate-100',
+    legend: 'border-dashed border-slate-300 bg-slate-50',
+  },
+  past: {
+    event: 'border-slate-200 bg-slate-50 text-slate-400 hover:border-slate-300 hover:bg-slate-100',
+    legend: 'border-slate-200 bg-slate-50',
+  },
+  booked: {
+    event: 'border-blue-700 bg-blue-600 text-white hover:border-blue-800 hover:bg-blue-700',
+    legend: 'border-blue-700 bg-blue-600',
+  },
+  ongoing: {
+    event:
+      'border-emerald-300 bg-emerald-100 text-emerald-800 hover:border-emerald-500 hover:bg-emerald-200',
+    legend: 'border-emerald-300 bg-emerald-100',
+  },
+  recurring: {
+    event:
+      'border-dashed border-sky-300 bg-sky-50 text-[#087fc5] hover:border-[#119CF7] hover:bg-sky-100',
+    legend: 'border-dashed border-sky-300 bg-sky-50',
+  },
+  available: {
+    event: 'border-sky-200 bg-sky-50 text-[#087fc5] hover:border-[#119CF7] hover:bg-sky-100',
+    legend: 'border-sky-200 bg-sky-50',
+  },
+} as const;
+
+type CalendarStatusStyleKey = keyof typeof CALENDAR_STATUS_STYLES;
 
 interface MentorScheduleCalendarProps {
   weekStart: Date;
@@ -45,7 +84,7 @@ function formatWeekRange(weekStart: Date) {
     weekStart.getUTCFullYear() === weekEnd.getUTCFullYear()
       ? weekEnd.getUTCFullYear()
       : `${weekStart.getUTCFullYear()} - ${weekEnd.getUTCFullYear()}`;
-  return `${startLabel} - ${endLabel}/${year}`;
+  return `${startLabel} – ${endLabel}/${year}`;
 }
 
 function formatHour(hour: number) {
@@ -100,27 +139,29 @@ function getEventSegments(event: MentorCalendarEvent, days: Date[], timezone: st
   });
 }
 
-function eventClasses(event: MentorCalendarEvent) {
-  if (event.source === 'template') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400';
-  }
-  if (event.status === 'booked') {
-    return 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-400';
-  }
-  if (event.status === 'ongoing') {
-    return 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400';
-  }
+function eventStyleKey(event: MentorCalendarEvent): CalendarStatusStyleKey {
+  if (event.status === 'inactive') return 'inactive';
   if (event.status === 'past') {
-    return 'border-rose-200 bg-rose-50 text-rose-600 hover:border-rose-300';
+    return event.isRecurring || event.source === 'template' ? 'pastRecurring' : 'past';
   }
-  return 'border-sky-200 bg-sky-50 text-[#087fc5] hover:border-[#119CF7] hover:bg-sky-100';
+  if (event.status === 'booked') return 'booked';
+  if (event.status === 'ongoing') return 'ongoing';
+  if (event.isRecurring || event.source === 'template') return 'recurring';
+  return 'available';
+}
+
+function eventClasses(event: MentorCalendarEvent) {
+  return CALENDAR_STATUS_STYLES[eventStyleKey(event)].event;
 }
 
 function eventStatusLabel(event: MentorCalendarEvent) {
-  if (event.source === 'template') return 'lịch lặp';
+  if (event.status === 'inactive') return 'lịch lặp đã dừng hoạt động';
+  if (event.status === 'past') {
+    return event.isRecurring || event.source === 'template' ? 'lịch lặp đã diễn ra' : 'đã diễn ra';
+  }
   if (event.status === 'booked') return 'đã được đặt';
   if (event.status === 'ongoing') return 'đang diễn ra';
-  if (event.status === 'past') return 'đã diễn ra';
+  if (event.isRecurring || event.source === 'template') return 'lịch lặp, có thể đặt';
   return 'có thể đặt';
 }
 
@@ -139,15 +180,6 @@ export function MentorScheduleCalendar({
   onSelectSlot,
   onSelectBooking,
 }: MentorScheduleCalendarProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      // Scroll to 06:00 by default (6 hours * 60px = 360px)
-      scrollRef.current.scrollTop = 360;
-    }
-  }, []);
-
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   let eventSegments: Array<{
     dayIndex: number;
@@ -161,55 +193,78 @@ export function MentorScheduleCalendar({
     eventSegments = [];
   }
 
-  const hasRecurringEvents = events.some((event) => event.source === 'template');
+  const earliestEventHour = eventSegments.length
+    ? Math.floor(Math.min(...eventSegments.map((segment) => segment.startMinutes)) / 60)
+    : DEFAULT_START_HOUR;
+  const latestEventHour = eventSegments.length
+    ? Math.ceil(Math.max(...eventSegments.map((segment) => segment.endMinutes)) / 60)
+    : DEFAULT_END_HOUR;
+  const visibleStartHour = Math.max(0, Math.min(DEFAULT_START_HOUR, earliestEventHour));
+  const visibleEndHour = Math.min(24, Math.max(DEFAULT_END_HOUR, latestEventHour));
+  const visibleHours = Array.from(
+    { length: visibleEndHour - visibleStartHour },
+    (_, index) => visibleStartHour + index,
+  );
+  const calendarHeight = visibleHours.length * HOUR_HEIGHT;
+
+  const hasActiveRecurringEvents = events.some(
+    (event) => (event.isRecurring || event.source === 'template') && event.status !== 'inactive',
+  );
+  const hasInactiveRecurringEvents = events.some(
+    (event) => event.source === 'template' && event.status === 'inactive',
+  );
+  const todayKey = getZonedDateTimeParts(new Date(), timezone).date;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:px-5">
+    <div className="mentor-schedule-surface overflow-hidden rounded-2xl border border-border-color bg-white shadow-xs">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light px-4 py-2 md:px-5">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 outline-none transition hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
+          <IconButton
+            variant="ghost"
+            size="md"
+            className="h-9 w-9 rounded-xl border-border-color bg-white"
             aria-label="Tuần trước"
+            icon={<ChevronLeft className="h-4 w-4" aria-hidden="true" />}
             onClick={onPreviousWeek}
-          >
-            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="h-10 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 outline-none transition hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
+          />
+          <Button
+            variant="secondary"
+            size="md"
+            className="h-9 border-border-color bg-white px-3.5 text-xs font-semibold text-text-secondary shadow-none"
             onClick={onToday}
           >
             Hôm nay
-          </button>
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 outline-none transition hover:border-[#119CF7] hover:bg-sky-50 hover:text-[#119CF7] focus-visible:ring-4 focus-visible:ring-[#119CF7]/20"
+          </Button>
+          <IconButton
+            variant="ghost"
+            size="md"
+            className="h-9 w-9 rounded-xl border-border-color bg-white"
             aria-label="Tuần sau"
+            icon={<ChevronRight className="h-4 w-4" aria-hidden="true" />}
             onClick={onNextWeek}
-          >
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </button>
+          />
         </div>
 
-        <div className="flex items-center gap-3">
-          <Calendar className="h-5 w-5 text-[#119CF7]" aria-hidden="true" />
+        <div className="flex items-center gap-2.5">
+          <Calendar className="h-5 w-5 text-primary" aria-hidden="true" />
           <div className="text-right">
-            <strong className="block text-sm font-bold text-slate-800">
+            <strong className="block text-sm font-semibold text-text-main">
               {formatWeekRange(weekStart)}
             </strong>
-            <span className="block max-w-52 truncate text-xs text-slate-500">{timezone}</span>
+            <span className="mt-0.5 block max-w-52 truncate text-xs text-text-muted">
+              {timezone}
+            </span>
           </div>
         </div>
       </header>
 
       <div className="relative">
-        <div className="max-h-[620px] overflow-auto" ref={scrollRef}>
-          <div className="min-w-[960px]">
-            <div className="sticky top-0 z-20 grid grid-cols-[72px_repeat(7,minmax(120px,1fr))] border-b border-slate-200 bg-white">
-              <div className="border-r border-slate-200" aria-hidden="true" />
+        <div className="overflow-x-auto overflow-y-hidden [scrollbar-color:var(--border-strong)_var(--surface-subtle)] [scrollbar-width:thin]">
+          <div className="min-w-[900px]">
+            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(112px,1fr))] border-b border-border-color bg-white">
+              <div className="border-r border-border-color bg-surface-subtle" aria-hidden="true" />
               {days.map((day) => {
-                const isWeekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+                const isToday = day.toISOString().slice(0, 10) === todayKey;
                 const weekdayName = new Intl.DateTimeFormat('vi-VN', {
                   timeZone: 'UTC',
                   weekday: 'short',
@@ -218,14 +273,16 @@ export function MentorScheduleCalendar({
                 return (
                   <div
                     key={day.toISOString()}
-                    className={`border-r border-slate-200 px-2 py-3 text-center last:border-r-0 ${
-                      isWeekend ? 'bg-slate-50' : 'bg-white'
-                    }`}
+                    className={`border-r border-border-light px-2 py-1.5 text-center last:border-r-0 ${isToday ? 'bg-primary-light' : 'bg-white'}`}
                   >
-                    <span className="block text-xs font-semibold uppercase text-slate-500">
+                    <span
+                      className={`block text-xs font-medium uppercase ${isToday ? 'text-primary' : 'text-text-muted'}`}
+                    >
                       {weekdayName}
                     </span>
-                    <strong className="mt-0.5 block text-sm text-slate-800">
+                    <strong
+                      className={`mt-0.5 block text-sm font-semibold ${isToday ? 'text-primary' : 'text-text-main'}`}
+                    >
                       {formatDate(day)}
                     </strong>
                   </div>
@@ -233,19 +290,20 @@ export function MentorScheduleCalendar({
               })}
             </div>
 
-            <div className="relative h-[1440px]">
+            <div className="relative bg-white" style={{ height: `${calendarHeight}px` }}>
               <div className="absolute inset-0">
-                {HOURS.map((hour) => (
+                {visibleHours.map((hour) => (
                   <div
-                    className="grid h-[60px] grid-cols-[72px_repeat(7,minmax(120px,1fr))]"
+                    className="grid grid-cols-[60px_repeat(7,minmax(112px,1fr))]"
                     key={hour}
+                    style={{ height: `${HOUR_HEIGHT}px` }}
                   >
-                    <div className="border-r border-b border-slate-200 bg-white pr-3 pt-2 text-right text-xs font-medium text-slate-500">
+                    <div className="border-r border-b border-border-color bg-white pr-2 pt-2 text-right text-xs font-medium text-text-muted">
                       {formatHour(hour)}
                     </div>
                     {days.map((day) => (
                       <div
-                        className="border-r border-b border-slate-100 bg-white last:border-r-0"
+                        className="border-r border-b border-border-light bg-white last:border-r-0"
                         key={`${day.toISOString()}-${hour}`}
                         aria-hidden="true"
                       />
@@ -255,7 +313,7 @@ export function MentorScheduleCalendar({
               </div>
 
               <div
-                className="absolute inset-y-0 left-[72px] right-0 grid grid-cols-7"
+                className="absolute inset-y-0 left-[60px] right-0 grid grid-cols-7"
                 aria-label="Lịch dạy theo tuần"
               >
                 {days.map((day, dayIndex) => (
@@ -264,12 +322,13 @@ export function MentorScheduleCalendar({
                       .filter((segment) => segment.dayIndex === dayIndex)
                       .map((segment) => {
                         const durationMinutes = segment.endMinutes - segment.startMinutes;
-                        const HOUR_HEIGHT = 60;
+                        const isCompactEvent = durationMinutes < 60;
                         const calculatedHeight = Math.max(
-                          32,
-                          (durationMinutes / 60) * HOUR_HEIGHT - 6,
+                          13,
+                          (durationMinutes / 60) * HOUR_HEIGHT - 2,
                         );
-                        const calculatedTop = (segment.startMinutes / 60) * HOUR_HEIGHT + 3;
+                        const calculatedTop =
+                          ((segment.startMinutes - visibleStartHour * 60) / 60) * HOUR_HEIGHT + 1;
                         const startTimeStr = formatSlotTime(segment.startMinutes);
                         const endTimeStr = formatSlotTime(segment.endMinutes);
 
@@ -283,9 +342,11 @@ export function MentorScheduleCalendar({
                         return (
                           <button
                             type="button"
-                            className={`absolute left-1 right-1 z-10 overflow-hidden rounded-lg border px-2 py-1 text-center text-xs font-semibold outline-none transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-[#119CF7] focus-visible:ring-offset-1 ${eventClasses(
-                              segment.event,
-                            )}`}
+                            className={`mentor-calendar-event absolute left-1 right-1 z-10 overflow-hidden border text-left font-semibold outline-none transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                              isCompactEvent
+                                ? 'rounded-sm px-1 py-0 text-[9px] leading-3'
+                                : 'rounded-xl px-2.5 py-2 text-xs'
+                            } ${eventClasses(segment.event)}`}
                             key={`${segment.event.id}-${dayIndex}`}
                             aria-label={`${accessibleDay}, ${startTimeStr} đến ${endTimeStr}, ${eventStatusLabel(segment.event)}`}
                             disabled={!segment.event.slotId && !segment.event.bookingId}
@@ -301,7 +362,18 @@ export function MentorScheduleCalendar({
                               top: `${calculatedTop}px`,
                             }}
                           >
-                            <span className="block truncate">
+                            <span
+                              className={`flex items-center justify-start truncate ${isCompactEvent ? 'gap-1' : 'gap-1.5'}`}
+                            >
+                              {(segment.event.isRecurring ||
+                                segment.event.source === 'template') && (
+                                <Repeat2
+                                  className={
+                                    isCompactEvent ? 'h-2 w-2 shrink-0' : 'h-3 w-3 shrink-0'
+                                  }
+                                  aria-hidden="true"
+                                />
+                              )}
                               {startTimeStr}–{endTimeStr}
                             </span>
                           </button>
@@ -332,71 +404,75 @@ export function MentorScheduleCalendar({
           >
             <strong className="text-base text-slate-800">Không thể tải lịch.</strong>
             <span className="text-sm text-slate-500">Vui lòng thử lại.</span>
-            <button
-              type="button"
-              className="mt-2 h-10 rounded-xl bg-[#119CF7] px-4 text-sm font-semibold text-white outline-none hover:bg-[#0789dc] focus-visible:ring-4 focus-visible:ring-[#119CF7]/25"
-              onClick={onRetry}
-            >
+            <Button type="button" className="mt-2" onClick={onRetry}>
               Thử lại
-            </button>
+            </Button>
           </div>
         ) : isAvailabilityResponseEmpty ? (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-white/95 px-6 text-center">
+          <div className="absolute left-1/2 top-20 z-30 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 flex-col items-center gap-2 rounded-2xl border border-border-color bg-white/95 px-6 py-5 text-center shadow-sm backdrop-blur-sm">
             <Calendar className="mb-1 h-9 w-9 text-slate-300" aria-hidden="true" />
-            <strong className="text-base text-slate-800">
+            <strong className="text-base text-text-main">
               Bạn chưa thiết lập lịch rảnh trong tuần này.
             </strong>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-text-muted">
               Thêm thời gian rảnh để mentee có thể đặt lịch với bạn.
             </span>
-            <button
-              type="button"
-              className="mt-2 h-10 rounded-xl bg-[#119CF7] px-4 text-sm font-semibold text-white outline-none hover:bg-[#0789dc] focus-visible:ring-4 focus-visible:ring-[#119CF7]/25"
-              onClick={onUnavailableAction}
-            >
+            <Button type="button" className="mt-2" onClick={onUnavailableAction}>
               + Thêm lịch rảnh
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>
 
-      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-600 md:px-5">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border-color px-4 py-2 text-[11px] text-text-secondary md:px-5">
         <div className="flex items-center gap-2">
-          <span className="h-3.5 w-6 rounded border border-sky-200 bg-sky-50" aria-hidden="true" />
+          <span
+            className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.available.legend}`}
+            aria-hidden="true"
+          />
           <span>Có thể đặt</span>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="h-3.5 w-6 rounded border border-slate-200 bg-slate-100"
+            className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.booked.legend}`}
             aria-hidden="true"
           />
           <span>Đã đặt</span>
         </div>
-        {hasRecurringEvents && (
+        {hasActiveRecurringEvents && (
           <div className="flex items-center gap-2">
             <span
-              className="h-3.5 w-6 rounded border border-emerald-200 bg-emerald-50"
+              className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.recurring.legend}`}
               aria-hidden="true"
             />
             <span>Lịch lặp</span>
           </div>
         )}
+        {hasInactiveRecurringEvents && (
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.inactive.legend}`}
+              aria-hidden="true"
+            />
+            <span>Lịch lặp đã dừng</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <span
-            className="h-3.5 w-6 rounded border border-amber-200 bg-amber-50"
+            className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.ongoing.legend}`}
             aria-hidden="true"
           />
           <span>Đang diễn ra</span>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="h-3.5 w-6 rounded border border-rose-200 bg-rose-50"
+            className={`h-3.5 w-6 rounded border ${CALENDAR_STATUS_STYLES.past.legend}`}
             aria-hidden="true"
           />
           <span>Đã diễn ra</span>
         </div>
-        <div className="ml-auto flex items-center gap-2 text-slate-500">
-          <Info className="h-4 w-4 text-[#119CF7]" aria-hidden="true" />
+        <div className="ml-auto flex items-center gap-2 text-text-muted">
+          <Info className="h-4 w-4 text-primary" aria-hidden="true" />
           <span>Nhấn vào khung giờ để xem hoặc quản lý lịch.</span>
         </div>
       </footer>

@@ -326,8 +326,8 @@ export function MentorBookingsView() {
             value={sortDirection}
             onValueChange={(val) => setSortDirection(val as 'ASC' | 'DESC')}
             options={[
-              { value: 'ASC', label: 'Sắp xếp: Gần nhất trước' },
-              { value: 'DESC', label: 'Sắp xếp: Xa nhất trước' },
+              { value: 'DESC', label: 'Sắp xếp: Gần nhất trước' },
+              { value: 'ASC', label: 'Sắp xếp: Xa nhất trước' },
             ]}
           />
         </div>

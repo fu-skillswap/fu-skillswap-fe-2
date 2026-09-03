@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@400;500;600;700;800;900&display=swap');
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-primary: var(--primary);
@@ -131,9 +131,191 @@ body {
   margin: 0;
   color: var(--text-main);
   background: var(--bg);
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    'Plus Jakarta Sans',
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes mentor-component-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mentor-schedule-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mentor-page-enter > :not(:only-child),
+.mentor-page-enter > :only-child > * {
+  animation: mentor-component-enter 280ms ease-out both;
+}
+
+.mentor-page-enter > :not(:only-child):nth-child(2),
+.mentor-page-enter > :only-child > :nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.mentor-page-enter > :not(:only-child):nth-child(3),
+.mentor-page-enter > :only-child > :nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.mentor-page-enter > :not(:only-child):nth-child(n + 4),
+.mentor-page-enter > :only-child > :nth-child(n + 4) {
+  animation-delay: 120ms;
+}
+
+.mentor-schedule-page .mentor-schedule-section {
+  animation: mentor-component-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.mentor-schedule-page .mentor-schedule-section:nth-of-type(2) {
+  animation-delay: 100ms;
+}
+
+.mentor-schedule-card {
+  animation: mentor-schedule-card-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.mentor-schedule-card:nth-child(2) {
+  animation-delay: 55ms;
+}
+
+.mentor-schedule-card:nth-child(3) {
+  animation-delay: 110ms;
+}
+
+.mentor-schedule-card:nth-child(4) {
+  animation-delay: 165ms;
+}
+
+.mentor-schedule-surface {
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.mentor-calendar-event {
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    filter 150ms ease;
+}
+
+.mentor-service-detail-back {
+  animation: mentor-component-enter 300ms ease-out backwards;
+}
+
+.mentor-service-detail-hero,
+.mentor-service-detail-form-enter {
+  animation: mentor-schedule-card-enter 440ms cubic-bezier(0.22, 1, 0.36, 1) 60ms backwards;
+}
+
+.mentor-service-detail-layout {
+  animation: mentor-component-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) 130ms backwards;
+}
+
+.mentor-service-detail-panel {
+  animation: mentor-schedule-card-enter 400ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.mentor-service-detail-layout > div .mentor-service-detail-panel:first-child {
+  animation-delay: 190ms;
+}
+
+.mentor-service-detail-layout > div .mentor-service-detail-panel:nth-child(2) {
+  animation-delay: 250ms;
+}
+
+.mentor-service-detail-sidebar .mentor-service-detail-panel:first-child {
+  animation-delay: 220ms;
+}
+
+.mentor-service-detail-sidebar .mentor-service-detail-panel:nth-child(2) {
+  animation-delay: 280ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mentor-schedule-card:hover {
+    z-index: 1;
+    transform: translateY(-4px);
+    border-color: var(--primary-border);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  }
+
+  .mentor-schedule-surface:hover {
+    border-color: var(--primary-border);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  }
+
+  .mentor-calendar-event:hover {
+    z-index: 20;
+    transform: translateY(-2px) scale(1.015);
+    filter: saturate(1.08);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+  }
+
+  .mentor-service-detail-panel:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-border);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mentor-page-enter > :not(:only-child),
+  .mentor-page-enter > :only-child > * {
+    animation: none;
+  }
+
+  .mentor-schedule-page .mentor-schedule-section,
+  .mentor-schedule-card,
+  .mentor-service-detail-back,
+  .mentor-service-detail-hero,
+  .mentor-service-detail-form-enter,
+  .mentor-service-detail-layout,
+  .mentor-service-detail-panel {
+    animation: none;
+  }
+
+  .mentor-schedule-card,
+  .mentor-schedule-surface,
+  .mentor-calendar-event,
+  .mentor-service-detail-panel {
+    transition: none;
+  }
 }

@@ -120,7 +120,7 @@ export function useMentorBookings() {
   const [allBookings, setAllBookings] = useState<MentorBookingResponse[]>([]);
   const [activeFilter, setActiveFilter] = useState<MentorBookingFilter>('ALL');
   const [selectedDate, setSelectedDate] = useState('');
-  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

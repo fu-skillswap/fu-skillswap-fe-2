@@ -8,6 +8,10 @@ import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import type { AvailabilityTemplateResponse } from '@/models/auth';
 import { ApiClientError } from '@/models/apiClient';
 
+function uniqueTemplatesById(templates: AvailabilityTemplateResponse[]) {
+  return Array.from(new Map(templates.map((template) => [template.templateId, template])).values());
+}
+
 export function useAvailabilityTemplates() {
   const [templates, setTemplates] = useState<AvailabilityTemplateResponse[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -27,9 +31,9 @@ export function useAvailabilityTemplates() {
 
       const res = await mentorSchedulingRepo.listAvailabilityTemplates(cursor, 20);
       if (cursor) {
-        setTemplates((prev) => [...prev, ...res.items]);
+        setTemplates((prev) => uniqueTemplatesById([...prev, ...res.items]));
       } else {
-        setTemplates(res.items);
+        setTemplates(uniqueTemplatesById(res.items));
       }
       setNextCursor(res.nextCursor ?? null);
       setHasNext(res.hasNext);

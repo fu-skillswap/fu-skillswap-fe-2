@@ -1091,3 +1091,93 @@ export interface MentorVerificationResponse {
   timeline?: Array<unknown>;
   profile?: any;
 }
+
+export type WalletEntryType =
+  | 'ISSUE'
+  | 'RESERVE'
+  | 'CONSUME'
+  | 'RELEASE'
+  | 'REFUND'
+  | 'ADJUSTMENT'
+  | 'HOLD'
+  | 'PAID_OUT'
+  | 'COMMISSION'
+  | 'VOID';
+
+export type WalletSourceType =
+  | 'PAYMENT_ORDER'
+  | 'BOOKING'
+  | 'CAMPAIGN'
+  | 'COUPON'
+  | 'MANUAL'
+  | 'PAYOUT_REQUEST'
+  | 'REFUND'
+  | 'PAYMENT_ATTEMPT'
+  | 'COURSE_ENROLLMENT'
+  | 'BOOKING_ISSUE_RESOLUTION';
+
+export interface WalletTransactionResponse {
+  id: string;
+  entryType: WalletEntryType;
+  originType?: string | null;
+  sourceType?: WalletSourceType | null;
+  sourceId?: string | null;
+  amountScoin: number;
+  balanceEffectScoin: number;
+  memo?: string | null;
+  createdAt: string;
+}
+
+export interface MentorWalletResponse {
+  availableScoin: number;
+  recentTransactions: WalletTransactionResponse[];
+}
+
+export interface MentorPayoutProfileUpsertRequest {
+  accountHolderName: string;
+  bankCode?: string;
+  bankName: string;
+  accountNumber: string;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export interface MentorPayoutProfileResponse {
+  payoutProfileId: string;
+  mentorUserId: string;
+  accountHolderName: string;
+  bankCode?: string | null;
+  bankName: string;
+  accountNumberMasked: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PayoutRequestCreateRequest {
+  amountScoin: number;
+  payoutProfileId?: string;
+  note?: string;
+}
+
+export type PayoutRequestStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'PAID' | 'CANCELLED';
+
+export interface PayoutRequestResponse {
+  payoutRequestId: string;
+  mentorUserId: string;
+  settlementAccountId: string;
+  payoutProfileId: string;
+  amountScoin: number;
+  status: PayoutRequestStatus;
+  bankAccountNameSnapshot: string;
+  bankNameSnapshot: string;
+  bankAccountNumberMaskedSnapshot: string;
+  adminUserId?: string | null;
+  adminNote?: string | null;
+  requestedAt: string;
+  reviewedAt?: string | null;
+  approvedAt?: string | null;
+  paidAt?: string | null;
+  rejectedAt?: string | null;
+}

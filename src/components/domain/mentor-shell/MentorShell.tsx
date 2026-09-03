@@ -74,13 +74,14 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
       title = 'Lịch đặt';
     } else if (pathname.includes('/mentor/posts')) {
       title = 'Bài viết của tôi';
+    } else if (pathname.includes('/mentor/wallet')) {
+      title = 'Ví S-coins';
     }
   }
 
   return (
     <MenteeShellContext.Provider value={contextValue}>
       <div className="min-h-screen bg-bg text-text-main flex relative overflow-x-clip">
-        {/* Background Watermark KooKoo Mascot (phóng to chiếm trọn màn hình dưới sidebar & bài post) */}
         <div
           className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
           aria-hidden="true"
@@ -101,7 +102,14 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
         <MentorNavigation locale={locale} isOpen={isSidebarOpen} onClose={closeSidebar} />
         <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 relative z-10 lg:pl-64">
           <MenteeHeader title={title} locale={locale} user={user} onToggleSidebar={toggleSidebar} />
-          <main className="flex-1 p-4 md:p-6 max-w-[1480px] w-full mx-auto">{children}</main>
+          <main className="w-full flex-1">
+            <div
+              key={pathname}
+              className="mentor-page-enter mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 md:py-5 lg:px-8"
+            >
+              {children}
+            </div>
+          </main>
         </div>
 
         {/* AI Chatbot Floating Trigger (con cú bo tròn + chấm xanh active ở góc trên) */}
