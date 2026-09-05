@@ -5,6 +5,7 @@
 
 import { apiClient } from '@/models/apiClient';
 import type {
+  CheckoutPreviewResponse,
   ConfirmBookingRequest,
   MentorBookingPageResponse,
   MentorBookingResponse,
@@ -47,10 +48,15 @@ export const bookingRepo = {
     apiClient(`/api/me/bookings/${bookingId}/issue`, { method: 'POST', data }),
   respondIssue: (bookingId: string, data: RespondBookingIssueRequest) =>
     apiClient(`/api/me/bookings/${bookingId}/issue/respond`, { method: 'POST', data }),
-  checkout: (bookingId: string) =>
+  checkoutPreview: (bookingId: string, couponCode?: string) =>
+    apiClient<CheckoutPreviewResponse>(`/api/me/bookings/${bookingId}/checkout-preview`, {
+      method: 'POST',
+      data: couponCode ? { couponCode } : {},
+    }),
+  checkout: (bookingId: string, couponCode?: string) =>
     apiClient<PaymentCheckoutResponse>('/api/me/payment-orders/checkout', {
       method: 'POST',
-      data: { bookingId },
+      data: { bookingId, ...(couponCode ? { couponCode } : {}) },
       headers: { 'Idempotency-Key': idempotencyKey() },
     }),
 };

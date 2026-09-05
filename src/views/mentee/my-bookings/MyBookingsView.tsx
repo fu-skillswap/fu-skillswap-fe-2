@@ -26,6 +26,7 @@ import { SelectField } from '@/components/ui/SelectField';
 import type { BookingIssueType, MentorBookingResponse } from '@/models/auth';
 import { showError, showSuccess } from '@/utils/toast';
 import { type MenteeBookingMutation, type MenteeBookingTab, useMyBookings } from './useMyBookings';
+import { PaymentCheckoutModal } from './PaymentCheckoutModal';
 
 const TABS: Array<{ value: MenteeBookingTab; label: string }> = [
   { value: 'ALL', label: 'Tất cả' },
@@ -75,6 +76,7 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
     type: FormAction;
     booking: MentorBookingResponse;
   }>();
+  const [paymentBooking, setPaymentBooking] = useState<MentorBookingResponse | null>(null);
 
   useEffect(() => {
     setHeaderTitle('Lịch đặt');
@@ -170,6 +172,7 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
               key={booking.bookingId}
               onAction={(type) => setFormAction({ type, booking })}
               onImmediate={(mutation) => void execute(booking, mutation)}
+              onPay={(b) => setPaymentBooking(b)}
               onMessage={() =>
                 router.push(
                   `/${params.locale || 'vi'}/messages?participantId=${encodeURIComponent(booking.mentorUserId || '')}`,
@@ -185,6 +188,10 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
         onClose={() => setFormAction(undefined)}
         onSubmit={(mutation) => formAction && void execute(formAction.booking, mutation)}
       />
+      <PaymentCheckoutModal
+        booking={paymentBooking}
+        onClose={() => setPaymentBooking(null)}
+      />
     </section>
   );
 }
@@ -193,11 +200,13 @@ function BookingCard({
   booking,
   onAction,
   onImmediate,
+  onPay,
   onMessage,
 }: {
   booking: MentorBookingResponse;
   onAction: (type: FormAction) => void;
   onImmediate: (mutation: MenteeBookingMutation) => void;
+  onPay: (booking: MentorBookingResponse) => void;
   onMessage: () => void;
 }) {
   const canCheckIn = Boolean(
@@ -220,6 +229,9 @@ function BookingCard({
     booking.displayState === 'PENDING_MENTOR_RESPONSE';
   const canCancel = booking.canCancel && isPendingStatus;
 
+  const statusStr = String(booking.bookingStatus || booking.displayState || '').toUpperCase();
+  const canPay = Boolean(booking.canPay) || statusStr === 'ACCEPTED_AWAITING_PAYMENT';
+
   return (
     <article className="grid gap-4 rounded-2xl border border-border-color bg-white p-5 shadow-xs">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -238,8 +250,8 @@ function BookingCard({
         {formatSchedule(booking.selectedStartTime)}
       </div>
       <div className="flex flex-wrap justify-end gap-2 border-t border-border-light pt-4">
-        {booking.canPay && (
-          <Button leftIcon={<CreditCard />} onClick={() => onImmediate({ type: 'pay' })}>
+        {canPay && (
+          <Button leftIcon={<CreditCard />} onClick={() => onPay(booking)}>
             Thanh toán
           </Button>
         )}

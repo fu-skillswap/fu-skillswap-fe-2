@@ -537,6 +537,23 @@ export interface PaymentCheckoutResponse {
   paymentLink?: string | null;
 }
 
+export interface CheckoutPreviewRequest {
+  couponCode?: string;
+}
+
+export interface CheckoutPreviewResponse {
+  bookingId: string;
+  priceScoin: number;
+  priceBeforeDiscountScoin: number;
+  couponDiscountScoin: number;
+  campaignCreditAppliedScoin: number;
+  userCreditAppliedScoin: number;
+  estimatedFinalPayableScoin: number;
+  paymentDeadlineAt: string;
+  isEstimate?: boolean;
+  disclaimer?: string;
+}
+
 export interface CancelMentorBookingRequest {
   cancelReason: string;
 }
