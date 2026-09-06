@@ -22,7 +22,7 @@ export function useMentorBooking() {
    * Tạo lịch hẹn mới với Mentor theo mốc thời gian đã chọn (POST /api/bookings).
    * Giữ nguyên Idempotency-Key trong Header nếu thực hiện Retry cùng một yêu cầu đặt lịch.
    */
-  const book = async (payloadOrMentorId: CreateBookingRequest | string, startsAt?: string) => {
+  const book = async (payload: CreateBookingRequest) => {
     setIsSubmitting(true);
     setError(undefined);
 
@@ -37,11 +37,7 @@ export function useMentorBooking() {
     }
 
     try {
-      if (typeof payloadOrMentorId === 'object') {
-        await mentorRepo.createBookingRequest(payloadOrMentorId, currentKey);
-      } else {
-        await mentorRepo.createBooking(payloadOrMentorId, startsAt || new Date().toISOString().replace(/Z$/, ''));
-      }
+      await mentorRepo.createBookingRequest(payload, currentKey);
 
       // Đặt lịch thành công -> Reset Idempotency-Key cho lần đặt lịch sau
       setIdempotencyKey(null);

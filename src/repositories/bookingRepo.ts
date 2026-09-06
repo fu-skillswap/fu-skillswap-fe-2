@@ -29,6 +29,9 @@ export const bookingRepo = {
     apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}/cancel`, {
       method: 'POST',
       data: { cancelReason },
+      headers: {
+        'Idempotency-Key': idempotencyKey(),
+      },
     }),
   checkIn: (bookingId: string) =>
     apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}/check-in`, {

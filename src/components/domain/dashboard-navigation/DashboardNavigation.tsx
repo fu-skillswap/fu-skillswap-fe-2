@@ -1,7 +1,7 @@
 /**
  * @file DashboardNavigation.tsx
  * @description Component Thanh điều hướng bên trái (Sidebar Navigation Component).
- * Chứa Logo thương hiệu và các liên kết điều hướng Bảng tin, Tìm Mentor, Ví S-Coin và Lịch hẹn.
+ * Chứa Logo thương hiệu và các liên kết điều hướng Bảng tin, Tìm Mentor và Lịch hẹn.
  */
 
 'use client';
@@ -9,17 +9,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
-import { Calendar, Home, Search, Wallet, X } from 'lucide-react';
+import { Calendar, Home, Search, X } from 'lucide-react';
 
-type NavIcon = 'home' | 'search' | 'wallet' | 'calendar';
+type NavIcon = 'home' | 'search' | 'calendar';
 
 /** Helper render Icon tương ứng từ lucide-react cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
   if (name === 'search') {
     return <Search className="w-5 h-5 shrink-0" aria-hidden="true" />;
-  }
-  if (name === 'wallet') {
-    return <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />;
   }
   if (name === 'calendar') {
     return <Calendar className="w-5 h-5 shrink-0" aria-hidden="true" />;
@@ -103,14 +100,6 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           <Icon name="search" />
           <span>Tìm Mentor</span>
         </Link>
-        <button
-          type="button"
-          onClick={() => handleProtectedAction('Ví S-Coin')}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all text-left bg-transparent cursor-pointer"
-        >
-          <Icon name="wallet" />
-          <span>S-coin</span>
-        </button>
         <Link
           href={bookingsHref}
           onClick={onClose}

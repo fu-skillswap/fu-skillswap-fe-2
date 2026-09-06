@@ -6,7 +6,8 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 /** Props khởi tạo cho Modal Component */
 interface ModalProps {
@@ -26,6 +27,7 @@ interface ModalProps {
 
 /**
  * Component Modal hiển thị popup đè trên giao diện.
+ * Sử dụng React Portal để đưa Modal lên root document.body, tránh bị che khuất / clipping bởi stacking context (sidebar/header).
  */
 export function Modal({
   open,
@@ -35,18 +37,25 @@ export function Modal({
   children,
   className = '',
 }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [onClose]);
+  }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const hasCustomMaxWidth = className.includes('max-w-');
   const defaultWidthClass = hasCustomMaxWidth ? '' : 'max-w-lg';
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[99999] flex items-center justify-center p-3 sm:p-6 transition-all duration-300 overflow-y-auto"
       role="presentation"
@@ -78,6 +87,7 @@ export function Modal({
         )}
         <div className="p-4 sm:p-6 overflow-y-auto max-w-full overflow-x-hidden flex-1">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

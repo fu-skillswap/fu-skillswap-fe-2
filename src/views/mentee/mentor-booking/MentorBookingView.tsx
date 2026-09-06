@@ -1,5 +1,6 @@
 'use client';
 
+import type { CreateBookingRequest } from '@/models/auth';
 import type { Mentor, MentorService } from '@/models/entities';
 import { Modal } from '@/components/ui/Modal';
 import { BookingFlow } from '@/components/domain/booking-flow/BookingFlow';
@@ -120,8 +121,13 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
     setBookingSuccess(false);
   };
   const confirmBooking = async () => {
-    if (!bookingMentor || !slot) return;
-    if (await book(bookingMentor.id, slot)) setBookingSuccess(true);
+    if (!bookingMentor || !bookingService || !slot) return;
+    const payload: CreateBookingRequest = {
+      slotId: slot,
+      serviceId: bookingService.id,
+      startAt: slot.includes('T') ? slot : new Date().toISOString().replace(/Z$/, ''),
+    };
+    if (await book(payload)) setBookingSuccess(true);
   };
 
   return (
