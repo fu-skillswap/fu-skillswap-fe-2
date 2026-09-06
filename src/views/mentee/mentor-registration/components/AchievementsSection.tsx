@@ -90,7 +90,8 @@ export function AchievementsSection({
               htmlFor={`awardDescription-${index}`}
               className="block text-sm font-semibold text-slate-700"
             >
-              Mô tả giải thưởng / thành tích <span className="text-red-500 font-bold ml-0.5">*</span>
+              Mô tả giải thưởng / thành tích{' '}
+              <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <textarea
               id={`awardDescription-${index}`}
@@ -132,7 +133,8 @@ export function AchievementsSection({
                 htmlFor={`productHeader-${index}`}
                 className="block text-sm font-semibold text-slate-700"
               >
-                Tiêu đề sản phẩm / Case study <span className="text-red-500 font-bold ml-0.5">*</span>
+                Tiêu đề sản phẩm / Case study{' '}
+                <span className="text-red-500 font-bold ml-0.5">*</span>
               </label>
               <input
                 id={`productHeader-${index}`}
@@ -153,7 +155,8 @@ export function AchievementsSection({
               htmlFor={`achievementProductDescription-${index}`}
               className="block text-sm font-semibold text-slate-700"
             >
-              Mô tả sản phẩm / Case study đi kèm <span className="text-red-500 font-bold ml-0.5">*</span>
+              Mô tả sản phẩm / Case study đi kèm{' '}
+              <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <textarea
               id={`achievementProductDescription-${index}`}

@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Plus,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 import type { MentorVerificationResponse } from '@/models/auth';
 
@@ -27,7 +28,8 @@ interface DocumentUploadSectionProps {
   onRemoveExpertiseFile: (index: number) => void;
   verificationData?: MentorVerificationResponse | null;
   disabled?: boolean;
-  error?: string | null;
+  fptuError?: string | null;
+  expertiseError?: string | null;
 }
 
 export function DocumentUploadSection({
@@ -38,7 +40,8 @@ export function DocumentUploadSection({
   onRemoveExpertiseFile,
   verificationData,
   disabled,
-  error,
+  fptuError,
+  expertiseError,
 }: DocumentUploadSectionProps) {
   const fptuInputRef = useRef<HTMLInputElement | null>(null);
   const expertiseInputRef = useRef<HTMLInputElement | null>(null);
@@ -72,15 +75,13 @@ export function DocumentUploadSection({
   return (
     <fieldset
       disabled={disabled}
-      className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6 disabled:opacity-75"
+      className="w-full min-w-0 max-w-full overflow-hidden bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6 disabled:opacity-75"
     >
       <div className="space-y-1">
-        <h2 className="text-lg font-bold text-slate-900">
-          Tải lên Minh chứng Xác thực Hồ sơ
-        </h2>
+        <h2 className="text-lg font-bold text-slate-900">Tải lên Minh chứng Xác thực Hồ sơ</h2>
         <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-          Tải lên tài liệu minh chứng tư cách sinh viên FPTU và các chứng chỉ chuyên môn để Admin
-          đối soát xác thực (Hỗ trợ JPG, PNG, WEBP, PDF - Tối đa 15MB/file).
+          Tải lên giấy tờ xác nhận bạn là sinh viên hoặc cựu sinh viên Đại học FPT cùng các chứng
+          chỉ chuyên môn để hồ sơ được xét duyệt. Hỗ trợ JPG, PNG và PDF, tối đa 15 MB mỗi tệp.
         </p>
       </div>
 
@@ -94,27 +95,33 @@ export function DocumentUploadSection({
           </strong>
         </div>
         <p className="text-xs text-slate-500">
-          Tải lên hình ảnh thẻ sinh viên, bằng tốt nghiệp hoặc bảng điểm FPTU để xác nhận vai trò
-          Mentor (`FPTU_AFFILIATION_PROOF`).
+          Tải lên ảnh thẻ sinh viên, bằng tốt nghiệp hoặc bảng điểm do Đại học FPT cấp để xác nhận
+          bạn là sinh viên hoặc cựu sinh viên.
         </p>
 
         <input
           ref={fptuInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          accept="image/jpeg,image/png,application/pdf"
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) onSelectFptuFile(f);
           }}
           className="hidden"
           disabled={disabled}
+          aria-invalid={Boolean(fptuError)}
+          aria-describedby={fptuError ? 'fptu-upload-error' : undefined}
         />
 
         {/* Hiển thị File FPTU vừa chọn local */}
         {selectedFptuFile ? (
-          <div className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/70 flex items-center justify-between gap-3">
+          <div
+            className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+              fptuError ? 'border-red-300 bg-red-50/70' : 'border-sky-200/80 bg-sky-50/70'
+            }`}
+          >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
                 {selectedFptuFile.type.includes('pdf') ? (
                   <FileText className="w-5 h-5" />
                 ) : (
@@ -122,11 +129,11 @@ export function DocumentUploadSection({
                 )}
               </div>
               <div className="min-w-0">
-                <strong className="text-sm font-bold text-emerald-800 truncate block">
+                <strong className="text-sm font-bold text-sky-800 truncate block">
                   {selectedFptuFile.name}
                 </strong>
-                <span className="text-xs text-emerald-600">
-                  {formatFileSize(selectedFptuFile.size)} • FPTU Affiliation Proof (File mới)
+                <span className="text-xs text-sky-700">
+                  {formatFileSize(selectedFptuFile.size)} • Đã chọn — chờ tải lên khi nộp hồ sơ
                 </span>
               </div>
             </div>
@@ -153,11 +160,10 @@ export function DocumentUploadSection({
               </div>
               <div className="min-w-0">
                 <strong className="text-sm font-bold text-emerald-800 truncate block">
-                  {existingFptuDoc.originalFilename || 'FPTU_AFFILIATION_PROOF'}
+                  {existingFptuDoc.originalFilename || 'Minh chứng sinh viên Đại học FPT'}
                 </strong>
                 <span className="text-xs text-emerald-600">
-                  {formatFileSize(existingFptuDoc.sizeBytes)} • Đã nộp thành công (Trạng thái:{' '}
-                  {existingFptuDoc.status || 'UPLOADED'})
+                  {formatFileSize(existingFptuDoc.sizeBytes)} • Đã tải lên thành công
                 </span>
               </div>
             </div>
@@ -188,11 +194,20 @@ export function DocumentUploadSection({
               <strong className="text-xs sm:text-sm font-bold text-slate-800 block">
                 Nhấn để chọn file minh chứng FPTU (Thẻ SV, Bảng điểm, Bằng TN)
               </strong>
-              <p className="text-xs text-slate-500 mt-0.5">
-                PNG, JPG, WEBP hoặc PDF (Tối đa 15MB)
-              </p>
+              <p className="text-xs text-slate-500 mt-0.5">PNG, JPG hoặc PDF (Tối đa 15 MB)</p>
             </div>
           </div>
+        )}
+
+        {fptuError && (
+          <p
+            id="fptu-upload-error"
+            role="alert"
+            className="m-0 flex items-start gap-1.5 text-xs font-semibold leading-relaxed text-red-600"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>{fptuError}</span>
+          </p>
         )}
       </div>
 
@@ -202,27 +217,30 @@ export function DocumentUploadSection({
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-purple-600 shrink-0" />
             <strong className="text-sm font-bold text-slate-900">
-              2. Chứng chỉ / Minh chứng chuyên môn <span className="text-red-500 font-bold ml-0.5">*</span>
+              2. Chứng chỉ / Minh chứng chuyên môn{' '}
+              <span className="text-red-500 font-bold ml-0.5">*</span>
             </strong>
           </div>
           <span className="text-xs font-semibold text-purple-600">
-            Đã có {selectedExpertiseFiles.length + existingExpertiseDocs.length}/3 file
+            Đã có {selectedExpertiseFiles.length + existingExpertiseDocs.length}/3 tệp
           </span>
         </div>
 
         <p className="text-xs text-slate-500">
-          Tải lên các chứng chỉ quốc tế, bằng cấp chuyên ngành hoặc chứng nhận năng lực chuyên môn
-          (`EXPERTISE_PROOF`). Bắt buộc từ 1 đến 3 files.
+          Tải lên chứng chỉ, bằng cấp hoặc tài liệu thể hiện năng lực chuyên môn. Cần ít nhất 1 và
+          tối đa 3 tệp.
         </p>
 
         <input
           ref={expertiseInputRef}
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          accept="image/jpeg,image/png,application/pdf"
           onChange={handleExpertiseChange}
           className="hidden"
           disabled={disabled || selectedExpertiseFiles.length + existingExpertiseDocs.length >= 3}
+          aria-invalid={Boolean(expertiseError)}
+          aria-describedby={expertiseError ? 'expertise-upload-error' : undefined}
         />
 
         {/* DANH SÁCH FILE ĐÃ NỘP TRÊN CSDL */}
@@ -231,7 +249,11 @@ export function DocumentUploadSection({
             {existingExpertiseDocs.map((doc, index) => (
               <div
                 key={doc.id || index}
-                className="p-4 rounded-xl border border-purple-200/80 bg-purple-50/70 flex items-center justify-between gap-3"
+                className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+                  expertiseError
+                    ? 'border-red-300 bg-red-50/70'
+                    : 'border-purple-200/80 bg-purple-50/70'
+                }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
@@ -242,8 +264,7 @@ export function DocumentUploadSection({
                       {doc.originalFilename || `Chứng chỉ chuyên môn #${index + 1}`}
                     </strong>
                     <span className="text-xs text-purple-600">
-                      {formatFileSize(doc.sizeBytes)} • Đã nộp thành công (Trạng thái:{' '}
-                      {doc.status || 'UPLOADED'})
+                      {formatFileSize(doc.sizeBytes)} • Đã tải lên thành công
                     </span>
                   </div>
                 </div>
@@ -284,7 +305,7 @@ export function DocumentUploadSection({
                       {file.name}
                     </strong>
                     <span className="text-xs text-purple-600">
-                      {formatFileSize(file.size)} • Expertise Proof #{index + 1} (File mới)
+                      {formatFileSize(file.size)} • Đã chọn — chờ tải lên khi nộp hồ sơ
                     </span>
                   </div>
                 </div>
@@ -325,16 +346,23 @@ export function DocumentUploadSection({
                   : 'Nhấn để chọn file chứng chỉ chuyên môn (AWS, IELTS, Coursera,...)'}
               </strong>
               <p className="text-xs text-slate-500 mt-0.5">
-                PNG, JPG, WEBP hoặc PDF (Tối đa 15MB/file - Tối đa 3 files)
+                PNG, JPG hoặc PDF (Tối đa 15 MB mỗi tệp, tối đa 3 tệp)
               </p>
             </div>
           </div>
         )}
-      </div>
 
-      {error && (
-        <p className="text-xs font-medium text-red-500">{error}</p>
-      )}
+        {expertiseError && (
+          <p
+            id="expertise-upload-error"
+            role="alert"
+            className="m-0 flex items-start gap-1.5 text-xs font-semibold leading-relaxed text-red-600"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>{expertiseError}</span>
+          </p>
+        )}
+      </div>
     </fieldset>
   );
 }

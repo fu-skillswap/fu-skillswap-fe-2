@@ -41,13 +41,12 @@ export function BookingConfigSection({
             {...register('isAvailable')}
           />
           <span>
-            Tôi sẵn sàng nhận lịch tư vấn từ Mentee <span className="text-red-500 font-bold ml-0.5">*</span>
+            Tôi sẵn sàng nhận lịch tư vấn từ Mentee{' '}
+            <span className="text-red-500 font-bold ml-0.5">*</span>
           </span>
         </label>
         {errors.isAvailable && (
-          <p className="text-xs font-medium text-red-500 mt-1">
-            {errors.isAvailable.message}
-          </p>
+          <p className="text-xs font-medium text-red-500 mt-1">{errors.isAvailable.message}</p>
         )}
       </div>
 

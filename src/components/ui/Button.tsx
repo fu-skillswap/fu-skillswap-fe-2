@@ -14,11 +14,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary: 'bg-primary text-white border-primary hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 active:shadow-none',
-  secondary: 'bg-surface-subtle text-text-main border-border-color hover:bg-slate-200/60 hover:border-border-strong shadow-xs',
-  outline: 'bg-white text-primary border-primary-border hover:bg-primary-light/80 hover:text-primary-hover hover:border-primary shadow-xs',
-  ghost: 'bg-transparent text-text-secondary border-transparent hover:bg-surface-subtle hover:text-text-main',
-  destructive: 'bg-danger text-white border-danger hover:bg-red-600 shadow-xs hover:shadow-md hover:shadow-danger/20 active:shadow-none',
+  primary:
+    'bg-primary text-white border-primary hover:bg-primary-hover shadow-xs hover:shadow-md hover:shadow-primary/20 active:shadow-none',
+  secondary:
+    'bg-surface-subtle text-text-main border-border-color hover:bg-slate-200/60 hover:border-border-strong shadow-xs',
+  outline:
+    'bg-white text-primary border-primary-border hover:bg-primary-light/80 hover:text-primary-hover hover:border-primary shadow-xs',
+  ghost:
+    'bg-transparent text-text-secondary border-transparent hover:bg-surface-subtle hover:text-text-main',
+  destructive:
+    'bg-danger text-white border-danger hover:bg-red-600 shadow-xs hover:shadow-md hover:shadow-danger/20 active:shadow-none',
 };
 
 const sizeStyles: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -45,12 +50,19 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true" />
+        <span
+          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0"
+          aria-hidden="true"
+        />
       ) : (
-        leftIcon && <span className="inline-flex shrink-0 items-center justify-center">{leftIcon}</span>
+        leftIcon && (
+          <span className="inline-flex shrink-0 items-center justify-center">{leftIcon}</span>
+        )
       )}
       {children && <span>{children}</span>}
-      {!loading && rightIcon && <span className="inline-flex shrink-0 items-center justify-center">{rightIcon}</span>}
+      {!loading && rightIcon && (
+        <span className="inline-flex shrink-0 items-center justify-center">{rightIcon}</span>
+      )}
     </button>
   );
 }

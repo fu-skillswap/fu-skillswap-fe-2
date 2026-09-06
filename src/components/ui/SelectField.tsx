@@ -20,11 +20,13 @@ interface SelectFieldProps {
   label?: React.ReactNode;
   value?: string;
   onValueChange?: (value: string) => void;
+  onBlur?: () => void;
   options: SelectOption[];
   placeholder?: string;
   error?: string;
   disabled?: boolean;
   required?: boolean;
+  triggerClassName?: string;
 }
 
 export function SelectField({
@@ -32,16 +34,21 @@ export function SelectField({
   label,
   value,
   onValueChange,
+  onBlur,
   options,
   placeholder = 'Chọn một tùy chọn',
   error,
   disabled,
   required,
+  triggerClassName = '',
 }: SelectFieldProps) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label htmlFor={id} className="text-xs font-semibold text-text-secondary flex items-center gap-1">
+        <label
+          htmlFor={id}
+          className="text-xs font-semibold text-text-secondary flex items-center gap-1"
+        >
           {label} {required && <span className="text-danger font-bold">*</span>}
         </label>
       )}
@@ -52,8 +59,12 @@ export function SelectField({
       >
         <SelectPrimitive.Trigger
           id={id}
-          className={`h-10 px-3.5 bg-white border border-solid border-border-color hover:border-border-strong rounded-xl flex items-center justify-between text-xs text-text-main transition-all duration-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${error ? '!border-danger focus:!ring-danger/10' : ''}`}
+          className={`h-10 px-3.5 bg-white border border-solid border-border-color hover:border-border-strong rounded-xl flex items-center justify-between text-xs text-text-main transition-all duration-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${error ? '!border-danger focus:!ring-danger/10' : ''} ${triggerClassName}`.trim()}
           aria-label={typeof label === 'string' ? label : placeholder}
+          aria-required={required}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error && id ? `${id}-error` : undefined}
+          onBlur={onBlur}
         >
           <SelectPrimitive.Value placeholder={placeholder} />
           <SelectPrimitive.Icon className="text-text-muted shrink-0 ml-2">
@@ -84,7 +95,11 @@ export function SelectField({
           </SelectPrimitive.Content>
         </SelectPrimitive.Portal>
       </SelectPrimitive.Root>
-      {error && <p className="text-[11px] text-danger font-medium m-0">{error}</p>}
+      {error && (
+        <p id={id ? `${id}-error` : undefined} className="text-[11px] text-danger font-medium m-0">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

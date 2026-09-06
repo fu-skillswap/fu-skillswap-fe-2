@@ -89,7 +89,9 @@ export function bookingFilterOf(booking: MentorBookingResponse): MentorBookingFi
   }
 
   // 6. Đang diễn ra: PAID, AWAITING_MENTOR_COMPLETION
-  if (['PAID', 'AWAITING_MENTOR_COMPLETION', 'CONFIRMED', 'IN_SESSION', 'UPCOMING'].includes(status)) {
+  if (
+    ['PAID', 'AWAITING_MENTOR_COMPLETION', 'CONFIRMED', 'IN_SESSION', 'UPCOMING'].includes(status)
+  ) {
     return 'IN_PROGRESS';
   }
 

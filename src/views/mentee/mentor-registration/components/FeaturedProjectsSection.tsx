@@ -86,7 +86,8 @@ export function FeaturedProjectsSection({
               htmlFor={`projectContent-${index}`}
               className="block text-sm font-semibold text-slate-700"
             >
-              Vai trò, công nghệ hoặc điểm nổi bật <span className="text-red-500 font-bold ml-0.5">*</span>
+              Vai trò, công nghệ hoặc điểm nổi bật{' '}
+              <span className="text-red-500 font-bold ml-0.5">*</span>
             </label>
             <input
               id={`projectContent-${index}`}

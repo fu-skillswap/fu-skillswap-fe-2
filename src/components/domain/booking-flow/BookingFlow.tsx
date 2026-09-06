@@ -223,9 +223,13 @@ export function BookingFlow({
         <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
           <CheckCircle2 className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-extrabold text-slate-900 m-0">Tạo yêu cầu đặt lịch thành công!</h2>
+        <h2 className="text-xl font-extrabold text-slate-900 m-0">
+          Tạo yêu cầu đặt lịch thành công!
+        </h2>
         <p className="text-xs sm:text-sm text-slate-600 max-w-md m-0 leading-relaxed">
-          Yêu cầu đặt lịch của bạn đã được gửi ở trạng thái <strong className="text-slate-900">PENDING</strong>. Mentor sẽ phản hồi lại thông báo đặt lịch của bạn.
+          Yêu cầu đặt lịch của bạn đã được gửi ở trạng thái{' '}
+          <strong className="text-slate-900">PENDING</strong>. Mentor sẽ phản hồi lại thông báo đặt
+          lịch của bạn.
         </p>
         <div className="flex items-center gap-3 pt-4">
           <Link
@@ -251,15 +255,23 @@ export function BookingFlow({
       {/* Tóm tắt thông tin Mentor */}
       <article className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex items-center gap-3.5">
         {mentor.avatarUrl ? (
-          <img src={mentor.avatarUrl} alt={mentor.name} className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0" />
+          <img
+            src={mentor.avatarUrl}
+            alt={mentor.name}
+            className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0"
+          />
         ) : (
           <span className="w-12 h-12 rounded-full bg-sky-100 text-sky-600 font-extrabold text-sm flex items-center justify-center shrink-0">
             {initials(mentor.name)}
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-slate-900 m-0 leading-tight truncate">{mentor.name}</h2>
-          <p className="text-xs text-slate-500 m-0 mt-0.5 truncate">{mentor.headline || mentor.organization || 'Mentor'}</p>
+          <h2 className="text-base font-bold text-slate-900 m-0 leading-tight truncate">
+            {mentor.name}
+          </h2>
+          <p className="text-xs text-slate-500 m-0 mt-0.5 truncate">
+            {mentor.headline || mentor.organization || 'Mentor'}
+          </p>
         </div>
       </article>
 
@@ -289,7 +301,9 @@ export function BookingFlow({
 
       {/* Tóm tắt lịch đặt */}
       <section className="bg-sky-50/60 border border-sky-100 p-4 sm:p-5 rounded-2xl space-y-3">
-        <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wider m-0">Tóm tắt lịch đặt</h3>
+        <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wider m-0">
+          Tóm tắt lịch đặt
+        </h3>
         <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm m-0">
           <div>
             <dt className="text-slate-400 font-medium">Dịch vụ</dt>
@@ -301,17 +315,24 @@ export function BookingFlow({
           </div>
           <div>
             <dt className="text-slate-400 font-medium">Thời gian</dt>
-            <dd className="font-bold text-sky-600 m-0 mt-0.5">{slotLabel(slot, selectedSlotObj)}</dd>
+            <dd className="font-bold text-sky-600 m-0 mt-0.5">
+              {slotLabel(slot, selectedSlotObj)}
+            </dd>
           </div>
           <div>
             <dt className="text-slate-400 font-medium">Tổng cộng</dt>
-            <dd className="font-black text-slate-900 m-0 mt-0.5">{priceLabel(service.priceScoins)} S-coins</dd>
+            <dd className="font-black text-slate-900 m-0 mt-0.5">
+              {priceLabel(service.priceScoins)} S-coins
+            </dd>
           </div>
         </dl>
       </section>
 
       {error && (
-        <p className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-medium m-0" role="alert">
+        <p
+          className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-medium m-0"
+          role="alert"
+        >
           {error}
         </p>
       )}

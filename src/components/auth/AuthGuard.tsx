@@ -25,7 +25,10 @@ export function AuthGuard({ children, locale }: { children: React.ReactNode; loc
 
   if (isBootstrapping)
     return (
-      <main className="min-h-screen bg-bg flex items-center justify-center p-6 text-sm text-text-muted font-medium" aria-live="polite">
+      <main
+        className="min-h-screen bg-bg flex items-center justify-center p-6 text-sm text-text-muted font-medium"
+        aria-live="polite"
+      >
         Đang khôi phục phiên đăng nhập...
       </main>
     );

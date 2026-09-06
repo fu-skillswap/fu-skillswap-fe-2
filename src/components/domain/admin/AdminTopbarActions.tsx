@@ -119,8 +119,15 @@ export function AdminTopbarActions() {
   return (
     <div className="flex items-center gap-3 relative">
       <label className="relative hidden sm:flex items-center">
-        <Search aria-hidden="true" className="w-4 h-4 text-text-muted absolute left-3 pointer-events-none" />
-        <input className="w-48 lg:w-64 h-9 pl-9 pr-3 rounded-xl border border-solid border-border-color bg-surface-subtle text-xs text-text-main transition-all outline-none focus:bg-white focus:border-primary focus:ring-3 focus:ring-primary-border" aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
+        <Search
+          aria-hidden="true"
+          className="w-4 h-4 text-text-muted absolute left-3 pointer-events-none"
+        />
+        <input
+          className="w-48 lg:w-64 h-9 pl-9 pr-3 rounded-xl border border-solid border-border-color bg-surface-subtle text-xs text-text-main transition-all outline-none focus:bg-white focus:border-primary focus:ring-3 focus:ring-primary-border"
+          aria-label="Tìm kiếm"
+          placeholder="Tìm kiếm..."
+        />
       </label>
       <div className="relative">
         <button
@@ -134,14 +141,25 @@ export function AdminTopbarActions() {
           }}
         >
           <Bell aria-hidden="true" className="w-4.5 h-4.5" />
-          {unreadCount > 0 && <b className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-danger text-white text-[10px] font-bold leading-none">{unreadCount > 99 ? '99+' : unreadCount}</b>}
+          {unreadCount > 0 && (
+            <b className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-danger text-white text-[10px] font-bold leading-none">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </b>
+          )}
         </button>
         {isOpen && (
-          <section className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-solid border-border-light p-3 z-50 flex flex-col gap-2" aria-label="Thông báo">
+          <section
+            className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-solid border-border-light p-3 z-50 flex flex-col gap-2"
+            aria-label="Thông báo"
+          >
             <header className="flex items-center justify-between pb-2 border-b border-solid border-border-light">
               <div className="flex items-center gap-2">
                 <strong className="text-xs font-bold text-text-main">Thông báo</strong>
-                {unreadCount > 0 && <span className="text-[11px] font-semibold text-primary bg-primary-light px-2 py-0.5 rounded-full">{unreadCount} chưa đọc</span>}
+                {unreadCount > 0 && (
+                  <span className="text-[11px] font-semibold text-primary bg-primary-light px-2 py-0.5 rounded-full">
+                    {unreadCount} chưa đọc
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -167,8 +185,12 @@ export function AdminTopbarActions() {
                     onClick={() => void markRead(item)}
                   >
                     <strong className="text-xs font-bold text-text-main block">{item.title}</strong>
-                    <span className="text-xs text-text-secondary leading-relaxed block">{item.message}</span>
-                    <small className="text-[10px] text-text-muted block">{formatDate(item.createdAt)}</small>
+                    <span className="text-xs text-text-secondary leading-relaxed block">
+                      {item.message}
+                    </span>
+                    <small className="text-[10px] text-text-muted block">
+                      {formatDate(item.createdAt)}
+                    </small>
                   </button>
                 ))}
               </div>
@@ -178,7 +200,11 @@ export function AdminTopbarActions() {
           </section>
         )}
       </div>
-      <button aria-label="Cài đặt" type="button" className="w-9 h-9 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-colors cursor-pointer">
+      <button
+        aria-label="Cài đặt"
+        type="button"
+        className="w-9 h-9 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-colors cursor-pointer"
+      >
         <Settings aria-hidden="true" className="w-4.5 h-4.5" />
       </button>
 
@@ -190,12 +216,21 @@ export function AdminTopbarActions() {
           aria-expanded={isProfileOpen}
           onClick={() => setIsProfileOpen((current) => !current)}
         >
-          {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : initials || 'A'}
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            initials || 'A'
+          )}
         </button>
         {isProfileOpen && (
-          <section className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-solid border-border-light p-2 z-50 flex flex-col gap-1" aria-label="Tùy chọn hồ sơ">
+          <section
+            className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-solid border-border-light p-2 z-50 flex flex-col gap-1"
+            aria-label="Tùy chọn hồ sơ"
+          >
             <div className="p-2 border-b border-solid border-border-light/60 flex flex-col">
-              <strong className="text-xs font-bold text-text-main">{user?.fullName || 'Quản trị viên'}</strong>
+              <strong className="text-xs font-bold text-text-main">
+                {user?.fullName || 'Quản trị viên'}
+              </strong>
               <span className="text-[11px] text-text-muted truncate">{user?.email}</span>
             </div>
             <button

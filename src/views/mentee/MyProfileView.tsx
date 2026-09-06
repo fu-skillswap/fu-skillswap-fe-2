@@ -415,7 +415,10 @@ export function MyProfileView() {
 
   if (!profile && !mentorProfile)
     return (
-      <section className="p-8 text-center text-rose-500 text-sm font-medium flex flex-col gap-2" role="alert">
+      <section
+        className="p-8 text-center text-rose-500 text-sm font-medium flex flex-col gap-2"
+        role="alert"
+      >
         <strong className="text-base font-bold">Không thể hiển thị hồ sơ</strong>
         <span>{error}</span>
       </section>
@@ -424,12 +427,18 @@ export function MyProfileView() {
   return (
     <section className="max-w-4xl mx-auto space-y-6 pb-12">
       {notice && (
-        <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-semibold flex items-center gap-2" role="status">
+        <div
+          className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-semibold flex items-center gap-2"
+          role="status"
+        >
           ✓ {notice}
         </div>
       )}
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-50 text-rose-800 border border-rose-200 text-sm font-semibold" role="alert">
+        <div
+          className="p-4 rounded-2xl bg-rose-50 text-rose-800 border border-rose-200 text-sm font-semibold"
+          role="alert"
+        >
           {error}
         </div>
       )}
@@ -478,7 +487,9 @@ export function MyProfileView() {
             <>
               {/* Display Name & Badges */}
               <div className="flex flex-col gap-1 mb-3">
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 m-0 tracking-tight">{displayName}</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 m-0 tracking-tight">
+                  {displayName}
+                </h2>
                 <div className="flex items-center gap-2.5 mt-1 flex-wrap">
                   <span className="px-3.5 py-1 rounded-full bg-sky-100 text-sky-700 font-bold text-xs">
                     {isMentor ? 'Mentor' : 'Mentee'}
@@ -510,14 +521,18 @@ export function MyProfileView() {
                 </div>
 
                 <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">Cơ sở</dt>
+                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                    Cơ sở
+                  </dt>
                   <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
                     {profile?.campus?.name || 'Đại học FPT TP. HCM'}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">Ngành học</dt>
+                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                    Ngành học
+                  </dt>
                   <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
                     {profile?.program?.nameVi || 'Công nghệ truyền thông'}
                   </dd>
@@ -551,7 +566,9 @@ export function MyProfileView() {
                 </div>
 
                 <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">Khóa nhập học</dt>
+                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                    Khóa nhập học
+                  </dt>
                   <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
                     {profile?.intakeYear || '2024'}
                   </dd>
@@ -573,7 +590,9 @@ export function MyProfileView() {
                   maxLength={150}
                   {...register('displayName')}
                 />
-                {errors.displayName && <small className="text-rose-500 font-normal">{errors.displayName.message}</small>}
+                {errors.displayName && (
+                  <small className="text-rose-500 font-normal">{errors.displayName.message}</small>
+                )}
               </label>
               <label className="flex flex-col gap-1 text-xs font-bold text-text-main">
                 Mã số sinh viên
@@ -581,7 +600,9 @@ export function MyProfileView() {
                   className="h-10 px-3.5 rounded-xl border border-solid border-border-color focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition-all"
                   {...register('studentCode')}
                 />
-                {errors.studentCode && <small className="text-rose-500 font-normal">{errors.studentCode.message}</small>}
+                {errors.studentCode && (
+                  <small className="text-rose-500 font-normal">{errors.studentCode.message}</small>
+                )}
               </label>
               <label className="flex flex-col gap-1 text-xs font-bold text-text-main">
                 Giới thiệu bản thân / Kinh nghiệm
@@ -591,11 +612,14 @@ export function MyProfileView() {
                   placeholder="Mục tiêu học tập, kinh nghiệm chuyên môn và lĩnh vực bạn quan tâm…"
                   {...register('bio')}
                 />
-                {errors.bio && <small className="text-rose-500 font-normal">{errors.bio.message}</small>}
+                {errors.bio && (
+                  <small className="text-rose-500 font-normal">{errors.bio.message}</small>
+                )}
               </label>
               {profile && (
                 <p className="text-xs text-text-muted">
-                  Thông tin học thuật được xác thực: {profile.campus.name} · {profile.program.nameVi} · {profile.specialization.nameVi}
+                  Thông tin học thuật được xác thực: {profile.campus.name} ·{' '}
+                  {profile.program.nameVi} · {profile.specialization.nameVi}
                 </p>
               )}
               <button

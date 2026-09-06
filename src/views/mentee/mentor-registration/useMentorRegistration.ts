@@ -17,7 +17,7 @@ import {
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
 import { confirmAction, showSuccess, showError, showWarning } from '@/utils/toast';
 
-import { useDocumentUpload } from './hooks/useDocumentUpload';
+import { DocumentUploadError, useDocumentUpload } from './hooks/useDocumentUpload';
 import { useMentorProfileHydration } from './hooks/useMentorProfileHydration';
 
 const defaultValues: MentorProfileFormValues = {
@@ -74,7 +74,11 @@ export function useMentorRegistration() {
   const {
     selectedFptuFile,
     setSelectedFptuFile,
+    fptuUploadError,
+    setFptuUploadError,
     selectedExpertiseFiles,
+    expertiseUploadError,
+    setExpertiseUploadError,
     onAddExpertiseFiles,
     onRemoveExpertiseFile,
     uploadAllDocuments,
@@ -98,8 +102,7 @@ export function useMentorRegistration() {
     if (!selectedFptuFile && !isExistingProfile) {
       const msg =
         'Vui lòng chọn file minh chứng Sinh viên / Cựu sinh viên FPTU trước khi nộp hồ sơ.';
-      setServerError(msg);
-      showWarning(msg);
+      setFptuUploadError(msg);
       return;
     }
 
@@ -108,9 +111,8 @@ export function useMentorRegistration() {
       !hasExistingExpertise &&
       !isExistingProfile
     ) {
-      const msg = 'Vui lòng chọn ít nhất 1 file chứng minh chuyên môn (EXPERTISE_PROOF).';
-      setServerError(msg);
-      showWarning(msg);
+      const msg = 'Vui lòng chọn ít nhất một minh chứng chuyên môn.';
+      setExpertiseUploadError(msg);
       return;
     }
 
@@ -220,9 +222,34 @@ export function useMentorRegistration() {
         description: 'Hồ sơ của bạn đã được gửi để xét duyệt.',
       });
     } catch (err) {
+      if (err instanceof DocumentUploadError) {
+        setServerError(null);
+        return;
+      }
+
       let errMsg = 'Có lỗi xảy ra trong quá trình kết nối máy chủ.';
       if (err instanceof ApiClientError) {
         errMsg = err.message || 'Lỗi nộp hồ sơ từ máy chủ.';
+
+        const normalizedMessage = errMsg.toLocaleLowerCase('vi');
+        if (normalizedMessage.includes('fptu') || normalizedMessage.includes('affiliation proof')) {
+          setFptuUploadError(
+            'Hệ thống chưa ghi nhận minh chứng sinh viên Đại học FPT. Vui lòng chờ một lát rồi thử nộp hồ sơ lại.',
+          );
+          setServerError(null);
+          return;
+        }
+
+        if (
+          normalizedMessage.includes('expertise_proof') ||
+          normalizedMessage.includes('minh chứng chuyên môn')
+        ) {
+          setExpertiseUploadError(
+            'Hệ thống chưa ghi nhận minh chứng chuyên môn. Vui lòng chờ một lát rồi thử nộp hồ sơ lại.',
+          );
+          setServerError(null);
+          return;
+        }
       }
       setServerError(errMsg);
       showError(err, { title: 'Không thể gửi hồ sơ Mentor' });
@@ -366,7 +393,9 @@ export function useMentorRegistration() {
     successMessage,
     selectedFptuFile,
     setSelectedFptuFile,
+    fptuUploadError,
     selectedExpertiseFiles,
+    expertiseUploadError,
     onAddExpertiseFiles,
     onRemoveExpertiseFile,
     fields: subjectFieldsArray.fields,

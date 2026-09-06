@@ -82,7 +82,9 @@ function tabOf(booking: MentorBookingResponse): MenteeBookingTab {
   }
 
   // 6. Đang diễn ra: PAID, AWAITING_MENTOR_COMPLETION
-  if (['PAID', 'AWAITING_MENTOR_COMPLETION', 'CONFIRMED', 'IN_SESSION', 'UPCOMING'].includes(status)) {
+  if (
+    ['PAID', 'AWAITING_MENTOR_COMPLETION', 'CONFIRMED', 'IN_SESSION', 'UPCOMING'].includes(status)
+  ) {
     return 'IN_PROGRESS';
   }
 
@@ -132,7 +134,8 @@ export function useMyBookings() {
         .filter((booking) => activeTab === 'ALL' || tabOf(booking) === activeTab)
         .sort((left, right) => {
           const diff =
-            new Date(left.selectedStartTime).getTime() - new Date(right.selectedStartTime).getTime();
+            new Date(left.selectedStartTime).getTime() -
+            new Date(right.selectedStartTime).getTime();
           return sortDirection === 'ASC' ? diff : -diff;
         }),
     [activeTab, allBookings, sortDirection],

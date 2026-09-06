@@ -40,7 +40,11 @@ export function SupportLevelsSection({
           render={({ field }) => (
             <SelectField
               id="foundationSupportLevel"
-              label={<span className="text-sm font-semibold text-slate-700">Kiến thức căn bản (1-5)</span>}
+              label={
+                <span className="text-sm font-semibold text-slate-700">
+                  Kiến thức căn bản (1-5)
+                </span>
+              }
               required
               disabled={disabled}
               error={errors.foundationSupportLevel?.message}
@@ -60,7 +64,11 @@ export function SupportLevelsSection({
           render={({ field }) => (
             <SelectField
               id="outputReviewSupportLevel"
-              label={<span className="text-sm font-semibold text-slate-700">Review Đồ án / Code (1-5)</span>}
+              label={
+                <span className="text-sm font-semibold text-slate-700">
+                  Review Đồ án / Code (1-5)
+                </span>
+              }
               required
               disabled={disabled}
               error={errors.outputReviewSupportLevel?.message}
@@ -80,7 +88,11 @@ export function SupportLevelsSection({
           render={({ field }) => (
             <SelectField
               id="directionSupportLevel"
-              label={<span className="text-sm font-semibold text-slate-700">Định hướng phát triển (1-5)</span>}
+              label={
+                <span className="text-sm font-semibold text-slate-700">
+                  Định hướng phát triển (1-5)
+                </span>
+              }
               required
               disabled={disabled}
               error={errors.directionSupportLevel?.message}
