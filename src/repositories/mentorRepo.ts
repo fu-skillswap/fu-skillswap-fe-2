@@ -330,10 +330,10 @@ export const mentorRepo = {
             !isSelectable ||
             Boolean(
               item.blockedByAcceptedBooking ||
-                item.blockedBySameService ||
-                item.blockedByDifferentService ||
-                item.isBlocked ||
-                item.blocked,
+              item.blockedBySameService ||
+              item.blockedByDifferentService ||
+              item.isBlocked ||
+              item.blocked,
             );
           const reason =
             item.reasonIfBlocked ||
@@ -399,14 +399,23 @@ export const mentorRepo = {
    * Tạo booking request mới ở trạng thái PENDING cho mentor service và availability slot mà mentee chọn.
    * API: POST /api/bookings
    */
-  async createBookingRequest(payload: CreateBookingRequest, idempotencyKey?: string): Promise<UserBookingItem> {
+  async createBookingRequest(
+    payload: CreateBookingRequest,
+    idempotencyKey?: string,
+  ): Promise<UserBookingItem> {
     const normalizedPayload: CreateBookingRequest = {
       ...payload,
       startAt: formatIso8601(payload.startAt),
-      ...(payload.legacySelectedEndTime ? { legacySelectedEndTime: formatIso8601(payload.legacySelectedEndTime) } : {}),
+      ...(payload.legacySelectedEndTime
+        ? { legacySelectedEndTime: formatIso8601(payload.legacySelectedEndTime) }
+        : {}),
     };
 
-    const key = idempotencyKey || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `idem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`);
+    const key =
+      idempotencyKey ||
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`);
 
     const res = await apiClient<any>('/api/bookings', {
       method: 'POST',
@@ -511,7 +520,8 @@ export const mentorRepo = {
           mentorId: b.mentorId || b.mentor?.id || b.mentorUserId,
           mentorName: mentorDisplayName,
           mentorDisplayName,
-          mentorAvatarUrl: b.mentorAvatarUrl || b.mentor?.avatarUrl || b.mentorUser?.avatarUrl || null,
+          mentorAvatarUrl:
+            b.mentorAvatarUrl || b.mentor?.avatarUrl || b.mentorUser?.avatarUrl || null,
           serviceName: serviceTitle,
           serviceTitle,
           serviceDescription: b.serviceDescription || b.service?.description,
@@ -526,7 +536,9 @@ export const mentorRepo = {
           status: String(b.bookingStatus || b.status || 'PENDING').toUpperCase(),
           learningGoalTitle: b.learningGoalTitle || b.title || b.goalTitle,
           learningGoalDescription: b.learningGoalDescription || b.description || b.goalDescription,
-          createdAt: b.createdAt ? formatIso8601(b.createdAt) : new Date().toISOString().replace(/Z$/, ''),
+          createdAt: b.createdAt
+            ? formatIso8601(b.createdAt)
+            : new Date().toISOString().replace(/Z$/, ''),
         };
       });
     } catch {

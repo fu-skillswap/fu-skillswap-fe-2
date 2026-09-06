@@ -71,9 +71,7 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
             TIÊU ĐỀ VỊ TRÍ / CHUYÊN MÔN
           </label>
-          <div className="text-base font-bold text-slate-900">
-            {headline || 'Chưa cập nhật'}
-          </div>
+          <div className="text-base font-bold text-slate-900">{headline || 'Chưa cập nhật'}</div>
         </div>
 
         <div className="space-y-1">
@@ -142,9 +140,7 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 className="text-base font-bold text-slate-900 m-0">
               2. Môn học nhận hướng dẫn ({subjectResults.length})
             </h3>
-            <span className="text-xs text-slate-500">
-              Danh mục môn học và điểm số đã duyệt
-            </span>
+            <span className="text-xs text-slate-500">Danh mục môn học và điểm số đã duyệt</span>
           </div>
         </div>
 
@@ -184,9 +180,7 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 className="text-base font-bold text-slate-900 m-0">
               3. Cấp độ năng lực hỗ trợ (Thang 1 - 5)
             </h3>
-            <span className="text-xs text-slate-500">
-              Đánh giá khả năng đồng hành cùng Mentee
-            </span>
+            <span className="text-xs text-slate-500">Đánh giá khả năng đồng hành cùng Mentee</span>
           </div>
         </div>
 
@@ -224,9 +218,7 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 className="text-base font-bold text-slate-900 m-0">
               4. Cấu hình thời gian booking
             </h3>
-            <span className="text-xs text-slate-500">
-              Quy định nhận lịch tư vấn từ Mentee
-            </span>
+            <span className="text-xs text-slate-500">Quy định nhận lịch tư vấn từ Mentee</span>
           </div>
         </div>
 
@@ -271,9 +263,7 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
             <h3 className="text-base font-bold text-slate-900 m-0">
               5. Tài liệu minh chứng đã xác thực
             </h3>
-            <span className="text-xs text-slate-500">
-              Đã qua quy trình kiểm duyệt chính thức
-            </span>
+            <span className="text-xs text-slate-500">Đã qua quy trình kiểm duyệt chính thức</span>
           </div>
         </div>
 

@@ -20,7 +20,11 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { BookingStatusBadge, BOOKING_STATUS_MAP, getBookingStatusConfig } from '@/components/ui/BookingStatusBadge';
+import {
+  BookingStatusBadge,
+  BOOKING_STATUS_MAP,
+  getBookingStatusConfig,
+} from '@/components/ui/BookingStatusBadge';
 
 const pageSize = 10;
 

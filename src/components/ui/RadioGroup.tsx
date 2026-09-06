@@ -40,7 +40,10 @@ export function RadioOption({
         onChange={() => onChange(value)}
         className="sr-only peer"
       />
-      <span className="w-4.5 h-4.5 rounded-full border border-solid border-border-strong bg-white relative flex items-center justify-center transition-all duration-150 peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary-border" aria-hidden="true">
+      <span
+        className="w-4.5 h-4.5 rounded-full border border-solid border-border-strong bg-white relative flex items-center justify-center transition-all duration-150 peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary-border"
+        aria-hidden="true"
+      >
         <span className="w-2 h-2 rounded-full bg-primary opacity-0 transition-opacity duration-150 peer-checked:opacity-100" />
       </span>
       <span>{label}</span>
@@ -65,12 +68,10 @@ export function RadioGroup({
   direction = 'horizontal',
   className = '',
 }: RadioGroupProps) {
-  const directionClasses = direction === 'vertical' ? 'flex-direction-col gap-2' : 'flex-row flex-wrap gap-6';
+  const directionClasses =
+    direction === 'vertical' ? 'flex-direction-col gap-2' : 'flex-row flex-wrap gap-6';
   return (
-    <div
-      role="radiogroup"
-      className={`flex ${directionClasses} ${className}`.trim()}
-    >
+    <div role="radiogroup" className={`flex ${directionClasses} ${className}`.trim()}>
       {options.map((opt) => (
         <RadioOption
           key={opt.value}

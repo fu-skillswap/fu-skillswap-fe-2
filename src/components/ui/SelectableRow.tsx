@@ -44,7 +44,11 @@ export function SelectableRow({
       <div className="shrink-0 pt-0.5">
         <Checkbox checked={selected} onChange={() => {}} disabled={disabled} tabIndex={-1} />
       </div>
-      {icon && <div className="shrink-0 w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-primary">{icon}</div>}
+      {icon && (
+        <div className="shrink-0 w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-primary">
+          {icon}
+        </div>
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-bold text-text-main">{title}</span>

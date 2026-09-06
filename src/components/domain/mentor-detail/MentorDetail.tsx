@@ -280,10 +280,11 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                         {Array.from({ length: 5 }, (_, index) => (
                           <Star
                             key={index}
-                            className={`w-4 h-4 ${index < Math.round(currentMentor.rating ?? 0)
-                              ? 'fill-amber-400 text-amber-400'
-                              : 'text-slate-300'
-                              }`}
+                            className={`w-4 h-4 ${
+                              index < Math.round(currentMentor.rating ?? 0)
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-slate-300'
+                            }`}
                           />
                         ))}
                       </div>
@@ -291,7 +292,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                         {currentMentor.rating.toFixed(1)}
                       </strong>
                       {currentMentor.reviewCount !== undefined && (
-                        <span className="text-slate-400">({currentMentor.reviewCount} đánh giá)</span>
+                        <span className="text-slate-400">
+                          ({currentMentor.reviewCount} đánh giá)
+                        </span>
                       )}
                     </div>
                   ) : (
@@ -330,8 +333,12 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                 onClick={() => void handleFollowToggle()}
                 className="flex-1 lg:flex-initial inline-flex flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-sky-400 text-sky-500 hover:bg-sky-50 font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer shrink-0 bg-white"
               >
-                <Heart className={`w-4 h-4 shrink-0 ${isFollowing ? 'fill-sky-500 text-sky-500' : ''}`} />
-                <span className="whitespace-nowrap">{isFollowing ? 'Đang theo dõi' : 'Theo dõi'}</span>
+                <Heart
+                  className={`w-4 h-4 shrink-0 ${isFollowing ? 'fill-sky-500 text-sky-500' : ''}`}
+                />
+                <span className="whitespace-nowrap">
+                  {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                </span>
               </button>
 
               <button
@@ -483,7 +490,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                       {service.durationMinutes} phút
                     </span>
                     {service.completedCount !== undefined && (
-                      <span className="text-slate-400">• {service.completedCount} phiên đã hoàn thành</span>
+                      <span className="text-slate-400">
+                        • {service.completedCount} phiên đã hoàn thành
+                      </span>
                     )}
                   </div>
                 </article>
@@ -533,7 +542,11 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {review.reviewerAvatarUrl ? (
-                        <img src={review.reviewerAvatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        <img
+                          src={review.reviewerAvatarUrl}
+                          alt=""
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
                       ) : (
                         <span className="w-10 h-10 rounded-full bg-sky-100 text-sky-600 font-bold text-xs flex items-center justify-center">
                           {initials(review.reviewerDisplayName)}
@@ -543,7 +556,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                         <strong className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">
                           {review.reviewerDisplayName}
                         </strong>
-                        <small className="text-[11px] text-slate-400">{formatReviewDate(review.createdAt)}</small>
+                        <small className="text-[11px] text-slate-400">
+                          {formatReviewDate(review.createdAt)}
+                        </small>
                       </div>
                     </div>
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/50">
@@ -551,7 +566,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                     </span>
                   </div>
                   {review.comment && (
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed m-0">{review.comment}</p>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed m-0">
+                      {review.comment}
+                    </p>
                   )}
                 </article>
               ))}
@@ -569,7 +586,10 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
           <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">
             {projects.length > 0 && (
               <section className="space-y-3" aria-labelledby="mentor-projects-title">
-                <h3 id="mentor-projects-title" className="text-base font-bold text-slate-900 flex items-center gap-2 m-0">
+                <h3
+                  id="mentor-projects-title"
+                  className="text-base font-bold text-slate-900 flex items-center gap-2 m-0"
+                >
                   <BriefcaseBusiness className="w-5 h-5 text-sky-600" /> Dự án nổi bật
                 </h3>
                 <div className="space-y-3">
@@ -579,12 +599,24 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                       className="p-4 bg-slate-50 rounded-xl border border-slate-200/70 space-y-2"
                     >
                       {project.pictureUrl && (
-                        <img src={project.pictureUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-2" />
+                        <img
+                          src={project.pictureUrl}
+                          alt=""
+                          className="w-full h-40 object-cover rounded-lg mb-2"
+                        />
                       )}
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 m-0">{project.title}</h4>
-                        {project.content && <strong className="text-xs text-sky-600 block mt-0.5">{project.content}</strong>}
-                        {project.projectDescription && <p className="text-xs text-slate-600 mt-1 leading-relaxed">{project.projectDescription}</p>}
+                        {project.content && (
+                          <strong className="text-xs text-sky-600 block mt-0.5">
+                            {project.content}
+                          </strong>
+                        )}
+                        {project.projectDescription && (
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                            {project.projectDescription}
+                          </p>
+                        )}
                         {project.liveDemoUrl && (
                           <a
                             href={project.liveDemoUrl}
@@ -604,26 +636,53 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
 
             {achievements.length > 0 && (
               <section className="space-y-3" aria-labelledby="mentor-achievements-title">
-                <h3 id="mentor-achievements-title" className="text-base font-bold text-slate-900 flex items-center gap-2 m-0">
+                <h3
+                  id="mentor-achievements-title"
+                  className="text-base font-bold text-slate-900 flex items-center gap-2 m-0"
+                >
                   <Award className="w-5 h-5 text-purple-600" /> Giải thưởng &amp; thành tích
                 </h3>
                 <div className="space-y-3">
                   {achievements.map((achievement, index) => (
                     <article
                       key={
-                        achievement.id || achievement.achievementId || `${achievement.title}-${index}`
+                        achievement.id ||
+                        achievement.achievementId ||
+                        `${achievement.title}-${index}`
                       }
                       className="p-4 bg-purple-50/50 rounded-xl border border-purple-200/70 space-y-2"
                     >
                       {achievement.pictureUrl && (
-                        <img src={achievement.pictureUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-2" />
+                        <img
+                          src={achievement.pictureUrl}
+                          alt=""
+                          className="w-full h-40 object-cover rounded-lg mb-2"
+                        />
                       )}
                       <div>
-                        <h4 className="text-sm font-bold text-purple-900 m-0">{achievement.title}</h4>
-                        {achievement.achievedAt && <strong className="text-xs text-purple-600 block mt-0.5">{achievement.achievedAt}</strong>}
-                        {achievement.awardDescription && <p className="text-xs text-slate-600 mt-1 leading-relaxed">{achievement.awardDescription}</p>}
-                        {achievement.productHeader && <h5 className="text-xs font-bold text-slate-800 mt-2">{achievement.productHeader}</h5>}
-                        {achievement.productDescription && <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{achievement.productDescription}</p>}
+                        <h4 className="text-sm font-bold text-purple-900 m-0">
+                          {achievement.title}
+                        </h4>
+                        {achievement.achievedAt && (
+                          <strong className="text-xs text-purple-600 block mt-0.5">
+                            {achievement.achievedAt}
+                          </strong>
+                        )}
+                        {achievement.awardDescription && (
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                            {achievement.awardDescription}
+                          </p>
+                        )}
+                        {achievement.productHeader && (
+                          <h5 className="text-xs font-bold text-slate-800 mt-2">
+                            {achievement.productHeader}
+                          </h5>
+                        )}
+                        {achievement.productDescription && (
+                          <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                            {achievement.productDescription}
+                          </p>
+                        )}
                         {achievement.demoUrl && (
                           <a
                             href={achievement.demoUrl}

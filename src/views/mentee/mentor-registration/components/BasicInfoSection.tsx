@@ -39,7 +39,10 @@ export function BasicInfoSection({ register, errors, disabled }: BasicInfoSectio
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="expertiseDescription" className="block text-sm font-semibold text-slate-700">
+        <label
+          htmlFor="expertiseDescription"
+          className="block text-sm font-semibold text-slate-700"
+        >
           Mô tả kinh nghiệm chuyên môn <span className="text-red-500 font-bold ml-0.5">*</span>
         </label>
         <textarea

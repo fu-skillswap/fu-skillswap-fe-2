@@ -13,8 +13,14 @@ export interface BadgeProps {
 }
 
 const variantStyles: Record<NonNullable<BadgeProps['variant']>, { bg: string; dot: string }> = {
-  neutral: { bg: 'bg-surface-subtle text-text-secondary border-border-color/80', dot: 'bg-text-disabled' },
-  success: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80 shadow-xs', dot: 'bg-emerald-500' },
+  neutral: {
+    bg: 'bg-surface-subtle text-text-secondary border-border-color/80',
+    dot: 'bg-text-disabled',
+  },
+  success: {
+    bg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80 shadow-xs',
+    dot: 'bg-emerald-500',
+  },
   warning: { bg: 'bg-amber-50 text-amber-700 border-amber-200/80 shadow-xs', dot: 'bg-amber-500' },
   danger: { bg: 'bg-rose-50 text-rose-700 border-rose-200/80 shadow-xs', dot: 'bg-rose-500' },
   info: { bg: 'bg-blue-50 text-primary border-primary-border/60 shadow-xs', dot: 'bg-primary' },

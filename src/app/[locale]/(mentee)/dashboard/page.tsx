@@ -16,14 +16,19 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   return (
     <section className="space-y-6 max-w-2xl mx-auto py-2" aria-label="Community posts">
       {/* Instagram / Facebook Style Story Bar */}
-      <div className="bg-white rounded-3xl p-4 border border-solid border-border-light shadow-xs overflow-hidden" aria-label="Community stories & ads">
+      <div
+        className="bg-white rounded-3xl p-4 border border-solid border-border-light shadow-xs overflow-hidden"
+        aria-label="Community stories & ads"
+      >
         <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-none">
           {/* Add Story Button */}
           <div className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group">
             <div className="relative w-15 h-15 rounded-full p-0.5 border-2 border-dashed border-primary/60 flex items-center justify-center bg-primary-light group-hover:scale-105 transition-all">
               <span className="text-primary font-black text-xl">+</span>
             </div>
-            <span className="text-xs font-bold text-text-main text-center truncate max-w-[70px]">Tạo tin</span>
+            <span className="text-xs font-bold text-text-main text-center truncate max-w-[70px]">
+              Tạo tin
+            </span>
           </div>
 
           {/* User & Ad Stories */}
@@ -34,12 +39,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
               .slice(0, 2)
               .join('');
             return (
-              <div className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group" key={person.id}>
+              <div
+                className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group"
+                key={person.id}
+              >
                 <div
-                  className={`p-0.5 rounded-full shadow-xs group-hover:scale-105 transition-all ${person.isAd
+                  className={`p-0.5 rounded-full shadow-xs group-hover:scale-105 transition-all ${
+                    person.isAd
                       ? 'bg-gradient-to-tr from-blue-600 to-indigo-600'
                       : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600'
-                    }`}
+                  }`}
                 >
                   <div className="w-14 h-14 rounded-full bg-white p-0.5 flex items-center justify-center">
                     {person.avatarUrl ? (

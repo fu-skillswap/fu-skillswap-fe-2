@@ -37,7 +37,10 @@ export function TextField({
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label htmlFor={fieldId} className="text-xs font-semibold text-text-secondary flex items-center gap-1">
+        <label
+          htmlFor={fieldId}
+          className="text-xs font-semibold text-text-secondary flex items-center gap-1"
+        >
           {label}
           {props.required && <span className="text-danger font-bold">*</span>}
         </label>

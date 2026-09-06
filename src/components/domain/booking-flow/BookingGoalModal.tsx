@@ -72,23 +72,72 @@ export function BookingGoalModal({
             boxShadow: 'var(--shadow-xs)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '13px',
+            }}
+          >
             <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>Gói dịch vụ:</span>
-            <strong style={{ color: 'var(--text-main)', fontSize: '14px', textAlign: 'right' }}>{service.name}</strong>
+            <strong style={{ color: 'var(--text-main)', fontSize: '14px', textAlign: 'right' }}>
+              {service.name}
+            </strong>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-            <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '13px',
+            }}
+          >
+            <span
+              style={{
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: '500',
+              }}
+            >
               <Clock className="w-4 h-4 text-[var(--primary)] flex-shrink-0" /> Khung giờ tư vấn:
             </span>
-            <strong style={{ color: 'var(--primary)', fontSize: '13.5px', fontWeight: '700', textAlign: 'right' }}>
+            <strong
+              style={{
+                color: 'var(--primary)',
+                fontSize: '13.5px',
+                fontWeight: '700',
+                textAlign: 'right',
+              }}
+            >
               {slotTimeLabel}
             </strong>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
-            <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
-              <CreditCard className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" /> Chi phí tư vấn:
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '13px',
+              borderTop: '1px dashed var(--border-color)',
+              paddingTop: '10px',
+            }}
+          >
+            <span
+              style={{
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: '500',
+              }}
+            >
+              <CreditCard className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" /> Chi phí tư
+              vấn:
             </span>
             <strong style={{ color: 'var(--text-main)', fontSize: '14px', textAlign: 'right' }}>
               {formatPrice(service.priceScoins)} S-coins
@@ -98,7 +147,17 @@ export function BookingGoalModal({
 
         {/* Form Field 1: Tiêu đề buổi học (learningGoalTitle) */}
         <div className="ui-form-field" style={{ gap: '8px' }}>
-          <label className="ui-form-label" style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <label
+            className="ui-form-label"
+            style={{
+              fontWeight: '700',
+              fontSize: '13px',
+              color: 'var(--text-main)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
             Tiêu đề buổi học
           </label>
           <input
@@ -109,14 +168,27 @@ export function BookingGoalModal({
             placeholder="Review lộ trình học Spring Boot và chuẩn bị phỏng vấn intern"
             style={{ fontSize: '13px', padding: '0 16px', height: '44px', borderRadius: '10px' }}
           />
-          <p className="ui-form-helper" style={{ marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+          <p
+            className="ui-form-helper"
+            style={{ marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}
+          >
             Nội dung chủ đề chính bạn mong muốn Mentor giải đáp
           </p>
         </div>
 
         {/* Form Field 2: Mô tả mong muốn (learningGoalDescription) */}
         <div className="ui-form-field" style={{ gap: '8px' }}>
-          <label className="ui-form-label" style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <label
+            className="ui-form-label"
+            style={{
+              fontWeight: '700',
+              fontSize: '13px',
+              color: 'var(--text-main)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
             Mô tả mong muốn
           </label>
           <textarea
@@ -125,9 +197,17 @@ export function BookingGoalModal({
             value={learningGoalDescription}
             onChange={(e) => onDescriptionChange(e.target.value)}
             placeholder="Em muốn được góp ý CV backend, định hướng học PRJ301 và cách làm project REST API với PostgreSQL."
-            style={{ fontSize: '13px', padding: '12px 16px', lineHeight: '1.55', borderRadius: '10px' }}
+            style={{
+              fontSize: '13px',
+              padding: '12px 16px',
+              lineHeight: '1.55',
+              borderRadius: '10px',
+            }}
           />
-          <p className="ui-form-helper" style={{ marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+          <p
+            className="ui-form-helper"
+            style={{ marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}
+          >
             Chi tiết các câu hỏi hoặc dự án cần góp ý
           </p>
         </div>
@@ -148,7 +228,8 @@ export function BookingGoalModal({
           }}
         >
           <AlertCircle className="w-4 h-4 flex-shrink-0 text-[var(--primary)]" />
-          <span>Buổi tư vấn sẽ gửi yêu cầu tới Mentor để chờ phản hồi. Xin vui lòng theo dõi trạng thái
+          <span>
+            Buổi tư vấn sẽ gửi yêu cầu tới Mentor để chờ phản hồi. Xin vui lòng theo dõi trạng thái
             booking trong mục Bookings của tôi
           </span>
         </div>
@@ -159,7 +240,13 @@ export function BookingGoalModal({
             variant="secondary"
             onClick={onClose}
             disabled={isSubmitting}
-            style={{ height: '44px', padding: '0 24px', borderRadius: '12px', fontSize: '14px', fontWeight: '500' }}
+            style={{
+              height: '44px',
+              padding: '0 24px',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '500',
+            }}
           >
             Hủy
           </Button>
@@ -167,7 +254,14 @@ export function BookingGoalModal({
             variant="primary"
             disabled={isSubmitting}
             onClick={onConfirm}
-            style={{ height: '44px', padding: '0 28px', borderRadius: '12px', minWidth: '160px', fontSize: '14px', fontWeight: '600' }}
+            style={{
+              height: '44px',
+              padding: '0 28px',
+              borderRadius: '12px',
+              minWidth: '160px',
+              fontSize: '14px',
+              fontWeight: '600',
+            }}
           >
             {isSubmitting ? 'Đang gửi...' : 'Xác nhận đặt lịch'}
           </Button>

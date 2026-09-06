@@ -145,6 +145,50 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.terms-modal {
+  min-width: 0;
+  width: calc(100vw - 16px);
+  max-width: calc(100vw - 16px);
+  height: calc(100vh - 16px);
+  max-height: calc(100vh - 16px);
+  height: calc(100dvh - 16px);
+  max-height: calc(100dvh - 16px);
+  margin: auto;
+}
+
+.terms-modal-mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.terms-modal-mobile-footer {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 640px) {
+  .terms-modal {
+    height: min(780px, calc(100vh - 32px));
+    max-height: calc(100vh - 32px);
+    height: min(780px, calc(100dvh - 32px));
+    max-height: calc(100dvh - 32px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .terms-modal-scroll {
+    overflow-y: visible;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 849px) {
+  .terms-modal-scroll {
+    overflow-y: auto;
+  }
+
+  .terms-modal-mascot {
+    max-height: 250px;
+  }
+}
+
 @keyframes mentor-component-enter {
   from {
     opacity: 0;
@@ -155,6 +199,83 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes student-onboarding-field-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes student-onboarding-mascot-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.student-onboarding-reveal {
+  animation: student-onboarding-field-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.student-onboarding-reveal-2 {
+  animation-delay: 60ms;
+}
+
+.student-onboarding-reveal-3 {
+  animation-delay: 120ms;
+}
+
+.student-onboarding-reveal-4 {
+  animation-delay: 180ms;
+}
+
+.student-onboarding-reveal-5 {
+  animation-delay: 240ms;
+}
+
+.student-onboarding-reveal-6 {
+  animation-delay: 300ms;
+}
+
+.student-onboarding-reveal-7 {
+  animation-delay: 360ms;
+}
+
+.student-onboarding-reveal-8 {
+  animation-delay: 420ms;
+}
+
+.student-onboarding-reveal-9 {
+  animation-delay: 480ms;
+}
+
+.student-onboarding-reveal-10 {
+  animation-delay: 540ms;
+}
+
+.student-onboarding-mascot,
+.student-onboarding-support {
+  animation: student-onboarding-mascot-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.student-onboarding-mascot {
+  animation-delay: 160ms;
+}
+
+.student-onboarding-support {
+  animation-delay: 260ms;
 }
 
 @keyframes mentor-schedule-card-enter {
@@ -297,6 +418,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .student-onboarding-reveal,
+  .student-onboarding-mascot,
+  .student-onboarding-support {
+    animation: none;
+  }
+
   .mentor-page-enter > :not(:only-child),
   .mentor-page-enter > :only-child > * {
     animation: none;

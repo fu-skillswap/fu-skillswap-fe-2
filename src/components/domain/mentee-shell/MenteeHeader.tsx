@@ -194,10 +194,16 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
               aria-label="User profile menu"
             >
               <span className="w-9.5 h-9.5 rounded-full bg-primary-light border border-solid border-primary-border text-primary font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
-                {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" /> : profile.initials}
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  profile.initials
+                )}
               </span>
               <span className="hidden sm:flex flex-col text-left">
-                <strong className="text-sm sm:text-base font-extrabold text-text-main leading-tight">{profile.fullName}</strong>
+                <strong className="text-sm sm:text-base font-extrabold text-text-main leading-tight">
+                  {profile.fullName}
+                </strong>
                 <small className="text-xs text-text-muted font-medium">{profile.role}</small>
               </span>
               <ChevronDown
@@ -207,9 +213,16 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
             </button>
 
             {isProfileOpen && (
-              <section className="absolute right-0 top-full mt-2 w-60 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-2.5 z-50 flex flex-col gap-1 animate-in fade-in-0 zoom-in-95 duration-150" aria-label="User profile menu">
+              <section
+                className="absolute right-0 top-full mt-2 w-60 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-solid border-border-light/80 p-2.5 z-50 flex flex-col gap-1 animate-in fade-in-0 zoom-in-95 duration-150"
+                aria-label="User profile menu"
+              >
                 <div className="flex flex-col gap-1">
-                  <button type="button" className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left" onClick={openProfile}>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
+                    onClick={openProfile}
+                  >
                     <User className="w-4.5 h-4.5 shrink-0 text-text-muted" aria-hidden="true" />
                     Hồ sơ của tôi
                   </button>
@@ -219,7 +232,10 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
                       className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer text-left"
                       onClick={openMentorRegistration}
                     >
-                      <UserCheck className="w-4.5 h-4.5 shrink-0 text-text-muted" aria-hidden="true" />
+                      <UserCheck
+                        className="w-4.5 h-4.5 shrink-0 text-text-muted"
+                        aria-hidden="true"
+                      />
                       Đăng ký làm mentor
                     </button>
                   )}

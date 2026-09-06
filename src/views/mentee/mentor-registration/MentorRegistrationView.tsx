@@ -50,7 +50,9 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
     serverError,
     selectedFptuFile,
     setSelectedFptuFile,
+    fptuUploadError,
     selectedExpertiseFiles,
+    expertiseUploadError,
     onAddExpertiseFiles,
     onRemoveExpertiseFile,
     fields,
@@ -136,9 +138,9 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
                 Hồ sơ Mentor đã được phê duyệt thành công
               </strong>
               <span className="text-xs text-emerald-700">
-                Các thông tin cơ bản, tư cách FPTU và cài đặt thời gian đặt lịch đã được kiểm duyệt và
-                khóa cố định. Bạn có thể tự do thêm, sửa hoặc xóa các Dự án tiêu biểu và Học vấn/Giải
-                thưởng bên dưới.
+                Các thông tin cơ bản, tư cách FPTU và cài đặt thời gian đặt lịch đã được kiểm duyệt
+                và khóa cố định. Bạn có thể tự do thêm, sửa hoặc xóa các Dự án tiêu biểu và Học
+                vấn/Giải thưởng bên dưới.
               </span>
             </div>
           </div>
@@ -231,6 +233,8 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
                 onRemoveExpertiseFile={onRemoveExpertiseFile}
                 verificationData={verificationData}
                 disabled={isFormDisabled}
+                fptuError={fptuUploadError}
+                expertiseError={expertiseUploadError}
               />
 
               {/* SECTION 8: XÁC NHẬN ĐIỀU KHOẢN VẬN HÀNH */}

@@ -44,10 +44,17 @@ export function SkillSwapToast({ id, type, title, description, visible }: SkillS
       aria-live={isAssertive ? 'assertive' : 'polite'}
       aria-atomic="true"
     >
-      <Icon className={`w-5 h-5 shrink-0 ${typeStyles[type].iconColor} mt-0.5`} aria-hidden="true" />
+      <Icon
+        className={`w-5 h-5 shrink-0 ${typeStyles[type].iconColor} mt-0.5`}
+        aria-hidden="true"
+      />
       <div className="flex-1 min-w-0">
         <strong className="block text-xs font-bold text-text-main">{title}</strong>
-        {description && <p className="text-[11px] text-text-secondary mt-0.5 m-0 leading-relaxed">{description}</p>}
+        {description && (
+          <p className="text-[11px] text-text-secondary mt-0.5 m-0 leading-relaxed">
+            {description}
+          </p>
+        )}
       </div>
       <button
         type="button"

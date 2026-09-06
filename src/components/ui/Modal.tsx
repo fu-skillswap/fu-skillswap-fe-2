@@ -23,6 +23,12 @@ interface ModalProps {
   children: React.ReactNode;
   /** Class CSS bổ sung */
   className?: string;
+  /** Class CSS bổ sung cho vùng nội dung */
+  contentClassName?: string;
+  /** Class CSS bổ sung cho lớp overlay */
+  overlayClassName?: string;
+  /** Tắt hiệu ứng scale khi modal xuất hiện */
+  disableScaleAnimation?: boolean;
 }
 
 /**
@@ -36,6 +42,9 @@ export function Modal({
   onClose,
   children,
   className = '',
+  contentClassName = '',
+  overlayClassName = '',
+  disableScaleAnimation = false,
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -46,8 +55,13 @@ export function Modal({
   useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
   }, [open, onClose]);
 
   if (!open || !mounted) return null;
@@ -57,12 +71,12 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[99999] flex items-center justify-center p-3 sm:p-6 transition-all duration-300 overflow-y-auto"
+      className={`fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[99999] flex items-center justify-center p-3 sm:p-6 transition-all duration-300 overflow-y-auto ${overlayClassName}`.trim()}
       role="presentation"
       onMouseDown={onClose}
     >
       <section
-        className={`bg-white rounded-3xl shadow-2xl border border-solid border-slate-200/80 w-full ${defaultWidthClass} max-h-[90vh] overflow-hidden flex flex-col transition-all animate-in fade-in-0 zoom-in-95 duration-200 ${className}`.trim()}
+        className={`bg-white rounded-3xl shadow-2xl border border-solid border-slate-200/80 w-full ${defaultWidthClass} max-h-[90vh] overflow-hidden flex flex-col transition-all animate-in fade-in-0 duration-200 ${disableScaleAnimation ? '' : 'zoom-in-95'} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Hộp thoại'}
@@ -85,7 +99,11 @@ export function Modal({
             </button>
           </div>
         )}
-        <div className="p-4 sm:p-6 overflow-y-auto max-w-full overflow-x-hidden flex-1">{children}</div>
+        <div
+          className={`p-4 sm:p-6 overflow-y-auto max-w-full overflow-x-hidden flex-1 ${contentClassName}`.trim()}
+        >
+          {children}
+        </div>
       </section>
     </div>,
     document.body,

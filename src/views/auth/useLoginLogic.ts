@@ -12,6 +12,7 @@ import { ApiClientError } from '@/models/apiClient';
 import { loginSchema, type LoginFormValues } from '@/models/schemas/authSchema';
 import { useAuth } from '@/providers/AuthProvider';
 import { authRepo } from '@/repositories/authRepo';
+import { showSuccess } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -136,6 +137,10 @@ export function useLoginLogic(locale: string, adminOnly = false) {
               nonce: loginNonce,
             });
             const { user, onboarding } = await completeGoogleLoginRef.current();
+            showSuccess({
+              title: 'Đăng nhập thành công',
+              description: `Chào mừng ${user.fullName || 'bạn'} quay lại SkillSwap.`,
+            });
             const canAccessAdmin = user.roles.some(
               (role) => role === 'ADMIN' || role === 'SYSTEM_ADMIN',
             );

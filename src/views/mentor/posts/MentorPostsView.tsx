@@ -56,9 +56,12 @@ export function MentorPostsView() {
     <section className="space-y-6 max-w-7xl mx-auto">
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-solid border-border-light shadow-xs">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-text-main m-0">Bài viết của tôi</h1>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-text-main m-0">
+            Bài viết của tôi
+          </h1>
           <p className="text-xs text-text-muted mt-1 m-0">
-            {posts.counts.published} đã đăng <span className="mx-1">·</span> {posts.counts.draft} bản nháp
+            {posts.counts.published} đã đăng <span className="mx-1">·</span> {posts.counts.draft}{' '}
+            bản nháp
           </p>
         </div>
         <Button leftIcon={<Plus />} onClick={posts.openCreate}>
@@ -67,7 +70,10 @@ export function MentorPostsView() {
       </header>
 
       {posts.error && (
-        <div className="p-4 rounded-2xl bg-danger-soft border border-solid border-red-200 text-danger text-xs font-medium flex items-center justify-between gap-4" role="alert">
+        <div
+          className="p-4 rounded-2xl bg-danger-soft border border-solid border-red-200 text-danger text-xs font-medium flex items-center justify-between gap-4"
+          role="alert"
+        >
           <span>{posts.error}</span>
           <Button variant="outline" size="sm" onClick={() => void posts.refresh()}>
             Thử lại
@@ -78,7 +84,10 @@ export function MentorPostsView() {
       {posts.isLoading ? (
         <div className="grid grid-cols-1 gap-4" aria-label="Đang tải bài viết">
           {[1, 2, 3].map((item) => (
-            <div className="h-36 rounded-2xl bg-surface-subtle animate-pulse border border-solid border-border-light" key={item} />
+            <div
+              className="h-36 rounded-2xl bg-surface-subtle animate-pulse border border-solid border-border-light"
+              key={item}
+            />
           ))}
         </div>
       ) : posts.posts.length ? (
@@ -96,7 +105,9 @@ export function MentorPostsView() {
         <div className="p-12 text-center bg-white rounded-3xl border border-solid border-border-light shadow-xs flex flex-col items-center gap-3">
           <FileText className="w-12 h-12 text-text-muted" aria-hidden="true" />
           <strong className="text-sm font-bold text-text-main">Bạn chưa có bài viết nào.</strong>
-          <span className="text-xs text-text-muted">Chia sẻ kinh nghiệm, kiến thức hoặc góc nhìn của bạn với mentee.</span>
+          <span className="text-xs text-text-muted">
+            Chia sẻ kinh nghiệm, kiến thức hoặc góc nhìn của bạn với mentee.
+          </span>
           <Button leftIcon={<Plus />} onClick={posts.openCreate}>
             Tạo bài viết đầu tiên
           </Button>
@@ -172,7 +183,9 @@ export function MentorPostsView() {
       >
         <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-solid border-amber-200 text-amber-900 text-xs">
           <Archive className="w-6 h-6 text-amber-600 shrink-0" aria-hidden="true" />
-          <p className="m-0 leading-relaxed">Bài viết sẽ được chuyển vào lưu trữ theo chính sách hiện tại của hệ thống.</p>
+          <p className="m-0 leading-relaxed">
+            Bài viết sẽ được chuyển vào lưu trữ theo chính sách hiện tại của hệ thống.
+          </p>
         </div>
         <footer className="flex items-center justify-end gap-3 pt-4 border-t border-solid border-border-light mt-4">
           <Button
@@ -227,14 +240,26 @@ function MentorPostCard({
         </div>
       </header>
       <h2 className="text-base font-bold text-text-main m-0">{post.title}</h2>
-      {preview && <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 m-0">{preview}</p>}
+      {preview && (
+        <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 m-0">{preview}</p>
+      )}
       {(post.categories?.length || post.tags?.length) && (
         <footer className="flex flex-wrap gap-1.5 pt-2 border-t border-solid border-border-light">
           {post.categories?.map((category) => (
-            <span key={category.id} className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color">{category.name}</span>
+            <span
+              key={category.id}
+              className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color"
+            >
+              {category.name}
+            </span>
           ))}
           {post.tags?.map((tag) => (
-            <span key={tag.id} className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color">#{tag.name}</span>
+            <span
+              key={tag.id}
+              className="px-2.5 py-0.5 rounded-full bg-surface-subtle text-[11px] font-semibold text-text-secondary border border-solid border-border-color"
+            >
+              #{tag.name}
+            </span>
           ))}
         </footer>
       )}

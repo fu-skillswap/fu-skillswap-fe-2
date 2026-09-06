@@ -242,7 +242,6 @@ export const showSuccess = (content: string | ToastContent) => {
 
 /** Hiển thị Toast thông báo Lỗi */
 export const showError = (reason: unknown, context?: FriendlyErrorContext) => {
-  console.error('[SkillSwap]', reason);
   showToast({ type: 'error', ...getUserFriendlyError(reason, context) });
 };
 

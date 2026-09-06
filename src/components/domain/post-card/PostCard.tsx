@@ -124,14 +124,15 @@ export function PostCard({ post, locale = 'vi' }: PostCardProps) {
       </div>
 
       {/* Likes Count line */}
-      <div className="px-4 text-xs font-extrabold text-text-main mb-1">
-        {likes} lượt thích
-      </div>
+      <div className="px-4 text-xs font-extrabold text-text-main mb-1">{likes} lượt thích</div>
 
       {/* Post Caption & Body */}
       <div className="px-4 pb-3 flex flex-col gap-2">
         {post.showTitle !== false && (
-          <Link href={`/${locale}/post-detail/${post.id}`} className="text-base font-extrabold text-text-main hover:text-primary transition-colors m-0 block">
+          <Link
+            href={`/${locale}/post-detail/${post.id}`}
+            className="text-base font-extrabold text-text-main hover:text-primary transition-colors m-0 block"
+          >
             {post.title}
           </Link>
         )}
@@ -139,7 +140,10 @@ export function PostCard({ post, locale = 'vi' }: PostCardProps) {
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-1">
             {post.tags.map((tag) => (
-              <span key={tag} className="text-xs font-semibold text-primary hover:underline cursor-pointer">
+              <span
+                key={tag}
+                className="text-xs font-semibold text-primary hover:underline cursor-pointer"
+              >
                 #{tag}
               </span>
             ))}
@@ -152,7 +156,8 @@ export function PostCard({ post, locale = 'vi' }: PostCardProps) {
         <div className="px-4 py-2 bg-surface-subtle/50 text-xs text-text-secondary border-t border-solid border-border-light/60 flex flex-col gap-1">
           {post.previewComments.map((comment) => (
             <p key={comment.id} className="m-0 leading-relaxed">
-              <strong className="font-bold text-text-main mr-1">{comment.authorName}</strong> {comment.content}
+              <strong className="font-bold text-text-main mr-1">{comment.authorName}</strong>{' '}
+              {comment.content}
             </p>
           ))}
         </div>

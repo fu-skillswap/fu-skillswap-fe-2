@@ -15,8 +15,10 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
 const variantStyles: Record<NonNullable<IconButtonProps['variant']>, string> = {
   primary: 'bg-primary text-white border-primary hover:bg-primary-hover shadow-xs',
   secondary: 'bg-surface-subtle text-text-main border-border-color hover:bg-border-light',
-  outline: 'bg-white text-primary border-primary-border hover:bg-primary-light hover:text-primary-hover',
-  ghost: 'bg-transparent text-text-secondary border-transparent hover:bg-surface-subtle hover:text-text-main',
+  outline:
+    'bg-white text-primary border-primary-border hover:bg-primary-light hover:text-primary-hover',
+  ghost:
+    'bg-transparent text-text-secondary border-transparent hover:bg-surface-subtle hover:text-text-main',
   destructive: 'bg-danger text-white border-danger hover:bg-red-700 shadow-xs',
 };
 

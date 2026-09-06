@@ -68,7 +68,8 @@ export const demoPosts: Post[] = [
       {
         id: 'comment-system-alex',
         authorName: 'Koo Koo',
-        content: 'Hãy bắt đầu bằng một chủ đề tiềm năng, bạn có thể tham khảo từ các anh chị khóa trước hoặc GVHD, sau đó thực hành vẽ các tính năng chính của hệ thống, sau đó lên timeline cho nhóm nhé.',
+        content:
+          'Hãy bắt đầu bằng một chủ đề tiềm năng, bạn có thể tham khảo từ các anh chị khóa trước hoặc GVHD, sau đó thực hành vẽ các tính năng chính của hệ thống, sau đó lên timeline cho nhóm nhé.',
         createdAt: '1 ngày trước',
       },
       {
