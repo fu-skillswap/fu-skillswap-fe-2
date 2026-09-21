@@ -7,9 +7,8 @@
 
 'use client';
 
-import { Button } from '@/components/ui/Button';
-import { TextField } from '@/components/ui/TextField';
 import { showError } from '@/utils/toast';
+import Image from 'next/image';
 import { useEffect } from 'react';
 import { useLoginLogic } from './useLoginLogic';
 
@@ -18,13 +17,7 @@ import { useLoginLogic } from './useLoginLogic';
  * @param props.locale - Mã ngôn ngữ hiện tại của route (ví dụ: "vi", "en")
  */
 export function LoginView({ locale, adminOnly = false }: { locale: string; adminOnly?: boolean }) {
-  const { form, error, clearError, loading, googleLoading, submit, googleButtonRef } =
-    useLoginLogic(locale, adminOnly);
-
-  const {
-    register,
-    formState: { errors },
-  } = form;
+  const { error, clearError, googleLoading, googleButtonRef } = useLoginLogic(locale, adminOnly);
 
   useEffect(() => {
     if (!error) return;
@@ -36,118 +29,69 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
   }, [clearError, error]);
 
   return (
-    <main className="min-h-screen bg-white flex flex-col lg:flex-row">
+    <main className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-white lg:flex-row">
       {/* Left Form Area */}
       <section
-        className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-white"
+        className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden bg-white px-4 py-8 before:pointer-events-none before:absolute before:-left-20 before:-top-20 before:h-52 before:w-52 before:rounded-full before:bg-[rgba(17,156,247,0.06)] before:content-[''] after:pointer-events-none after:absolute after:-bottom-28 after:-right-28 after:h-72 after:w-72 after:rounded-full after:bg-[rgba(17,156,247,0.07)] after:content-[''] sm:p-12 sm:before:-left-28 sm:before:-top-28 sm:before:h-72 sm:before:w-72 sm:after:-bottom-40 sm:after:-right-40 sm:after:h-96 sm:after:w-96 lg:p-16"
         aria-label="Log in"
       >
-        <form className="w-full max-w-sm flex flex-col gap-5" noValidate onSubmit={submit}>
-          <div className="flex flex-col items-center text-center gap-1 mb-1">
-            <img
-              src="/images/SkillSwap_Logo_Text.png"
-              alt="SkillSwap"
-              className="h-28 sm:h-32 max-w-full w-auto object-contain mx-auto"
-            />
-            <p className="text-xs text-text-muted m-0 mt-1">
-              {adminOnly ? 'Cổng quản trị SkillSwap' : 'Kết nối - Học hỏi - Phát triển.'}
-            </p>
-          </div>
-
-          {adminOnly ? (
-            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-amber-50 border border-solid border-amber-200">
-              <span className="text-[11px] font-extrabold tracking-wider text-amber-800 uppercase">
-                ADMIN PORTAL
-              </span>
-              <h1 className="text-lg font-bold text-slate-900 m-0">Đăng nhập quản trị</h1>
-              <p className="text-xs text-amber-700 m-0">
-                Chỉ tài khoản ADMIN hoặc SYSTEM_ADMIN được phép truy cập.
-              </p>
-            </div>
-          ) : (
-            <div
-              className="flex items-center gap-2 bg-slate-100/80 p-1.5 rounded-2xl border border-solid border-slate-200/60"
-              aria-label="Authentication mode"
-            >
-              <span className="flex-1 text-center py-2 text-xs font-black text-slate-900 bg-white rounded-xl shadow-xs cursor-pointer">
-                Đăng nhập
-              </span>
-              <span className="flex-1 text-center py-2 text-xs font-bold text-slate-500 cursor-pointer hover:text-slate-900 transition-colors">
-                Đăng ký
-              </span>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-4">
-            <TextField
-              label="Email"
-              type="email"
-              placeholder="your@email.com"
-              autoComplete="email"
-              error={errors.email?.message}
-              {...register('email')}
-            />
-            <div>
-              <TextField
-                label="Mật khẩu"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                error={errors.password?.message}
-                {...register('password')}
-              />
-              <span
-                className="text-xs font-bold text-sky-600 hover:underline cursor-pointer block text-right mt-1.5"
-                aria-disabled="true"
-              >
-                Quên mật khẩu?
-              </span>
-            </div>
-          </div>
-
-          <Button
-            className="w-full h-11 bg-sky-500 hover:bg-sky-600 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer border-none"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </Button>
+        <section className="relative z-10 flex w-full max-w-[calc(100vw-32px)] flex-col items-center rounded-[22px] border border-solid border-[#DCE6F1] bg-white px-6 py-9 text-center shadow-[0_12px_32px_rgba(30,58,95,0.08)] sm:max-w-[460px] sm:px-10 sm:py-10">
+          <Image
+            src="/images/SkillSwap_Logo_Text.png"
+            alt="SkillSwap"
+            width={360}
+            height={128}
+            priority
+            className="h-auto w-[220px] object-contain sm:w-[240px]"
+          />
+          <h1 className="mb-0 mt-6 text-[28px] font-semibold leading-tight text-[#1E3A5F] sm:text-[30px]">
+            Đăng nhập SkillSwap
+          </h1>
+          <p className="mb-0 mt-2 text-[15px] leading-6 text-[#6B7A90] sm:text-base">
+            Tiếp tục bằng tài khoản Google của bạn.
+          </p>
 
           <div
-            className="flex items-center gap-4 text-xs text-text-muted my-0.5 before:flex-1 before:h-px before:bg-border-light after:flex-1 after:h-px after:bg-border-light"
-            aria-hidden="true"
+            className="relative mt-8 flex min-h-14 w-full items-center justify-center"
+            aria-busy={googleLoading}
           >
-            hoặc
+            <div ref={googleButtonRef} className="flex w-full items-center justify-center" />
+            {googleLoading && (
+              <div
+                className="absolute inset-0 flex cursor-wait items-center justify-center rounded-xl border border-solid border-[#D7DEE8] bg-white text-sm font-semibold text-[#6B7A90] shadow-xs"
+                aria-label="Đang chuẩn bị đăng nhập bằng Google"
+              >
+                <span
+                  className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-solid border-primary border-t-transparent"
+                  aria-hidden="true"
+                />
+                Đang tải...
+              </div>
+            )}
           </div>
 
-          <div className="flex justify-center w-full min-h-[44px]" aria-busy={googleLoading}>
-            <div ref={googleButtonRef} />
-          </div>
-
-          {!adminOnly && (
-            <p className="text-xs text-text-muted text-center m-0 mt-2">
-              Chưa có tài khoản?{' '}
-              <span className="text-sky-600 font-bold hover:underline cursor-pointer">Đăng ký</span>
-            </p>
-          )}
-        </form>
+          <p className="mb-0 mt-8 text-sm leading-6 text-[#6B7A90]">
+            Khi tiếp tục, bạn đồng ý với{' '}
+            <span className="font-medium text-primary">Điều khoản</span> và{' '}
+            <span className="font-medium text-primary">Chính sách quyền riêng tư</span>.
+          </p>
+        </section>
       </section>
 
       {/* Right Hero / Metric Cards Area (Light Blue Tint Background) */}
       <aside
-        className="hidden lg:flex flex-1 bg-sky-50/70 p-12 lg:p-16 flex-col justify-center items-center relative overflow-hidden"
+        className="relative hidden flex-1 items-center justify-center overflow-hidden bg-sky-50/70 p-12 before:pointer-events-none before:absolute before:-right-32 before:-top-32 before:h-80 before:w-80 before:rounded-full before:bg-[rgba(17,156,247,0.10)] before:content-[''] after:pointer-events-none after:absolute after:-bottom-72 after:-left-72 after:h-[440px] after:w-[440px] after:rounded-full after:border-[64px] after:border-solid after:border-[rgba(17,156,247,0.07)] after:shadow-[0_0_0_72px_rgba(0,119,204,0.05)] after:content-[''] lg:flex lg:flex-col lg:p-16"
         aria-label="Lợi ích SkillSwap"
       >
         <div className="max-w-md mx-auto flex flex-col items-center text-center gap-6 relative z-10">
-          <span
-            className="w-14 h-14 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center shadow-2xs mx-auto"
-            aria-hidden="true"
-          >
-            <svg className="w-7 h-7 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-              <path d="m3 9 9-4 9 4-9 4z" />
-              <path d="M7 11.2V16c2.8 2 7.2 2 10 0v-4.8M21 10v5" />
-            </svg>
-          </span>
+          <Image
+            src="/images/Koko.png"
+            alt="Koko, linh vật SkillSwap"
+            width={112}
+            height={112}
+            priority
+            className="mx-auto h-24 w-auto object-contain xl:h-28"
+          />
 
           <h2 className="text-3xl lg:text-4xl font-black leading-tight tracking-tight text-slate-900 m-0 text-center">
             Học từ chuyên gia.

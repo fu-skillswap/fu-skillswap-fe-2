@@ -170,7 +170,7 @@ export function useLoginLogic(locale: string, adminOnly = false) {
       window.google.accounts.id.renderButton(button, {
         theme: 'outline',
         size: 'large',
-        text: 'signin_with',
+        text: 'continue_with',
         shape: 'rectangular',
         width: Math.floor(button.getBoundingClientRect().width) || 380,
       });
