@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "skillswap-frontend",
+  "name": "fu-skillswap-fe-2",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-25",
   "compatibility_flags": ["nodejs_compat"],
@@ -8,10 +8,4 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS",
   },
-  "routes": [
-    {
-      "pattern": "skillswap.asia/*",
-      "zone_name": "skillswap.asia",
-    },
-  ],
 }
