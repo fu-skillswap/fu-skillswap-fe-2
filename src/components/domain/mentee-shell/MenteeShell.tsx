@@ -8,6 +8,7 @@
 
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { KouKouChatWidget } from '@/components/domain/ai-chat/KouKouChatWidget';
 import { DashboardNavigation } from '@/components/domain/dashboard-navigation/DashboardNavigation';
 import { MentorNavigation } from '@/components/domain/mentor-shell/MentorNavigation';
 import { MenteeHeader } from '@/components/domain/mentee-shell/MenteeHeader';
@@ -138,21 +139,7 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
         </div>
 
         {/* AI Chatbot Floating Trigger (con cú bo tròn + chấm xanh active ở góc trên) */}
-        <button
-          type="button"
-          aria-label="AI Support Chat"
-          className="fixed bottom-6 right-6 z-40 w-15 h-15 rounded-full bg-white shadow-2xl border-2 border-solid border-primary/30 p-1 flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 group"
-        >
-          <img
-            src="/images/Koko.png"
-            alt="AI Assistant"
-            className="w-full h-full rounded-full object-cover"
-          />
-          <span
-            className="absolute top-0 right-0 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-xs animate-pulse"
-            title="AI Trợ lý trực tuyến"
-          />
-        </button>
+        <KouKouChatWidget />
       </div>
     </MenteeShellContext.Provider>
   );

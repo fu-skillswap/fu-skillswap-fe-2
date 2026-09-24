@@ -5,6 +5,7 @@
 
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { AdminSidebar } from '@/components/domain/admin/AdminSidebar';
+import '@/styles/admin.css';
 
 export default async function AdminLayout({
   children,

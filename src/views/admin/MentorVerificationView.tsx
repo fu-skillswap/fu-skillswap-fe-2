@@ -144,40 +144,6 @@ export function MentorVerificationView({ locale }: { locale: string }) {
 
   return (
     <main className="admin-dashboard mentor-verification-page">
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <img src="/images/SkillSwapLogo.png" alt="SkillSwap" />
-          <div>
-            <strong>
-              SkillSwap
-              <br />
-              Admin
-            </strong>
-            <span>
-              Academic
-              <br />
-              Management
-            </span>
-          </div>
-        </div>
-        <nav aria-label="Điều hướng quản trị">
-          <Link href={`/${locale}/admin/dashboard`}>▦ Tổng quan</Link>
-          <Link className="is-active" href={`/${locale}/admin/mentor-verification`}>
-            ♢ Xác minh mentor
-          </Link>
-          <a href="#users">♧ Người dùng</a>
-          <a href="#bookings">▣ Lịch hẹn</a>
-          <a href="#reports">▱ Đánh giá &amp; báo cáo</a>
-        </nav>
-        <div className="admin-sidebar-footer">
-          <a href="/" target="_blank" rel="noreferrer">
-            ↗ <span>Xem SkillSwap</span>
-          </a>
-          <a href="#profile">
-            ◎ <span>Hồ sơ</span>
-          </a>
-        </div>
-      </aside>
       <div className="admin-workspace">
         <header className="admin-topbar">
           <div className="admin-breadcrumb">

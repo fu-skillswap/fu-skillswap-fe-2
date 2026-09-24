@@ -1,15 +1,14 @@
 /**
  * @file page.tsx
- * @description Route trang chủ mặc định (`/[locale]`).
- * Tự động chuyển hướng (Redirect) người dùng tới trang Đăng nhập (`/[locale]/login`).
+ * @description Route landing page public mặc định (`/[locale]`).
  */
 
-import { redirect } from 'next/navigation';
+import { LandingView } from '@/views/landing/LandingView';
 
 /**
- * Server Component điều hướng trang chủ về trang Đăng nhập.
+ * Server Component chuyển locale vào landing view.
  */
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  redirect(`/${locale}/dashboard`);
+  return <LandingView locale={locale} />;
 }
