@@ -219,53 +219,6 @@ export function AdminDashboardView() {
   ];
   return (
     <main className="admin-dashboard">
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <img src="/images/SkillSwapLogo.png" alt="SkillSwap" />
-          <div>
-            <strong>
-              SkillSwap
-              <br />
-              Admin
-            </strong>
-            <span>
-              Academic
-              <br />
-              Management
-            </span>
-          </div>
-        </div>
-        <nav aria-label="Điều hướng quản trị">
-          <a className="is-active" href="#overview">
-            <Icon name="grid" />
-            Tổng quan
-          </a>
-          <Link href={`/${locale}/admin/mentor-verification`}>
-            <Icon name="shield" />
-            Xác minh mentor
-          </Link>
-          <a href="#users">
-            <Icon name="users" />
-            Người dùng
-          </a>
-          <a href="#bookings">
-            <Icon name="booking" />
-            Lịch hẹn
-          </a>
-          <a href="#reports">
-            <Icon name="report" />
-            Đánh giá &amp; báo cáo
-          </a>
-        </nav>
-        <div className="admin-sidebar-footer">
-          <a href="/" target="_blank" rel="noreferrer">
-            ↗ <span>Xem SkillSwap</span>
-          </a>
-          <a href="#profile">
-            ◎ <span>Hồ sơ</span>
-          </a>
-        </div>
-      </aside>
       <div className="admin-workspace" id="overview">
         <header className="admin-topbar">
           <div className="admin-breadcrumb">
