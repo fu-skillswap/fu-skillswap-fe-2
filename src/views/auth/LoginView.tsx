@@ -29,13 +29,13 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
   }, [clearError, error]);
 
   return (
-    <main className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-white lg:flex-row">
+    <main className="flex min-h-screen w-full min-w-0 flex-col overflow-x-hidden bg-[#f4faff] xl:flex-row">
       {/* Left Form Area */}
       <section
-        className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden bg-white px-4 py-8 before:pointer-events-none before:absolute before:-left-20 before:-top-20 before:h-52 before:w-52 before:rounded-full before:bg-[rgba(17,156,247,0.06)] before:content-[''] after:pointer-events-none after:absolute after:-bottom-28 after:-right-28 after:h-72 after:w-72 after:rounded-full after:bg-[rgba(17,156,247,0.07)] after:content-[''] sm:p-12 sm:before:-left-28 sm:before:-top-28 sm:before:h-72 sm:before:w-72 sm:after:-bottom-40 sm:after:-right-40 sm:after:h-96 sm:after:w-96 lg:p-16"
+        className="relative flex w-full min-w-0 flex-1 items-center justify-center overflow-hidden bg-[linear-gradient(160deg,#f8fcff_0%,#eef8ff_52%,#f9fcff_100%)] px-4 py-8 before:pointer-events-none before:absolute before:-top-20 before:-left-20 before:h-52 before:w-52 before:rounded-full before:bg-[rgba(17,156,247,0.10)] before:content-[''] after:pointer-events-none after:-right-28 after:-bottom-28 after:h-72 after:w-72 after:rounded-full after:bg-[rgba(17,156,247,0.10)] after:content-[''] sm:p-12 sm:before:-top-28 sm:before:-left-28 sm:before:h-72 sm:before:w-72 sm:after:-right-40 sm:after:-bottom-40 sm:after:h-96 sm:after:w-96 xl:p-16"
         aria-label="Log in"
       >
-        <section className="relative z-10 flex w-full max-w-[calc(100vw-32px)] flex-col items-center rounded-[22px] border border-solid border-[#DCE6F1] bg-white px-6 py-9 text-center shadow-[0_12px_32px_rgba(30,58,95,0.08)] sm:max-w-[460px] sm:px-10 sm:py-10">
+        <section className="relative z-10 mx-auto flex w-[calc(100dvw-32px)] max-w-[440px] shrink-0 flex-col items-center rounded-[24px] border border-solid border-[#cfe4f5] bg-white/[0.96] px-5 py-8 text-center shadow-[0_24px_70px_rgba(18,56,110,0.16),0_4px_16px_rgba(17,156,247,0.08)] ring-1 ring-white/90 backdrop-blur-sm sm:w-full sm:px-10 sm:py-10">
           <Image
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
@@ -80,7 +80,7 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
 
       {/* Right Hero / Metric Cards Area (Light Blue Tint Background) */}
       <aside
-        className="relative hidden flex-1 items-center justify-center overflow-hidden bg-sky-50/70 p-12 before:pointer-events-none before:absolute before:-right-32 before:-top-32 before:h-80 before:w-80 before:rounded-full before:bg-[rgba(17,156,247,0.10)] before:content-[''] after:pointer-events-none after:absolute after:-bottom-72 after:-left-72 after:h-[440px] after:w-[440px] after:rounded-full after:border-[64px] after:border-solid after:border-[rgba(17,156,247,0.07)] after:shadow-[0_0_0_72px_rgba(0,119,204,0.05)] after:content-[''] lg:flex lg:flex-col lg:p-16"
+        className="relative hidden flex-1 items-center justify-center overflow-hidden bg-sky-50/70 p-12 before:pointer-events-none before:absolute before:-top-32 before:-right-32 before:h-80 before:w-80 before:rounded-full before:bg-[rgba(17,156,247,0.10)] before:content-[''] after:pointer-events-none after:absolute after:-bottom-72 after:-left-72 after:h-[440px] after:w-[440px] after:rounded-full after:border-[64px] after:border-solid after:border-[rgba(17,156,247,0.07)] after:shadow-[0_0_0_72px_rgba(0,119,204,0.05)] after:content-[''] xl:flex xl:flex-col xl:p-16"
         aria-label="Lợi ích SkillSwap"
       >
         <div className="max-w-md mx-auto flex flex-col items-center text-center gap-6 relative z-10">
@@ -105,21 +105,21 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
           </p>
 
           <div className="grid grid-cols-2 gap-4 w-full pt-4">
-            <div className="bg-white rounded-3xl p-5 text-center shadow-xs border border-solid border-slate-100/80 flex flex-col gap-1">
+            <div className="flex flex-col gap-1 rounded-3xl border border-solid border-[#d8e9f6] bg-white p-5 text-center shadow-[0_12px_30px_rgba(18,56,110,0.10)]">
               <strong className="block text-2xl sm:text-3xl font-black text-sky-600">2,400+</strong>
               <span className="text-xs text-slate-500 font-semibold">Mentor đã xác thực</span>
             </div>
-            <div className="bg-white rounded-3xl p-5 text-center shadow-xs border border-solid border-slate-100/80 flex flex-col gap-1">
+            <div className="flex flex-col gap-1 rounded-3xl border border-solid border-[#d8e9f6] bg-white p-5 text-center shadow-[0_12px_30px_rgba(18,56,110,0.10)]">
               <strong className="block text-2xl sm:text-3xl font-black text-sky-600">
                 18,000+
               </strong>
               <span className="text-xs text-slate-500 font-semibold">Phiên học hoàn thành</span>
             </div>
-            <div className="bg-white rounded-3xl p-5 text-center shadow-xs border border-solid border-slate-100/80 flex flex-col gap-1">
+            <div className="flex flex-col gap-1 rounded-3xl border border-solid border-[#d8e9f6] bg-white p-5 text-center shadow-[0_12px_30px_rgba(18,56,110,0.10)]">
               <strong className="block text-2xl sm:text-3xl font-black text-sky-600">94%</strong>
               <span className="text-xs text-slate-500 font-semibold">Tỷ lệ hài lòng</span>
             </div>
-            <div className="bg-white rounded-3xl p-5 text-center shadow-xs border border-solid border-slate-100/80 flex flex-col gap-1">
+            <div className="flex flex-col gap-1 rounded-3xl border border-solid border-[#d8e9f6] bg-white p-5 text-center shadow-[0_12px_30px_rgba(18,56,110,0.10)]">
               <strong className="block text-2xl sm:text-3xl font-black text-sky-600">120+</strong>
               <span className="text-xs text-slate-500 font-semibold">Danh mục kỹ năng</span>
             </div>

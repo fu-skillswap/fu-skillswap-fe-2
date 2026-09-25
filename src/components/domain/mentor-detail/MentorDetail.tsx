@@ -524,10 +524,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
               ))}
             </div>
           ) : reviewsError ? (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>Không thể tải đánh giá. Vui lòng thử lại.</span>
-            </div>
+            <p className="m-0 text-xs leading-5 font-medium text-primary">
+              Chưa thể tải được, vui lòng thử lại sau.
+            </p>
           ) : reviews.length === 0 ? (
             <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm text-slate-500 text-xs sm:text-sm">
               Mentor chưa có đánh giá từ mentee.

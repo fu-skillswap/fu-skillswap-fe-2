@@ -11,9 +11,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 const navigation = [
-  { label: 'Dành cho mentee', href: '#mentee' },
-  { label: 'Dành cho mentor', href: '#mentor' },
-  { label: 'Khóa học ngắn', href: '#courses' },
+  { label: 'Về chúng tôi', href: '#mentor' },
   { label: 'Bảng giá', href: '#pricing' },
   { label: 'Câu hỏi thường gặp', href: '#faq' },
 ] as const;
@@ -23,16 +21,16 @@ export function LandingHeader({ locale }: { locale: string }) {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="landing-load-reveal landing-load-from-top sticky top-0 z-50 border-b border-border-light/80 bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex h-[82px] w-[calc(100%_-_40px)] max-w-[1440px] items-center justify-between gap-5 md:w-[calc(100%_-_64px)] xl:w-[calc(100%_-_96px)]">
+    <header className="landing-load-reveal landing-load-from-top sticky top-0 z-50 bg-white/96 backdrop-blur-md">
+      <div className="mx-auto flex h-[76px] w-[calc(100%_-_32px)] max-w-[1480px] items-center justify-between gap-2 sm:h-[84px] sm:w-[calc(100%_-_40px)] sm:gap-5 md:w-[calc(100%_-_64px)] xl:w-[calc(100%_-_96px)]">
         <Link href={`/${locale}`} aria-label="Trang chủ SkillSwap" className="shrink-0">
           <Image
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
-            width={190}
-            height={48}
+            width={280}
+            height={76}
             priority
-            className="h-12 w-[190px] object-cover object-center"
+            className="h-16 w-[180px] object-contain object-left sm:h-[72px] sm:w-[250px]"
           />
         </Link>
 
@@ -41,25 +39,19 @@ export function LandingHeader({ locale }: { locale: string }) {
             <a
               key={item.href}
               href={item.href}
-              className="text-[15px] font-medium text-[#435b78] transition-colors hover:text-primary focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="relative py-2 text-[15px] font-medium text-[#435b78] transition-colors after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-200 hover:text-primary hover:after:scale-x-100 focus-visible:rounded focus-visible:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:after:scale-x-100"
             >
               {item.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2.5 xl:flex">
+        <div className="hidden items-center xl:flex">
           <Link
-            href={`/${locale}/mentor-registration`}
-            className="inline-flex h-12 items-center rounded-xl border border-primary px-5 text-sm font-bold text-primary transition hover:-translate-y-px hover:bg-primary-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            href={`/${locale}/login`}
+            className="inline-flex h-[52px] items-center rounded-[13px] bg-primary px-7 text-sm font-bold text-white shadow-xs transition hover:-translate-y-px hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            Đăng ký làm mentor
-          </Link>
-          <Link
-            href={`/${locale}/dashboard`}
-            className="inline-flex h-12 items-center rounded-xl bg-primary px-6 text-sm font-bold text-white shadow-xs transition hover:-translate-y-px hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            Bắt đầu ngay
+            Đăng nhập / Đăng ký
           </Link>
         </div>
 
@@ -91,20 +83,13 @@ export function LandingHeader({ locale }: { locale: string }) {
               {item.label}
             </a>
           ))}
-          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border-light pt-4">
+          <div className="mt-3 border-t border-border-light pt-4">
             <Link
-              href={`/${locale}/mentor-registration`}
+              href={`/${locale}/login`}
               onClick={closeMenu}
-              className="grid min-h-11 place-items-center rounded-xl border border-primary-border px-3 text-center text-xs font-bold text-primary"
+              className="grid min-h-11 w-full place-items-center rounded-xl bg-primary px-3 text-center text-xs font-bold text-white"
             >
-              Đăng ký mentor
-            </Link>
-            <Link
-              href={`/${locale}/dashboard`}
-              onClick={closeMenu}
-              className="grid min-h-11 place-items-center rounded-xl bg-primary px-3 text-center text-xs font-bold text-white"
-            >
-              Bắt đầu ngay
+              Đăng nhập/ Đăng ký
             </Link>
           </div>
         </nav>
