@@ -8,21 +8,36 @@
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 
 const navigation = [
-  { label: 'Về chúng tôi', href: '#mentor' },
-  { label: 'Bảng giá', href: '#pricing' },
+  { label: 'Trang chủ', href: '/' },
+  { label: 'Dành cho mentee', href: '#mentee' },
+  { label: 'Đăng ký làm mentor', href: '#mentor' },
+  { label: 'Cách hoạt động', href: '#how-it-works' },
   { label: 'Câu hỏi thường gặp', href: '#faq' },
 ] as const;
 
 export function LandingHeader({ locale }: { locale: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const closeMenu = () => setIsOpen(false);
+  const navigationHref = (href: string) =>
+    href.startsWith('#') ? href : `/${locale}${href === '/' ? '' : href}`;
+  const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    closeMenu();
+    if (!href.startsWith('#')) return;
+
+    const target = document.querySelector(href);
+    if (!target) return;
+
+    event.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.history.replaceState(null, '', href);
+  };
 
   return (
     <header className="landing-load-reveal landing-load-from-top sticky top-0 z-50 bg-white/96 backdrop-blur-md">
-      <div className="mx-auto flex h-[76px] w-[calc(100%_-_32px)] max-w-[1480px] items-center justify-between gap-2 sm:h-[84px] sm:w-[calc(100%_-_40px)] sm:gap-5 md:w-[calc(100%_-_64px)] xl:w-[calc(100%_-_96px)]">
+      <div className="mx-auto flex h-[82px] w-[calc(100%_-_32px)] max-w-[1480px] items-center justify-between gap-2 sm:h-[94px] sm:w-[calc(100%_-_40px)] sm:gap-5 md:w-[calc(100%_-_64px)] xl:w-[calc(100%_-_96px)]">
         <Link href={`/${locale}`} aria-label="Trang chủ SkillSwap" className="shrink-0">
           <Image
             src="/images/SkillSwap_Logo_Text.png"
@@ -30,26 +45,27 @@ export function LandingHeader({ locale }: { locale: string }) {
             width={280}
             height={76}
             priority
-            className="h-16 w-[180px] object-contain object-left sm:h-[72px] sm:w-[250px]"
+            className="h-[68px] w-[190px] object-contain object-left sm:h-20 sm:w-[250px] xl:w-[230px] 2xl:w-[260px]"
           />
         </Link>
 
-        <nav aria-label="Điều hướng chính" className="hidden items-center gap-6 xl:flex 2xl:gap-11">
+        <nav aria-label="Điều hướng chính" className="hidden items-center gap-4 xl:flex 2xl:gap-6">
           {navigation.map((item) => (
-            <a
+            <Link
               key={item.href}
-              href={item.href}
-              className="relative py-2 text-[15px] font-medium text-[#435b78] transition-colors after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-200 hover:text-primary hover:after:scale-x-100 focus-visible:rounded focus-visible:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:after:scale-x-100"
+              href={navigationHref(item.href)}
+              onClick={(event) => handleNavigation(event, item.href)}
+              className="relative py-2.5 text-sm font-semibold whitespace-nowrap text-[#435b78] transition-colors after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-200 hover:text-primary hover:after:scale-x-100 focus-visible:rounded focus-visible:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:after:scale-x-100 2xl:text-[15px]"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
         <div className="hidden items-center xl:flex">
           <Link
             href={`/${locale}/login`}
-            className="inline-flex h-[52px] items-center rounded-[13px] bg-primary px-7 text-sm font-bold text-white shadow-xs transition hover:-translate-y-px hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="inline-flex h-14 items-center rounded-[14px] bg-primary px-8 text-[15px] font-bold text-white shadow-xs transition hover:-translate-y-px hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             Đăng nhập / Đăng ký
           </Link>
@@ -74,14 +90,14 @@ export function LandingHeader({ locale }: { locale: string }) {
       >
         <nav aria-label="Điều hướng di động" className="mx-auto grid max-w-[1220px] gap-1">
           {navigation.map((item) => (
-            <a
+            <Link
               key={item.href}
-              href={item.href}
-              onClick={closeMenu}
+              href={navigationHref(item.href)}
+              onClick={(event) => handleNavigation(event, item.href)}
               className="rounded-lg px-3 py-2.5 text-sm font-semibold text-text-secondary hover:bg-primary-light hover:text-primary"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
           <div className="mt-3 border-t border-border-light pt-4">
             <Link

@@ -9,7 +9,7 @@ import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions
 import type { MentorVerificationRequest, MentorVerificationStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
 import { showError } from '@/utils/toast';
-import { RefreshCw, Search } from 'lucide-react';
+import { FileSearch, RefreshCw, Search, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -43,6 +43,7 @@ const allRequestStatuses: MentorVerificationStatus[] = [
 ];
 const pageSize = 10;
 const allStatusesBatchSize = 100;
+type VerificationCountKey = MentorVerificationStatus | 'ALL';
 
 function formatDate(value: string | null) {
   if (!value) return 'Chưa gửi';
@@ -108,6 +109,28 @@ export function MentorVerificationView({ locale }: { locale: string }) {
   );
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [statusCounts, setStatusCounts] = useState<Partial<Record<VerificationCountKey, number>>>(
+    {},
+  );
+
+  const loadStatusCounts = useCallback(async () => {
+    try {
+      const responses = await Promise.all(
+        allRequestStatuses.map((status) =>
+          adminRepo.getMentorVerificationRequests({ status, page: 0, size: 1 }),
+        ),
+      );
+      const nextCounts: Partial<Record<VerificationCountKey, number>> = { ALL: 0 };
+      responses.forEach((response, index) => {
+        const status = allRequestStatuses[index];
+        nextCounts[status] = response.totalElements;
+        nextCounts.ALL = (nextCounts.ALL ?? 0) + response.totalElements;
+      });
+      setStatusCounts(nextCounts);
+    } catch {
+      // Count phụ trợ không được làm gián đoạn danh sách xác minh chính.
+    }
+  }, []);
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -142,6 +165,10 @@ export function MentorVerificationView({ locale }: { locale: string }) {
     void loadRequests();
   }, [loadRequests]);
 
+  useEffect(() => {
+    void loadStatusCounts();
+  }, [loadStatusCounts]);
+
   return (
     <main className="admin-dashboard mentor-verification-page">
       <div className="admin-workspace">
@@ -153,26 +180,35 @@ export function MentorVerificationView({ locale }: { locale: string }) {
         </header>
         <div className="mentor-verification-content">
           <section className="mentor-verification-heading">
-            <h1>Xác minh mentor</h1>
-            <p>Rà soát hồ sơ mentor và xác minh thông tin đã gửi.</p>
+            <div>
+              <h1>Xác minh mentor</h1>
+              <p>Rà soát hồ sơ mentor và xác minh thông tin đã gửi.</p>
+            </div>
           </section>
           <section className="mentor-verification-table">
-            <div className="mentor-tabs" role="tablist">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.label}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeStatus === tab.value}
-                  className={activeStatus === tab.value ? 'is-active' : ''}
-                  onClick={() => {
-                    setActiveStatus(tab.value);
-                    setPage(0);
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="mentor-tabs-scroll">
+              <div className="mentor-tabs" role="tablist">
+                {tabs.map((tab) => {
+                  const countKey = tab.value ?? 'ALL';
+                  const count = statusCounts[countKey];
+                  return (
+                    <button
+                      key={tab.label}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeStatus === tab.value}
+                      className={`mentor-tab-${countKey.toLowerCase().replaceAll('_', '-')} ${activeStatus === tab.value ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setActiveStatus(tab.value);
+                        setPage(0);
+                      }}
+                    >
+                      <span>{tab.label}</span>
+                      <b>{count === undefined ? '—' : count}</b>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="mentor-table-toolbar">
               <label>
@@ -186,7 +222,11 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                   placeholder="Tìm theo tên hoặc email..."
                 />
               </label>
-              <button type="button" onClick={() => void loadRequests()}>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void Promise.all([loadRequests(), loadStatusCounts()])}
+              >
                 <RefreshCw aria-hidden="true" /> Làm mới
               </button>
             </div>
@@ -245,7 +285,17 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                   ) : (
                     <tr>
                       <td colSpan={6} className="mentor-table-state">
-                        Không tìm thấy hồ sơ phù hợp.
+                        <div className="mentor-empty-state">
+                          <div aria-hidden="true">
+                            <UserRound />
+                            <FileSearch />
+                          </div>
+                          <strong>Không tìm thấy hồ sơ phù hợp.</strong>
+                          <span>
+                            Thử thay đổi từ khóa tìm kiếm hoặc chuyển sang tab khác
+                            <br /> để xem thêm kết quả.
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -260,14 +310,16 @@ export function MentorVerificationView({ locale }: { locale: string }) {
               <div>
                 <button
                   type="button"
+                  aria-label="Trang trước"
                   disabled={page === 0}
                   onClick={() => setPage((current) => current - 1)}
                 >
                   Trước
                 </button>
-                <b>{page + 1}</b>
+                <b aria-current="page">{page + 1}</b>
                 <button
                   type="button"
+                  aria-label="Trang sau"
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((current) => current + 1)}
                 >

@@ -5,7 +5,6 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import type {
   AvailabilitySlotsQuery,
   AvailabilitySlotsResponse,
@@ -16,6 +15,7 @@ import type {
 } from '@/models/auth';
 import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { useCallback, useEffect, useState } from 'react';
 
 export interface MentorSchedulingReadData {
@@ -32,22 +32,7 @@ interface SchedulingReadErrors {
 }
 
 function getErrorMessage(reason: unknown) {
-  if (!(reason instanceof ApiClientError)) {
-    return 'Unable to load the scheduling configuration. Please try again.';
-  }
-
-  switch (reason.status) {
-    case 403:
-      return 'You do not have permission to view the scheduling configuration.';
-    case 404:
-      return 'The scheduling configuration was not found.';
-    case 409:
-      return 'The scheduling configuration changed. Please reload and try again.';
-    case 429:
-      return 'Too many requests. Please try again later.';
-    default:
-      return reason.message;
-  }
+  return getUserFriendlyErrorMessage(reason, 'Không thể tải cấu hình lịch. Vui lòng thử lại.');
 }
 
 /**

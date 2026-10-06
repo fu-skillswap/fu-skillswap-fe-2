@@ -7,6 +7,7 @@
 
 import type { CreateBookingRequest } from '@/models/auth';
 import { mentorRepo } from '@/repositories/mentorRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { useState } from 'react';
 
 /**
@@ -43,12 +44,14 @@ export function useMentorBooking() {
       setIdempotencyKey(null);
       setMessage('Gửi yêu cầu đặt lịch thành công.');
       return true;
-    } catch (err: any) {
+    } catch (err) {
       // Giữ nguyên Idempotency-Key để hỗ trợ Retry cùng request
-      const errorMsg =
-        err?.message ||
-        'Khung giờ này vừa có người khác chốt lịch. Đã tự động tải lại danh sách khung giờ rảnh để bạn chọn khung giờ khác!';
-      setError(errorMsg);
+      setError(
+        getUserFriendlyErrorMessage(
+          err,
+          'Không thể gửi yêu cầu đặt lịch. Vui lòng chọn khung giờ khác hoặc thử lại.',
+        ),
+      );
       return false;
     } finally {
       setIsSubmitting(false);

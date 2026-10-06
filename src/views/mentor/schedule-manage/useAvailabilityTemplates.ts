@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import type { AvailabilityTemplateResponse } from '@/models/auth';
-import { ApiClientError } from '@/models/apiClient';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 
 function uniqueTemplatesById(templates: AvailabilityTemplateResponse[]) {
   return Array.from(new Map(templates.map((template) => [template.templateId, template])).values());
@@ -38,11 +38,7 @@ export function useAvailabilityTemplates() {
       setNextCursor(res.nextCursor ?? null);
       setHasNext(res.hasNext);
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err.message);
-      } else {
-        setError('Không thể tải danh sách mẫu lịch lặp.');
-      }
+      setError(getUserFriendlyErrorMessage(err, 'Không thể tải danh sách mẫu lịch lặp.'));
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);

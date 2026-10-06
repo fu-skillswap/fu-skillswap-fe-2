@@ -13,6 +13,9 @@ export const mentorPostSchema = yup.object({
     .max(220, 'Tiêu đề tối đa 220 ký tự.'),
   excerpt: yup.string().trim().max(500, 'Mô tả ngắn tối đa 500 ký tự.').default(''),
   contentMarkdown: yup.string().trim().default(''),
+  categoryIds: yup.array().of(yup.string().required()).default([]),
+  tagIds: yup.array().of(yup.string().required()).default([]),
+  coverAssetId: yup.string().optional(),
   visibility: yup
     .mixed<'PUBLIC' | 'AUTHENTICATED' | 'BOOKED_MEMBERS'>()
     .oneOf(['PUBLIC', 'AUTHENTICATED', 'BOOKED_MEMBERS'])

@@ -5,7 +5,6 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminUserSummary } from '@/models/admin';
 import {
@@ -13,16 +12,23 @@ import {
   type UserAccountActionForm,
 } from '@/models/schemas/adminUserSchema';
 import { adminRepo } from '@/repositories/adminRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   ArrowLeft,
-  Ban,
+  CalendarCheck,
+  CalendarDays,
   CircleUserRound,
+  CreditCard,
+  Flag,
   GraduationCap,
+  HandCoins,
   LoaderCircle,
+  LockKeyhole,
   Star,
   TrendingUp,
-  WalletCards,
+  UnlockKeyhole,
+  UserRound,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -48,7 +54,7 @@ const detailTabs: Array<{ value: DetailTab; label: string }> = [
 ];
 
 function getErrorMessage(reason: unknown, fallback = 'Không thể tải thông tin người dùng.') {
-  return reason instanceof ApiClientError ? reason.message : fallback;
+  return getUserFriendlyErrorMessage(reason, fallback);
 }
 
 function formatDate(value: string | null) {
@@ -71,6 +77,46 @@ function getStatusLabel(status: string) {
 function InitialAvatar({ name }: { name: string }) {
   return (
     <span className="admin-user-detail-initial">{name.trim().charAt(0).toUpperCase() || '?'}</span>
+  );
+}
+
+function RoleBadge({ roles }: { roles: string[] }) {
+  return (
+    <>
+      {roles.map((role) => (
+        <span className="admin-user-role-badge" key={role}>
+          <UserRound aria-hidden="true" /> {role}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span className={`admin-user-status ${status.toLowerCase().replaceAll('_', '-')}`}>
+      <i aria-hidden="true" /> {getStatusLabel(status)}
+    </span>
+  );
+}
+
+function EmptyProfile({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof GraduationCap;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="admin-user-profile-empty">
+      <span aria-hidden="true">
+        <Icon />
+      </span>
+      <strong>{title}</strong>
+      <p>{description}</p>
+    </div>
   );
 }
 
@@ -131,7 +177,7 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
   const academicProfile = user.academicProfile;
   const mentorProfile = user.mentorProfile;
   const activitySummary = user.activitySummary;
-  const isBanned = user.status === 'BANNED';
+  const isLocked = user.status === 'BANNED' || user.status === 'SUSPENDED';
 
   const openAccountAction = (action: UserAccountAction) => {
     resetActionForm();
@@ -180,51 +226,45 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
           <ArrowLeft aria-hidden="true" /> Quay lại danh sách người dùng
         </Link>
         <section className="admin-user-hero">
-          {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" />
-          ) : (
-            <InitialAvatar name={user.fullName} />
-          )}
-          <div>
+          <div className="admin-user-hero-avatar">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt={`Ảnh đại diện của ${user.fullName}`} />
+            ) : (
+              <InitialAvatar name={user.fullName} />
+            )}
+          </div>
+          <div className="admin-user-hero-identity">
             <h1>{user.fullName}</h1>
             <p>{user.email}</p>
             <div className="admin-user-detail-badges">
-              {user.roles.map((role) => (
-                <span key={role}>{role}</span>
-              ))}
-              <span
-                className={`admin-user-status ${user.status.toLowerCase().replaceAll('_', '-')}`}
-              >
-                {getStatusLabel(user.status)}
-              </span>
+              <RoleBadge roles={user.roles} />
+              <StatusBadge status={user.status} />
             </div>
           </div>
           <div className="admin-user-account-actions">
-            <button
-              type="button"
-              className="danger"
-              disabled={isBanned}
-              onClick={() => openAccountAction('ban')}
-            >
-              <Ban aria-hidden="true" /> Khóa tài khoản
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              disabled={!isBanned}
-              onClick={() => openAccountAction('unban')}
-            >
-              Mở lại tài khoản
-            </button>
+            {isLocked ? (
+              <button type="button" onClick={() => openAccountAction('unban')}>
+                <UnlockKeyhole aria-hidden="true" /> Mở khóa tài khoản
+              </button>
+            ) : (
+              <button type="button" onClick={() => openAccountAction('ban')}>
+                <LockKeyhole aria-hidden="true" /> Khóa tài khoản
+              </button>
+            )}
           </div>
         </section>
-        <nav className="admin-user-detail-tabs" aria-label="Nội dung chi tiết người dùng">
+        <nav
+          className="admin-user-detail-tabs"
+          aria-label="Nội dung chi tiết người dùng"
+          role="tablist"
+        >
           {detailTabs.map((tab) => (
             <button
               key={tab.value}
               type="button"
+              role="tab"
               className={activeTab === tab.value ? 'is-active' : ''}
-              aria-current={activeTab === tab.value ? 'page' : undefined}
+              aria-selected={activeTab === tab.value}
               onClick={() => setActiveTab(tab.value)}
             >
               {tab.label}
@@ -235,12 +275,27 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
           <div className="admin-user-detail-grid">
             <section className="admin-user-detail-card admin-user-account-card">
               <h2>
-                <CircleUserRound aria-hidden="true" /> Thông tin tài khoản
+                <span>
+                  <CircleUserRound aria-hidden="true" />
+                </span>{' '}
+                Thông tin tài khoản
               </h2>
               <dl>
                 <div>
                   <dt>Email</dt>
                   <dd>{user.email}</dd>
+                </div>
+                <div>
+                  <dt>Vai trò</dt>
+                  <dd className="admin-user-info-badges">
+                    <RoleBadge roles={user.roles} />
+                  </dd>
+                </div>
+                <div>
+                  <dt>Trạng thái</dt>
+                  <dd className="admin-user-info-badges">
+                    <StatusBadge status={user.status} />
+                  </dd>
                 </div>
                 <div>
                   <dt>Ngày tạo</dt>
@@ -250,11 +305,18 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
                   <dt>Đăng nhập gần nhất</dt>
                   <dd>{formatDate(user.lastLoginAt)}</dd>
                 </div>
+                <div>
+                  <dt>Mã sinh viên</dt>
+                  <dd>{academicProfile?.studentCode ?? 'Chưa cập nhật'}</dd>
+                </div>
               </dl>
             </section>
             <section className="admin-user-detail-card admin-user-academic-card">
               <h2>
-                <GraduationCap aria-hidden="true" /> Hồ sơ học thuật
+                <span>
+                  <GraduationCap aria-hidden="true" />
+                </span>{' '}
+                Hồ sơ học thuật
               </h2>
               {academicProfile ? (
                 <dl className="admin-user-academic-fields">
@@ -298,12 +360,19 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
                   </div>
                 </dl>
               ) : (
-                <p className="admin-user-detail-empty">Người dùng chưa cập nhật hồ sơ học thuật.</p>
+                <EmptyProfile
+                  icon={GraduationCap}
+                  title="Chưa có hồ sơ học thuật"
+                  description="Người dùng chưa cập nhật hồ sơ học thuật."
+                />
               )}
             </section>
             <section className="admin-user-detail-card admin-user-mentor-card">
               <h2>
-                <Star aria-hidden="true" /> Hồ sơ mentor
+                <span>
+                  <Star aria-hidden="true" />
+                </span>{' '}
+                Hồ sơ mentor
               </h2>
               {mentorProfile?.exists ? (
                 <dl className="admin-user-mentor-fields">
@@ -333,27 +402,50 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
                   </div>
                 </dl>
               ) : (
-                <p className="admin-user-detail-empty">Người dùng chưa có hồ sơ mentor.</p>
+                <EmptyProfile
+                  icon={Star}
+                  title="Chưa có hồ sơ mentor"
+                  description="Người dùng chưa có hồ sơ mentor."
+                />
               )}
             </section>
             <section className="admin-user-detail-card admin-user-activity-card">
               <h2>
-                <TrendingUp aria-hidden="true" /> Hoạt động trên nền tảng
+                <span>
+                  <TrendingUp aria-hidden="true" />
+                </span>{' '}
+                Hoạt động trên nền tảng
               </h2>
               <div className="admin-user-activity-grid">
                 <ActivityItem
                   label="Lịch đặt với vai trò mentee"
                   value={activitySummary.menteeBookingCount}
+                  icon={CalendarDays}
+                  tone="blue"
                 />
                 <ActivityItem
                   label="Lịch nhận với vai trò mentor"
                   value={activitySummary.mentorBookingCount}
+                  icon={CalendarCheck}
+                  tone="green"
                 />
-                <ActivityItem label="Đơn thanh toán" value={activitySummary.paymentOrderCount} />
-                <ActivityItem label="Yêu cầu rút tiền" value={activitySummary.payoutRequestCount} />
+                <ActivityItem
+                  label="Đơn thanh toán"
+                  value={activitySummary.paymentOrderCount}
+                  icon={CreditCard}
+                  tone="purple"
+                />
+                <ActivityItem
+                  label="Yêu cầu rút tiền"
+                  value={activitySummary.payoutRequestCount}
+                  icon={HandCoins}
+                  tone="orange"
+                />
                 <ActivityItem
                   label="Báo cáo đã tạo"
                   value={activitySummary.forumReportCreatedCount}
+                  icon={Flag}
+                  tone="red"
                 />
               </div>
             </section>
@@ -430,10 +522,22 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
   );
 }
 
-function ActivityItem({ label, value }: { label: string; value: number }) {
+function ActivityItem({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: number;
+  icon: typeof CreditCard;
+  tone: 'blue' | 'green' | 'purple' | 'orange' | 'red';
+}) {
   return (
-    <div>
-      <WalletCards aria-hidden="true" />
+    <div className={`admin-user-activity-metric ${tone}`}>
+      <i aria-hidden="true">
+        <Icon />
+      </i>
       <strong>{formatNumber(value)}</strong>
       <span>{label}</span>
     </div>

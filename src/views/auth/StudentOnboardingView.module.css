@@ -1,0 +1,105 @@
+.onboardingGrid {
+  display: grid;
+  grid-template-areas:
+    'content aside'
+    'action aside';
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  align-items: start;
+}
+
+.formContent {
+  grid-area: content;
+}
+
+.sidePanel {
+  grid-area: aside;
+}
+
+.actionBar {
+  grid-area: action;
+}
+
+.onboardingField {
+  border-color: #d7e3f0;
+  background-color: #fff;
+  background-image: linear-gradient(135deg, #fff 0%, #f9fcff 100%);
+  box-shadow: 0 2px 7px rgba(30, 80, 130, 0.045);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.onboardingField:hover:not(:disabled) {
+  border-color: rgba(0, 149, 246, 0.58);
+  background-color: #f4f9ff;
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(0, 149, 246, 0.1) 1px, transparent 1.2px),
+    linear-gradient(135deg, #fff 0%, #edf7ff 100%);
+  background-size:
+    16px 16px,
+    auto;
+  box-shadow: 0 8px 20px rgba(0, 149, 246, 0.13);
+  transform: translateY(-1px);
+}
+
+.onboardingField:focus,
+.onboardingField:focus-visible,
+.onboardingField[data-state='open'] {
+  border-color: #0095f6;
+  background-color: #f1f8ff;
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(0, 149, 246, 0.11) 1px, transparent 1.2px),
+    linear-gradient(135deg, #fff 0%, #eaf6ff 100%);
+  background-size:
+    16px 16px,
+    auto;
+  box-shadow:
+    0 0 0 4px rgba(0, 149, 246, 0.11),
+    0 10px 24px rgba(0, 149, 246, 0.14);
+  transform: translateY(-1px);
+}
+
+.onboardingField:-webkit-autofill {
+  -webkit-text-fill-color: #0f172a;
+  -webkit-box-shadow:
+    0 0 0 1000px #edf6ff inset,
+    0 5px 14px rgba(0, 149, 246, 0.11);
+}
+
+.speechBubble::after {
+  position: absolute;
+  bottom: -8px;
+  left: 30px;
+  width: 18px;
+  height: 18px;
+  content: '';
+  background: white;
+  transform: rotate(45deg);
+  border-right: 1px solid #e5edf7;
+  border-bottom: 1px solid #e5edf7;
+}
+
+@media (max-width: 1023px) {
+  .onboardingGrid {
+    grid-template-areas:
+      'content'
+      'aside'
+      'action';
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboardingField {
+    transition: none;
+  }
+
+  .onboardingField:hover:not(:disabled),
+  .onboardingField:focus,
+  .onboardingField:focus-visible,
+  .onboardingField[data-state='open'] {
+    transform: none;
+  }
+}

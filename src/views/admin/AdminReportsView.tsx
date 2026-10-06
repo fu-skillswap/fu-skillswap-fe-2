@@ -101,7 +101,7 @@ export function AdminReportsView() {
         </section>
         <section className="admin-reports-table" aria-labelledby="admin-reports-title">
           <div className="admin-reports-toolbar">
-            <label>
+            <label className="admin-reports-search">
               <Search aria-hidden="true" />
               <input
                 value={keyword}
@@ -113,7 +113,7 @@ export function AdminReportsView() {
                 aria-label="Tìm báo cáo"
               />
             </label>
-            <div>
+            <div className="admin-reports-toolbar-controls">
               <label className="admin-users-status-filter">
                 <Filter aria-hidden="true" />
                 <span>Trạng thái</span>
@@ -180,6 +180,8 @@ export function AdminReportsView() {
                   key={pageNumber}
                   type="button"
                   className={pageNumber === page ? 'is-active' : ''}
+                  aria-current={pageNumber === page ? 'page' : undefined}
+                  aria-label={`Trang ${pageNumber + 1}`}
                   disabled={loading}
                   onClick={() => setPage(pageNumber)}
                 >

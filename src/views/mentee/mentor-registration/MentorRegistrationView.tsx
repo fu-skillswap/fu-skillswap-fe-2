@@ -1,18 +1,15 @@
-/**
- * @file MentorRegistrationView.tsx
- * @description Giao diện Đăng ký / Cập nhật Hồ sơ Mentor (Mentor Registration View).
- * Hỗ trợ chế độ Dashboard Read-Only cho các thông tin đã xác thực khi hồ sơ ở trạng thái APPROVED,
- * đồng thời giữ mục Dự án tiêu biểu & Học vấn/Giải thưởng ở dạng Editable.
- */
-
 'use client';
 
 import Link from 'next/link';
-import React, { useState } from 'react';
-import { Clock, CheckCircle2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Check, CheckCircle2, Clock3, Save, Send, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { SelectOption } from '@/components/ui/SelectField';
+import type { SelectOption } from '@/components/ui/SelectField';
+import { useAuth } from '@/providers/AuthProvider';
+import { showWarning } from '@/utils/toast';
 import { useMentorRegistration } from './useMentorRegistration';
+import { useMentorDraft } from './hooks/useMentorDraft';
 import { BasicInfoSection } from './components/BasicInfoSection';
 import { SubjectResultsSection } from './components/SubjectResultsSection';
 import { SupportLevelsSection } from './components/SupportLevelsSection';
@@ -22,25 +19,31 @@ import { BookingConfigSection } from './components/BookingConfigSection';
 import { DocumentUploadSection } from './components/DocumentUploadSection';
 import { MentorDashboardReadOnly } from './components/MentorDashboardReadOnly';
 import { TermsModal } from './components/TermsModal';
+import { MentorWizardStepper } from './components/MentorWizardStepper';
+import { MentorBenefitsCard } from './components/MentorBenefitsCard';
+import { MENTOR_REVIEW_DURATION, MENTOR_STEPS, STEP_FIELDS } from './mentorRegistration.constants';
 
-const levelOptions: SelectOption[] = [
-  { value: '1', label: 'Mức 1' },
-  { value: '2', label: 'Mức 2' },
-  { value: '3', label: 'Mức 3' },
-  { value: '4', label: 'Mức 4' },
-  { value: '5', label: 'Mức 5' },
-];
+const levelOptions: SelectOption[] = [1, 2, 3, 4, 5].map((value) => ({
+  value: String(value),
+  label: `Mức ${value}`,
+}));
 
 export function MentorRegistrationView({ locale }: { locale: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const requestedStep = Number(searchParams.get('step') || 1);
+  const step = requestedStep >= 1 && requestedStep <= 5 ? requestedStep : 1;
   const [showTermsModal, setShowTermsModal] = useState(false);
 
+  const registration = useMentorRegistration();
   const {
     form,
     register,
     control,
     watch,
     errors,
-    isValid,
     isSubmitting,
     isLoading,
     isExistingProfile,
@@ -66,165 +69,195 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
     removeAchievement,
     submitProfile,
     withdrawProfile,
-  } = useMentorRegistration();
+  } = registration;
+  const { setValue, getValues, reset, trigger } = form;
+  const { saveDraft, lastSavedAt, clearDraft } = useMentorDraft({
+    userId: user?.id,
+    loading: isLoading,
+    watch,
+    getValues,
+    reset,
+  });
 
-  const isAvailable = watch('isAvailable');
-  const agreeTerms = watch('agreeTerms');
+  const existingFptu =
+    verificationData?.documents?.some(
+      (item) => item.documentType === 'FPTU_AFFILIATION_PROOF' && item.isActive !== false,
+    ) ?? false;
+  const existingExpertiseCount =
+    verificationData?.documents?.filter(
+      (item) => item.documentType === 'EXPERTISE_PROOF' && item.isActive !== false,
+    ).length ?? 0;
+  const hasFptu = Boolean(selectedFptuFile || existingFptu || isExistingProfile);
+  const hasExpertise =
+    selectedExpertiseFiles.length + existingExpertiseCount > 0 || isExistingProfile;
+  const current = MENTOR_STEPS[step - 1];
+  const values = watch();
 
-  const hasExistingExpertise =
-    (verificationData?.documents?.filter(
-      (d) => d.documentType === 'EXPERTISE_PROOF' && d.isActive !== false,
-    ).length ?? 0) > 0;
+  const goToStep = (next: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('step', String(next));
+    router.push(`${pathname}?${params.toString()}`, { scroll: true });
+  };
 
-  const isFormDisabled = isSubmitting || isPendingReview;
-  const isSubmitDisabled =
-    isFormDisabled ||
-    !isValid ||
-    !agreeTerms ||
-    (!selectedFptuFile && !isExistingProfile) ||
-    (selectedExpertiseFiles.length === 0 && !hasExistingExpertise && !isExistingProfile);
+  const nextStep = async () => {
+    if (step === 4 && (!hasFptu || !hasExpertise)) {
+      showWarning(
+        !hasFptu
+          ? 'Vui lòng tải lên minh chứng sinh viên/cựu sinh viên FPTU.'
+          : 'Vui lòng tải lên ít nhất một minh chứng chuyên môn.',
+      );
+      return;
+    }
+    const valid =
+      STEP_FIELDS[step].length === 0 || (await trigger(STEP_FIELDS[step], { shouldFocus: true }));
+    if (!valid) return;
+    saveDraft();
+    goToStep(Math.min(5, step + 1));
+  };
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isPendingReview) clearDraft();
+  }, [clearDraft, isPendingReview]);
+
+  const completedRequired = useMemo(() => {
+    return [
+      Boolean(values.headline),
+      Boolean(values.expertiseDescription),
+      Boolean(values.phoneNumber),
+      Boolean(values.foundationSupportLevel),
+      Boolean(values.outputReviewSupportLevel),
+      Boolean(values.directionSupportLevel),
+      Boolean(values.minimumBookingLeadTimeMinutes),
+      Boolean(values.maximumBookingHorizonDays),
+      hasFptu,
+      hasExpertise,
+    ].filter(Boolean).length;
+  }, [hasExpertise, hasFptu, values]);
+
+  if (isLoading)
     return (
-      <main className="min-h-screen bg-slate-50/60 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:16px_16px] py-16 px-4 flex items-center justify-center">
-        <div className="text-center text-slate-500 text-sm font-medium">
-          Đang tải dữ liệu hồ sơ Mentor...
+      <main className="grid min-h-[60vh] place-items-center bg-slate-50 text-sm font-semibold text-slate-600">
+        Đang tải dữ liệu hồ sơ Mentor...
+      </main>
+    );
+
+  if (isPendingReview) return <StatusScreen locale={locale} />;
+
+  if (isApproved)
+    return (
+      <main className="min-h-screen bg-slate-50 px-4 py-8">
+        <div className="mx-auto max-w-5xl space-y-5">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+            <h1 className="m-0 flex items-center gap-2 text-2xl font-bold text-emerald-900">
+              <CheckCircle2 /> Hồ sơ Mentor đã được phê duyệt
+            </h1>
+            <p className="mb-0 mt-2 text-sm text-emerald-800">
+              Thông tin xác thực đã được khóa. Bạn vẫn có thể cập nhật dự án và thành tích nổi bật.
+            </p>
+          </div>
+          <MentorDashboardReadOnly watch={watch} verificationData={verificationData} />
+          <FeaturedProjectsSection
+            register={register}
+            errors={errors}
+            projectFields={projectFields}
+            appendProject={appendProject}
+            removeProject={removeProject}
+          />
+          <AchievementsSection
+            register={register}
+            errors={errors}
+            achievementFields={achievementFields}
+            appendAchievement={appendAchievement}
+            removeAchievement={removeAchievement}
+          />
         </div>
       </main>
     );
-  }
 
   return (
-    <main className="min-h-screen bg-slate-50/60 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:16px_16px] py-10 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
-            {isApproved
-              ? 'Quản lý Hồ sơ Mentor (Đã duyệt)'
-              : isExistingProfile
-                ? 'Cập nhật Hồ sơ Mentor'
-                : 'Đăng ký trở thành Mentor'}
-          </h1>
-          <p className="text-slate-500 text-sm sm:text-base leading-relaxed">
-            {isApproved
-              ? 'Hồ sơ chuyên môn của bạn đã được kiểm duyệt chính thức. Bạn có thể cập nhật danh sách các Dự án thực tế và Giải thưởng nổi bật.'
-              : isExistingProfile
-                ? 'Đăng ký thông tin năng lực, kinh nghiệm chuyên môn, minh chứng và thời gian có thể tư vấn của bạn.'
-                : 'Chia sẻ kinh nghiệm, chuyên môn và thiết lập thời gian có thể tư vấn cho Mentee.'}
-          </p>
-        </div>
-
-        {/* DÒNG TRẠNG THÁI HỒ SƠ ĐANG CHỜ DUYỆT */}
-        {isPendingReview && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/80 border border-blue-200/80 text-blue-900 flex items-center gap-3.5 shadow-sm">
-            <Clock className="w-6 h-6 text-blue-600 shrink-0" />
-            <div>
-              <strong className="block text-sm font-bold text-blue-800">
-                Hồ sơ đang chờ duyệt
-              </strong>
-              <span className="text-xs text-blue-600">
-                Hồ sơ đang chờ Admin xem xét đối soát, vui lòng đợi 1-2 ngày làm việc.
-              </span>
-            </div>
+    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-[1180px]">
+        <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <h1 className="m-0 text-2xl font-extrabold text-slate-950 sm:text-3xl">
+              Đăng ký trở thành Mentor
+            </h1>
+            <p className="mb-0 mt-1 text-sm text-slate-600">
+              Chia sẻ kinh nghiệm – Truyền cảm hứng – Cùng phát triển cộng đồng sinh viên FPT
+            </p>
           </div>
-        )}
-
-        {/* DÒNG TRẠNG THÁI HỒ SƠ ĐÃ ĐƯỢC PHÊ DUYỆT (APPROVED) */}
-        {isApproved && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-900 flex items-center gap-3.5 shadow-sm">
-            <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
-            <div>
-              <strong className="block text-sm font-bold text-emerald-800">
-                Hồ sơ Mentor đã được phê duyệt thành công
-              </strong>
-              <span className="text-xs text-emerald-700">
-                Các thông tin cơ bản, tư cách FPTU và cài đặt thời gian đặt lịch đã được kiểm duyệt
-                và khóa cố định. Bạn có thể tự do thêm, sửa hoặc xóa các Dự án tiêu biểu và Học
-                vấn/Giải thưởng bên dưới.
-              </span>
-            </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <Clock3 className="h-4 w-4 text-sky-600" /> Thời gian hoàn thành:{' '}
+            <strong className="text-sky-700">~5 phút</strong>
           </div>
-        )}
+        </header>
 
-        <form onSubmit={submitProfile} className="space-y-6">
-          {/* NẾU HỒ SƠ Ở TRẠNG THÁI APPROVED -> HIỂN THỊ DASHBOARD READ-ONLY CHO CÁC MỤC CỐ ĐỊNH */}
-          {isApproved ? (
-            <>
-              <MentorDashboardReadOnly watch={watch} verificationData={verificationData} />
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <MentorWizardStepper step={step} onGoBack={goToStep} />
+        </section>
 
-              {/* SECTION DỰ ÁN TIÊU BIỂU (EDITABLE) */}
-              <FeaturedProjectsSection
+        <div className={`mt-5 grid gap-5 ${step <= 3 ? 'lg:grid-cols-[minmax(0,1fr)_280px]' : ''}`}>
+          <form onSubmit={submitProfile} className="min-w-0 space-y-4">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-wide text-sky-600">
+                Bước {step}/5
+              </span>
+              <h2 className="mb-0 mt-1 text-xl font-extrabold text-slate-950">{current.label}</h2>
+              <p className="mb-0 mt-1 text-sm text-slate-600">{current.purpose}</p>
+            </section>
+
+            {step === 1 && (
+              <BasicInfoSection
                 register={register}
                 errors={errors}
-                projectFields={projectFields}
-                appendProject={appendProject}
-                removeProject={removeProject}
-                disabled={false}
+                watch={watch}
+                setValue={setValue}
+                disabled={isSubmitting}
               />
-
-              {/* SECTION HỌC VẤN & GIẢI THƯỞNG NỔI BẬT (EDITABLE) */}
-              <AchievementsSection
-                register={register}
-                errors={errors}
-                achievementFields={achievementFields}
-                appendAchievement={appendAchievement}
-                removeAchievement={removeAchievement}
-                disabled={false}
-              />
-            </>
-          ) : (
-            /* NẾU HỒ SƠ CHƯA APPROVED -> HIỂN THỊ DẠNG FORM CHỈNH SỬA ĐẦY ĐỦ */
-            <>
-              {/* SECTION 1: THÔNG TIN CƠ BẢN */}
-              <BasicInfoSection register={register} errors={errors} disabled={isFormDisabled} />
-
-              {/* SECTION 2: DANH MỤC MÔN HỌC & ĐIỂM SỐ */}
-              <SubjectResultsSection
-                register={register}
-                errors={errors}
-                fields={fields}
-                append={append}
-                remove={remove}
-                disabled={isFormDisabled}
-              />
-
-              {/* SECTION 3: MỨC ĐỘ HỖ TRỢ */}
-              <SupportLevelsSection
-                control={control}
-                errors={errors}
-                levelOptions={levelOptions}
-                disabled={isFormDisabled}
-              />
-
-              {/* SECTION 4: DỰ ÁN TIÊU BIỂU */}
-              <FeaturedProjectsSection
-                register={register}
-                errors={errors}
-                projectFields={projectFields}
-                appendProject={appendProject}
-                removeProject={removeProject}
-                disabled={isFormDisabled}
-              />
-
-              {/* SECTION 5: HỌC VẤN & GIẢI THƯỞNG NỔI BẬT */}
-              <AchievementsSection
-                register={register}
-                errors={errors}
-                achievementFields={achievementFields}
-                appendAchievement={appendAchievement}
-                removeAchievement={removeAchievement}
-                disabled={isFormDisabled}
-              />
-
-              {/* SECTION 6: CẤU HÌNH ĐẶT LỊCH */}
+            )}
+            {step === 2 && (
+              <>
+                <SubjectResultsSection
+                  register={register}
+                  errors={errors}
+                  fields={fields}
+                  append={append}
+                  remove={remove}
+                  disabled={isSubmitting}
+                />
+                <SupportLevelsSection
+                  control={control}
+                  errors={errors}
+                  levelOptions={levelOptions}
+                  disabled={isSubmitting}
+                />
+                <FeaturedProjectsSection
+                  register={register}
+                  errors={errors}
+                  projectFields={projectFields}
+                  appendProject={appendProject}
+                  removeProject={removeProject}
+                  disabled={isSubmitting}
+                />
+                <AchievementsSection
+                  register={register}
+                  errors={errors}
+                  achievementFields={achievementFields}
+                  appendAchievement={appendAchievement}
+                  removeAchievement={removeAchievement}
+                  disabled={isSubmitting}
+                />
+              </>
+            )}
+            {step === 3 && (
               <BookingConfigSection
                 register={register}
                 errors={errors}
-                isAvailable={isAvailable}
-                disabled={isFormDisabled}
+                isAvailable={watch('isAvailable')}
+                disabled={isSubmitting}
               />
-
-              {/* SECTION 7: TẢI LÊN MINH CHỨNG FPTU & CHỨNG CHỈ CHUYÊN MÔN */}
+            )}
+            {step === 4 && (
               <DocumentUploadSection
                 selectedFptuFile={selectedFptuFile}
                 onSelectFptuFile={setSelectedFptuFile}
@@ -232,86 +265,212 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
                 onAddExpertiseFiles={onAddExpertiseFiles}
                 onRemoveExpertiseFile={onRemoveExpertiseFile}
                 verificationData={verificationData}
-                disabled={isFormDisabled}
+                disabled={isSubmitting}
                 fptuError={fptuUploadError}
                 expertiseError={expertiseUploadError}
               />
-
-              {/* SECTION 8: XÁC NHẬN ĐIỀU KHOẢN VẬN HÀNH */}
-              <fieldset
-                disabled={isFormDisabled}
-                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm disabled:opacity-75"
+            )}
+            {step === 5 && (
+              <ReviewStep
+                values={values}
+                completed={completedRequired}
+                total={10}
+                agreeTerms={Boolean(values.agreeTerms)}
+                register={register}
+                errors={errors}
+                onEdit={goToStep}
+                onTerms={() => setShowTermsModal(true)}
+              />
+            )}
+            {serverError && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700"
               >
-                <label className="inline-flex items-center gap-2.5 cursor-pointer text-sm font-medium text-slate-800">
-                  <input
-                    type="checkbox"
-                    className="w-4.5 h-4.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 accent-sky-600 cursor-pointer"
-                    {...register('agreeTerms')}
-                  />
-                  <span>
-                    Tôi đồng ý với{' '}
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => setShowTermsModal(true)}
-                      className="bg-transparent border-0 text-sky-600 font-bold underline p-0 cursor-pointer hover:text-sky-700 transition-colors"
-                    >
-                      điều khoản vận hành
-                    </button>{' '}
-                    của SkillSwap <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </span>
-                </label>
-                {errors.agreeTerms && (
-                  <p className="text-xs font-medium text-red-500 mt-1">
-                    {errors.agreeTerms.message}
+                {serverError}
+              </div>
+            )}
+
+            <footer className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
+              <div>
+                <Button type="button" variant="outline" leftIcon={<Save />} onClick={saveDraft}>
+                  Lưu nháp
+                </Button>
+                {lastSavedAt && (
+                  <p className="mb-0 mt-1 text-[11px] text-slate-500">
+                    Đã lưu nháp lúc{' '}
+                    {lastSavedAt.toLocaleTimeString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </p>
                 )}
-              </fieldset>
-            </>
-          )}
-
-          {/* HIỂN THỊ LỖI THẤT BẠI NGAY TRÊN NÚT SUBMIT NẾU CÓ */}
-          {serverError && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold">
-              {serverError}
-            </div>
-          )}
-
-          {/* ACTION BUTTONS */}
-          <div className="flex items-center justify-end gap-3 pt-2 pb-10">
-            <Link
-              href={`/${locale}/dashboard`}
-              className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors text-center inline-flex items-center justify-center decoration-0"
-            >
-              {isApproved ? 'Quay lại Dashboard' : 'Hủy bỏ'}
-            </Link>
-            {isPendingReview ? (
-              <Button
-                type="button"
-                onClick={withdrawProfile}
-                className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm border-0"
-              >
-                Rút hồ sơ
-              </Button>
-            ) : isApproved ? (
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-sm border border-emerald-200">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Hồ sơ đã phê duyệt
               </div>
-            ) : (
-              <Button
-                type="submit"
-                disabled={isSubmitDisabled}
-                className="px-6 py-2.5 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed border-0"
-              >
-                {isSubmitting ? 'Đang xử lý...' : 'Nộp hồ sơ mentor'}
-              </Button>
-            )}
-          </div>
-        </form>
-
-        {/* MODAL POP-UP ĐIỀU KHOẢN VẬN HÀNH */}
-        <TermsModal open={showTermsModal} onClose={() => setShowTermsModal(false)} />
+              <div className="flex gap-2">
+                {step > 1 && (
+                  <Button type="button" variant="outline" onClick={() => goToStep(step - 1)}>
+                    ← Quay lại
+                  </Button>
+                )}
+                {step < 5 ? (
+                  <Button type="button" onClick={nextStep}>
+                    Tiếp tục →
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={isSubmitting} leftIcon={<Send />}>
+                    {isSubmitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
+                  </Button>
+                )}
+              </div>
+            </footer>
+          </form>
+          {step <= 3 && <MentorBenefitsCard />}
+        </div>
       </div>
+      <TermsModal open={showTermsModal} onClose={() => setShowTermsModal(false)} />
+    </main>
+  );
+}
+
+function ReviewStep({
+  values,
+  completed,
+  total,
+  agreeTerms,
+  register,
+  errors,
+  onEdit,
+  onTerms,
+}: any) {
+  const summaries = [
+    {
+      step: 1,
+      title: 'Thông tin cơ bản',
+      lines: [values.headline || 'Chưa có tiêu đề', values.phoneNumber || 'Chưa có số điện thoại'],
+    },
+    {
+      step: 2,
+      title: 'Kinh nghiệm & thế mạnh',
+      lines: [
+        `${values.subjectResults?.length || 0} môn học · ${values.projects?.length || 0} dự án`,
+        'Ba mức hỗ trợ đã được thiết lập',
+      ],
+    },
+    {
+      step: 3,
+      title: 'Thời gian tư vấn',
+      lines: [values.isAvailable ? 'Đang sẵn sàng nhận lịch tư vấn' : 'Chưa sẵn sàng nhận lịch'],
+    },
+    { step: 4, title: 'Minh chứng', lines: ['Minh chứng FPTU và chuyên môn'] },
+  ];
+  return (
+    <div className="space-y-4">
+      {summaries.map((item) => (
+        <section
+          key={item.step}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex justify-between gap-3">
+            <h3 className="m-0 text-base font-bold text-slate-900">{item.title}</h3>
+            <button
+              type="button"
+              onClick={() => onEdit(item.step)}
+              className="min-h-8 border-0 bg-transparent text-sm font-bold text-sky-600 hover:underline"
+            >
+              Sửa
+            </button>
+          </div>
+          {item.lines.map((line: string) => (
+            <p key={line} className="mb-0 mt-2 text-sm text-slate-600">
+              {line}
+            </p>
+          ))}
+        </section>
+      ))}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold text-slate-900">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 accent-sky-600"
+            {...register('agreeTerms')}
+          />
+          <span>
+            Tôi đồng ý với{' '}
+            <button
+              type="button"
+              onClick={onTerms}
+              className="border-0 bg-transparent p-0 font-bold text-sky-600 underline"
+            >
+              Điều khoản vận hành
+            </button>{' '}
+            của SkillSwap <span className="text-red-600">*</span>
+          </span>
+        </label>
+        {errors.agreeTerms && (
+          <p role="alert" className="text-xs font-semibold text-red-600">
+            {errors.agreeTerms.message}
+          </p>
+        )}
+        <ul className="mb-0 mt-3 space-y-1 pl-7 text-xs leading-5 text-slate-600">
+          <li>Tôi cam kết các thông tin và minh chứng cung cấp là chính xác.</li>
+          <li>Tôi hiểu rằng hồ sơ sẽ được đội ngũ SkillSwap xét duyệt.</li>
+          <li>Tôi đồng ý với chính sách bảo mật thông tin.</li>
+        </ul>
+      </section>
+      <section className="flex flex-col gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3">
+          <Clock3 className="h-6 w-6 shrink-0 text-sky-600" />
+          <div>
+            <strong className="text-sm text-sky-950">Thời gian xét duyệt dự kiến</strong>
+            <p className="mb-0 mt-1 text-xs leading-5 text-sky-800">
+              Hồ sơ sẽ được xét duyệt trong {MENTOR_REVIEW_DURATION}. Bạn sẽ nhận thông báo qua
+              email và trong ứng dụng khi có kết quả.
+            </p>
+          </div>
+        </div>
+        <span
+          className={`shrink-0 text-xs font-bold ${completed === total && agreeTerms ? 'text-emerald-700' : 'text-amber-700'}`}
+        >
+          <Check className="mr-1 inline h-4 w-4" />
+          Đã hoàn thành {completed}/{total} mục bắt buộc
+        </span>
+      </section>
+    </div>
+  );
+}
+
+function StatusScreen({ locale }: { locale: string }) {
+  return (
+    <main className="grid min-h-[70vh] place-items-center bg-slate-50 px-4 py-10">
+      <section className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-sm sm:p-10">
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+          <CheckCircle2 className="h-8 w-8" />
+        </span>
+        <h1 className="mb-0 mt-4 text-2xl font-extrabold text-slate-950">Đã nộp hồ sơ!</h1>
+        <p className="mx-auto mb-0 mt-2 max-w-lg text-sm leading-6 text-slate-600">
+          Hồ sơ đang được xét duyệt trong {MENTOR_REVIEW_DURATION}. Bạn sẽ nhận kết quả qua email và
+          thông báo trong ứng dụng.
+        </p>
+        <div className="mx-auto mt-7 grid max-w-lg grid-cols-3 text-xs font-bold">
+          <span className="text-emerald-600">Đã nộp ✓</span>
+          <span className="text-sky-600">Đang xét duyệt</span>
+          <span className="text-slate-400">Kết quả</span>
+        </div>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link
+            href={`/${locale}/settings?section=help`}
+            className="inline-flex min-h-11 items-center rounded-xl border border-sky-200 px-4 text-sm font-bold text-sky-700 no-underline"
+          >
+            Trợ giúp & hỗ trợ
+          </Link>
+          <Link
+            href={`/${locale}/dashboard`}
+            className="inline-flex min-h-11 items-center rounded-xl bg-sky-600 px-5 text-sm font-bold text-white no-underline"
+          >
+            Về Bảng tin
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

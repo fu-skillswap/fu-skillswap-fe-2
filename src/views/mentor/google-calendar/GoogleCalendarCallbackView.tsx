@@ -9,7 +9,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { showSuccess } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showSuccess } from '@/utils/toast';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { ApiClientError } from '@/models/apiClient';
 import { getGoogleCalendarRedirectUri } from '@/lib/auth/google';
@@ -119,12 +119,16 @@ export function GoogleCalendarCallbackView() {
           } else if (reason.status === 400 || reason.code === 'AUTH_1006') {
             setStatus('EXPIRED');
             setErrorMessage(
-              reason.message ||
+              getUserFriendlyErrorMessage(
+                reason,
                 'Phiên kết nối Google Calendar không còn hợp lệ. Vui lòng kết nối lại.',
+              ),
             );
           } else {
             setStatus('ERROR');
-            setErrorMessage(reason.message || 'Không thể kết nối Google Calendar.');
+            setErrorMessage(
+              getUserFriendlyErrorMessage(reason, 'Không thể kết nối Google Calendar.'),
+            );
           }
         } else {
           setStatus('ERROR');

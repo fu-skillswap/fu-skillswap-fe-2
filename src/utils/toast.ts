@@ -91,8 +91,18 @@ function contentOf(content: string | ToastContent, defaultDescription: string): 
 }
 
 function looksTechnical(message: string) {
-  return /NEXT_PUBLIC_|\b(?:HTTP|API|OAuth|endpoint|payload|access token|client id|unauthorized|forbidden|conflict|validation|exception)\b|\b(?:400|401|403|404|409|422|500|502|503)\b|\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b|NetworkError|Failed to fetch/i.test(
+  return /NEXT_PUBLIC_|request failed with status code|\b(?:AxiosError|HTTP|API|OAuth|endpoint|payload|access token|client id|statusText|unauthorized|forbidden|conflict|validation|exception|stack trace|ECONNREFUSED|ERR_NETWORK|NetworkError|Failed to fetch|load failed)\b|\bHTTP\s*[45]\d{2}\b|\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b|\b(?:java|spring|hibernate|sql|database)\b|\bat\s+[\w.$]+\([^)]*:\d+(?::\d+)?\)/i.test(
     message,
+  );
+}
+
+function usableBusinessMessage(message: string) {
+  const normalized = message.trim();
+  return (
+    normalized.length >= 4 &&
+    normalized.length <= 240 &&
+    !looksTechnical(normalized) &&
+    !/[{}<>]|https?:\/\/|\/api\/|\\[\w.-]+\\|[\w.-]+\.(?:java|kt|js|ts):\d+/i.test(normalized)
   );
 }
 
@@ -122,11 +132,17 @@ export function getUserFriendlyError(
     }
     if (
       reason.code === 'NETWORK_ERROR' ||
-      /network|failed to fetch|load failed/i.test(reason.message)
+      /network|failed to fetch|load failed|ECONNREFUSED|ERR_NETWORK/i.test(technicalText)
     ) {
       return {
         title: 'Không thể kết nối',
-        description: 'Kiểm tra kết nối mạng và thử lại.',
+        description: 'Hiện chưa thể kết nối đến SkillSwap. Vui lòng kiểm tra mạng và thử lại.',
+      };
+    }
+    if (/ECONNABORTED|ETIMEDOUT|timeout|timed out/i.test(technicalText)) {
+      return {
+        title: context.title || 'Yêu cầu chưa hoàn tất',
+        description: 'Yêu cầu mất nhiều thời gian hơn dự kiến. Vui lòng thử lại.',
       };
     }
     if (reason.status === 401) {
@@ -137,18 +153,29 @@ export function getUserFriendlyError(
     }
     if (reason.status === 403) {
       return {
-        title: 'Bạn chưa thể thực hiện thao tác này',
-        description: 'Tài khoản của bạn không có quyền thực hiện hành động này.',
+        title: context.title || 'Thao tác chưa được thực hiện',
+        description: 'Bạn chưa có quyền thực hiện thao tác này.',
       };
     }
     if (reason.status === 404) {
       return {
-        title: 'Không tìm thấy dữ liệu',
-        description:
-          context.notFoundDescription || 'Nội dung này có thể đã được xóa hoặc không còn khả dụng.',
+        title: context.title || 'Không tìm thấy thông tin',
+        description: context.notFoundDescription || 'Không tìm thấy thông tin bạn đang tìm kiếm.',
+      };
+    }
+    if (reason.status === 408) {
+      return {
+        title: context.title || 'Yêu cầu chưa hoàn tất',
+        description: 'Yêu cầu mất nhiều thời gian hơn dự kiến. Vui lòng thử lại.',
       };
     }
     if (reason.status === 409) {
+      if (usableBusinessMessage(reason.message)) {
+        return {
+          title: context.title || 'Không thể hoàn tất thay đổi',
+          description: reason.message.trim(),
+        };
+      }
       return {
         title: context.title || 'Không thể hoàn tất thay đổi',
         description:
@@ -162,15 +189,21 @@ export function getUserFriendlyError(
       };
     }
     if (reason.status === 400 || reason.status === 422) {
+      if (usableBusinessMessage(reason.message)) {
+        return {
+          title: context.title || 'Thông tin cần được kiểm tra',
+          description: reason.message.trim(),
+        };
+      }
       return {
-        title: 'Thông tin chưa hợp lệ',
-        description: 'Vui lòng kiểm tra lại các thông tin đã nhập.',
+        title: context.title || 'Thông tin chưa hợp lệ',
+        description: 'Thông tin chưa hợp lệ. Vui lòng kiểm tra và thử lại.',
       };
     }
     if (reason.status >= 500) {
       return {
-        title: 'Có lỗi xảy ra',
-        description: 'Hệ thống đang gặp sự cố tạm thời. Vui lòng thử lại sau.',
+        title: context.title || 'Hệ thống đang tạm gián đoạn',
+        description: 'SkillSwap đang gặp sự cố tạm thời. Vui lòng thử lại sau ít phút.',
       };
     }
     return {
@@ -187,13 +220,19 @@ export function getUserFriendlyError(
       description: 'Tính năng kết nối lịch hiện chưa sẵn sàng. Vui lòng thử lại sau.',
     };
   }
-  if (/network|failed to fetch|load failed/i.test(message)) {
+  if (/network|failed to fetch|load failed|ECONNREFUSED|ERR_NETWORK/i.test(message)) {
     return {
       title: 'Không thể kết nối',
-      description: 'Kiểm tra kết nối mạng và thử lại.',
+      description: 'Hiện chưa thể kết nối đến SkillSwap. Vui lòng kiểm tra mạng và thử lại.',
     };
   }
-  if (typeof reason === 'string' && message && !looksTechnical(message)) {
+  if (/ECONNABORTED|ETIMEDOUT|timeout|timed out/i.test(message)) {
+    return {
+      title: context.title || 'Yêu cầu chưa hoàn tất',
+      description: 'Yêu cầu mất nhiều thời gian hơn dự kiến. Vui lòng thử lại.',
+    };
+  }
+  if (typeof reason === 'string' && usableBusinessMessage(message)) {
     return {
       title: context.title || 'Không thể hoàn tất thao tác',
       description: message,
@@ -205,12 +244,21 @@ export function getUserFriendlyError(
   };
 }
 
+/** Lấy riêng phần mô tả an toàn để hiển thị trong error state/form inline. */
+export function getUserFriendlyErrorMessage(
+  reason: unknown,
+  fallback = 'Không thể hoàn tất thao tác. Vui lòng thử lại sau.',
+) {
+  return getUserFriendlyError(reason, { description: fallback }).description || fallback;
+}
+
 export interface ConfirmOptions {
   title?: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info';
+  simple?: boolean;
 }
 
 let confirmHandler: ((options: ConfirmOptions) => Promise<boolean>) | null = null;

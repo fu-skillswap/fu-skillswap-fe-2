@@ -15,101 +15,20 @@ import type {
 import { adminRepo } from '@/repositories/adminRepo';
 import { showError } from '@/utils/toast';
 import {
-  Bell,
+  ArrowRight,
   CalendarDays,
+  CirclePlus,
+  ClipboardClock,
   ClipboardList,
+  FileText,
   Flag,
-  LayoutDashboard,
-  Search,
-  Settings,
-  ShieldCheck,
+  Inbox,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-
-type IconName =
-  | 'bell'
-  | 'booking'
-  | 'clipboard'
-  | 'flag'
-  | 'grid'
-  | 'report'
-  | 'search'
-  | 'settings'
-  | 'shield'
-  | 'users';
-
-const iconPaths: Record<IconName, ReactNode> = {
-  bell: <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />,
-  booking: (
-    <>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M16 3v4M8 3v4M3 10h18M12 14v3" />
-    </>
-  ),
-  clipboard: (
-    <>
-      <rect x="5" y="5" width="14" height="16" rx="2" />
-      <path d="M9 5V3h6v2M9 11h6M9 15h6" />
-    </>
-  ),
-  flag: <path d="M5 21V4m0 1h11l-1 4 1 4H5" />,
-  grid: (
-    <>
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-    </>
-  ),
-  report: (
-    <>
-      <path d="M3 21V3h18v12H8z" />
-      <path d="m10 15 2-2 2 1 3-4" />
-    </>
-  ),
-  search: (
-    <>
-      <circle cx="11" cy="11" r="6" />
-      <path d="m20 20-4-4" />
-    </>
-  ),
-  settings: (
-    <>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.1 2.1-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-2.1-2.1.1-.1A1.7 1.7 0 0 0 7 15a1.7 1.7 0 0 0-1.5-1H5.3v-3h.2A1.7 1.7 0 0 0 7 10a1.7 1.7 0 0 0-.3-1.9l-.1-.1 2.1-2.1.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h3v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.1 2.1-.1.1A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.5 1h.2v3h-.2a1.7 1.7 0 0 0-1.5 1Z" />
-    </>
-  ),
-  shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3.5-10 2.2 2.2 4.8-4.8" />,
-  users: (
-    <>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
-    </>
-  ),
-};
-
-const iconComponents: Record<IconName, LucideIcon> = {
-  bell: Bell,
-  booking: CalendarDays,
-  clipboard: ClipboardList,
-  flag: Flag,
-  grid: LayoutDashboard,
-  report: ClipboardList,
-  search: Search,
-  settings: Settings,
-  shield: ShieldCheck,
-  users: Users,
-};
-
-function Icon({ name }: { name: IconName }) {
-  const Component = iconComponents[name];
-  return <Component aria-hidden="true" className="admin-icon" />;
-}
+import { useCallback, useEffect, useState } from 'react';
 
 function formatNumber(value?: number) {
   return value === undefined ? '—' : new Intl.NumberFormat('vi-VN').format(value);
@@ -124,14 +43,21 @@ function formatTime(value: string) {
       : `${Math.round(minutes / 1440)}d ago`;
 }
 
-const queueIcon: Record<AdminQueueKey, IconName> = {
-  MENTOR_VERIFICATION: 'clipboard',
-  FORUM_REPORT: 'report',
-  BOOKING_DISPUTE: 'booking',
-  PAYOUT_REQUEST: 'flag',
-  FAILED_PAYMENT_ORDER: 'flag',
-  EMAIL_OUTBOX_DEAD_LETTER: 'report',
+const queueIcon: Record<AdminQueueKey, LucideIcon> = {
+  MENTOR_VERIFICATION: ClipboardList,
+  FORUM_REPORT: Flag,
+  BOOKING_DISPUTE: CalendarDays,
+  PAYOUT_REQUEST: FileText,
+  FAILED_PAYMENT_ORDER: FileText,
+  EMAIL_OUTBOX_DEAD_LETTER: FileText,
 };
+
+function getQueueHref(locale: string, queueKey?: AdminQueueKey) {
+  if (queueKey === 'MENTOR_VERIFICATION') return `/${locale}/admin/mentor-verification`;
+  if (queueKey === 'FORUM_REPORT') return `/${locale}/admin/reports`;
+  if (queueKey === 'BOOKING_DISPUTE') return `/${locale}/admin/bookings`;
+  return `/${locale}/admin/dashboard#queue-details`;
+}
 
 export function AdminDashboardView() {
   const { locale } = useParams<{ locale: string }>();
@@ -202,19 +128,40 @@ export function AdminDashboardView() {
       setAssigningCase(undefined);
     }
   };
-  const metrics: Array<{ label: string; value?: number; icon: IconName; tone?: string }> = [
+  const metrics: Array<{
+    label: string;
+    description: string;
+    value?: number;
+    icon: LucideIcon;
+    tone: string;
+  }> = [
     {
       label: 'Hồ sơ chờ duyệt',
+      description: 'Hồ sơ mentor đang chờ xét duyệt',
       value: mentorVerificationCount ?? overview?.pendingMentorVerifications,
-      icon: 'clipboard',
+      icon: ClipboardList,
+      tone: 'blue',
     },
-    { label: 'Người dùng hoạt động', value: overview?.activeUsers, icon: 'users' },
-    { label: 'Lịch hẹn đang hoạt động', value: overview?.activeBookings, icon: 'booking' },
+    {
+      label: 'Người dùng hoạt động',
+      description: 'Người dùng đăng nhập gần đây',
+      value: overview?.activeUsers,
+      icon: Users,
+      tone: 'blue',
+    },
+    {
+      label: 'Lịch hẹn đang hoạt động',
+      description: 'Các buổi mentoring sắp diễn ra',
+      value: overview?.activeBookings,
+      icon: CalendarDays,
+      tone: 'green',
+    },
     {
       label: 'Báo cáo đang mở',
+      description: 'Báo cáo cần được xử lý',
       value: overview?.pendingForumReports,
-      icon: 'flag',
-      tone: 'danger',
+      icon: Flag,
+      tone: 'red',
     },
   ];
   return (
@@ -238,6 +185,7 @@ export function AdminDashboardView() {
                 type="button"
                 onClick={() => window.print()}
               >
+                <FileText aria-hidden="true" />
                 Xuất báo cáo
               </button>
               <button
@@ -246,55 +194,86 @@ export function AdminDashboardView() {
                 onClick={() => void Promise.all([loadDashboard(), loadMentorVerificationSummary()])}
                 disabled={loading}
               >
+                <CirclePlus aria-hidden="true" />
                 Tạo thông báo
               </button>
             </div>
           </section>
-          <section className="admin-metric-grid" aria-label="Platform overview">
-            {metrics.map((metric) => (
-              <article key={metric.label}>
-                <span>{metric.label}</span>
-                <i className={metric.tone}>
-                  <Icon name={metric.icon} />
+          <section className="admin-metric-grid" aria-label="Tổng quan nền tảng">
+            {metrics.map(({ label, description, value, icon: MetricIcon, tone }) => (
+              <article key={label} className={`is-${tone}`}>
+                <i>
+                  <MetricIcon aria-hidden="true" />
                 </i>
-                <strong>{formatNumber(metric.value)}</strong>
+                <div>
+                  <span>{label}</span>
+                  <strong>{formatNumber(value)}</strong>
+                </div>
+                <p>{description}</p>
+                <span className="admin-metric-decoration" aria-hidden="true">
+                  <b />
+                  <b />
+                  <b />
+                </span>
               </article>
             ))}
           </section>
           <div className="admin-dashboard-columns">
             <section className="admin-panel" id="attention">
-              <h2>Cần xử lý</h2>
+              <header className="admin-panel-heading">
+                <h2>Cần xử lý</h2>
+                <Link href={`/${locale}/admin/mentor-verification`}>
+                  Xem tất cả <ArrowRight aria-hidden="true" />
+                </Link>
+              </header>
               <div className="admin-attention-list">
                 {mentorVerificationCount !== undefined && (
                   <div>
-                    <Icon name="clipboard" />
+                    <i>
+                      <ClipboardList aria-hidden="true" />
+                    </i>
                     <span>Hồ sơ mentor chờ duyệt</span>
                     <b>{formatNumber(mentorVerificationCount)}</b>
-                    <Link href={`/${locale}/admin/mentor-verification`}>Xem</Link>
+                    <Link href={`/${locale}/admin/mentor-verification`}>
+                      Xem <ArrowRight aria-hidden="true" />
+                    </Link>
                   </div>
                 )}
-                {queues.slice(0, 4).map((queue) => (
-                  <div
-                    key={queue.queueKey}
-                    className={activeQueue === queue.queueKey ? 'is-selected' : ''}
-                  >
-                    <Icon name={queueIcon[queue.queueKey]} />
-                    <span>{queue.title}</span>
-                    <b className={queue.slaBreachCount ? 'is-danger' : ''}>
-                      {formatNumber(queue.pendingCount)}
-                    </b>
-                    <button type="button" onClick={() => setActiveQueue(queue.queueKey)}>
-                      Xem
-                    </button>
-                  </div>
-                ))}
+                {queues
+                  .filter((queue) => queue.queueKey !== 'MENTOR_VERIFICATION')
+                  .slice(0, 3)
+                  .map((queue) => {
+                    const QueueIcon = queueIcon[queue.queueKey];
+                    return (
+                      <div
+                        key={queue.queueKey}
+                        className={activeQueue === queue.queueKey ? 'is-selected' : ''}
+                      >
+                        <i>
+                          <QueueIcon aria-hidden="true" />
+                        </i>
+                        <span>{queue.title}</span>
+                        <b className={queue.slaBreachCount ? 'is-danger' : ''}>
+                          {formatNumber(queue.pendingCount)}
+                        </b>
+                        <button type="button" onClick={() => setActiveQueue(queue.queueKey)}>
+                          Xem <ArrowRight aria-hidden="true" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 {!queues.length && mentorVerificationCount === undefined && (
                   <p className="admin-empty-state">Không có mục nào cần xử lý.</p>
                 )}
               </div>
             </section>
             <section className="admin-panel" id="reports">
-              <h2>Hoạt động quản trị gần đây</h2>
+              <header className="admin-panel-heading">
+                <h2>Hoạt động quản trị gần đây</h2>
+                <Link href={getQueueHref(locale, activeQueue)}>
+                  Xem tất cả <ArrowRight aria-hidden="true" />
+                </Link>
+              </header>
               <div className="admin-table-wrap">
                 <table>
                   <thead>
@@ -305,52 +284,78 @@ export function AdminDashboardView() {
                       <th>Thời gian</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {queueItems.map((item) => (
-                      <tr key={item.caseId}>
-                        <td>
-                          <i
-                            className={item.slaRemainingMinutes < 0 ? 'status danger' : 'status'}
-                          />
-                          {item.title}
-                        </td>
-                        <td>{item.caseType}</td>
-                        <td>{item.assignedAdminEmail ?? 'Chưa phân công'}</td>
-                        <td>{formatTime(item.submittedAt)}</td>
-                      </tr>
-                    ))}
-                    {!queueItems.length && (
-                      <tr>
-                        <td colSpan={4}>Chưa có hoạt động gần đây.</td>
-                      </tr>
-                    )}
-                  </tbody>
+                  {!!queueItems.length && (
+                    <tbody>
+                      {queueItems.map((item) => (
+                        <tr key={item.caseId}>
+                          <td>
+                            <i
+                              className={item.slaRemainingMinutes < 0 ? 'status danger' : 'status'}
+                            />
+                            {item.title}
+                          </td>
+                          <td>{item.caseType}</td>
+                          <td>{item.assignedAdminEmail ?? 'Chưa phân công'}</td>
+                          <td>{formatTime(item.submittedAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  )}
                 </table>
+                {!queueItems.length && (
+                  <div className="admin-dashboard-empty">
+                    <i>
+                      <ClipboardClock aria-hidden="true" />
+                    </i>
+                    <strong>Chưa có hoạt động gần đây.</strong>
+                    <span>Các hoạt động quản trị sẽ được hiển thị tại đây.</span>
+                  </div>
+                )}
               </div>
             </section>
           </div>
-          <section className="admin-case-panel">
-            <div>
-              <h2>
-                {queues.find((queue) => queue.queueKey === activeQueue)?.title ??
-                  'Chi tiết hàng đợi'}
-              </h2>
-              <span>Hiển thị {queueItems.length} hồ sơ</span>
-            </div>
-            {queueItems.some((item) => !item.assignedAdminEmail) && (
-              <div className="admin-case-actions">
-                {queueItems
-                  .filter((item) => !item.assignedAdminEmail)
-                  .map((item) => (
-                    <button
-                      key={item.caseId}
-                      type="button"
-                      onClick={() => void assignToMe(item)}
-                      disabled={assigningCase === item.caseId}
-                    >
-                      Nhận xử lý: {item.title}
-                    </button>
-                  ))}
+          <section className="admin-case-panel" id="queue-details">
+            <header className="admin-panel-heading">
+              <h2>Chi tiết hàng đợi</h2>
+              {!!activeQueue && (
+                <Link href={getQueueHref(locale, activeQueue)}>
+                  Xem tất cả <ArrowRight aria-hidden="true" />
+                </Link>
+              )}
+            </header>
+            {queueItems.length ? (
+              <div className="admin-queue-detail-list">
+                {queueItems.map((item) => (
+                  <article key={item.caseId}>
+                    <i>
+                      <Inbox aria-hidden="true" />
+                    </i>
+                    <div>
+                      <strong>{item.title}</strong>
+                      <span>
+                        {item.caseType} · {formatTime(item.submittedAt)}
+                      </span>
+                    </div>
+                    <span>{item.assignedAdminEmail ?? 'Chưa phân công'}</span>
+                    {!item.assignedAdminEmail && (
+                      <button
+                        type="button"
+                        onClick={() => void assignToMe(item)}
+                        disabled={assigningCase === item.caseId}
+                      >
+                        Nhận xử lý
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="admin-queue-empty">
+                <i>
+                  <Inbox aria-hidden="true" />
+                </i>
+                <strong>Hiển thị 0 hồ sơ</strong>
+                <span>Không có hồ sơ nào trong hàng đợi xử lý.</span>
               </div>
             )}
           </section>

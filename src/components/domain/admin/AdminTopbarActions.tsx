@@ -5,10 +5,10 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import type { Notification } from '@/models/notification';
 import { useAuth } from '@/providers/AuthProvider';
 import { notificationRepo } from '@/repositories/notificationRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { Bell, CheckCheck, LogOut, Search, Settings, UserRound } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -49,7 +49,7 @@ export function AdminTopbarActions() {
       setItems(result.items);
       setUnreadCount(result.items.filter((item) => !item.read).length);
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : 'Không thể tải thông báo.');
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải thông báo.'));
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export function AdminTopbarActions() {
       );
       setUnreadCount((current) => Math.max(0, current - 1));
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : 'Không thể cập nhật thông báo.');
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể cập nhật thông báo.'));
     }
   };
 
@@ -112,29 +112,22 @@ export function AdminTopbarActions() {
       setItems((current) => current.map((item) => ({ ...item, read: true })));
       setUnreadCount(0);
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : 'Không thể cập nhật thông báo.');
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể cập nhật thông báo.'));
     }
   };
 
   return (
-    <div className="flex items-center gap-3 relative">
-      <label className="relative hidden sm:flex items-center">
-        <Search
-          aria-hidden="true"
-          className="w-4 h-4 text-text-muted absolute left-3 pointer-events-none"
-        />
-        <input
-          className="w-48 lg:w-64 h-9 pl-9 pr-3 rounded-xl border border-solid border-border-color bg-surface-subtle text-xs text-text-main transition-all outline-none focus:bg-white focus:border-primary focus:ring-3 focus:ring-primary-border"
-          aria-label="Tìm kiếm"
-          placeholder="Tìm kiếm..."
-        />
+    <div className="admin-topbar-actions">
+      <label className="admin-global-search">
+        <Search aria-hidden="true" className="admin-global-search-icon" />
+        <input aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
       </label>
       <div className="relative">
         <button
           aria-label="Thông báo"
           aria-expanded={isOpen}
           type="button"
-          className="relative w-9 h-9 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-colors cursor-pointer"
+          className="admin-topbar-icon-button"
           onClick={() => {
             setIsOpen((current) => !current);
             if (!isOpen) void loadNotifications();
@@ -200,18 +193,14 @@ export function AdminTopbarActions() {
           </section>
         )}
       </div>
-      <button
-        aria-label="Cài đặt"
-        type="button"
-        className="w-9 h-9 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-colors cursor-pointer"
-      >
+      <button aria-label="Cài đặt" type="button" className="admin-topbar-icon-button">
         <Settings aria-hidden="true" className="w-4.5 h-4.5" />
       </button>
 
       <div className="relative" ref={profileMenuRef}>
         <button
           type="button"
-          className="w-9 h-9 rounded-full bg-primary-light border border-solid border-primary-border text-primary font-bold text-xs flex items-center justify-center overflow-hidden cursor-pointer shrink-0"
+          className="admin-topbar-avatar"
           aria-label="Hồ sơ quản trị viên"
           aria-expanded={isProfileOpen}
           onClick={() => setIsProfileOpen((current) => !current)}

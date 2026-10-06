@@ -24,6 +24,7 @@ interface SelectFieldProps {
   options: SelectOption[];
   placeholder?: string;
   error?: string;
+  helperText?: string;
   disabled?: boolean;
   required?: boolean;
   triggerClassName?: string;
@@ -38,6 +39,7 @@ export function SelectField({
   options,
   placeholder = 'Chọn một tùy chọn',
   error,
+  helperText,
   disabled,
   required,
   triggerClassName = '',
@@ -63,7 +65,9 @@ export function SelectField({
           aria-label={typeof label === 'string' ? label : placeholder}
           aria-required={required}
           aria-invalid={Boolean(error)}
-          aria-describedby={error && id ? `${id}-error` : undefined}
+          aria-describedby={
+            id && (error || helperText) ? `${id}-${error ? 'error' : 'helper'}` : undefined
+          }
           onBlur={onBlur}
         >
           <SelectPrimitive.Value placeholder={placeholder} />
@@ -98,6 +102,11 @@ export function SelectField({
       {error && (
         <p id={id ? `${id}-error` : undefined} className="text-[11px] text-danger font-medium m-0">
           {error}
+        </p>
+      )}
+      {helperText && !error && (
+        <p id={id ? `${id}-helper` : undefined} className="m-0 text-[11px] text-text-muted">
+          {helperText}
         </p>
       )}
     </div>

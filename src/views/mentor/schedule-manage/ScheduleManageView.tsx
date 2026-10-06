@@ -40,7 +40,7 @@ import {
 } from '@/models/schemas/mentorServiceSchema';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
-import { showError, showInfo, showSuccess } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   AlertTriangle,
@@ -690,9 +690,10 @@ export function ScheduleManageView() {
           const newErrors: { leadTime?: string; horizon?: string; root?: string } = {};
           reason.data.forEach((err) => {
             const mappedKey = err.field ? fieldMap[err.field] : undefined;
-            if (mappedKey === 'leadTime') newErrors.leadTime = err.message;
-            else if (mappedKey === 'horizon') newErrors.horizon = err.message;
-            else newErrors.root = err.message;
+            const message = getUserFriendlyErrorMessage(err.message, 'Thông tin chưa hợp lệ.');
+            if (mappedKey === 'leadTime') newErrors.leadTime = message;
+            else if (mappedKey === 'horizon') newErrors.horizon = message;
+            else newErrors.root = message;
           });
           setPolicyFormErrors(newErrors);
         } else if (reason.status === 429) {
@@ -704,10 +705,10 @@ export function ScheduleManageView() {
             root:
               retryAfterSeconds > 0
                 ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-                : reason.message,
+                : getUserFriendlyErrorMessage(reason),
           });
         } else {
-          setPolicyFormErrors({ root: reason.message });
+          setPolicyFormErrors({ root: getUserFriendlyErrorMessage(reason) });
         }
       } else {
         setPolicyFormErrors({ root: 'Không thể cập nhật cài đặt lịch. Vui lòng thử lại.' });
@@ -947,7 +948,7 @@ export function ScheduleManageView() {
           showError(
             retryAfterSeconds > 0
               ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-              : reason.message,
+              : getUserFriendlyErrorMessage(reason),
           );
         } else {
           showError(reason);
@@ -1002,7 +1003,7 @@ export function ScheduleManageView() {
           showError(
             retryAfterSeconds > 0
               ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-              : reason.message,
+              : getUserFriendlyErrorMessage(reason),
           );
         } else {
           showError(reason);
@@ -1275,8 +1276,7 @@ export function ScheduleManageView() {
       startAt = localDateTimeToUtcIso({ date: values.date, time: values.startTime }, timezone);
       endAt = localDateTimeToUtcIso({ date: values.date, time: values.endTime }, timezone);
     } catch (reason) {
-      const message =
-        reason instanceof Error ? reason.message : 'Không thể xử lý thời gian đã chọn.';
+      const message = getUserFriendlyErrorMessage(reason, 'Không thể xử lý thời gian đã chọn.');
       availabilityForm.setError('startTime', {
         type: 'validate',
         message,
@@ -1343,11 +1343,14 @@ export function ScheduleManageView() {
           reason.data.forEach((error) => {
             const field = error.field ? fieldMap[error.field] : undefined;
             if (field) {
-              availabilityForm.setError(field, { type: 'server', message: error.message });
+              availabilityForm.setError(field, {
+                type: 'server',
+                message: getUserFriendlyErrorMessage(error.message, 'Thông tin chưa hợp lệ.'),
+              });
             }
           });
           const firstFieldMessage = reason.data.find((error) => error.message)?.message;
-          showError(firstFieldMessage || reason.message, {
+          showError(firstFieldMessage || reason, {
             title: 'Thông tin lịch rảnh chưa hợp lệ',
           });
         } else if (reason.status === 429) {
@@ -1358,7 +1361,7 @@ export function ScheduleManageView() {
           const message =
             retryAfterSeconds > 0
               ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-              : reason.message;
+              : getUserFriendlyErrorMessage(reason);
           showError(message, { title: 'Chưa thể tạo lịch rảnh' });
         } else {
           showError(reason, { title: 'Không thể tạo lịch rảnh' });
@@ -1400,7 +1403,7 @@ export function ScheduleManageView() {
       } catch (reason) {
         editAvailabilityForm.setError('root', {
           type: 'validate',
-          message: reason instanceof Error ? reason.message : 'Không thể xử lý thời gian đã chọn.',
+          message: getUserFriendlyErrorMessage(reason, 'Không thể xử lý thời gian đã chọn.'),
         });
         return;
       }
@@ -1501,10 +1504,16 @@ export function ScheduleManageView() {
           reason.data.forEach((error) => {
             const field = error.field ? fieldMap[error.field] : undefined;
             if (field) {
-              editAvailabilityForm.setError(field, { type: 'server', message: error.message });
+              editAvailabilityForm.setError(field, {
+                type: 'server',
+                message: getUserFriendlyErrorMessage(error.message, 'Thông tin chưa hợp lệ.'),
+              });
             }
           });
-          editAvailabilityForm.setError('root', { type: 'server', message: reason.message });
+          editAvailabilityForm.setError('root', {
+            type: 'server',
+            message: getUserFriendlyErrorMessage(reason),
+          });
         } else if (reason.status === 429) {
           const retryAfterSeconds = reason.retryAfterSeconds ?? 0;
           if (retryAfterSeconds > 0) {
@@ -1515,10 +1524,13 @@ export function ScheduleManageView() {
             message:
               retryAfterSeconds > 0
                 ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-                : reason.message,
+                : getUserFriendlyErrorMessage(reason),
           });
         } else {
-          editAvailabilityForm.setError('root', { type: 'server', message: reason.message });
+          editAvailabilityForm.setError('root', {
+            type: 'server',
+            message: getUserFriendlyErrorMessage(reason),
+          });
         }
       } else {
         editAvailabilityForm.setError('root', {
@@ -1602,7 +1614,7 @@ export function ScheduleManageView() {
           showError(
             retryAfterSeconds > 0
               ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-              : reason.message,
+              : getUserFriendlyErrorMessage(reason),
           );
         } else {
           showError(reason);

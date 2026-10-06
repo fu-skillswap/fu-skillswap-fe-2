@@ -9,6 +9,7 @@ import { useState } from 'react';
 import type { ConfirmDocumentRequest } from '@/models/auth';
 import { ApiClientError } from '@/models/apiClient';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
+import { ALLOWED_EVIDENCE_TYPES, MAX_EVIDENCE_SIZE } from '../mentorRegistration.constants';
 
 export class DocumentUploadError extends Error {
   constructor(
@@ -68,18 +69,36 @@ export function useDocumentUpload() {
   const [expertiseUploadError, setExpertiseUploadError] = useState<string | null>(null);
 
   const handleSelectFptuFile = (file: File | null) => {
+    if (file && !ALLOWED_EVIDENCE_TYPES.includes(file.type)) {
+      setFptuUploadError('Định dạng không hỗ trợ. Vui lòng chọn tệp JPG, PNG hoặc PDF.');
+      return;
+    }
+    if (file && file.size > MAX_EVIDENCE_SIZE) {
+      setFptuUploadError('Tệp vượt quá 15 MB. Vui lòng chọn tệp có dung lượng nhỏ hơn.');
+      return;
+    }
     setSelectedFptuFile(file);
     setFptuUploadError(null);
   };
 
   const handleAddExpertiseFiles = (newFiles: File[]) => {
     setExpertiseUploadError(null);
+    const invalidType = newFiles.find((file) => !ALLOWED_EVIDENCE_TYPES.includes(file.type));
+    if (invalidType) {
+      setExpertiseUploadError(`Định dạng của “${invalidType.name}” không hỗ trợ.`);
+      return;
+    }
+    const oversized = newFiles.find((file) => file.size > MAX_EVIDENCE_SIZE);
+    if (oversized) {
+      setExpertiseUploadError(`“${oversized.name}” vượt quá 15 MB.`);
+      return;
+    }
+    if (selectedExpertiseFiles.length + newFiles.length > 3) {
+      setExpertiseUploadError('Bạn chỉ được tải lên tối đa 3 tệp minh chứng chuyên môn.');
+      return;
+    }
     setSelectedExpertiseFiles((prev) => {
-      const combined = [...prev, ...newFiles];
-      if (combined.length > 3) {
-        return combined.slice(0, 3);
-      }
-      return combined;
+      return [...prev, ...newFiles];
     });
   };
 

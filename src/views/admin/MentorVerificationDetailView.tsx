@@ -5,7 +5,6 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import { AdminLoadingState } from '@/components/domain/admin/AdminLoadingState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import {
@@ -21,6 +20,7 @@ import type {
 } from '@/models/admin';
 import { useAuth } from '@/providers/AuthProvider';
 import { adminRepo } from '@/repositories/adminRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   ArrowLeft,
@@ -46,7 +46,7 @@ const checklistLabels: Array<[keyof MentorVerificationRequestDetail['checklist']
 ];
 
 function getErrorMessage(reason: unknown, fallback = 'Không thể tải chi tiết hồ sơ mentor.') {
-  return reason instanceof ApiClientError ? reason.message : fallback;
+  return getUserFriendlyErrorMessage(reason, fallback);
 }
 
 function formatDate(value: string | null) {

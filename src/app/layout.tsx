@@ -11,8 +11,7 @@ import { ToastProvider } from '@/components/ui/ToastProvider';
 
 /** Metadata mặc định của trang web */
 export const metadata: Metadata = {
-  title: 'SkillSwap- Đổi kinh nghiệm, trao kỹ năng',
-  description: 'University skill exchange platform',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://skillswap.asia'),
   // Tối ưu thêm SEO, thêm keywords khi search trên google, openGraph để hiển thị tiêu đề, hình, nội dung như đã modify khi chia sẻ
   keywords: [
     'SkillSwap',
@@ -27,28 +26,9 @@ export const metadata: Metadata = {
     'university',
     'fpt',
   ],
-  openGraph: {
-    title: 'SkillSwap- Đổi kinh nghiệm, trao kỹ năng',
-    description: 'University skill exchange platform',
-    images: [
-      {
-        url: '/images/SkillSwap_Logo_Text.png',
-        width: 1200,
-        height: 630,
-        // Đây là kích thước chuẩn của openGraph nha
-        alt: 'SkillSwapLogo',
-      },
-    ],
-    locale: 'vi_VN',
-    type: 'website',
-  },
   icons: {
     icon: '/images/SkillSwapLogo.png',
   },
-  // alternates: {
-  //   canonical: 'localhost:300'//địa chỉ tạm, mốt ghi link deploy vào env
-  // },
-  // metadataBase: new URL('localhost:300'),
 };
 
 //Thêm thư viện này vào để tránh bể nét khi hiển thị trên các thiêt bị khác

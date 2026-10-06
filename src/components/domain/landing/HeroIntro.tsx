@@ -43,16 +43,9 @@ export function HeroIntro({ locale }: { locale: string }) {
         <span className="block whitespace-nowrap">Học đúng người.</span>
         <span className="block whitespace-nowrap text-primary">Tiến nhanh hơn.</span>
       </h1>
-      <p
-        className={`${revealClass} mt-6 max-w-[560px] text-base leading-[1.6] text-[#5c718d] sm:mt-[30px] sm:text-[17px] lg:text-lg`}
-        style={delay(340)}
-      >
-        Khám phá mentor phù hợp hoặc các khóa học ngắn
-        <br className="hidden sm:block" /> để phát triển kỹ năng theo cách của bạn.
-      </p>
       <div
         className={`${revealClass} mt-8 flex flex-col gap-3.5 sm:mt-9 sm:flex-row sm:gap-4.5`}
-        style={delay(460)}
+        style={delay(340)}
       >
         <Link
           href={`/${locale}/mentor-booking`}
@@ -70,7 +63,7 @@ export function HeroIntro({ locale }: { locale: string }) {
       </div>
       <div
         className={`${revealClass} mt-8 grid max-w-[600px] grid-cols-3 items-start text-xs font-medium text-[#435b78] sm:mt-9 sm:text-sm`}
-        style={delay(580)}
+        style={delay(460)}
       >
         {trustItems.map(([Icon, label], index) => (
           <div

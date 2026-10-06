@@ -21,12 +21,17 @@ export function TextArea({
   ...props
 }: TextAreaProps) {
   const fieldId = id ?? name;
+  const describedBy =
+    props['aria-describedby'] ??
+    (fieldId && (error || helperText) ? `${fieldId}-${error ? 'error' : 'helper'}` : undefined);
   const textareaEl = (
     <textarea
       id={fieldId}
       name={name}
       className={`w-full min-h-[100px] rounded-xl border border-solid border-border-color bg-white text-text-main p-3 text-xs resize-y transition-all duration-150 outline-none focus:border-primary focus:ring-3 focus:ring-primary-border disabled:opacity-50 disabled:cursor-not-allowed ${error ? '!border-danger' : ''} ${className}`.trim()}
       {...props}
+      aria-describedby={describedBy}
+      aria-invalid={props['aria-invalid'] ?? Boolean(error)}
     />
   );
 
@@ -46,8 +51,22 @@ export function TextArea({
         </label>
       )}
       {textareaEl}
-      {helperText && !error && <p className="text-[11px] text-text-muted m-0">{helperText}</p>}
-      {error && <p className="text-[11px] text-danger font-medium m-0">{error}</p>}
+      {helperText && !error && (
+        <p
+          id={fieldId ? `${fieldId}-helper` : undefined}
+          className="text-[11px] text-text-muted m-0"
+        >
+          {helperText}
+        </p>
+      )}
+      {error && (
+        <p
+          id={fieldId ? `${fieldId}-error` : undefined}
+          className="text-[11px] text-danger font-medium m-0"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -6,10 +6,9 @@
 'use client';
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { ApiClientError } from '@/models/apiClient';
 import type { AdminCaseActivity, AdminCaseOwnership, AdminForumReport } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { showError } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError } from '@/utils/toast';
 import { ArrowLeft, ClipboardCheck, LoaderCircle, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -17,7 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 const caseType = 'FORUM_REPORT';
 
 function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError ? reason.message : 'Không thể tải chi tiết báo cáo.';
+  return getUserFriendlyErrorMessage(reason, 'Không thể tải chi tiết báo cáo.');
 }
 
 function formatDate(value: string | null) {

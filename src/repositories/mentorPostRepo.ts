@@ -4,14 +4,37 @@
  */
 
 import { apiClient } from '@/models/apiClient';
+import axios from 'axios';
 import type {
+  BlogCategoryResponse,
   BlogExpectedVersionRequest,
+  BlogFileAssetMetadata,
+  BlogTagResponse,
+  BlogUploadIntent,
+  BlogUploadRequest,
   MentorBlogPostCreateRequest,
   MentorBlogPostDetailResponse,
   MentorBlogPostUpdateRequest,
 } from '@/models/auth';
 
 export const mentorPostRepo = {
+  categories: (): Promise<BlogCategoryResponse[]> =>
+    apiClient<BlogCategoryResponse[]>('/api/blog/categories'),
+  tags: (): Promise<BlogTagResponse[]> => apiClient<BlogTagResponse[]>('/api/blog/tags'),
+  createUploadIntent: (data: BlogUploadRequest): Promise<BlogUploadIntent> =>
+    apiClient<BlogUploadIntent>('/api/me/blog/assets/upload-intents', {
+      method: 'POST',
+      data,
+    }),
+  uploadFile: async (intent: BlogUploadIntent, file: File): Promise<void> => {
+    await axios.put(intent.uploadUrl, file, {
+      headers: intent.requiredHeaders ?? { 'Content-Type': file.type },
+    });
+  },
+  confirmUpload: (intentId: string): Promise<BlogFileAssetMetadata> =>
+    apiClient<BlogFileAssetMetadata>(`/api/me/blog/assets/${intentId}/confirm`, {
+      method: 'POST',
+    }),
   list: (): Promise<MentorBlogPostDetailResponse[]> =>
     apiClient<MentorBlogPostDetailResponse[]>('/api/me/blog/posts'),
   detail: (postId: string): Promise<MentorBlogPostDetailResponse> =>

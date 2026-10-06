@@ -8,7 +8,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/providers/AuthProvider';
 import { Calendar, Home, Search, X } from 'lucide-react';
 
 type NavIcon = 'home' | 'search' | 'calendar';
@@ -39,7 +38,6 @@ interface DashboardNavigationProps {
  */
 export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNavigationProps) {
   const pathname = usePathname();
-  const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
@@ -48,15 +46,6 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
     pathname === dashboardHref || pathname.startsWith(`/${locale}/post-detail/`);
   const mentorActive = pathname.startsWith(mentorHref);
   const bookingsActive = pathname.startsWith(bookingsHref);
-
-  const handleProtectedAction = (featureName: string) => {
-    if (onClose) onClose();
-    if (!isAuthenticated) {
-      showAuthRequiredModal(
-        `Bạn cần Đăng nhập hoặc Đăng ký tài khoản để sử dụng tính năng ${featureName}.`,
-      );
-    }
-  };
 
   return (
     <aside
@@ -123,13 +112,6 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
           <span>Booking của tôi</span>
         </Link>
       </nav>
-      <button
-        type="button"
-        onClick={() => handleProtectedAction('Tạo bài viết mới')}
-        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover shadow-xs transition-colors border-none cursor-pointer flex items-center justify-center gap-2"
-      >
-        + Bài viết mới
-      </button>
     </aside>
   );
 }

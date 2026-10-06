@@ -12,6 +12,7 @@ import type {
   MentorServiceManagementResponse,
 } from '@/models/auth';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { useCallback, useEffect, useState } from 'react';
 
 const defaultError = 'Không thể tải dịch vụ. Vui lòng thử lại.';
@@ -35,7 +36,7 @@ export function useMentorServices() {
       setConstraints(nextConstraints);
       setServices(nextServices);
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : defaultError);
+      setError(getUserFriendlyErrorMessage(reason, defaultError));
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +54,7 @@ export function useMentorServices() {
       setServices((current) => [created, ...current]);
       return true;
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : defaultError);
+      setError(getUserFriendlyErrorMessage(reason, defaultError));
       return false;
     } finally {
       setIsSaving(false);
@@ -75,9 +76,7 @@ export function useMentorServices() {
       setError(
         reason instanceof ApiClientError && reason.status === 409
           ? 'Dịch vụ đã thay đổi. Vui lòng tải lại trước khi thao tác tiếp.'
-          : reason instanceof ApiClientError
-            ? reason.message
-            : defaultError,
+          : getUserFriendlyErrorMessage(reason, defaultError),
       );
     } finally {
       setIsSaving(false);

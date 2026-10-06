@@ -24,6 +24,12 @@ export function KouKouChatWidget() {
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [isOpen]);
 
+  useEffect(() => {
+    const openChat = () => setIsOpen(true);
+    window.addEventListener('skillswap:open-koukou', openChat);
+    return () => window.removeEventListener('skillswap:open-koukou', openChat);
+  }, []);
+
   const handleSendMessage = (message = input) => {
     const content = message.trim();
     if (!content || isSending) return;
