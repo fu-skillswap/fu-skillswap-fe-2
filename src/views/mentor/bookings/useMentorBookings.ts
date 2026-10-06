@@ -6,7 +6,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiClientError } from '@/models/apiClient';
 import type {
   AcceptMentorBookingRequest,
   CancelMentorBookingRequest,
@@ -19,6 +18,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
 import { bookingRepo } from '@/repositories/bookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 
 export type MentorBookingFilter =
   | 'ALL'
@@ -141,11 +141,7 @@ export function useMentorBookings() {
       setGoogleCalendarStatus(calendarStatus);
     } catch (reason) {
       setAllBookings([]);
-      setError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể tải lịch đặt. Vui lòng thử lại.',
-      );
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải lịch đặt. Vui lòng thử lại.'));
     } finally {
       setIsLoading(false);
     }

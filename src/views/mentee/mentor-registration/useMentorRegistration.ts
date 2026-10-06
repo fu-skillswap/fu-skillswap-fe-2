@@ -15,7 +15,13 @@ import {
   type MentorProfileFormValues,
 } from '@/models/schemas/mentorProfileSchema';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
-import { confirmAction, showSuccess, showError, showWarning } from '@/utils/toast';
+import {
+  confirmAction,
+  getUserFriendlyErrorMessage,
+  showError,
+  showSuccess,
+  showWarning,
+} from '@/utils/toast';
 
 import { DocumentUploadError, useDocumentUpload } from './hooks/useDocumentUpload';
 import { useMentorProfileHydration } from './hooks/useMentorProfileHydration';
@@ -251,7 +257,9 @@ export function useMentorRegistration() {
           return;
         }
       }
-      setServerError(errMsg);
+      setServerError(
+        getUserFriendlyErrorMessage(err, 'Không thể gửi hồ sơ Mentor. Vui lòng thử lại.'),
+      );
       showError(err, { title: 'Không thể gửi hồ sơ Mentor' });
     }
   };
@@ -280,11 +288,7 @@ export function useMentorRegistration() {
           description: 'Dự án đã được xóa khỏi hồ sơ của bạn.',
         });
       } catch (err) {
-        const errMsg =
-          err instanceof ApiClientError
-            ? err.message || 'Xóa dự án thất bại.'
-            : 'Không thể xóa dự án trên máy chủ.';
-        setServerError(errMsg);
+        setServerError(getUserFriendlyErrorMessage(err, 'Không thể xóa dự án.'));
         showError(err, { title: 'Không thể xóa dự án' });
         return;
       }
@@ -322,11 +326,7 @@ export function useMentorRegistration() {
           description: 'Thông tin đã được xóa khỏi hồ sơ của bạn.',
         });
       } catch (err) {
-        const errMsg =
-          err instanceof ApiClientError
-            ? err.message || 'Xóa giải thưởng thất bại.'
-            : 'Không thể xóa giải thưởng trên máy chủ.';
-        setServerError(errMsg);
+        setServerError(getUserFriendlyErrorMessage(err, 'Không thể xóa thành tích.'));
         showError(err, { title: 'Không thể xóa thành tích' });
         return;
       }
@@ -366,11 +366,7 @@ export function useMentorRegistration() {
         description: 'Bạn có thể chỉnh sửa và gửi lại hồ sơ sau.',
       });
     } catch (err) {
-      let errMsg = 'Không thể rút hồ sơ vào lúc này.';
-      if (err instanceof ApiClientError) {
-        errMsg = err.message || 'Lỗi rút hồ sơ từ máy chủ.';
-      }
-      setServerError(errMsg);
+      setServerError(getUserFriendlyErrorMessage(err, 'Không thể rút hồ sơ vào lúc này.'));
       showError(err, { title: 'Không thể rút hồ sơ Mentor' });
     }
   };

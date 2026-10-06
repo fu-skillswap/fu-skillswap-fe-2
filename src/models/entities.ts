@@ -22,10 +22,13 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  author: Pick<User, 'id' | 'name'>;
+  author: Pick<User, 'id' | 'name'> & { avatarUrl?: string };
   tags: string[];
+  topicId?: string;
   createdAt: string;
   likes: number;
+  likedByCurrentUser?: boolean;
+  imageUrls?: string[];
   mediaUrl?: string;
   commentCount?: number;
   previewComments?: Comment[];
@@ -73,7 +76,14 @@ export interface Booking {
 /** Thực thể Bình luận trên bài viết */
 export interface Comment {
   id: string;
+  authorId?: string;
   authorName: string;
+  authorAvatarUrl?: string;
+  authorRole?: string;
   content: string;
   createdAt: string;
+  reactionCount?: number;
+  reactedByCurrentUser?: boolean;
+  replyCount?: number;
+  replyToCommentId?: string;
 }

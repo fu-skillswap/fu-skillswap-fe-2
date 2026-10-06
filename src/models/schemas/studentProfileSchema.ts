@@ -8,9 +8,9 @@ import * as yup from 'yup';
 /** Quy tắc kiểm tra tính hợp lệ biểu mẫu Hoàn thiện Hồ sơ sinh viên (Onboarding Step) */
 export const studentOnboardingSchema = yup.object().shape({
   studentCode: yup.string().trim().required('Vui lòng nhập mã số sinh viên.'),
-  displayName: yup.string().trim().optional(),
-  campusId: yup.string().required('Vui lòng chọn cơ sở / campus.'),
-  programId: yup.string().required('Vui lòng chọn ngành đào tạo.'),
+  displayName: yup.string().trim().required('Vui lòng nhập tên hiển thị.'),
+  campusId: yup.string().required('Vui lòng chọn cơ sở.'),
+  programId: yup.string().required('Vui lòng chọn ngành học phù hợp.'),
   specializationId: yup.string().optional().nullable(),
   semester: yup
     .number()
@@ -19,9 +19,9 @@ export const studentOnboardingSchema = yup.object().shape({
     .min(0, 'Học kỳ từ 0 trở lên.'),
   intakeYear: yup
     .number()
-    .typeError('Năm nhập học phải là số.')
-    .required('Vui lòng chọn khóa / năm nhập học.')
-    .min(2000, 'Năm nhập học không hợp lệ.'),
+    .typeError('Năm bắt đầu học tại FPT phải là số.')
+    .required('Vui lòng nhập năm bắt đầu học tại FPT.')
+    .min(2000, 'Năm bắt đầu học tại FPT không hợp lệ.'),
   isAlumni: yup.boolean().default(false),
   graduationYear: yup.number().when('isAlumni', {
     is: true,
@@ -32,7 +32,7 @@ export const studentOnboardingSchema = yup.object().shape({
         .min(2000, 'Năm tốt nghiệp không hợp lệ.'),
     otherwise: (schema) => schema.optional().nullable(),
   }),
-  bio: yup.string().trim().max(500, 'Bio tối đa 500 ký tự.').optional(),
+  bio: yup.string().trim().max(500, 'Phần giới thiệu tối đa 500 ký tự.').optional(),
 });
 
 export type StudentOnboardingFormValues = yup.InferType<typeof studentOnboardingSchema>;

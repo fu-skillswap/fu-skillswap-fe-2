@@ -103,19 +103,23 @@ export function ToastProvider({ children }: { children?: React.ReactNode }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: variantStyle.iconBg }}
-                >
-                  {variantStyle.icon}
-                </div>
-                <div>
-                  <span
-                    className="text-[11px] font-extrabold tracking-wider block mb-0.5"
-                    style={{ color: variantStyle.titleColor }}
+                {!confirmState.simple && (
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: variantStyle.iconBg }}
                   >
-                    {variantStyle.badge}
-                  </span>
+                    {variantStyle.icon}
+                  </div>
+                )}
+                <div>
+                  {!confirmState.simple && (
+                    <span
+                      className="text-[11px] font-extrabold tracking-wider block mb-0.5"
+                      style={{ color: variantStyle.titleColor }}
+                    >
+                      {variantStyle.badge}
+                    </span>
+                  )}
                   <h3 className="m-0 text-base font-bold text-text-main">
                     {confirmState.title || 'Xác nhận thao tác'}
                   </h3>

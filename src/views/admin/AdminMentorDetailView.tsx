@@ -6,13 +6,13 @@
 'use client';
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { ApiClientError } from '@/models/apiClient';
 import type {
   AdminMentorAchievement,
   AdminMentorDetail,
   AdminMentorFeaturedProject,
 } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import {
   ArrowLeft,
   Award,
@@ -40,7 +40,7 @@ const statusLabels: Record<string, string> = {
 };
 
 function getErrorMessage(reason: unknown) {
-  return reason instanceof ApiClientError ? reason.message : 'Không thể tải thông tin mentor.';
+  return getUserFriendlyErrorMessage(reason, 'Không thể tải thông tin mentor.');
 }
 
 function formatDate(value: string | null) {

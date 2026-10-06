@@ -5,29 +5,15 @@
 
 'use client';
 
-import { Archive, CalendarDays, FileText, Pencil, Plus, Send, Trash2 } from 'lucide-react';
+import { Archive, CalendarDays, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { FormField } from '@/components/ui/FormField';
 import { Modal } from '@/components/ui/Modal';
-import { SelectField } from '@/components/ui/SelectField';
-import { TextArea } from '@/components/ui/TextArea';
-import { TextField } from '@/components/ui/TextField';
-import type { MentorBlogPostDetailResponse, MentorBlogVisibility } from '@/models/auth';
+import type { MentorBlogPostDetailResponse } from '@/models/auth';
+import { MentorPostComposer } from './MentorPostComposer';
 import { useMentorPosts } from './useMentorPosts';
-
-const VISIBILITY_OPTIONS = [
-  { value: 'PUBLIC', label: 'Công khai' },
-  { value: 'AUTHENTICATED', label: 'Người dùng đã đăng nhập' },
-  { value: 'BOOKED_MEMBERS', label: 'Mentee đã đặt dịch vụ' },
-];
-
-function mentorBlogVisibilityOf(value: string): MentorBlogVisibility {
-  if (value === 'AUTHENTICATED' || value === 'BOOKED_MEMBERS') return value;
-  return 'PUBLIC';
-}
 
 function formatPostDate(value: string) {
   const date = new Date(value);
@@ -51,6 +37,8 @@ export function MentorPostsView() {
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('create') === '1') posts.openCreate();
   }, [posts.openCreate]);
+
+  if (posts.isEditorOpen) return <MentorPostComposer posts={posts} />;
 
   return (
     <section className="space-y-6 max-w-7xl mx-auto">
@@ -113,68 +101,6 @@ export function MentorPostsView() {
           </Button>
         </div>
       )}
-
-      <Modal
-        open={posts.isEditorOpen}
-        onClose={posts.closeEditor}
-        title={posts.editingPost ? 'Chỉnh sửa bản nháp' : 'Tạo bài viết mới'}
-      >
-        <form className="flex flex-col gap-4" onSubmit={posts.submitDraft} noValidate>
-          <TextField
-            label="Tiêu đề"
-            required
-            maxLength={220}
-            placeholder="Nhập tiêu đề bài viết"
-            error={posts.form.formState.errors.title?.message}
-            {...posts.form.register('title')}
-          />
-          <TextArea
-            label="Mô tả ngắn"
-            rows={3}
-            maxLength={500}
-            placeholder="Tóm tắt nội dung chính của bài viết"
-            error={posts.form.formState.errors.excerpt?.message}
-            {...posts.form.register('excerpt')}
-          />
-          <TextArea
-            label="Nội dung"
-            rows={10}
-            placeholder="Chia sẻ kiến thức và kinh nghiệm của bạn..."
-            error={posts.form.formState.errors.contentMarkdown?.message}
-            {...posts.form.register('contentMarkdown')}
-          />
-          <FormField label="Ai có thể xem" htmlFor="mentor-post-visibility">
-            <SelectField
-              id="mentor-post-visibility"
-              value={posts.form.watch('visibility')}
-              options={VISIBILITY_OPTIONS}
-              onValueChange={(value) =>
-                posts.form.setValue('visibility', mentorBlogVisibilityOf(value), {
-                  shouldDirty: true,
-                })
-              }
-            />
-          </FormField>
-          <footer className="flex items-center justify-between gap-3 pt-4 border-t border-solid border-border-light mt-2">
-            <Button type="button" variant="outline" onClick={posts.closeEditor}>
-              Hủy
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button type="submit" variant="secondary" loading={posts.isSaving}>
-                Lưu bản nháp
-              </Button>
-              <Button
-                type="button"
-                leftIcon={<Send />}
-                loading={posts.isSaving}
-                onClick={() => void posts.submitPublish()}
-              >
-                Đăng bài
-              </Button>
-            </div>
-          </footer>
-        </form>
-      </Modal>
 
       <Modal
         open={Boolean(posts.archiveTarget)}

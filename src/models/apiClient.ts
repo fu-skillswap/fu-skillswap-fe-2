@@ -148,6 +148,14 @@ axiosInstance.interceptors.response.use(
     }
 
     const envelope = error.response?.data;
+    console.error('[API Error]', {
+      method: originalRequest?.method?.toUpperCase(),
+      url: path,
+      status: error.response?.status,
+      code: envelope?.code ?? error.code,
+      response: envelope,
+      originalError: error,
+    });
     throw new ApiClientError(
       status,
       envelope?.code ?? error.code ?? 'NETWORK_ERROR',

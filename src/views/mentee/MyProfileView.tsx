@@ -24,15 +24,22 @@ import {
 import { authRepo } from '@/repositories/authRepo';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   Award,
   Briefcase,
   Calendar,
+  CalendarDays,
+  ChartNoAxesColumnIncreasing,
   ExternalLink,
+  FileText,
   Globe,
+  GraduationCap,
+  Landmark,
+  Mail,
+  Pencil,
   Phone,
   Plus,
   Star,
@@ -41,10 +48,11 @@ import {
   Code,
   BookOpen,
   Target,
-  UserCheck,
+  type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import styles from './MyProfileView.module.css';
 
 /** Tạo chữ viết tắt 2 ký tự làm Avatar */
 function initials(name: string) {
@@ -57,6 +65,47 @@ function initials(name: string) {
       .map((part) => part[0])
       .join('')
       .toUpperCase() || 'SS'
+  );
+}
+
+const academicTileTones = {
+  blue: 'bg-sky-100 text-sky-600',
+  violet: 'bg-violet-100 text-violet-600',
+  green: 'bg-emerald-100 text-emerald-600',
+  orange: 'bg-orange-100 text-orange-500',
+  pink: 'bg-pink-100 text-pink-600',
+} as const;
+
+function AcademicTile({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  tone: keyof typeof academicTileTones;
+}) {
+  return (
+    <div
+      className={`${styles.tile} group flex min-w-0 items-center gap-3 rounded-[14px] border border-[#edf2f7] bg-[#f8fbfe] px-4 py-2.5 transition duration-200 hover:-translate-y-0.5 hover:border-sky-200`}
+    >
+      <span
+        className={`grid h-12 w-12 shrink-0 place-items-center rounded-[13px] ${academicTileTones[tone]}`}
+        aria-hidden="true"
+      >
+        <Icon className="h-6 w-6" strokeWidth={1.9} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[11px] font-semibold tracking-[0.045em] text-[#72839d] uppercase sm:text-xs">
+          {label}
+        </span>
+        <strong className="mt-1 block break-words text-[15px] leading-5 font-bold text-[#0b2554] sm:text-[17px] sm:leading-6">
+          {value}
+        </strong>
+      </span>
+    </div>
   );
 }
 
@@ -285,11 +334,7 @@ export function MyProfileView() {
       setEditing(false);
       setNotice('Hồ sơ của bạn đã được cập nhật thành công.');
     } catch (reason) {
-      setError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể lưu thay đổi. Vui lòng thử lại.',
-      );
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể lưu thay đổi. Vui lòng thử lại.'));
     } finally {
       setSaving(false);
     }
@@ -425,7 +470,7 @@ export function MyProfileView() {
     );
 
   return (
-    <section className="max-w-4xl mx-auto space-y-6 pb-12">
+    <section className={`${isMentor ? 'max-w-4xl space-y-6 pb-12' : styles.page} mx-auto`}>
       {notice && (
         <div
           className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-semibold flex items-center gap-2"
@@ -444,38 +489,62 @@ export function MyProfileView() {
       )}
 
       {/* Main Profile Card */}
-      <article className="bg-white rounded-3xl border border-solid border-border-light shadow-xs overflow-hidden">
+      <article
+        className={`${isMentor ? 'rounded-3xl' : 'rounded-[20px]'} overflow-hidden border border-solid border-border-light bg-white shadow-[0_8px_28px_rgba(24,70,120,0.055)]`}
+      >
         {/* Blue Cover Banner Header */}
-        <div className="h-44 sm:h-52 bg-sky-500 relative p-6 flex items-start justify-end">
-          <div className="flex items-center gap-3">
-            {!isMentor && (
-              <Link
-                href={`/${locale}/mentor-registration`}
-                className="bg-white hover:bg-sky-50 text-sky-600 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-2 border-none no-underline cursor-pointer"
+        <div
+          className={`${isMentor ? 'h-44 bg-sky-500 sm:h-52' : `${styles.cover} bg-[radial-gradient(circle_at_25%_-10%,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_65%_110%,rgba(255,255,255,0.11),transparent_32%),linear-gradient(135deg,#42b7f5_0%,#0798f3_55%,#087ef1_100%)]`} relative flex items-start justify-end p-4 sm:p-6`}
+        >
+          {!isMentor && (
+            <>
+              <span
+                className="pointer-events-none absolute -top-24 left-[10%] h-52 w-52 rounded-full bg-white/8"
+                aria-hidden="true"
+              />
+              <span
+                className="pointer-events-none absolute -bottom-24 left-[42%] h-48 w-48 rounded-full bg-white/8"
+                aria-hidden="true"
+              />
+              <span
+                className="pointer-events-none absolute right-8 bottom-5 h-16 w-28 opacity-70 [background-image:radial-gradient(circle,rgba(255,255,255,0.9)_1.5px,transparent_1.5px)] [background-size:16px_16px]"
+                aria-hidden="true"
+              />
+            </>
+          )}
+          <div className="relative z-10 flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
+            {isMentor && (
+              <button
+                type="button"
+                className={`${isMentor ? 'rounded-2xl px-4 py-2.5' : 'h-11 rounded-full px-4 sm:h-12 sm:px-6'} flex cursor-pointer items-center gap-2 whitespace-nowrap border-none bg-white/90 text-[11px] font-extrabold text-slate-800 shadow-xs transition-all hover:-translate-y-px hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:text-xs`}
+                onClick={() => {
+                  setEditing((current) => !current);
+                  setError(undefined);
+                }}
               >
-                <UserCheck className="w-4 h-4 text-sky-600" /> Đăng ký làm mentor
-              </Link>
+                {isMentor ? (
+                  <Edit3 className="h-4 w-4 text-slate-600" aria-hidden="true" />
+                ) : (
+                  <Pencil className="h-4 w-4 text-slate-600" aria-hidden="true" />
+                )}
+                {editing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}
+              </button>
             )}
-            <button
-              type="button"
-              className="bg-white/90 hover:bg-white text-slate-800 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-xs transition-all border-none cursor-pointer flex items-center gap-2"
-              onClick={() => {
-                setEditing((current) => !current);
-                setError(undefined);
-              }}
-            >
-              <Edit3 className="w-4 h-4 text-slate-600" />
-              {editing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}
-            </button>
           </div>
         </div>
 
         {/* Profile Content Body */}
-        <div className="px-6 sm:px-8 pb-8 pt-0 relative">
+        <div className={`${isMentor ? 'px-6 pb-8 sm:px-8' : styles.body} relative pt-0`}>
           {/* Avatar Floating over Banner */}
-          <div className="-mt-14 sm:-mt-16 mb-4 w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-solid border-white bg-slate-100 shadow-md relative overflow-hidden flex items-center justify-center shrink-0">
+          <div
+            className={`${isMentor ? 'relative -mt-14 h-24 w-24 border-4 sm:-mt-16 sm:h-28 sm:w-28' : `${styles.avatar} border-[5px]`} mb-1.5 flex shrink-0 items-center justify-center overflow-hidden rounded-full border-solid border-white bg-slate-100 shadow-[0_8px_20px_rgba(28,67,108,0.16)]`}
+          >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+              <img
+                src={avatarUrl}
+                alt={`Ảnh đại diện của ${displayName}`}
+                className="h-full w-full rounded-full object-cover"
+              />
             ) : (
               <span className="w-full h-full rounded-full bg-gradient-to-br from-primary-light to-blue-100 text-primary font-black text-xl flex items-center justify-center">
                 {initials(displayName)}
@@ -485,95 +554,187 @@ export function MyProfileView() {
 
           {!editing ? (
             <>
-              {/* Display Name & Badges */}
-              <div className="flex flex-col gap-1 mb-3">
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 m-0 tracking-tight">
-                  {displayName}
-                </h2>
-                <div className="flex items-center gap-2.5 mt-1 flex-wrap">
-                  <span className="px-3.5 py-1 rounded-full bg-sky-100 text-sky-700 font-bold text-xs">
-                    {isMentor ? 'Mentor' : 'Mentee'}
-                  </span>
-                  <span className="px-3.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium text-xs">
-                    {email}
-                  </span>
-                </div>
-              </div>
+              {isMentor ? (
+                <>
+                  <div className="mb-3 flex flex-col gap-1">
+                    <h2 className="m-0 text-2xl font-black tracking-tight text-[#0b2554] sm:text-3xl">
+                      {displayName}
+                    </h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2.5">
+                      <span className="inline-flex min-h-8 items-center gap-2 rounded-full bg-sky-100 px-3.5 py-1 text-xs font-bold text-sky-700">
+                        Mentor
+                      </span>
+                      <span className="inline-flex min-h-8 min-w-0 max-w-full items-center gap-2 rounded-full bg-slate-100 px-3.5 py-1 text-xs font-medium text-slate-600">
+                        <span className="truncate">{email}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mb-6 mt-3 max-w-3xl text-xs leading-relaxed text-text-muted sm:text-sm">
+                    {bioText}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="m-0 text-[26px] font-bold tracking-tight text-[#0b2554] sm:text-[30px]">
+                          {displayName}
+                        </h2>
+                        <span className="inline-flex min-h-8 items-center gap-2 rounded-full bg-sky-100 px-3.5 py-1 text-xs font-bold text-sky-700">
+                          <GraduationCap className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                          Mentee
+                        </span>
+                      </div>
+                      {profile?.campus?.name && (
+                        <p className="mb-0 mt-2 flex items-center gap-2 text-sm font-semibold text-text-secondary">
+                          <Landmark className="h-4 w-4 text-text-muted" aria-hidden="true" />
+                          {profile.campus.name}
+                        </p>
+                      )}
+                      {email && (
+                        <p className="mb-0 mt-2 flex min-w-0 items-center gap-2 text-[13px] text-text-muted">
+                          <Mail className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                          <span className="truncate">{email}</span>
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border-none bg-primary px-5 text-xs font-extrabold text-white shadow-xs transition-all hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                      onClick={() => {
+                        setEditing(true);
+                        setError(undefined);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
+                      Chỉnh sửa hồ sơ
+                    </button>
+                  </div>
 
-              {/* Bio */}
-              <p className="text-xs sm:text-sm text-text-muted mt-3 mb-6 leading-relaxed max-w-2xl">
-                {bioText}
-              </p>
+                  <h3 className="mb-3 mt-0 flex items-center gap-2 text-base font-extrabold text-[#0b2554] sm:text-lg">
+                    <GraduationCap className="h-5 w-5 text-primary" aria-hidden="true" />
+                    Thông tin học tập
+                  </h3>
+                </>
+              )}
 
               {/* Academic Details Grid (2 Rows x 3 Columns) */}
-              <dl className="grid grid-cols-1 sm:grid-cols-3 gap-y-6 gap-x-6 pt-6 border-t border-solid border-border-light/60">
-                <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
-                    {isMentor ? 'Đánh giá trung bình' : 'Mã số sinh viên'}
-                  </dt>
-                  <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
-                    {isMentor
-                      ? mentorProfile?.ratingAverage
-                        ? `${mentorProfile.ratingAverage.toFixed(1)} ⭐ (${mentorProfile.reviewCount || 0} lượt)`
-                        : '--'
-                      : profile?.studentCode || 'SE201627'}
-                  </dd>
-                </div>
+              {isMentor ? (
+                <dl className="grid grid-cols-1 gap-x-6 gap-y-6 border-t border-solid border-border-light/60 pt-6 sm:grid-cols-3">
+                  <div>
+                    <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                      {isMentor ? 'Đánh giá trung bình' : 'Mã số sinh viên'}
+                    </dt>
+                    <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
+                      {isMentor
+                        ? mentorProfile?.ratingAverage
+                          ? `${mentorProfile.ratingAverage.toFixed(1)} ⭐ (${mentorProfile.reviewCount || 0} lượt)`
+                          : '--'
+                        : profile?.studentCode || 'SE201627'}
+                    </dd>
+                  </div>
 
-                <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
-                    Cơ sở
-                  </dt>
-                  <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
-                    {profile?.campus?.name || 'Đại học FPT TP. HCM'}
-                  </dd>
-                </div>
+                  <div>
+                    <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                      Cơ sở
+                    </dt>
+                    <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
+                      {profile?.campus?.name || 'Đại học FPT TP. HCM'}
+                    </dd>
+                  </div>
 
-                <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
-                    Ngành học
-                  </dt>
-                  <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
-                    {profile?.program?.nameVi || 'Công nghệ truyền thông'}
-                  </dd>
-                </div>
+                  <div>
+                    <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                      Ngành học
+                    </dt>
+                    <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
+                      {profile?.program?.nameVi || 'Công nghệ truyền thông'}
+                    </dd>
+                  </div>
 
-                <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
-                    {isMentor ? 'Chuyên môn / Tiêu đề' : 'Chuyên ngành'}
-                  </dt>
-                  <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
-                    {isMentor
-                      ? mentorProfile?.headline ||
-                        mentorProfile?.subjectResults?.map((s) => s.subjectCode).join(', ') ||
-                        profile?.specialization?.nameVi ||
-                        'Chưa cập nhật tiêu đề'
-                      : profile?.specialization?.nameVi || 'Quan hệ công chúng'}
-                  </dd>
-                </div>
+                  <div>
+                    <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                      {isMentor ? 'Chuyên môn / Tiêu đề' : 'Chuyên ngành'}
+                    </dt>
+                    <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
+                      {isMentor
+                        ? mentorProfile?.headline ||
+                          mentorProfile?.subjectResults?.map((s) => s.subjectCode).join(', ') ||
+                          profile?.specialization?.nameVi ||
+                          'Chưa cập nhật tiêu đề'
+                        : profile?.specialization?.nameVi || 'Quan hệ công chúng'}
+                    </dd>
+                  </div>
 
-                <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
-                    {isMentor ? 'Múi giờ' : 'Học kỳ'}
-                  </dt>
-                  <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
-                    {isMentor
-                      ? mentorProfile?.bookingTimezone || 'Asia/Ho_Chi_Minh'
-                      : profile?.semester === 0
+                  <div>
+                    <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                      {isMentor ? 'Múi giờ' : 'Học kỳ'}
+                    </dt>
+                    <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
+                      {isMentor
+                        ? mentorProfile?.bookingTimezone || 'Asia/Ho_Chi_Minh'
+                        : profile?.semester === 0
+                          ? 'Tiếng Anh dự bị'
+                          : `Học kỳ ${profile?.semester || 2}`}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
+                      Khóa nhập học
+                    </dt>
+                    <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
+                      {profile?.intakeYear || '2024'}
+                    </dd>
+                  </div>
+                </dl>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  <AcademicTile
+                    icon={GraduationCap}
+                    label="Mã số sinh viên"
+                    value={profile?.studentCode || 'Chưa cập nhật'}
+                    tone="blue"
+                  />
+                  <AcademicTile
+                    icon={Landmark}
+                    label="Cơ sở"
+                    value={profile?.campus?.name || 'Chưa cập nhật'}
+                    tone="violet"
+                  />
+                  <AcademicTile
+                    icon={BookOpen}
+                    label="Ngành học"
+                    value={profile?.program?.nameVi || 'Chưa cập nhật'}
+                    tone="green"
+                  />
+                  <AcademicTile
+                    icon={FileText}
+                    label="Chuyên ngành"
+                    value={profile?.specialization?.nameVi || 'Chưa cập nhật'}
+                    tone="orange"
+                  />
+                  <AcademicTile
+                    icon={ChartNoAxesColumnIncreasing}
+                    label="Học kỳ"
+                    value={
+                      profile?.semester === 0
                         ? 'Tiếng Anh dự bị'
-                        : `Học kỳ ${profile?.semester || 2}`}
-                  </dd>
+                        : profile?.semester
+                          ? `Học kỳ ${profile.semester}`
+                          : 'Chưa cập nhật'
+                    }
+                    tone="pink"
+                  />
+                  <AcademicTile
+                    icon={CalendarDays}
+                    label="Khóa nhập học"
+                    value={profile?.intakeYear ? String(profile.intakeYear) : 'Chưa cập nhật'}
+                    tone="blue"
+                  />
                 </div>
-
-                <div>
-                  <dt className="text-xs text-text-muted font-semibold mb-1 uppercase tracking-wider">
-                    Khóa nhập học
-                  </dt>
-                  <dd className="text-sm sm:text-base font-black text-slate-800 m-0">
-                    {profile?.intakeYear || '2024'}
-                  </dd>
-                </div>
-              </dl>
+              )}
 
               {profile?.alumni && (
                 <p className="mt-4 pt-4 border-t border-solid border-border-light/60 text-xs text-primary font-bold">
@@ -604,18 +765,6 @@ export function MyProfileView() {
                   <small className="text-rose-500 font-normal">{errors.studentCode.message}</small>
                 )}
               </label>
-              <label className="flex flex-col gap-1 text-xs font-bold text-text-main">
-                Giới thiệu bản thân / Kinh nghiệm
-                <textarea
-                  className="p-3.5 rounded-xl border border-solid border-border-color focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition-all"
-                  rows={4}
-                  placeholder="Mục tiêu học tập, kinh nghiệm chuyên môn và lĩnh vực bạn quan tâm…"
-                  {...register('bio')}
-                />
-                {errors.bio && (
-                  <small className="text-rose-500 font-normal">{errors.bio.message}</small>
-                )}
-              </label>
               {profile && (
                 <p className="text-xs text-text-muted">
                   Thông tin học thuật được xác thực: {profile.campus.name} ·{' '}
@@ -635,26 +784,45 @@ export function MyProfileView() {
       </article>
 
       {/* Segmented Profile Tabs */}
-      <section className="bg-white rounded-2xl p-2 border border-solid border-border-light shadow-xs flex items-center justify-around text-center">
+      <section
+        className={`${!isMentor ? styles.tabs : 'min-h-[68px]'} flex items-center justify-between overflow-x-auto rounded-2xl border border-solid border-border-light bg-white px-2 text-center shadow-xs`}
+        role="tablist"
+        aria-label="Nội dung hồ sơ"
+      >
         <button
-          className="px-6 py-2.5 text-xs sm:text-sm font-extrabold text-primary border-b-2 border-primary bg-transparent cursor-pointer"
+          className="relative min-h-[52px] min-w-[150px] flex-1 cursor-pointer border-0 bg-transparent px-5 py-2.5 text-xs font-extrabold text-primary after:absolute after:right-4 after:bottom-0 after:left-4 after:h-[3px] after:rounded-full after:bg-primary sm:text-sm"
           type="button"
+          role="tab"
+          aria-selected="true"
         >
-          {isMentor ? 'Thông tin Mentor' : 'Thông tin học thuật'}
+          <span className="inline-flex items-center gap-2">
+            <Target className="h-4 w-4" aria-hidden="true" />
+            {isMentor ? 'Thông tin Mentor' : 'Tổng quan'}
+          </span>
         </button>
         <button
-          className="px-6 py-2.5 text-xs sm:text-sm font-semibold text-text-muted bg-transparent cursor-pointer hover:text-text-main"
+          className="min-h-[52px] min-w-[120px] flex-1 cursor-pointer border-0 bg-transparent px-5 py-2.5 text-xs font-semibold text-text-muted hover:text-text-main sm:min-w-[150px] sm:text-sm"
           type="button"
+          role="tab"
+          aria-selected="false"
           disabled
         >
-          Hoạt động gần đây
+          <span className="inline-flex items-center gap-2">
+            <ChartNoAxesColumnIncreasing className="h-4 w-4" aria-hidden="true" />
+            Hoạt động gần đây
+          </span>
         </button>
         <button
-          className="px-6 py-2.5 text-xs sm:text-sm font-semibold text-text-muted bg-transparent cursor-pointer hover:text-text-main"
+          className="min-h-[52px] min-w-[120px] flex-1 cursor-pointer border-0 bg-transparent px-5 py-2.5 text-xs font-semibold text-text-muted hover:text-text-main sm:min-w-[150px] sm:text-sm"
           type="button"
+          role="tab"
+          aria-selected="false"
           disabled
         >
-          Lịch đặt
+          <span className="inline-flex items-center gap-2">
+            <Calendar className="h-4 w-4" aria-hidden="true" />
+            Lịch hẹn
+          </span>
         </button>
       </section>
 

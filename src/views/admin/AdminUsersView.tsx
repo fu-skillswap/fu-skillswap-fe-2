@@ -9,7 +9,14 @@ import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions
 import type { AdminMentor, AdminUser } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
 import { showError } from '@/utils/toast';
-import { ChevronLeft, ChevronRight, RefreshCw, Users } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  RefreshCw,
+  UserRoundSearch,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -313,7 +320,11 @@ function LoadingRow({ message }: { message: string }) {
   return (
     <tr>
       <td colSpan={6} className="admin-users-state">
-        <span>{message}</span>
+        <div className="admin-users-feedback" role="status" aria-live="polite">
+          <LoaderCircle className="is-loading" aria-hidden="true" />
+          <strong>{message}</strong>
+          <span>Vui lòng chờ trong giây lát.</span>
+        </div>
       </td>
     </tr>
   );
@@ -323,7 +334,13 @@ function EmptyRow({ statusFilter, label }: { statusFilter: string; label: string
   return (
     <tr>
       <td colSpan={6} className="admin-users-state">
-        {statusFilter ? `Không có ${label} ở trạng thái đã chọn.` : `Chưa có ${label} nào.`}
+        <div className="admin-users-feedback">
+          <UserRoundSearch aria-hidden="true" />
+          <strong>
+            {statusFilter ? `Không có ${label} ở trạng thái đã chọn.` : `Chưa có ${label} nào.`}
+          </strong>
+          <span>Thử chọn trạng thái khác hoặc làm mới danh sách.</span>
+        </div>
       </td>
     </tr>
   );
@@ -335,7 +352,7 @@ function MenteeRow({ user, locale }: { user: AdminUser; locale: string }) {
       <td>
         <Link className="admin-user-profile" href={`/${locale}/admin/users/${user.userId}`}>
           {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" />
+            <img src={user.avatarUrl} alt="" loading="lazy" />
           ) : (
             <InitialAvatar name={user.fullName} />
           )}
@@ -367,7 +384,7 @@ function MentorRow({ mentor, locale }: { mentor: AdminMentor; locale: string }) 
           href={`/${locale}/admin/mentors/${mentor.mentorUserId}`}
         >
           {mentor.avatarUrl ? (
-            <img src={mentor.avatarUrl} alt="" />
+            <img src={mentor.avatarUrl} alt="" loading="lazy" />
           ) : (
             <InitialAvatar name={mentor.displayName} />
           )}

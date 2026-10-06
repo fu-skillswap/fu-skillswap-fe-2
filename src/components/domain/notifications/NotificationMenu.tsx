@@ -5,10 +5,9 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import type { Notification } from '@/models/notification';
 import { notificationRepo } from '@/repositories/notificationRepo';
-import { showInfo } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showInfo } from '@/utils/toast';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -51,7 +50,7 @@ export function NotificationMenu() {
       setItems(result.items);
       setUnreadCount(result.items.filter((item) => !item.read).length);
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : 'Không thể tải thông báo.');
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải thông báo.'));
     } finally {
       setLoading(false);
     }
@@ -100,7 +99,7 @@ export function NotificationMenu() {
       );
       setUnreadCount((current) => Math.max(0, current - 1));
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : 'Không thể cập nhật thông báo.');
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể cập nhật thông báo.'));
     }
   };
 
@@ -110,7 +109,7 @@ export function NotificationMenu() {
       setItems((current) => current.map((item) => ({ ...item, read: true })));
       setUnreadCount(0);
     } catch (reason) {
-      setError(reason instanceof ApiClientError ? reason.message : 'Không thể cập nhật thông báo.');
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể cập nhật thông báo.'));
     }
   };
 

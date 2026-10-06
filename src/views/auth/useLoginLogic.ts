@@ -46,9 +46,9 @@ function loadGoogleIdentityServices() {
 /**
  * Chuyển đổi các đối tượng lỗi từ API/Network thành thông điệp thân thiện với người dùng bằng tiếng Việt.
  * @param reason - Lỗi thu được từ khối catch
- * @returns Chuỗi thông báo lỗi tiếng Việt
+ * @returns Lỗi gốc để mapper dùng chung xử lý, hoặc business message đã được xác định an toàn
  */
-function messageForGoogleError(reason: unknown) {
+function userFacingGoogleError(reason: unknown): unknown {
   if (reason instanceof ApiClientError) {
     if (reason.code === 'SYS_0010')
       return reason.retryAfterSeconds
@@ -57,9 +57,9 @@ function messageForGoogleError(reason: unknown) {
     if (reason.code === 'AUTH_1004') return 'Tài khoản của bạn đã bị khóa.';
     if (/nonce/i.test(reason.message))
       return 'Phiên đăng nhập Google đã hết hạn hoặc không còn hợp lệ. Vui lòng bấm “Đăng nhập bằng Google” và thử lại.';
-    return reason.message || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
+    return reason;
   }
-  return 'Không thể khởi tạo đăng nhập Google. Vui lòng thử lại.';
+  return reason;
 }
 
 /**
@@ -75,7 +75,7 @@ export function useLoginLogic(locale: string, adminOnly = false) {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const nonceRef = useRef<string | null>(null);
   const configureGoogleButtonRef = useRef<() => Promise<void>>(async () => {});
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<unknown>();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(true);
   const clearError = useCallback(() => setError(undefined), []);
@@ -159,7 +159,8 @@ export function useLoginLogic(locale: string, adminOnly = false) {
             }
             router.replace(onboardingDestination(locale, onboarding.nextRecommendedAction));
           } catch (reason) {
-            setError(messageForGoogleError(reason));
+            console.error('[Login Error]', reason);
+            setError(userFacingGoogleError(reason));
             void configureGoogleButtonRef.current();
           } finally {
             setGoogleLoading(false);
@@ -176,7 +177,8 @@ export function useLoginLogic(locale: string, adminOnly = false) {
       });
     } catch (reason) {
       nonceRef.current = null;
-      setError(messageForGoogleError(reason));
+      console.error('[Login Setup Error]', reason);
+      setError(userFacingGoogleError(reason));
     } finally {
       setGoogleLoading(false);
     }

@@ -1,0 +1,52 @@
+.discoveryPage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+  padding-bottom: 28px;
+}
+
+.discoveryPage::before {
+  position: absolute;
+  z-index: -2;
+  inset: -24px;
+  min-height: calc(100% + 48px);
+  background:
+    radial-gradient(circle at 88% 18%, rgba(17, 156, 247, 0.07), transparent 24%),
+    radial-gradient(circle at 8% 92%, rgba(17, 156, 247, 0.06), transparent 22%),
+    linear-gradient(180deg, #f7fbff 0%, #eff8ff 100%);
+  content: '';
+}
+
+.discoveryPage::after {
+  position: absolute;
+  z-index: -1;
+  top: 112px;
+  right: 8px;
+  width: 112px;
+  height: 72px;
+  background-image: radial-gradient(circle, rgba(17, 156, 247, 0.14) 1.5px, transparent 1.5px);
+  background-size: 16px 16px;
+  content: '';
+  pointer-events: none;
+}
+
+.filterScroller {
+  scrollbar-width: none;
+}
+
+.filterScroller::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .discoveryPage::before {
+    inset: -16px;
+    min-height: calc(100% + 32px);
+  }
+
+  .discoveryPage::after {
+    display: none;
+  }
+}

@@ -9,7 +9,10 @@ import { AosInitializer } from '@/components/domain/landing/AosInitializer';
 import { LandingFaq } from '@/components/domain/landing/LandingFaq';
 import { LandingFooter } from '@/components/domain/landing/LandingFooter';
 import { LandingHeader } from '@/components/domain/landing/LandingHeader';
+import { CONFIRMED_LANDING_FAQS } from '@/data/landingFaq';
 import {
+  AboutSection,
+  FeaturedCourses,
   FinalCta,
   HowItWorks,
   MenteeBenefits,
@@ -20,8 +23,27 @@ import {
 } from '@/components/domain/landing/LandingSections';
 
 export function LandingView({ locale }: { locale: string }) {
+  const faqStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: CONFIRMED_LANDING_FAQS.map(({ question, answer }) => ({
+      '@type': 'Question',
+      name: question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: answer,
+      },
+    })),
+  };
+
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-clip bg-white text-text-main">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqStructuredData).replace(/</g, '\\u003c'),
+        }}
+      />
       <AosInitializer />
       <LandingHeader locale={locale} />
       <main>
@@ -35,11 +57,13 @@ export function LandingView({ locale }: { locale: string }) {
             <TrustStrip />
           </div>
         </section>
+        <AboutSection />
         <MenteeBenefits locale={locale} />
+        <FeaturedCourses locale={locale} />
         <HowItWorks />
         <MentorSection locale={locale} />
         <MentorSteps />
-        <TransparentPricing />
+        <TransparentPricing locale={locale} />
         <LandingFaq />
         <FinalCta locale={locale} />
       </main>

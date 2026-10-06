@@ -46,10 +46,25 @@ function getPageNumbers(currentPage: number, totalPages: number) {
   return Array.from({ length: end - start }, (_, index) => start + index);
 }
 
-function InitialAvatar({ name }: { name: string }) {
-  return (
-    <span className="admin-booking-initial">{name.trim().charAt(0).toUpperCase() || '?'}</span>
-  );
+function getPaymentStatusClass(value: string | null) {
+  return value?.trim().toLowerCase().replaceAll('_', '-') ?? '';
+}
+
+function getPaymentStatusLabel(value: string | null) {
+  if (!value) return 'Chưa cập nhật';
+  const labels: Record<string, string> = {
+    PENDING: 'Đang chờ',
+    UNPAID: 'Chưa thanh toán',
+    REQUIRES_PAYMENT: 'Chờ thanh toán',
+    PROCESSING: 'Đang xử lý',
+    PAID: 'Đã thanh toán',
+    COMPLETED: 'Đã thanh toán',
+    SUCCEEDED: 'Đã thanh toán',
+    FAILED: 'Thất bại',
+    CANCELLED: 'Đã hủy',
+    REFUNDED: 'Đã hoàn tiền',
+  };
+  return labels[value] ?? value.replaceAll('_', ' ').toLocaleLowerCase('vi-VN');
 }
 
 export function AdminBookingsView() {
@@ -148,7 +163,7 @@ export function AdminBookingsView() {
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Tìm mã lịch, mentor hoặc mentee..."
+                placeholder="Tìm mentor hoặc mentee..."
                 aria-label="Tìm lịch hẹn"
               />
             </label>
@@ -177,8 +192,7 @@ export function AdminBookingsView() {
             <table>
               <thead>
                 <tr>
-                  <th id="admin-bookings-title">Lịch hẹn</th>
-                  <th>Người tham gia</th>
+                  <th id="admin-bookings-title">Người tham gia</th>
                   <th>Dịch vụ</th>
                   <th>Thời gian</th>
                   <th>Trạng thái</th>
@@ -270,7 +284,7 @@ function BookingMetric({
 function BookingStateRow({ message }: { message: string }) {
   return (
     <tr>
-      <td colSpan={6} className="admin-users-state">
+      <td colSpan={5} className="admin-users-state">
         <span>{message}</span>
       </td>
     </tr>
@@ -281,21 +295,9 @@ function BookingRow({ booking }: { booking: AdminBooking }) {
   return (
     <tr>
       <td>
-        <b>{booking.bookingId}</b>
-        <small>{booking.displayState ? getLabel(booking.displayState) : '—'}</small>
-      </td>
-      <td>
         <div className="admin-booking-participants">
-          <Participant
-            avatarUrl={booking.menteeAvatarUrl}
-            name={booking.menteeDisplayName}
-            role="Mentee"
-          />
-          <Participant
-            avatarUrl={booking.mentorAvatarUrl}
-            name={booking.mentorDisplayName}
-            role="Mentor"
-          />
+          <Participant name={booking.menteeDisplayName} role="Mentee" />
+          <Participant name={booking.mentorDisplayName} role="Mentor" />
         </div>
       </td>
       <td>
@@ -319,8 +321,12 @@ function BookingRow({ booking }: { booking: AdminBooking }) {
         )}
       </td>
       <td>
-        <span className="admin-booking-payment">{getLabel(booking.paymentStatus)}</span>
-        <small>
+        {!booking.serviceIsFreeSnapshot && booking.paymentStatus !== 'NOT_REQUIRED' && (
+          <span className={`admin-booking-payment ${getPaymentStatusClass(booking.paymentStatus)}`}>
+            {getPaymentStatusLabel(booking.paymentStatus)}
+          </span>
+        )}
+        <small className="admin-booking-price">
           {booking.serviceIsFreeSnapshot
             ? 'Miễn phí'
             : `${booking.servicePriceWithSurchargeScoin ?? booking.servicePriceScoinSnapshot ?? 0} Scoin`}
@@ -330,18 +336,9 @@ function BookingRow({ booking }: { booking: AdminBooking }) {
   );
 }
 
-function Participant({
-  avatarUrl,
-  name,
-  role,
-}: {
-  avatarUrl: string | null;
-  name: string;
-  role: string;
-}) {
+function Participant({ name, role }: { name: string; role: string }) {
   return (
     <span className="admin-booking-person">
-      {avatarUrl ? <img src={avatarUrl} alt="" /> : <InitialAvatar name={name} />}
       <span>
         <b>{name}</b>
         <small>{role}</small>

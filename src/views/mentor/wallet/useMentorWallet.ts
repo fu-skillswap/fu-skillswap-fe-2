@@ -3,7 +3,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ApiClientError } from '@/models/apiClient';
 import type {
   MentorPayoutProfileResponse,
   MentorPayoutProfileUpsertRequest,
@@ -19,7 +18,7 @@ import {
 } from '@/models/schemas/mentorWalletSchema';
 import { useAuth } from '@/providers/AuthProvider';
 import { walletRepo } from '@/repositories/walletRepo';
-import { showError, showSuccess } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
 
 const EMPTY_PROFILE: PayoutProfileFormValues = {
   accountHolderName: '',
@@ -64,9 +63,7 @@ export function useMentorWallet() {
       setRequests(requestData);
     } catch (reason) {
       setError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể tải thông tin ví. Vui lòng thử lại.',
+        getUserFriendlyErrorMessage(reason, 'Không thể tải thông tin ví. Vui lòng thử lại.'),
       );
     } finally {
       setIsLoading(false);

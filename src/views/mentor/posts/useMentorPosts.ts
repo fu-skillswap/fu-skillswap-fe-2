@@ -8,18 +8,20 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ApiClientError } from '@/models/apiClient';
 import type { MentorBlogPostDetailResponse, MentorBlogPostCreateRequest } from '@/models/auth';
 import { mentorPostSchema, type MentorPostFormValues } from '@/models/schemas/mentorPostSchema';
 import { useAuth } from '@/providers/AuthProvider';
 import { mentorPostRepo } from '@/repositories/mentorPostRepo';
-import { showError, showSuccess } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
 
 const EMPTY_FORM: MentorPostFormValues = {
   title: '',
   excerpt: '',
   contentMarkdown: '',
   visibility: 'PUBLIC',
+  categoryIds: [],
+  tagIds: [],
+  coverAssetId: undefined,
 };
 
 export function useMentorPosts() {
@@ -43,11 +45,7 @@ export function useMentorPosts() {
       setPosts(await mentorPostRepo.list());
     } catch (reason) {
       setPosts([]);
-      setError(
-        reason instanceof ApiClientError
-          ? reason.message
-          : 'Không thể tải bài viết. Vui lòng thử lại.',
-      );
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải bài viết. Vui lòng thử lại.'));
     } finally {
       setIsLoading(false);
     }
@@ -88,12 +86,16 @@ export function useMentorPosts() {
           excerpt: detail.excerpt ?? '',
           contentMarkdown: detail.contentMarkdown ?? '',
           visibility: detail.visibility,
+          categoryIds: detail.categories?.map((category) => category.id) ?? [],
+          tagIds: detail.tags?.map((tag) => tag.id) ?? [],
+          coverAssetId: undefined,
         });
         setEditingPost(detail);
       } catch (reason) {
-        showError(
-          reason instanceof Error ? reason.message : 'Không thể tải bài viết để chỉnh sửa.',
-        );
+        showError(reason, {
+          title: 'Không thể tải bài viết để chỉnh sửa',
+          description: 'Vui lòng thử lại sau.',
+        });
       } finally {
         setIsSaving(false);
       }
@@ -113,6 +115,9 @@ export function useMentorPosts() {
         excerpt: values.excerpt?.trim() || undefined,
         contentMarkdown: values.contentMarkdown?.trim() || undefined,
         visibility: values.visibility,
+        categoryIds: values.categoryIds,
+        tagIds: values.tagIds,
+        coverAssetId: values.coverAssetId || undefined,
       };
       const saved = editingPost
         ? await mentorPostRepo.update(editingPost.id, {
@@ -179,3 +184,5 @@ export function useMentorPosts() {
     submitPublish,
   };
 }
+
+export type MentorPostsController = ReturnType<typeof useMentorPosts>;

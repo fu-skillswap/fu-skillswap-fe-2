@@ -583,6 +583,8 @@ export interface MentorBlogPostCreateRequest {
   title: string;
   excerpt?: string;
   contentMarkdown?: string;
+  coverAssetId?: string;
+  ogAssetId?: string;
   visibility?: MentorBlogVisibility;
   categoryIds?: string[];
   tagIds?: string[];
@@ -595,6 +597,111 @@ export interface MentorBlogPostUpdateRequest extends MentorBlogPostCreateRequest
 
 export interface BlogExpectedVersionRequest {
   expectedVersion: number;
+}
+
+export type ForumTopicCode = 'QUESTION' | 'SHARING' | 'SEARCH' | 'REVIEW';
+
+export interface ForumTopicResponse {
+  id: string;
+  code: ForumTopicCode;
+  nameVi: string;
+  nameEn?: string;
+  displayOrder?: number;
+}
+
+export interface ForumPostUpsertRequest {
+  title: string;
+  content: string;
+  forumTopicId: string;
+  imageUrls?: string[];
+}
+
+export interface ForumPostResponse {
+  postId: string;
+  authorUserId?: string;
+  authorFullName?: string;
+  authorAvatarUrl?: string | null;
+  forumTopic?: ForumTopicResponse;
+  title: string;
+  content: string;
+  status: string;
+  commentCount: number;
+  reactionCount: number;
+  reactedByCurrentUser?: boolean;
+  myReactionType?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  imageUrls?: string[];
+}
+
+export interface ForumPostPageResponse {
+  items: ForumPostResponse[];
+  nextCursor?: string | null;
+  hasNext: boolean;
+  limit: number;
+}
+
+export interface ForumCommentResponse {
+  commentId: string;
+  postId: string;
+  authorUserId?: string;
+  authorFullName?: string;
+  authorAvatarUrl?: string;
+  authorRole?: string;
+  content: string;
+  status: string;
+  reactionCount?: number;
+  reactedByCurrentUser?: boolean;
+  replyToCommentId?: string;
+  replyToUserId?: string;
+  replyToUserName?: string;
+  replyCount?: number;
+  createdAt: string;
+  updatedAt?: string;
+  imageUrls?: string[];
+}
+
+export interface ForumCommentPageResponse {
+  items: ForumCommentResponse[];
+  nextCursor?: string | null;
+  hasNext: boolean;
+  limit: number;
+}
+
+export interface ForumCommentUpsertRequest {
+  content: string;
+  imageUrls?: string[];
+  replyToCommentId?: string;
+}
+
+export interface ForumReactionRequest {
+  reactionType: 'LIKE';
+}
+
+export interface ForumReportCreateRequest {
+  targetType: 'POST' | 'COMMENT';
+  targetId: string;
+  reasonType: 'SPAM' | 'OFF_TOPIC' | 'HARASSMENT' | 'MISLEADING' | 'OTHER';
+  description?: string;
+}
+
+export interface BlogUploadRequest {
+  filename: string;
+  contentType: string;
+}
+
+export interface BlogUploadIntent {
+  uploadIntentId: string;
+  uploadUrl: string;
+  expiresAt: string;
+  requiredHeaders?: Record<string, string>;
+}
+
+export interface BlogFileAssetMetadata {
+  assetId: string;
+  publicUrl: string;
+  contentType: string;
+  sizeBytes: number;
 }
 
 /** Availability slot returned by GET /api/me/availability-slots. */

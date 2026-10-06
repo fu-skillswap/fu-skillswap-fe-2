@@ -40,6 +40,7 @@ function getInitialSidebarOpen(): boolean {
 function routeTitle(pathname: string) {
   if (pathname.endsWith('/messages')) return 'Tin nhắn';
   if (pathname.endsWith('/profile')) return 'Hồ sơ của tôi';
+  if (pathname.endsWith('/settings')) return 'Cài đặt & hỗ trợ';
   if (pathname.includes('/my-bookings')) return 'Booking của tôi';
   if (pathname.includes('/mentor-booking')) return 'Tìm Mentor';
   if (pathname.includes('/post-detail/')) return 'Chi tiết bài viết';
@@ -81,6 +82,7 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
 
   const title = headerTitle ?? routeTitle(pathname);
   const isMentor = user?.roles?.includes('MENTOR');
+  const isDashboard = pathname.endsWith('/dashboard') && !pathname.includes('/mentor/dashboard');
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -108,17 +110,18 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
   return (
     <MenteeShellContext.Provider value={contextValue}>
       <div className="min-h-screen bg-bg text-text-main flex relative overflow-x-clip">
-        {/* Background Watermark KooKoo Mascot (phóng to chiếm trọn màn hình dưới sidebar & bài post) */}
-        <div
-          className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
-          aria-hidden="true"
-        >
-          <img
-            src="/images/Koko.png"
-            alt=""
-            className="w-full h-full object-contain p-4 md:p-8 scale-105"
-          />
-        </div>
+        {!isDashboard && (
+          <div
+            className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
+            aria-hidden="true"
+          >
+            <img
+              src="/images/Koko.png"
+              alt=""
+              className="w-full h-full object-contain p-4 md:p-8 scale-105"
+            />
+          </div>
+        )}
 
         {/* Backdrop che mờ màn hình khi mở Sidebar trên thiết bị di động */}
         <div

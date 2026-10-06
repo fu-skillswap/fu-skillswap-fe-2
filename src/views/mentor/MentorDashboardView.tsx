@@ -5,10 +5,10 @@
 
 'use client';
 
-import { ApiClientError } from '@/models/apiClient';
 import type { MentorProfileResponse } from '@/models/auth';
 import { useAuth } from '@/providers/AuthProvider';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import {
   ArrowRight,
   Banknote,
@@ -36,11 +36,7 @@ export function MentorDashboardView({ locale }: { locale: string }) {
       .get(true)
       .then(setProfile)
       .catch((reason) =>
-        setError(
-          reason instanceof ApiClientError
-            ? reason.message
-            : 'Không thể tải thông tin hồ sơ Mentor.',
-        ),
+        setError(getUserFriendlyErrorMessage(reason, 'Không thể tải thông tin hồ sơ Mentor.')),
       )
       .finally(() => setLoading(false));
   }, []);

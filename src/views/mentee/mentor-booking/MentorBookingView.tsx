@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useMentorBooking } from './useMentorBooking';
 import { mentorRepo } from '@/repositories/mentorRepo';
+import styles from './MentorBookingView.module.css';
 
 /**
  * @file MentorBookingView.tsx
@@ -140,15 +141,14 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
           onBook={(service) => openBooking(detailMentor, service)}
         />
       ) : (
-        <section className="mx-auto max-w-7xl space-y-5" aria-label="Tìm Mentor">
-          <div className="flex flex-col items-stretch gap-4 rounded-3xl border border-solid border-border-light bg-white p-4 shadow-xs sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-            <label className="relative w-full lg:max-w-[460px]">
-              <Search
-                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
-                aria-hidden="true"
-              />
+        <section className={`${styles.discoveryPage} space-y-0`} aria-label="Tìm Mentor">
+          <div className="grid items-center gap-4 rounded-[20px] border border-solid border-[#e1ecf6] bg-white/95 p-4 shadow-[0_5px_18px_rgba(29,76,122,0.035)] sm:p-5 xl:grid-cols-[minmax(360px,1.2fr)_auto] xl:gap-7">
+            <label className="relative block w-full">
+              <span className="pointer-events-none absolute top-1/2 left-3 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-[#e9f5ff]">
+                <Search className="h-5 w-5 text-primary" aria-hidden="true" />
+              </span>
               <input
-                className="h-12 w-full rounded-xl border border-solid border-border-color bg-surface-subtle pl-12 pr-4 text-sm text-text-main outline-none transition-all placeholder:text-text-muted focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/15"
+                className="h-14 w-full rounded-[14px] border border-solid border-[#dce7f2] bg-[#f8fbff] pr-4 pl-16 text-[15px] text-text-main outline-none transition-all placeholder:text-[#71849d] hover:border-primary/35 focus:border-primary focus:bg-white focus:ring-3 focus:ring-primary/10"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm theo tên hoặc kỹ năng..."
@@ -156,17 +156,17 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
               />
             </label>
             <div
-              className="flex items-center gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:justify-end lg:overflow-visible lg:pb-0"
+              className={`${styles.filterScroller} flex items-center gap-2 overflow-x-auto pb-1 xl:justify-end xl:overflow-visible xl:pb-0`}
               aria-label="Lọc Mentor theo lĩnh vực"
             >
               <button
                 type="button"
                 onClick={() => setCategory(undefined)}
                 aria-pressed={!category}
-                className={`h-10 shrink-0 rounded-xl border border-solid px-4 text-sm font-semibold outline-none transition-all focus-visible:ring-3 focus-visible:ring-primary/20 ${
+                className={`h-12 shrink-0 rounded-[13px] border border-solid px-5 text-sm font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-primary/20 ${
                   !category
-                    ? 'bg-primary border-primary text-white shadow-xs'
-                    : 'bg-surface-subtle border-border-color text-text-secondary hover:bg-border-strong/20 hover:border-border-strong'
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-[#dce6f1] bg-white text-[#465a73] hover:border-primary/30 hover:bg-[#f7fbff]'
                 }`}
               >
                 Tất cả
@@ -177,10 +177,10 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
                   key={option}
                   onClick={() => setCategory(option)}
                   aria-pressed={category === option}
-                  className={`h-10 shrink-0 rounded-xl border border-solid px-4 text-sm font-semibold outline-none transition-all focus-visible:ring-3 focus-visible:ring-primary/20 ${
+                  className={`h-12 shrink-0 rounded-[13px] border border-solid px-5 text-sm font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-primary/20 ${
                     category === option
-                      ? 'bg-primary border-primary text-white shadow-xs'
-                      : 'bg-surface-subtle border-border-color text-text-secondary hover:bg-border-strong/20 hover:border-border-strong'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-[#dce6f1] bg-white text-[#465a73] hover:border-primary/30 hover:bg-[#f7fbff]'
                   }`}
                 >
                   {option}
@@ -190,26 +190,26 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
           </div>
           {!isLoading && (
             <p
-              className="relative -top-2 m-0 px-1 text-sm font-medium text-text-muted"
+              className="m-0 px-2 pt-7 pb-5 text-lg font-bold text-[#0b2554] sm:text-xl"
               aria-live="polite"
             >
-              {filteredMentors.length} mentor phù hợp
+              <strong className="text-primary">{filteredMentors.length}</strong> mentor phù hợp
             </p>
           )}
           {isLoading ? (
             <div
-              className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
               aria-label="Đang tìm Mentor"
             >
-              {[1, 2, 3, 4].map((item) => (
+              {[1, 2, 3].map((item) => (
                 <div
                   key={item}
-                  className="mx-auto h-[430px] w-full max-w-[280px] animate-pulse rounded-2xl border border-solid border-border-light bg-white shadow-xs"
+                  className="h-[470px] w-full animate-pulse rounded-[18px] border border-solid border-border-light bg-white shadow-xs"
                 />
               ))}
             </div>
           ) : filteredMentors.length ? (
-            <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
               {filteredMentors.map((mentor) => (
                 <MentorCard mentor={mentor} key={mentor.id} onSelect={setDetailMentor} />
               ))}

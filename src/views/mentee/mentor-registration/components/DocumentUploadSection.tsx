@@ -17,6 +17,8 @@ import {
   Plus,
   ExternalLink,
   AlertCircle,
+  ShieldCheck,
+  LockKeyhole,
 } from 'lucide-react';
 import type { MentorVerificationResponse } from '@/models/auth';
 
@@ -77,6 +79,23 @@ export function DocumentUploadSection({
       disabled={disabled}
       className="w-full min-w-0 max-w-full overflow-hidden bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6 disabled:opacity-75"
     >
+      <div className="flex items-start justify-between gap-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-600">
+            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <strong className="block text-sm font-bold text-sky-900">
+              Thông tin của bạn được bảo mật tuyệt đối
+            </strong>
+            <p className="mb-0 mt-1 text-xs leading-5 text-sky-800">
+              Minh chứng chỉ được sử dụng để xác thực tư cách sinh viên/cựu sinh viên và năng lực
+              mentor. Không hiển thị công khai với người dùng khác.
+            </p>
+          </div>
+        </div>
+        <LockKeyhole className="h-5 w-5 shrink-0 text-sky-600" aria-hidden="true" />
+      </div>
       <div className="space-y-1">
         <h2 className="text-lg font-bold text-slate-900">Tải lên Minh chứng Xác thực Hồ sơ</h2>
         <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
@@ -183,6 +202,15 @@ export function DocumentUploadSection({
           /* Nút chọn file khi chưa có file nào */
           <div
             onClick={() => !disabled && fptuInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (!disabled && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                fptuInputRef.current?.click();
+              }
+            }}
+            role="button"
+            tabIndex={disabled ? -1 : 0}
+            aria-label="Tải lên minh chứng sinh viên hoặc cựu sinh viên FPTU"
             className={`border-2 border-dashed border-slate-300 hover:border-sky-400 bg-slate-50/50 hover:bg-sky-50/30 rounded-xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 ${
               disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
@@ -328,6 +356,15 @@ export function DocumentUploadSection({
         {!disabled && selectedExpertiseFiles.length + existingExpertiseDocs.length < 3 && (
           <div
             onClick={() => expertiseInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                expertiseInputRef.current?.click();
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="Tải lên chứng chỉ hoặc minh chứng chuyên môn"
             className={`border-2 border-dashed border-purple-200/80 hover:border-purple-300 bg-purple-50/30 hover:bg-purple-50/60 rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col sm:flex-row items-center justify-center gap-3 ${
               selectedExpertiseFiles.length > 0 || existingExpertiseDocs.length > 0 ? 'p-4' : 'p-6'
             }`}

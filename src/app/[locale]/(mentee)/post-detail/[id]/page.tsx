@@ -18,8 +18,15 @@ export default async function PostDetailPage({
 }) {
   const { locale, id } = await params;
   try {
-    const { post, comments } = await postRepo.findById(id);
-    return <PostDetailView post={post} initialComments={comments} locale={locale} />;
+    const { post, comments, relatedPosts } = await postRepo.findById(id);
+    return (
+      <PostDetailView
+        post={post}
+        initialComments={comments}
+        relatedPosts={relatedPosts}
+        locale={locale}
+      />
+    );
   } catch {
     notFound();
   }

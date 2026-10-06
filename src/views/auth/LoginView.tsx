@@ -22,8 +22,8 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
   useEffect(() => {
     if (!error) return;
     showError(error, {
-      title: 'Không thể đăng nhập',
-      description: 'Vui lòng kiểm tra thông tin và thử lại.',
+      title: 'Đăng nhập chưa thành công',
+      description: 'Vui lòng thử lại sau ít phút.',
     });
     clearError();
   }, [clearError, error]);

@@ -241,20 +241,19 @@ export function MentorBookingsView() {
         const isGenericValidationMessage =
           reason.status === 400 &&
           /invalid|validation|bad request|không hợp lệ|chưa hợp lệ/i.test(reason.message);
-        showError(
+        const displayReason: unknown =
           validationMessage ||
-            (isMissingIdempotencyKey
-              ? 'Yêu cầu chưa có mã xác nhận an toàn. Vui lòng thử lại; hệ thống đã tự bổ sung mã cho thao tác này.'
-              : mutation.type === 'complete' && isGenericValidationMessage
-                ? 'Hệ thống chưa cho phép kết thúc booking ở trạng thái hiện tại. Dữ liệu booking sẽ được tải lại để bạn kiểm tra.'
-                : reason.message),
-          {
-            title:
-              mutation.type === 'complete'
-                ? 'Chưa thể kết thúc buổi mentoring'
-                : 'Không thể cập nhật booking',
-          },
-        );
+          (isMissingIdempotencyKey
+            ? 'Yêu cầu chưa có mã xác nhận an toàn. Vui lòng thử lại; hệ thống đã tự bổ sung mã cho thao tác này.'
+            : mutation.type === 'complete' && isGenericValidationMessage
+              ? 'Hệ thống chưa cho phép kết thúc booking ở trạng thái hiện tại. Dữ liệu booking sẽ được tải lại để bạn kiểm tra.'
+              : reason);
+        showError(displayReason, {
+          title:
+            mutation.type === 'complete'
+              ? 'Chưa thể kết thúc buổi mentoring'
+              : 'Không thể cập nhật booking',
+        });
         await refresh();
       } else {
         showError(reason, { title: 'Không thể cập nhật booking' });

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { FormField } from '@/components/ui/FormField';
 import { TextField } from '@/components/ui/TextField';
+import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import {
   AlertTriangle,
   Archive,
@@ -97,8 +98,8 @@ export function AvailabilityTemplateDetailModal({
       await onSubmitSkipDate(template.templateId, skipDate, template.configVersion);
       setIsSkipModalOpen(false);
       setSkipDate('');
-    } catch (err: any) {
-      setSkipError(err.message || 'Không thể bỏ qua ngày đã chọn.');
+    } catch (err) {
+      setSkipError(getUserFriendlyErrorMessage(err, 'Không thể bỏ qua ngày đã chọn.'));
     }
   };
 
