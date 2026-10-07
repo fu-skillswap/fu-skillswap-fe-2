@@ -57,8 +57,14 @@ function formatDate(value: string | null) {
 }
 
 function formatFileSize(value: number) {
-  return `${(value / 1024).toFixed(value >= 1024 * 1024 ? 1 : 0)} KB`;
+  if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(value / 1024))} KB`;
 }
+
+const documentTypeLabels: Record<string, string> = {
+  FPTU_AFFILIATION_PROOF: 'Minh chứng sinh viên FPTU',
+  EXPERTISE_PROOF: 'Minh chứng chuyên môn',
+};
 
 function StatusBadge({ status }: { status: string }) {
   const labels: Record<string, string> = {
@@ -71,7 +77,19 @@ function StatusBadge({ status }: { status: string }) {
     APPROVED: 'Đã duyệt',
     REJECTED: 'Từ chối',
   };
-  return <span className="mentor-status">{labels[status] ?? status.replaceAll('_', ' ')}</span>;
+  const tone = status === 'APPROVED' ? 'approved' : status === 'REJECTED' ? 'rejected' : 'pending';
+  return (
+    <span className={`mentor-status ${tone}`}>{labels[status] ?? status.replaceAll('_', ' ')}</span>
+  );
+}
+
+function LinkOrEmpty({ url }: { url?: string | null }) {
+  if (!url) return <>Chưa có</>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer">
+      {url} <ExternalLink aria-hidden="true" />
+    </a>
+  );
 }
 
 export function MentorVerificationDetailView({
@@ -240,6 +258,7 @@ export function MentorVerificationDetailView({
           <div className="mentor-review-actions">
             <button
               type="button"
+              className="admin-button"
               disabled={lockedByAnotherAdmin || !detail.canReview}
               onClick={() => {
                 reset();
@@ -251,7 +270,7 @@ export function MentorVerificationDetailView({
             </button>
             <button
               type="button"
-              className="danger"
+              className="admin-button danger"
               disabled={lockedByAnotherAdmin || !detail.canReview}
               onClick={() => {
                 resetReject();
@@ -263,7 +282,7 @@ export function MentorVerificationDetailView({
             </button>
             <button
               type="button"
-              className="primary"
+              className="admin-button primary"
               disabled={lockedByAnotherAdmin || !detail.canReview}
               onClick={() => {
                 setApproveError(undefined);
@@ -329,7 +348,7 @@ export function MentorVerificationDetailView({
                   <dt>Tiêu đề</dt>
                   <dd>{detail.mentorProfile?.headline ?? 'Chưa có'}</dd>
                 </div>
-                <div>
+                <div className="is-wide">
                   <dt>Giới thiệu &amp; chuyên môn</dt>
                   <dd>
                     {detail.mentorProfile?.expertiseDescription ?? detail.submitNote ?? 'Chưa có'}
@@ -337,11 +356,15 @@ export function MentorVerificationDetailView({
                 </div>
                 <div>
                   <dt>Liên kết GitHub</dt>
-                  <dd>{detail.mentorProfile?.githubUrl ?? 'Chưa có'}</dd>
+                  <dd>
+                    <LinkOrEmpty url={detail.mentorProfile?.githubUrl} />
+                  </dd>
                 </div>
                 <div>
                   <dt>Portfolio</dt>
-                  <dd>{detail.mentorProfile?.portfolioUrl ?? 'Chưa có'}</dd>
+                  <dd>
+                    <LinkOrEmpty url={detail.mentorProfile?.portfolioUrl} />
+                  </dd>
                 </div>
               </dl>
             </section>
@@ -355,14 +378,20 @@ export function MentorVerificationDetailView({
                       <div>
                         <b>{document.originalFilename}</b>
                         <small>
-                          {document.documentType.replaceAll('_', ' ')} ·{' '}
-                          {formatFileSize(document.sizeBytes)}
+                          {documentTypeLabels[document.documentType] ??
+                            document.documentType.replaceAll('_', ' ')}{' '}
+                          · {formatFileSize(document.sizeBytes)}
                         </small>
                       </div>
-                      <button type="button" onClick={() => setSelectedDocument(document)}>
+                      <button
+                        type="button"
+                        className="admin-button"
+                        onClick={() => setSelectedDocument(document)}
+                      >
                         <Eye aria-hidden="true" /> Xem
                       </button>
                       <a
+                        className="admin-button"
                         href={document.fileUrl}
                         target="_blank"
                         rel="noreferrer"
@@ -414,7 +443,7 @@ export function MentorVerificationDetailView({
                 <div className="mentor-lock-actions">
                   <button
                     type="button"
-                    className="secondary"
+                    className="admin-button"
                     disabled={isUpdatingLock}
                     onClick={() => {
                       setLockActionError(undefined);
@@ -426,7 +455,7 @@ export function MentorVerificationDetailView({
                   </button>
                   <button
                     type="button"
-                    className="danger"
+                    className="admin-button danger"
                     disabled={isUpdatingLock}
                     onClick={() => {
                       setLockActionError(undefined);
@@ -444,32 +473,34 @@ export function MentorVerificationDetailView({
         </div>
         <section className="mentor-detail-card mentor-timeline">
           <h2>Lịch sử xử lý</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Thời gian</th>
-                <th>Sự kiện</th>
-                <th>Người thực hiện</th>
-                <th>Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.timeline.length ? (
-                detail.timeline.map((event) => (
-                  <tr key={event.id}>
-                    <td>{formatDate(event.createdAt)}</td>
-                    <td>{event.eventType.replaceAll('_', ' ')}</td>
-                    <td>{event.actorFullName || event.actorEmail}</td>
-                    <td>{event.note ?? '—'}</td>
-                  </tr>
-                ))
-              ) : (
+          <div className="mentor-timeline-scroll">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={4}>Chưa có lịch sử xử lý.</td>
+                  <th>Thời gian</th>
+                  <th>Sự kiện</th>
+                  <th>Người thực hiện</th>
+                  <th>Ghi chú</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {detail.timeline.length ? (
+                  detail.timeline.map((event) => (
+                    <tr key={event.id}>
+                      <td>{formatDate(event.createdAt)}</td>
+                      <td>{event.eventType.replaceAll('_', ' ')}</td>
+                      <td>{event.actorFullName || event.actorEmail}</td>
+                      <td>{event.note ?? '—'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4}>Chưa có lịch sử xử lý.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
         {selectedDocument && (
           <div
