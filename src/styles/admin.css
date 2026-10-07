@@ -3749,3 +3749,367 @@
     transform: none !important;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Mentor verification detail (/admin/mentor-verification/[requestId])        */
+/* -------------------------------------------------------------------------- */
+
+.mentor-detail-page .mentor-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--admin-copy);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color var(--admin-transition-fast);
+}
+
+.mentor-detail-page .mentor-back-link:hover {
+  color: var(--admin-blue-dark);
+}
+
+.mentor-detail-page .mentor-back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mentor-detail-page .mentor-detail-heading {
+  align-items: flex-end;
+}
+
+.mentor-detail-page .mentor-detail-heading > div:first-child {
+  min-width: 0;
+}
+
+.mentor-detail-page .mentor-detail-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.mentor-detail-page .mentor-detail-heading p {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.mentor-detail-page .mentor-detail-heading p span {
+  margin: 0 6px;
+  color: var(--admin-muted);
+}
+
+.mentor-detail-page .mentor-review-actions {
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.mentor-detail-page .admin-button {
+  min-height: 40px;
+}
+
+.mentor-detail-page .admin-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+.mentor-detail-page .admin-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mentor-detail-page .mentor-detail-main,
+.mentor-detail-page .mentor-detail-side {
+  min-width: 0;
+  align-content: start;
+}
+
+.mentor-detail-page .mentor-timeline {
+  margin-top: 20px;
+}
+
+/* Applicant summary: avatar + 2-column facts */
+.mentor-detail-page .mentor-profile-summary {
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.mentor-detail-page .mentor-profile-summary > img,
+.mentor-detail-page .mentor-profile-summary > span {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+  place-items: center;
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--admin-soft);
+  color: var(--admin-blue-dark);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.mentor-detail-page .mentor-profile-summary dl {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.mentor-detail-page .mentor-profile-summary dl > div {
+  padding: 12px 13px;
+  border: 1px solid #e8f0f8;
+  border-radius: 11px;
+  background: #f8fbff;
+}
+
+.mentor-detail-page :is(.mentor-profile-summary, .mentor-detail-fields) dt {
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mentor-detail-page :is(.mentor-profile-summary, .mentor-detail-fields) dd {
+  margin: 4px 0 0;
+  color: var(--admin-navy);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.mentor-detail-page .mentor-detail-fields {
+  margin: 0;
+}
+
+.mentor-detail-page .mentor-detail-fields > .is-wide {
+  grid-column: 1 / -1;
+}
+
+.mentor-detail-page .mentor-detail-fields > .is-wide dd {
+  font-weight: 500;
+  white-space: pre-line;
+}
+
+.mentor-detail-page .mentor-detail-fields dd a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--admin-blue-dark);
+  text-decoration: none;
+}
+
+.mentor-detail-page .mentor-detail-fields dd a:hover {
+  text-decoration: underline;
+}
+
+.mentor-detail-page .mentor-detail-fields dd a svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Documents */
+.mentor-detail-page .mentor-document-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.mentor-detail-page .mentor-document-item > svg {
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--admin-soft);
+  color: var(--admin-blue-dark);
+}
+
+.mentor-detail-page .mentor-document-item b,
+.mentor-detail-page .mentor-document-item small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mentor-detail-page .mentor-document-item b {
+  color: var(--admin-navy);
+  font-size: 14px;
+}
+
+.mentor-detail-page .mentor-document-item small {
+  margin-top: 2px;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.mentor-detail-page .mentor-document-item a.admin-button {
+  width: 40px;
+  padding: 0;
+}
+
+.mentor-detail-page .mentor-documents > p {
+  margin: 0;
+  color: var(--admin-copy);
+  font-size: 14px;
+}
+
+/* Review checklist */
+.mentor-detail-page .mentor-checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mentor-detail-page .mentor-checklist > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--admin-border);
+  border-radius: 11px;
+  background: #fbfdff;
+  color: var(--admin-navy);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mentor-detail-page .mentor-checklist > li > span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  border: 1.5px solid #cbd8e6;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.mentor-detail-page .mentor-checklist > li > span.is-done {
+  border-color: #9fd8bd;
+  background: #eefaf5;
+  color: #23775c;
+}
+
+.mentor-detail-page .mentor-checklist > li > span svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 3;
+}
+
+/* Lock / processing status */
+.mentor-detail-page .mentor-lock-card dl {
+  display: grid;
+  margin: 0;
+}
+
+.mentor-detail-page .mentor-lock-card dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--admin-border);
+}
+
+.mentor-detail-page .mentor-lock-card dl > div:last-child {
+  border-bottom: 0;
+}
+
+.mentor-detail-page .mentor-lock-card dt {
+  color: var(--admin-muted);
+  font-size: 13px;
+}
+
+.mentor-detail-page .mentor-lock-card dd {
+  margin: 0;
+  color: var(--admin-navy);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.mentor-detail-page .mentor-lock-actions {
+  margin-top: 14px;
+}
+
+.mentor-detail-page .mentor-lock-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mentor-detail-page .mentor-lock-notice svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Timeline table */
+.mentor-detail-page .mentor-timeline-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
+
+.mentor-detail-page .mentor-timeline table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.mentor-detail-page .mentor-timeline th {
+  padding: 10px 14px;
+  background: #f8fbff;
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.mentor-detail-page .mentor-timeline td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--admin-border);
+  color: var(--admin-navy);
+  vertical-align: top;
+}
+
+@media (max-width: 1180px) {
+  .mentor-detail-page .mentor-detail-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mentor-detail-page .mentor-review-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 680px) {
+  .mentor-detail-page .mentor-profile-summary {
+    flex-direction: column;
+  }
+
+  .mentor-detail-page .mentor-profile-summary dl,
+  .mentor-detail-page .mentor-detail-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mentor-detail-page .mentor-document-item {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .mentor-detail-page .mentor-document-item .admin-button {
+    grid-column: span 1;
+  }
+}
