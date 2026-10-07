@@ -22,7 +22,7 @@ import type {
 } from '@/models/admin';
 import { useAuth } from '@/providers/AuthProvider';
 import { adminRepo } from '@/repositories/adminRepo';
-import { getUserFriendlyErrorMessage } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   ArrowLeft,
@@ -234,6 +234,25 @@ export function MentorVerificationDetailView({
     }
   };
 
+  // `fileUrl` is an internal private:// reference: always ask the API for a fresh signed URL.
+  const resolveDocumentUrl = async (documentId: string) =>
+    (await adminRepo.getMentorVerificationDocumentDownload(requestId, documentId)).downloadUrl;
+
+  const openDocumentInNewTab = async (document: MentorVerificationDocument) => {
+    // Open the tab synchronously so the popup blocker allows it, then point it at the signed URL.
+    const tab = window.open('', '_blank');
+    try {
+      const url = await resolveDocumentUrl(document.id);
+      if (tab) {
+        tab.opener = null;
+        tab.location.href = url;
+      }
+    } catch (reason) {
+      tab?.close();
+      showError(reason, { title: 'Không mở được tài liệu' });
+    }
+  };
+
   return (
     <main className="mentor-detail-page">
       <header className="admin-topbar">
@@ -394,15 +413,15 @@ export function MentorVerificationDetailView({
                       >
                         <Eye aria-hidden="true" /> Xem
                       </button>
-                      <a
+                      <button
+                        type="button"
                         className="admin-button"
-                        href={document.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
+                        onClick={() => void openDocumentInNewTab(document)}
                         aria-label={`Mở ${document.originalFilename} ở tab mới`}
+                        title="Mở ở tab mới"
                       >
                         <ExternalLink aria-hidden="true" />
-                      </a>
+                      </button>
                     </div>
                   ))
                 ) : (
@@ -515,6 +534,7 @@ export function MentorVerificationDetailView({
                 selectedDocument.documentType.replaceAll('_', ' ')
               } · ${formatFileSize(selectedDocument.sizeBytes)}`,
             }}
+            resolveUrl={() => resolveDocumentUrl(selectedDocument.id)}
             onClose={() => setSelectedDocument(undefined)}
           />
         )}

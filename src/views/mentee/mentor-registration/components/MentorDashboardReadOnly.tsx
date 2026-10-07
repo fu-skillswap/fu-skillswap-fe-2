@@ -23,6 +23,7 @@ import {
 import type { UseFormWatch } from 'react-hook-form';
 import type { MentorVerificationResponse } from '@/models/auth';
 import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
+import { browsableUrl } from '@/utils/url';
 
 interface MentorDashboardReadOnlyProps {
   watch: UseFormWatch<MentorProfileFormValues>;
@@ -280,9 +281,9 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
                   <span className="text-xs text-emerald-600">Tư cách FPTU • Đã phê duyệt</span>
                 </div>
               </div>
-              {existingFptuDoc.fileUrl && (
+              {browsableUrl(existingFptuDoc.fileUrl) && (
                 <a
-                  href={existingFptuDoc.fileUrl}
+                  href={browsableUrl(existingFptuDoc.fileUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
@@ -310,9 +311,9 @@ export function MentorDashboardReadOnly({ watch, verificationData }: MentorDashb
                   </span>
                 </div>
               </div>
-              {doc.fileUrl && (
+              {browsableUrl(doc.fileUrl) && (
                 <a
-                  href={doc.fileUrl}
+                  href={browsableUrl(doc.fileUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"

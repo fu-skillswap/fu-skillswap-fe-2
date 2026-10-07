@@ -25,6 +25,7 @@ import type { VerificationDocumentResponse } from '@/models/auth';
 import type { MentorProfileFormValues } from '@/models/schemas/mentorProfileSchema';
 import { MENTOR_REVIEW_DURATION } from '../mentorRegistration.constants';
 import { EvidencePreview } from './EvidencePreview';
+import { browsableUrl } from '@/utils/url';
 
 type ReviewValues = Partial<MentorProfileFormValues>;
 
@@ -523,7 +524,7 @@ function toEvidenceItem(doc: VerificationDocumentResponse, index: number): Evide
   return {
     key: doc.id || `doc-${index}`,
     name: doc.originalFilename || `Tài liệu #${index + 1}`,
-    url: doc.fileUrl,
+    url: browsableUrl(doc.fileUrl),
     contentType: doc.contentType,
     sizeBytes: doc.sizeBytes,
     isNew: false,
