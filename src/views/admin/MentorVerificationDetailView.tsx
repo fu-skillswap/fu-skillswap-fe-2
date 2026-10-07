@@ -5,7 +5,9 @@
 
 'use client';
 
+import { AdminDialog } from '@/components/domain/admin/AdminDialog';
 import { AdminLoadingState } from '@/components/domain/admin/AdminLoadingState';
+import { DocumentPreviewDialog } from '@/components/domain/admin/DocumentPreviewDialog';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import {
   rejectMentorVerificationSchema,
@@ -29,9 +31,11 @@ import {
   Eye,
   FileText,
   LockKeyhole,
+  MessageSquareWarning,
   RefreshCw,
+  ShieldCheck,
   Unlock,
-  X,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -503,173 +507,133 @@ export function MentorVerificationDetailView({
           </div>
         </section>
         {selectedDocument && (
-          <div
-            className="mentor-document-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Xem ${selectedDocument.originalFilename}`}
-          >
-            <div className="mentor-document-preview">
-              <header>
-                <div>
-                  <FileText aria-hidden="true" />
-                  <strong>{selectedDocument.originalFilename}</strong>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Đóng xem trước"
-                  onClick={() => setSelectedDocument(undefined)}
-                >
-                  <X aria-hidden="true" />
-                </button>
-              </header>
-              <div className="mentor-document-preview-content">
-                {selectedDocument.contentType.startsWith('image/') ? (
-                  <img src={selectedDocument.fileUrl} alt={selectedDocument.originalFilename} />
-                ) : (
-                  <iframe
-                    title={selectedDocument.originalFilename}
-                    src={selectedDocument.fileUrl}
-                  />
-                )}
-              </div>
-              <footer>
-                <a href={selectedDocument.fileUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink aria-hidden="true" /> Mở ở tab mới
-                </a>
-              </footer>
-            </div>
-          </div>
+          <DocumentPreviewDialog
+            document={{
+              ...selectedDocument,
+              meta: `${
+                documentTypeLabels[selectedDocument.documentType] ??
+                selectedDocument.documentType.replaceAll('_', ' ')
+              } · ${formatFileSize(selectedDocument.sizeBytes)}`,
+            }}
+            onClose={() => setSelectedDocument(undefined)}
+          />
         )}
         {isRevisionModalOpen && (
-          <div
-            className="mentor-document-modal mentor-revision-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mentor-revision-title"
-          >
-            <form className="mentor-revision-dialog" onSubmit={handleSubmit(submitRevisionRequest)}>
-              <header>
-                <div>
-                  <h2 id="mentor-revision-title">Yêu cầu bổ sung hồ sơ</h2>
-                  <p>Gửi lý do cụ thể để mentor cập nhật hồ sơ.</p>
-                </div>
+          <AdminDialog
+            titleId="mentor-revision-title"
+            tone="warning"
+            icon={<MessageSquareWarning aria-hidden="true" />}
+            title="Yêu cầu bổ sung hồ sơ"
+            description="Gửi lý do cụ thể để mentor cập nhật hồ sơ."
+            busy={isSubmittingRevision}
+            onClose={() => setIsRevisionModalOpen(false)}
+            onSubmit={handleSubmit(submitRevisionRequest)}
+            footer={
+              <>
                 <button
                   type="button"
-                  aria-label="Đóng popup"
+                  className="admin-button"
                   onClick={() => setIsRevisionModalOpen(false)}
                   disabled={isSubmittingRevision}
                 >
-                  <X aria-hidden="true" />
+                  Hủy
                 </button>
-              </header>
-              <label htmlFor="revision-note">Lý do yêu cầu bổ sung</label>
+                <button
+                  className="admin-button is-warning"
+                  type="submit"
+                  disabled={isSubmittingRevision}
+                >
+                  {isSubmittingRevision ? 'Đang gửi...' : 'Gửi yêu cầu bổ sung'}
+                </button>
+              </>
+            }
+          >
+            <label className="admin-dialog-field" htmlFor="revision-note">
+              Lý do yêu cầu bổ sung
               <textarea
                 id="revision-note"
                 rows={6}
                 placeholder="Ví dụ: Vui lòng bổ sung minh chứng chuyên môn và cập nhật phần giới thiệu..."
+                aria-invalid={Boolean(errors.note)}
                 {...register('note')}
                 disabled={isSubmittingRevision}
                 autoFocus
               />
-              {errors.note && <p className="mentor-form-error">{errors.note.message}</p>}
-              {revisionError && <p className="mentor-form-error">{revisionError}</p>}
-              <footer>
-                <button
-                  type="button"
-                  onClick={() => setIsRevisionModalOpen(false)}
-                  disabled={isSubmittingRevision}
-                >
-                  Hủy
-                </button>
-                <button className="primary" type="submit" disabled={isSubmittingRevision}>
-                  {isSubmittingRevision ? 'Đang gửi...' : 'Xác nhận gửi'}
-                </button>
-              </footer>
-            </form>
-          </div>
+            </label>
+            {errors.note && <p className="mentor-form-error">{errors.note.message}</p>}
+            {revisionError && <p className="mentor-form-error">{revisionError}</p>}
+          </AdminDialog>
         )}
         {isRejectModalOpen && (
-          <div
-            className="mentor-document-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mentor-reject-title"
-          >
-            <form className="mentor-revision-dialog" onSubmit={handleRejectSubmit(submitRejection)}>
-              <header>
-                <div>
-                  <h2 id="mentor-reject-title">Từ chối hồ sơ mentor</h2>
-                  <p>Gửi lý do cụ thể để mentor biết nội dung cần cải thiện.</p>
-                </div>
+          <AdminDialog
+            titleId="mentor-reject-title"
+            tone="danger"
+            icon={<XCircle aria-hidden="true" />}
+            title="Từ chối hồ sơ mentor"
+            description="Gửi lý do cụ thể để mentor biết nội dung cần cải thiện."
+            busy={isRejecting}
+            onClose={() => setIsRejectModalOpen(false)}
+            onSubmit={handleRejectSubmit(submitRejection)}
+            footer={
+              <>
                 <button
                   type="button"
-                  aria-label="Đóng"
+                  className="admin-button"
                   disabled={isRejecting}
                   onClick={() => setIsRejectModalOpen(false)}
                 >
-                  <X aria-hidden="true" />
+                  Hủy
                 </button>
-              </header>
-              <label htmlFor="mentor-reject-note">Lý do từ chối</label>
+                <button
+                  className="admin-button is-danger-solid"
+                  type="submit"
+                  disabled={isRejecting}
+                >
+                  {isRejecting ? 'Đang từ chối...' : 'Xác nhận từ chối'}
+                </button>
+              </>
+            }
+          >
+            <label className="admin-dialog-field" htmlFor="mentor-reject-note">
+              Lý do từ chối
               <textarea
                 id="mentor-reject-note"
                 rows={6}
                 placeholder="Ví dụ: Hồ sơ chưa có đủ minh chứng chuyên môn..."
+                aria-invalid={Boolean(rejectErrors.note)}
                 disabled={isRejecting}
+                autoFocus
                 {...registerReject('note')}
               />
-              {rejectErrors.note && (
-                <p className="mentor-form-error">{rejectErrors.note.message}</p>
-              )}
-              {rejectError && <p className="mentor-form-error">{rejectError}</p>}
-              <footer>
-                <button
-                  type="button"
-                  disabled={isRejecting}
-                  onClick={() => setIsRejectModalOpen(false)}
-                >
-                  Hủy
-                </button>
-                <button className="danger" type="submit" disabled={isRejecting}>
-                  {isRejecting ? 'Đang từ chối...' : 'Xác nhận từ chối'}
-                </button>
-              </footer>
-            </form>
-          </div>
+            </label>
+            {rejectErrors.note && <p className="mentor-form-error">{rejectErrors.note.message}</p>}
+            {rejectError && <p className="mentor-form-error">{rejectError}</p>}
+          </AdminDialog>
         )}
         {pendingLockAction && (
-          <div
-            className="mentor-document-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mentor-lock-action-title"
-          >
-            <section className="mentor-revision-dialog mentor-confirm-dialog">
-              <header>
-                <div>
-                  <h2 id="mentor-lock-action-title">
-                    {pendingLockAction === 'refresh' ? 'Gia hạn giữ hồ sơ' : 'Bỏ giữ hồ sơ'}
-                  </h2>
-                  <p>
-                    {pendingLockAction === 'refresh'
-                      ? 'Bạn có muốn gia hạn thêm thời gian xử lý hồ sơ này không?'
-                      : 'Bạn có chắc muốn bỏ giữ hồ sơ này để quản trị viên khác có thể xử lý?'}
-                  </p>
-                </div>
+          <AdminDialog
+            titleId="mentor-lock-action-title"
+            tone={pendingLockAction === 'release' ? 'danger' : 'info'}
+            icon={
+              pendingLockAction === 'refresh' ? (
+                <RefreshCw aria-hidden="true" />
+              ) : (
+                <Unlock aria-hidden="true" />
+              )
+            }
+            title={pendingLockAction === 'refresh' ? 'Gia hạn giữ hồ sơ' : 'Bỏ giữ hồ sơ'}
+            description={
+              pendingLockAction === 'refresh'
+                ? 'Bạn có muốn gia hạn thêm thời gian xử lý hồ sơ này không?'
+                : 'Bạn có chắc muốn bỏ giữ hồ sơ này để quản trị viên khác có thể xử lý?'
+            }
+            busy={isUpdatingLock}
+            onClose={() => setPendingLockAction(undefined)}
+            footer={
+              <>
                 <button
                   type="button"
-                  aria-label="Đóng"
-                  disabled={isUpdatingLock}
-                  onClick={() => setPendingLockAction(undefined)}
-                >
-                  <X aria-hidden="true" />
-                </button>
-              </header>
-              {lockActionError && <p className="mentor-form-error">{lockActionError}</p>}
-              <footer>
-                <button
-                  type="button"
+                  className="admin-button"
                   disabled={isUpdatingLock}
                   onClick={() => setPendingLockAction(undefined)}
                 >
@@ -677,7 +641,9 @@ export function MentorVerificationDetailView({
                 </button>
                 <button
                   type="button"
-                  className={pendingLockAction === 'release' ? 'danger' : 'primary'}
+                  className={`admin-button ${
+                    pendingLockAction === 'release' ? 'is-danger-solid' : 'is-primary'
+                  }`}
                   disabled={isUpdatingLock}
                   onClick={() => void updateLock(pendingLockAction)}
                 >
@@ -687,55 +653,50 @@ export function MentorVerificationDetailView({
                       ? 'Xác nhận gia hạn'
                       : 'Xác nhận bỏ giữ'}
                 </button>
-              </footer>
-            </section>
-          </div>
+              </>
+            }
+          >
+            {lockActionError && <p className="mentor-form-error">{lockActionError}</p>}
+          </AdminDialog>
         )}
         {isApproveModalOpen && (
-          <div
-            className="mentor-document-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mentor-approve-title"
-          >
-            <section className="mentor-revision-dialog mentor-confirm-dialog">
-              <header>
-                <div>
-                  <h2 id="mentor-approve-title">Xác nhận duyệt mentor</h2>
-                  <p>
-                    Bạn có chắc muốn duyệt hồ sơ của {detail.mentorFullName}? Thao tác này sẽ gửi
-                    kết quả duyệt đến mentor.
-                  </p>
-                </div>
+          <AdminDialog
+            titleId="mentor-approve-title"
+            tone="success"
+            icon={<ShieldCheck aria-hidden="true" />}
+            title="Xác nhận duyệt mentor"
+            description={
+              <>
+                Bạn có chắc muốn duyệt hồ sơ của <strong>{detail.mentorFullName}</strong>? Thao tác
+                này sẽ gửi kết quả duyệt đến mentor.
+              </>
+            }
+            busy={isApproving}
+            onClose={() => setIsApproveModalOpen(false)}
+            footer={
+              <>
                 <button
                   type="button"
-                  aria-label="Đóng popup"
-                  onClick={() => setIsApproveModalOpen(false)}
-                  disabled={isApproving}
-                >
-                  <X aria-hidden="true" />
-                </button>
-              </header>
-              {approveError && <p className="mentor-form-error">{approveError}</p>}
-              <footer>
-                <button
-                  type="button"
+                  className="admin-button"
                   onClick={() => setIsApproveModalOpen(false)}
                   disabled={isApproving}
                 >
                   Hủy
                 </button>
                 <button
-                  className="primary"
+                  className="admin-button is-success"
                   type="button"
                   onClick={() => void approveMentor()}
                   disabled={isApproving}
                 >
+                  <Check aria-hidden="true" />
                   {isApproving ? 'Đang duyệt...' : 'Xác nhận duyệt'}
                 </button>
-              </footer>
-            </section>
-          </div>
+              </>
+            }
+          >
+            {approveError && <p className="mentor-form-error">{approveError}</p>}
+          </AdminDialog>
         )}
       </div>
     </main>

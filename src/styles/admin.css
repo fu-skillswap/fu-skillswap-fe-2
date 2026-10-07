@@ -4113,3 +4113,353 @@
     grid-column: span 1;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Admin dialog (AdminDialog / DocumentPreviewDialog)                          */
+/* -------------------------------------------------------------------------- */
+
+.admin-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(14, 31, 53, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.admin-dialog {
+  display: flex;
+  width: min(100%, 520px);
+  max-height: calc(100dvh - 40px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--admin-shadow-modal);
+  color: var(--admin-navy);
+}
+
+.admin-dialog.is-wide {
+  width: min(100%, 960px);
+}
+
+.admin-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 20px 16px 24px;
+}
+
+.admin-dialog-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--admin-soft);
+  color: var(--admin-blue-dark);
+}
+
+.admin-dialog-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-dialog-icon.is-success {
+  background: #eaf8f1;
+  color: #15803d;
+}
+
+.admin-dialog-icon.is-warning {
+  background: #fff6e0;
+  color: #b45309;
+}
+
+.admin-dialog-icon.is-danger {
+  background: #fff0f2;
+  color: #c2414f;
+}
+
+.admin-dialog-heading {
+  min-width: 0;
+  flex: 1;
+  padding-top: 2px;
+}
+
+.admin-dialog-heading h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--admin-navy);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-dialog-heading p {
+  margin: 4px 0 0;
+  color: var(--admin-copy);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-dialog-heading p strong {
+  color: var(--admin-navy);
+}
+
+.admin-dialog-close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--admin-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--admin-transition-fast),
+    color var(--admin-transition-fast);
+}
+
+.admin-dialog-close:hover:not(:disabled) {
+  background: #f1f5fa;
+  color: var(--admin-navy);
+}
+
+.admin-dialog-close:focus-visible,
+.admin-dialog .admin-button:focus-visible {
+  outline: 2px solid var(--admin-blue);
+  outline-offset: 2px;
+}
+
+.admin-dialog-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-dialog-body {
+  min-height: 0;
+  flex: 1;
+  padding: 4px 24px 20px;
+  overflow-y: auto;
+}
+
+.admin-dialog-header + .admin-dialog-footer {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.admin-dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #edf2f8;
+  background: #fbfdff;
+}
+
+.admin-dialog-footer .admin-button {
+  min-height: 40px;
+}
+
+.admin-dialog-footer .admin-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-dialog-field {
+  display: grid;
+  gap: 8px;
+  color: var(--admin-navy);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-dialog-field textarea {
+  width: 100%;
+  min-height: 132px;
+  padding: 12px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--admin-navy);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  resize: vertical;
+  transition:
+    border-color var(--admin-transition-fast),
+    box-shadow var(--admin-transition-fast);
+}
+
+.admin-dialog-field textarea::placeholder {
+  color: var(--admin-muted);
+}
+
+.admin-dialog-field textarea:focus {
+  border-color: var(--admin-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(17, 156, 247, 0.15);
+}
+
+.admin-dialog-field textarea[aria-invalid='true'] {
+  border-color: #e7a3ac;
+}
+
+.admin-dialog .mentor-form-error {
+  margin: 8px 0 0;
+}
+
+/* Solid confirm buttons by intent */
+.admin-area-shell .admin-button.is-success,
+.admin-area-shell .admin-button.is-warning,
+.admin-area-shell .admin-button.is-danger-solid {
+  color: #fff;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-area-shell .admin-button.is-success {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.admin-area-shell .admin-dialog-footer .admin-button.is-success:not(:disabled):hover {
+  background: #15803d;
+  border-color: #15803d;
+  color: #fff;
+}
+
+.admin-area-shell .admin-button.is-warning {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.admin-area-shell .admin-dialog-footer .admin-button.is-warning:not(:disabled):hover {
+  background: #d97706;
+  border-color: #d97706;
+  color: #fff;
+}
+
+.admin-area-shell .admin-button.is-danger-solid {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.admin-area-shell .admin-dialog-footer .admin-button.is-danger-solid:not(:disabled):hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+}
+
+.admin-area-shell .admin-dialog .admin-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Document preview stage */
+.admin-document-stage {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: repeating-conic-gradient(#f3f6fa 0% 25%, #fff 0% 50%) 50% / 20px 20px;
+}
+
+.admin-document-stage img {
+  display: block;
+  max-width: 100%;
+  max-height: min(68vh, 720px);
+  object-fit: contain;
+}
+
+.admin-document-stage iframe {
+  display: block;
+  width: 100%;
+  height: min(70vh, 760px);
+  border: 0;
+  background: #fff;
+}
+
+.admin-document-state {
+  display: grid;
+  max-width: 360px;
+  justify-items: center;
+  gap: 8px;
+  padding: 32px 20px;
+  color: var(--admin-copy);
+  font-size: 14px;
+  text-align: center;
+}
+
+.admin-document-state svg {
+  width: 28px;
+  height: 28px;
+  color: var(--admin-blue);
+}
+
+.admin-document-state.is-error svg {
+  color: #d97706;
+}
+
+.admin-document-state strong {
+  color: var(--admin-navy);
+  font-size: 15px;
+}
+
+.admin-document-state .is-spinning {
+  animation: admin-dialog-spin 0.9s linear infinite;
+}
+
+@keyframes admin-dialog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-dialog-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .admin-dialog,
+  .admin-dialog.is-wide {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .admin-dialog-footer .admin-button {
+    flex: 1 1 140px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-document-state .is-spinning {
+    animation: none;
+  }
+}
+
+.admin-area-shell .admin-dialog-footer .admin-button.is-primary {
+  color: #fff;
+  background: var(--admin-blue);
+  border-color: var(--admin-blue);
+}
+
+.admin-area-shell .admin-dialog-footer .admin-button.is-primary:not(:disabled):hover {
+  color: #fff;
+  background: #078de5;
+  border-color: #078de5;
+}
