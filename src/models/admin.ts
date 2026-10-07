@@ -420,12 +420,19 @@ export interface MentorVerificationDocument {
   originalFilename: string;
   contentType: string;
   sizeBytes: number;
+  /** Internal `private://` storage reference; not openable in the browser. */
   fileUrl: string;
   isActive: boolean;
   version: number;
   reviewNote: string | null;
   rejectedReason: string | null;
   uploadedAt: string;
+}
+
+/** Short-lived signed URL for viewing a verification document. */
+export interface MentorVerificationDocumentDownload {
+  downloadUrl: string;
+  expiresAt: string;
 }
 
 export interface MentorVerificationTimelineItem {
