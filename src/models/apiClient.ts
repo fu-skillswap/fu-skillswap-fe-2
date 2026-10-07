@@ -87,6 +87,30 @@ function canRefresh(path: string) {
   );
 }
 
+/**
+ * Logs a failed API call with only safe, minimal fields. Never pass the axios error, config or
+ * headers here: they can contain the `Authorization` token.
+ * Expected 4xx responses are skipped in production and only warned about in development.
+ */
+function logApiError(info: { method?: string; url: string; status?: number; message?: string }) {
+  const { status } = info;
+  const isClientError = status !== undefined && status >= 400 && status < 500;
+  if (isClientError && process.env.NODE_ENV === 'production') return;
+
+  const entry = {
+    method: info.method,
+    // Drop the query string: it may carry one-time codes or other sensitive params.
+    url: info.url.split('?')[0],
+    status: status ?? 'NETWORK_ERROR',
+    message: info.message?.slice(0, 200),
+  };
+  if (isClientError) {
+    console.warn('[API Error]', entry);
+  } else {
+    console.error('[API Error]', entry);
+  }
+}
+
 /** Axios instance chính cấu hình mặc định baseURL và withCredentials: true */
 const axiosInstance = axios.create({
   baseURL: apiBaseUrl,
@@ -148,13 +172,11 @@ axiosInstance.interceptors.response.use(
     }
 
     const envelope = error.response?.data;
-    console.error('[API Error]', {
+    logApiError({
       method: originalRequest?.method?.toUpperCase(),
       url: path,
       status: error.response?.status,
-      code: envelope?.code ?? error.code,
-      response: envelope,
-      originalError: error,
+      message: envelope?.message ?? error.message,
     });
     throw new ApiClientError(
       status,
