@@ -142,7 +142,8 @@ export function useMentorRegistration() {
         headline: values.headline,
         expertiseDescription: values.expertiseDescription,
         isAvailable: Boolean(values.isAvailable),
-        phoneNumber: values.phoneNumber,
+        // TODO(api): confirm PUT mentor profile accepts a missing phoneNumber (no longer collected).
+        phoneNumber: values.phoneNumber?.trim() || undefined,
         githubUrl: values.githubUrl || undefined,
         portfolioUrl: values.portfolioUrl || undefined,
         foundationSupportLevel: Number(values.foundationSupportLevel),

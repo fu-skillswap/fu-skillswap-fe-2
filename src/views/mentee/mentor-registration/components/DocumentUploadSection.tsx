@@ -21,6 +21,7 @@ import {
   LockKeyhole,
 } from 'lucide-react';
 import type { MentorVerificationResponse } from '@/models/auth';
+import { EvidencePreview } from './EvidencePreview';
 
 interface DocumentUploadSectionProps {
   selectedFptuFile: File | null;
@@ -135,68 +136,78 @@ export function DocumentUploadSection({
         {/* Hiển thị File FPTU vừa chọn local */}
         {selectedFptuFile ? (
           <div
-            className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+            className={`p-4 rounded-xl border space-y-3 ${
               fptuError ? 'border-red-300 bg-red-50/70' : 'border-sky-200/80 bg-sky-50/70'
             }`}
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
-                {selectedFptuFile.type.includes('pdf') ? (
-                  <FileText className="w-5 h-5" />
-                ) : (
-                  <FileCheck className="w-5 h-5" />
-                )}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                  {selectedFptuFile.type.includes('pdf') ? (
+                    <FileText className="w-5 h-5" />
+                  ) : (
+                    <FileCheck className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <strong className="text-sm font-bold text-sky-800 truncate block">
+                    {selectedFptuFile.name}
+                  </strong>
+                  <span className="text-xs text-sky-700">
+                    {formatFileSize(selectedFptuFile.size)} • Đã chọn — chờ tải lên khi nộp hồ sơ
+                  </span>
+                </div>
               </div>
-              <div className="min-w-0">
-                <strong className="text-sm font-bold text-sky-800 truncate block">
-                  {selectedFptuFile.name}
-                </strong>
-                <span className="text-xs text-sky-700">
-                  {formatFileSize(selectedFptuFile.size)} • Đã chọn — chờ tải lên khi nộp hồ sơ
-                </span>
-              </div>
-            </div>
 
-            {!disabled && (
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectFptuFile(null);
-                  if (fptuInputRef.current) fptuInputRef.current.value = '';
-                }}
-                className="shrink-0 border-0 bg-red-100 text-red-600 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer hover:bg-red-200 transition-colors flex items-center gap-1"
-              >
-                <X className="w-3.5 h-3.5" /> Chọn lại
-              </button>
-            )}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectFptuFile(null);
+                    if (fptuInputRef.current) fptuInputRef.current.value = '';
+                  }}
+                  className="shrink-0 border-0 bg-red-100 text-red-600 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer hover:bg-red-200 transition-colors flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" /> Chọn lại
+                </button>
+              )}
+            </div>
+            <EvidencePreview file={selectedFptuFile} name={selectedFptuFile.name} />
           </div>
         ) : existingFptuDoc ? (
           /* Hiển thị File FPTU đã nộp từ API CSDL */
-          <div className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/70 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                <FileCheck className="w-5 h-5" />
+          <div className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/70 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <FileCheck className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <strong className="text-sm font-bold text-emerald-800 truncate block">
+                    {existingFptuDoc.originalFilename || 'Minh chứng sinh viên Đại học FPT'}
+                  </strong>
+                  <span className="text-xs text-emerald-600">
+                    {formatFileSize(existingFptuDoc.sizeBytes)} • Đã tải lên thành công
+                  </span>
+                </div>
               </div>
-              <div className="min-w-0">
-                <strong className="text-sm font-bold text-emerald-800 truncate block">
-                  {existingFptuDoc.originalFilename || 'Minh chứng sinh viên Đại học FPT'}
-                </strong>
-                <span className="text-xs text-emerald-600">
-                  {formatFileSize(existingFptuDoc.sizeBytes)} • Đã tải lên thành công
-                </span>
-              </div>
-            </div>
 
-            {existingFptuDoc.fileUrl && (
-              <a
-                href={existingFptuDoc.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
-              >
-                Xem file <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
+              {existingFptuDoc.fileUrl && (
+                <a
+                  href={existingFptuDoc.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
+                >
+                  Xem file <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
+            <EvidencePreview
+              url={existingFptuDoc.fileUrl}
+              contentType={existingFptuDoc.contentType}
+              name={existingFptuDoc.originalFilename || 'Minh chứng sinh viên Đại học FPT'}
+            />
           </div>
         ) : (
           /* Nút chọn file khi chưa có file nào */
@@ -277,36 +288,43 @@ export function DocumentUploadSection({
             {existingExpertiseDocs.map((doc, index) => (
               <div
                 key={doc.id || index}
-                className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+                className={`p-4 rounded-xl border space-y-3 ${
                   expertiseError
                     ? 'border-red-300 bg-red-50/70'
                     : 'border-purple-200/80 bg-purple-50/70'
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                    <FileCheck className="w-5 h-5" />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                      <FileCheck className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <strong className="text-sm font-bold text-purple-900 truncate block">
+                        {doc.originalFilename || `Chứng chỉ chuyên môn #${index + 1}`}
+                      </strong>
+                      <span className="text-xs text-purple-600">
+                        {formatFileSize(doc.sizeBytes)} • Đã tải lên thành công
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <strong className="text-sm font-bold text-purple-900 truncate block">
-                      {doc.originalFilename || `Chứng chỉ chuyên môn #${index + 1}`}
-                    </strong>
-                    <span className="text-xs text-purple-600">
-                      {formatFileSize(doc.sizeBytes)} • Đã tải lên thành công
-                    </span>
-                  </div>
-                </div>
 
-                {doc.fileUrl && (
-                  <a
-                    href={doc.fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"
-                  >
-                    Xem file <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
+                  {doc.fileUrl && (
+                    <a
+                      href={doc.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"
+                    >
+                      Xem file <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+                <EvidencePreview
+                  url={doc.fileUrl}
+                  contentType={doc.contentType}
+                  name={doc.originalFilename || `Chứng chỉ chuyên môn #${index + 1}`}
+                />
               </div>
             ))}
           </div>
@@ -318,35 +336,38 @@ export function DocumentUploadSection({
             {selectedExpertiseFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
-                className="p-4 rounded-xl border border-purple-200/80 bg-purple-50/70 flex items-center justify-between gap-3"
+                className="p-4 rounded-xl border border-purple-200/80 bg-purple-50/70 space-y-3"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                    {file.type.includes('pdf') ? (
-                      <FileText className="w-5 h-5" />
-                    ) : (
-                      <FileCheck className="w-5 h-5" />
-                    )}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                      {file.type.includes('pdf') ? (
+                        <FileText className="w-5 h-5" />
+                      ) : (
+                        <FileCheck className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <strong className="text-sm font-bold text-purple-900 truncate block">
+                        {file.name}
+                      </strong>
+                      <span className="text-xs text-purple-600">
+                        {formatFileSize(file.size)} • Đã chọn — chờ tải lên khi nộp hồ sơ
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <strong className="text-sm font-bold text-purple-900 truncate block">
-                      {file.name}
-                    </strong>
-                    <span className="text-xs text-purple-600">
-                      {formatFileSize(file.size)} • Đã chọn — chờ tải lên khi nộp hồ sơ
-                    </span>
-                  </div>
-                </div>
 
-                {!disabled && (
-                  <button
-                    type="button"
-                    onClick={() => onRemoveExpertiseFile(index)}
-                    className="shrink-0 border-0 bg-red-100 text-red-600 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer hover:bg-red-200 transition-colors flex items-center gap-1"
-                  >
-                    <X className="w-3.5 h-3.5" /> Xóa
-                  </button>
-                )}
+                  {!disabled && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveExpertiseFile(index)}
+                      className="shrink-0 border-0 bg-red-100 text-red-600 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer hover:bg-red-200 transition-colors flex items-center gap-1"
+                    >
+                      <X className="w-3.5 h-3.5" /> Xóa
+                    </button>
+                  )}
+                </div>
+                <EvidencePreview file={file} name={file.name} />
               </div>
             ))}
           </div>
