@@ -6,7 +6,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, FileText } from 'lucide-react';
 
 type EvidencePreviewProps = {
   /** Local file just selected (preview via an object URL). */
@@ -15,12 +15,20 @@ type EvidencePreviewProps = {
   url?: string;
   contentType?: string;
   name: string;
+  /** `thumb` renders a small square tile (used in the review step). */
+  variant?: 'full' | 'thumb';
 };
 
 const IMAGE_EXTENSIONS = /\.(jpe?g|png)$/i;
 const PDF_EXTENSION = /\.pdf$/i;
 
-export function EvidencePreview({ file, url, contentType, name }: EvidencePreviewProps) {
+export function EvidencePreview({
+  file,
+  url,
+  contentType,
+  name,
+  variant = 'full',
+}: EvidencePreviewProps) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -36,6 +44,31 @@ export function EvidencePreview({ file, url, contentType, name }: EvidencePrevie
   const type = file?.type || contentType || '';
   const isImage = type.startsWith('image/') || (!type && IMAGE_EXTENSIONS.test(name));
   const isPdf = type === 'application/pdf' || (!type && PDF_EXTENSION.test(name));
+
+  if (variant === 'thumb') {
+    const tileClass =
+      'flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500';
+    if (src && isImage && !failed) {
+      return (
+        <a href={src} target="_blank" rel="noreferrer" className={tileClass} title={name}>
+          <img
+            src={src}
+            alt={`Xem trước ${name}`}
+            onError={() => setFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        </a>
+      );
+    }
+    const icon = <FileText className="h-6 w-6" aria-hidden="true" />;
+    return src ? (
+      <a href={src} target="_blank" rel="noreferrer" className={tileClass} title={name}>
+        {icon}
+      </a>
+    ) : (
+      <span className={tileClass}>{icon}</span>
+    );
+  }
 
   if (!src || (!isImage && !isPdf)) return null;
 

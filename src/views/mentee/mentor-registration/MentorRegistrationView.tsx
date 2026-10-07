@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Check, CheckCircle2, Clock3, Save, Send, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Clock3, Save, Send, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { SelectOption } from '@/components/ui/SelectField';
 import { useAuth } from '@/providers/AuthProvider';
@@ -21,7 +21,11 @@ import { MentorDashboardReadOnly } from './components/MentorDashboardReadOnly';
 import { TermsModal } from './components/TermsModal';
 import { MentorWizardStepper } from './components/MentorWizardStepper';
 import { MentorBenefitsCard } from './components/MentorBenefitsCard';
+import { ReviewStep } from './components/ReviewStep';
 import { MENTOR_REVIEW_DURATION, MENTOR_STEPS, STEP_FIELDS } from './mentorRegistration.constants';
+
+/** Required items counted on the review step (fields, evidence and terms). */
+const REQUIRED_ITEM_COUNT = 10;
 
 const levelOptions: SelectOption[] = [1, 2, 3, 4, 5].map((value) => ({
   value: String(value),
@@ -130,6 +134,7 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
       Boolean(values.maximumBookingHorizonDays),
       hasFptu,
       hasExpertise,
+      Boolean(values.agreeTerms),
     ].filter(Boolean).length;
   }, [hasExpertise, hasFptu, values]);
 
@@ -273,10 +278,12 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
               <ReviewStep
                 values={values}
                 completed={completedRequired}
-                total={10}
-                agreeTerms={Boolean(values.agreeTerms)}
+                total={REQUIRED_ITEM_COUNT}
                 register={register}
                 errors={errors}
+                selectedFptuFile={selectedFptuFile}
+                selectedExpertiseFiles={selectedExpertiseFiles}
+                documents={verificationData?.documents ?? []}
                 onEdit={goToStep}
                 onTerms={() => setShowTermsModal(true)}
               />
@@ -328,113 +335,6 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
       </div>
       <TermsModal open={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </main>
-  );
-}
-
-function ReviewStep({
-  values,
-  completed,
-  total,
-  agreeTerms,
-  register,
-  errors,
-  onEdit,
-  onTerms,
-}: any) {
-  const summaries = [
-    {
-      step: 1,
-      title: 'Thông tin cơ bản',
-      lines: [values.headline || 'Chưa có tiêu đề'],
-    },
-    {
-      step: 2,
-      title: 'Kinh nghiệm & thế mạnh',
-      lines: [
-        `${values.subjectResults?.length || 0} môn học · ${values.projects?.length || 0} dự án`,
-        'Ba mức hỗ trợ đã được thiết lập',
-      ],
-    },
-    {
-      step: 3,
-      title: 'Thời gian tư vấn',
-      lines: [values.isAvailable ? 'Đang sẵn sàng nhận lịch tư vấn' : 'Chưa sẵn sàng nhận lịch'],
-    },
-    { step: 4, title: 'Minh chứng', lines: ['Minh chứng FPTU và chuyên môn'] },
-  ];
-  return (
-    <div className="space-y-4">
-      {summaries.map((item) => (
-        <section
-          key={item.step}
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-        >
-          <div className="flex justify-between gap-3">
-            <h3 className="m-0 text-base font-bold text-slate-900">{item.title}</h3>
-            <button
-              type="button"
-              onClick={() => onEdit(item.step)}
-              className="min-h-8 border-0 bg-transparent text-sm font-bold text-sky-600 hover:underline"
-            >
-              Sửa
-            </button>
-          </div>
-          {item.lines.map((line: string) => (
-            <p key={line} className="mb-0 mt-2 text-sm text-slate-600">
-              {line}
-            </p>
-          ))}
-        </section>
-      ))}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold text-slate-900">
-          <input
-            type="checkbox"
-            className="mt-1 h-4 w-4 accent-sky-600"
-            {...register('agreeTerms')}
-          />
-          <span>
-            Tôi đồng ý với{' '}
-            <button
-              type="button"
-              onClick={onTerms}
-              className="border-0 bg-transparent p-0 font-bold text-sky-600 underline"
-            >
-              Điều khoản vận hành
-            </button>{' '}
-            của SkillSwap <span className="text-red-600">*</span>
-          </span>
-        </label>
-        {errors.agreeTerms && (
-          <p role="alert" className="text-xs font-semibold text-red-600">
-            {errors.agreeTerms.message}
-          </p>
-        )}
-        <ul className="mb-0 mt-3 space-y-1 pl-7 text-xs leading-5 text-slate-600">
-          <li>Tôi cam kết các thông tin và minh chứng cung cấp là chính xác.</li>
-          <li>Tôi hiểu rằng hồ sơ sẽ được đội ngũ SkillSwap xét duyệt.</li>
-          <li>Tôi đồng ý với chính sách bảo mật thông tin.</li>
-        </ul>
-      </section>
-      <section className="flex flex-col gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-3">
-          <Clock3 className="h-6 w-6 shrink-0 text-sky-600" />
-          <div>
-            <strong className="text-sm text-sky-950">Thời gian xét duyệt dự kiến</strong>
-            <p className="mb-0 mt-1 text-xs leading-5 text-sky-800">
-              Hồ sơ sẽ được xét duyệt trong {MENTOR_REVIEW_DURATION}. Bạn sẽ nhận thông báo qua
-              email và trong ứng dụng khi có kết quả.
-            </p>
-          </div>
-        </div>
-        <span
-          className={`shrink-0 text-xs font-bold ${completed === total && agreeTerms ? 'text-emerald-700' : 'text-amber-700'}`}
-        >
-          <Check className="mr-1 inline h-4 w-4" />
-          Đã hoàn thành {completed}/{total} mục bắt buộc
-        </span>
-      </section>
-    </div>
   );
 }
 
