@@ -27,6 +27,7 @@ import type {
   AdminUserSummary,
   MentorVerificationRequestsQuery,
   MentorVerificationRequestsResponse,
+  MentorVerificationDocumentDownload,
   MentorVerificationLock,
   MentorVerificationRequestDetail,
 } from '@/models/admin';
@@ -102,6 +103,12 @@ export const adminRepo = {
   getMentorVerificationRequest: (requestId: string) =>
     apiClient<MentorVerificationRequestDetail>(
       `/api/admin/mentor-verification/requests/${requestId}`,
+    ),
+
+  /** Signed, short-lived URL to view a verification document; call again once it expires. */
+  getMentorVerificationDocumentDownload: (requestId: string, documentId: string) =>
+    apiClient<MentorVerificationDocumentDownload>(
+      `/api/admin/mentor-verification/requests/${requestId}/documents/${documentId}/download`,
     ),
 
   getMentorVerificationLock: (requestId: string) =>

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { MentorVerificationResponse } from '@/models/auth';
 import { EvidencePreview } from './EvidencePreview';
+import { browsableUrl } from '@/utils/url';
 
 interface DocumentUploadSectionProps {
   selectedFptuFile: File | null;
@@ -66,6 +67,8 @@ export function DocumentUploadSection({
     }
   };
 
+  // TODO(api): mentee-side signed URL endpoint for own verification documents; fileUrl is a
+  // private:// reference, so links/previews of already-uploaded files are hidden until then.
   // Lấy các file đã nộp trước đó từ API /api/me/mentor-verification
   const existingFptuDoc = verificationData?.documents?.find(
     (d) => d.documentType === 'FPTU_AFFILIATION_PROOF' && d.isActive !== false,
@@ -192,9 +195,9 @@ export function DocumentUploadSection({
                 </div>
               </div>
 
-              {existingFptuDoc.fileUrl && (
+              {browsableUrl(existingFptuDoc.fileUrl) && (
                 <a
-                  href={existingFptuDoc.fileUrl}
+                  href={browsableUrl(existingFptuDoc.fileUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 shrink-0"
@@ -204,7 +207,7 @@ export function DocumentUploadSection({
               )}
             </div>
             <EvidencePreview
-              url={existingFptuDoc.fileUrl}
+              url={browsableUrl(existingFptuDoc.fileUrl)}
               contentType={existingFptuDoc.contentType}
               name={existingFptuDoc.originalFilename || 'Minh chứng sinh viên Đại học FPT'}
             />
@@ -309,9 +312,9 @@ export function DocumentUploadSection({
                     </div>
                   </div>
 
-                  {doc.fileUrl && (
+                  {browsableUrl(doc.fileUrl) && (
                     <a
-                      href={doc.fileUrl}
+                      href={browsableUrl(doc.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"
@@ -321,7 +324,7 @@ export function DocumentUploadSection({
                   )}
                 </div>
                 <EvidencePreview
-                  url={doc.fileUrl}
+                  url={browsableUrl(doc.fileUrl)}
                   contentType={doc.contentType}
                   name={doc.originalFilename || `Chứng chỉ chuyên môn #${index + 1}`}
                 />
