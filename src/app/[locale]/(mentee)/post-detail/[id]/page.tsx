@@ -4,7 +4,7 @@
  * Lấy ID bài viết từ URL params, truy xuất bài viết & bình luận từ `postRepo` hoặc trả về 404 nếu không tìm thấy.
  */
 
-import { notFound } from 'next/navigation';
+import { PostDetailLoader } from '@/views/mentee/post-detail/PostDetailLoader';
 import { PostDetailView } from '@/views/mentee/post-detail/PostDetailView';
 import { postRepo } from '@/repositories/postRepo';
 
@@ -28,6 +28,7 @@ export default async function PostDetailPage({
       />
     );
   } catch {
-    notFound();
+    // The server has no user token and may not reach the API: retry in the browser.
+    return <PostDetailLoader id={id} locale={locale} />;
   }
 }

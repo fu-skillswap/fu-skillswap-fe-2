@@ -10,6 +10,7 @@ import { MenteeQuestionModal } from '@/views/mentee/dashboard/MenteeQuestionModa
 import type { ForumPostResponse } from '@/models/auth';
 import type { Mentor, Post } from '@/models/entities';
 import { useAuth } from '@/providers/AuthProvider';
+import { mentorRepo } from '@/repositories/mentorRepo';
 import { postRepo } from '@/repositories/postRepo';
 import {
   ArrowRight,
@@ -21,7 +22,7 @@ import {
   Search,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 type FeedFilter = 'all' | 'question' | 'experience' | 'learning' | 'career';
 
@@ -60,11 +61,46 @@ export function MenteeDashboardView({
   /** True when the server could not load the feed; shows a load-error empty state. */
   postsLoadFailed?: boolean;
 }) {
-  const { user, isAuthenticated, showAuthRequiredModal } = useAuth();
+  const { user, isAuthenticated, isBootstrapping, showAuthRequiredModal } = useAuth();
   const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
   const [isQuestionOpen, setIsQuestionOpen] = useState(false);
   const [feedPosts, setFeedPosts] = useState(posts);
-  const showLoadError = postsLoadFailed && feedPosts.length === 0;
+  const [suggestedMentors, setSuggestedMentors] = useState(mentors);
+  const [feedStatus, setFeedStatus] = useState<'idle' | 'loading' | 'error'>(
+    postsLoadFailed ? 'loading' : 'idle',
+  );
+  const showLoadError = feedStatus === 'error' && feedPosts.length === 0;
+  const isFeedLoading = feedStatus === 'loading' && feedPosts.length === 0;
+
+  // The server render has no user token and may not reach the API at all, so reload the feed in
+  // the browser once the session is restored. This also refreshes per-user state (likes).
+  useEffect(() => {
+    if (isBootstrapping) return;
+    let cancelled = false;
+    setFeedStatus((current) => (current === 'error' ? 'loading' : current));
+    postRepo
+      .list()
+      .then((loaded) => {
+        if (cancelled) return;
+        setFeedPosts(loaded);
+        setFeedStatus('idle');
+      })
+      .catch(() => {
+        if (!cancelled) setFeedStatus('error');
+      });
+    if (mentors.length === 0) {
+      mentorRepo
+        .list({ page: 0, size: 3 })
+        .then((loaded) => {
+          if (!cancelled) setSuggestedMentors(loaded.slice(0, 3));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isBootstrapping, user?.id, mentors.length]);
+
   const displayName = user?.fullName?.trim().split(/\s+/).at(-1);
   const visiblePosts = useMemo(
     () => feedPosts.filter((post) => activeFilter === 'all' || classifyPost(post) === activeFilter),
@@ -176,7 +212,14 @@ export function MenteeDashboardView({
               </button>
             ))}
           </div>
-          {visiblePosts.length > 0 ? (
+          {isFeedLoading ? (
+            <div
+              className="rounded-[18px] border border-solid border-border-light bg-white p-8 text-center text-sm text-text-secondary"
+              role="status"
+            >
+              Đang tải bảng tin...
+            </div>
+          ) : visiblePosts.length > 0 ? (
             <div className="flex flex-col gap-4">
               {visiblePosts.map((post) => {
                 const category = classifyPost(post);
@@ -250,7 +293,7 @@ export function MenteeDashboardView({
             </Link>
           </section>
 
-          {mentors.filter((mentor) => mentor.id && mentor.name).length > 0 && (
+          {suggestedMentors.filter((mentor) => mentor.id && mentor.name).length > 0 && (
             <section className="rounded-[18px] border border-solid border-border-light bg-white p-5 shadow-[0_3px_12px_rgba(16,50,90,0.035)]">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="m-0 text-base font-extrabold text-text-main">Mentor nổi bật</h2>
@@ -262,7 +305,7 @@ export function MenteeDashboardView({
                 </Link>
               </div>
               <div className="mt-4 divide-y divide-border-light">
-                {mentors
+                {suggestedMentors
                   .filter((mentor) => mentor.id && mentor.name)
                   .slice(0, 3)
                   .map((mentor) => (
