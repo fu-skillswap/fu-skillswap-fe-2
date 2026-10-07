@@ -63,10 +63,8 @@ export const mentorProfileSchema = yup.object().shape({
     .required('Vui lòng nhập mô tả chi tiết kinh nghiệm chuyên môn.')
     .min(10, 'Mô tả kinh nghiệm tối thiểu 10 ký tự.')
     .max(1500, 'Mô tả tối đa 1500 ký tự.'),
-  isAvailable: yup
-    .boolean()
-    .oneOf([true], 'Vui lòng xác nhận sẵn sàng nhận lịch tư vấn từ Mentee.')
-    .required('Vui lòng xác nhận sẵn sàng nhận lịch tư vấn từ Mentee.'),
+  // Optional: a mentor may submit the profile while not yet ready to take bookings.
+  isAvailable: yup.boolean().default(false),
   // Phone is no longer collected in the mentor application (it must not be shown to mentees).
   // Kept optional so previously saved values still pass validation.
   phoneNumber: yup.string().trim().optional(),

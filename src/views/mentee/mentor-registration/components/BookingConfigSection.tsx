@@ -40,14 +40,13 @@ export function BookingConfigSection({
             className="w-4.5 h-4.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 accent-sky-600 cursor-pointer"
             {...register('isAvailable')}
           />
-          <span>
-            Tôi sẵn sàng nhận lịch tư vấn từ Mentee{' '}
-            <span className="text-red-500 font-bold ml-0.5">*</span>
-          </span>
+          <span>Tôi sẵn sàng nhận lịch tư vấn từ Mentee</span>
         </label>
-        {errors.isAvailable && (
-          <p className="text-xs font-medium text-red-500 mt-1">{errors.isAvailable.message}</p>
-        )}
+        <p className="m-0 text-xs text-slate-600">
+          {isAvailable
+            ? 'Mentee có thể đặt lịch với bạn sau khi hồ sơ được duyệt.'
+            : 'Bạn vẫn có thể gửi hồ sơ. Mentee chưa thể đặt lịch cho tới khi bạn bật lại.'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -61,7 +60,6 @@ export function BookingConfigSection({
           <input
             id="minimumBookingLeadTimeMinutes"
             type="number"
-            disabled={!isAvailable}
             placeholder="VD: 120"
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50 disabled:text-slate-400"
             {...register('minimumBookingLeadTimeMinutes')}
@@ -83,7 +81,6 @@ export function BookingConfigSection({
           <input
             id="maximumBookingHorizonDays"
             type="number"
-            disabled={!isAvailable}
             placeholder="VD: 30"
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none shadow-sm disabled:bg-slate-50 disabled:text-slate-400"
             {...register('maximumBookingHorizonDays')}
