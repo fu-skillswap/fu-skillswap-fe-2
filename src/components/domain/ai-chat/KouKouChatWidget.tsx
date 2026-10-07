@@ -5,15 +5,20 @@
 
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { KouKouChatPanel } from '@/components/domain/ai-chat/KouKouChatPanel';
-import type { ChatMessage } from '@/components/domain/ai-chat/types';
+import { useKouKouChat } from '@/components/domain/ai-chat/useKouKouChat';
+import { useAuth } from '@/providers/AuthProvider';
+import { MenteeQuestionModal } from '@/views/mentee/dashboard/MenteeQuestionModal';
 
 export function KouKouChatWidget() {
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'vi';
+  const { isAuthenticated, showAuthRequiredModal } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [isSending] = useState(false);
+  const [isQuestionOpen, setIsQuestionOpen] = useState(false);
+  const chat = useKouKouChat();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -30,26 +35,32 @@ export function KouKouChatWidget() {
     return () => window.removeEventListener('skillswap:open-koukou', openChat);
   }, []);
 
-  const handleSendMessage = (message = input) => {
-    const content = message.trim();
-    if (!content || isSending) return;
-    setMessages((current) => [
-      ...current,
-      { id: `${Date.now()}-${current.length}`, role: 'user', content, createdAt: new Date() },
-    ]);
-    setInput('');
+  const handleAskCommunity = () => {
+    if (!isAuthenticated) {
+      showAuthRequiredModal('Bạn cần đăng nhập để đăng câu hỏi và nhận hỗ trợ từ mentor.');
+      return;
+    }
+    setIsOpen(false);
+    setIsQuestionOpen(true);
   };
 
   return (
     <>
       <KouKouChatPanel
         isOpen={isOpen}
-        messages={messages}
-        input={input}
-        isSending={isSending}
-        onInputChange={setInput}
-        onQuickAction={handleSendMessage}
-        onSend={() => handleSendMessage()}
+        locale={locale}
+        messages={chat.messages}
+        input={chat.input}
+        isSending={chat.isSending}
+        isBudgetExhausted={chat.isBudgetExhausted}
+        onInputChange={chat.setInput}
+        onQuickAction={(message) => chat.send(message)}
+        onSend={() => chat.send()}
+        onStop={chat.stop}
+        onRetry={chat.retry}
+        onRate={(messageId, rating) => void chat.rate(messageId, rating)}
+        onNewConversation={chat.resetConversation}
+        onAskCommunity={handleAskCommunity}
         onClose={() => setIsOpen(false)}
       />
       <button
@@ -66,6 +77,11 @@ export function KouKouChatWidget() {
           aria-hidden="true"
         />
       </button>
+      <MenteeQuestionModal
+        open={isQuestionOpen}
+        onClose={() => setIsQuestionOpen(false)}
+        onCreated={() => setIsQuestionOpen(false)}
+      />
     </>
   );
 }

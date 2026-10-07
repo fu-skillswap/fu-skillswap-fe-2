@@ -4,19 +4,53 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { KouKouAssistantMessage } from '@/components/domain/ai-chat/KouKouAssistantMessage';
 import type { ChatMessage } from '@/components/domain/ai-chat/types';
 
-export function KouKouMessageList({ messages }: { messages: ChatMessage[] }) {
+/** Distance (px) from the bottom within which the list keeps following new content. */
+const STICK_THRESHOLD = 48;
+
+type KouKouMessageListProps = {
+  messages: ChatMessage[];
+  locale: string;
+  isSending: boolean;
+  onRetry: (messageId: string) => void;
+  onRate: (messageId: string, rating: 1 | -1) => void;
+};
+
+export function KouKouMessageList({
+  messages,
+  locale,
+  isSending,
+  onRetry,
+  onRate,
+}: KouKouMessageListProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
+
+  const handleScroll = () => {
+    const list = listRef.current;
+    if (!list) return;
+    stickToBottomRef.current =
+      list.scrollHeight - list.scrollTop - list.clientHeight <= STICK_THRESHOLD;
+  };
+
+  // A newly sent question always brings the user back to the bottom. Declared before the scroll
+  // effect so it runs first in the same commit.
+  const lastUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id;
+  useEffect(() => {
+    stickToBottomRef.current = true;
+  }, [lastUserMessageId]);
 
   useEffect(() => {
     const list = listRef.current;
-    if (list) list.scrollTop = list.scrollHeight;
+    if (list && stickToBottomRef.current) list.scrollTop = list.scrollHeight;
   }, [messages]);
 
   return (
     <div
       ref={listRef}
+      onScroll={handleScroll}
       className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4"
       aria-live="polite"
     >
@@ -27,21 +61,24 @@ export function KouKouMessageList({ messages }: { messages: ChatMessage[] }) {
           <p>Mình là KouKou, trợ lý AI của SkillSwap. Mình có thể giúp gì cho bạn hôm nay?</p>
         </div>
       </div>
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className={`mb-3 flex items-end gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-        >
-          {message.role === 'assistant' && (
-            <img src="/images/Koko.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
-          )}
-          <p
-            className={`m-0 max-w-[82%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${message.role === 'user' ? 'rounded-br-md bg-primary-light text-text-main' : 'rounded-bl-md border border-border-color bg-white text-text-secondary'}`}
-          >
-            {message.content}
-          </p>
-        </div>
-      ))}
+      {messages.map((message) =>
+        message.role === 'assistant' ? (
+          <KouKouAssistantMessage
+            key={message.id}
+            message={message}
+            locale={locale}
+            canRetry={!isSending}
+            onRetry={onRetry}
+            onRate={onRate}
+          />
+        ) : (
+          <div key={message.id} className="mb-3 flex justify-end">
+            <p className="m-0 max-w-[82%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-xs leading-5 text-white">
+              {message.content}
+            </p>
+          </div>
+        ),
+      )}
     </div>
   );
 }
