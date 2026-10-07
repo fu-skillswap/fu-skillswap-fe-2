@@ -52,15 +52,19 @@ export function MenteeDashboardView({
   locale,
   posts,
   mentors,
+  postsLoadFailed = false,
 }: {
   locale: string;
   posts: Post[];
   mentors: Mentor[];
+  /** True when the server could not load the feed; shows a load-error empty state. */
+  postsLoadFailed?: boolean;
 }) {
   const { user, isAuthenticated, showAuthRequiredModal } = useAuth();
   const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
   const [isQuestionOpen, setIsQuestionOpen] = useState(false);
   const [feedPosts, setFeedPosts] = useState(posts);
+  const showLoadError = postsLoadFailed && feedPosts.length === 0;
   const displayName = user?.fullName?.trim().split(/\s+/).at(-1);
   const visiblePosts = useMemo(
     () => feedPosts.filter((post) => activeFilter === 'all' || classifyPost(post) === activeFilter),
@@ -205,10 +209,12 @@ export function MenteeDashboardView({
           ) : (
             <div className="rounded-[18px] border border-solid border-border-light bg-white p-8 text-center">
               <h3 className="m-0 text-base font-extrabold text-text-main">
-                Chưa có bài viết phù hợp.
+                {showLoadError ? 'Không tải được bảng tin lúc này.' : 'Chưa có bài viết phù hợp.'}
               </h3>
               <p className="mb-5 mt-2 text-sm text-text-secondary">
-                Hãy thử chọn chủ đề khác hoặc đặt câu hỏi đầu tiên của bạn.
+                {showLoadError
+                  ? 'Vui lòng tải lại trang hoặc thử lại sau ít phút.'
+                  : 'Hãy thử chọn chủ đề khác hoặc đặt câu hỏi đầu tiên của bạn.'}
               </p>
               <button
                 type="button"
