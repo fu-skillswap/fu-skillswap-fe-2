@@ -31,7 +31,7 @@ export const MENTOR_STEPS = [
 ] as const;
 
 export const STEP_FIELDS: Record<number, FieldPath<MentorProfileFormValues>[]> = {
-  1: ['headline', 'expertiseDescription', 'phoneNumber', 'githubUrl', 'portfolioUrl'],
+  1: ['headline', 'expertiseDescription', 'githubUrl', 'portfolioUrl'],
   2: [
     'subjectResults',
     'foundationSupportLevel',

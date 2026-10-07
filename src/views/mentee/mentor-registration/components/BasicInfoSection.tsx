@@ -96,20 +96,6 @@ export function BasicInfoSection({ register, errors, watch, setValue, disabled }
         <div className="flex justify-end text-xs text-slate-600">{description.length}/1500</div>
         {error(errors.expertiseDescription?.message)}
       </div>
-      <div className="space-y-1.5">
-        <label htmlFor="phoneNumber" className="block text-sm font-semibold text-slate-800">
-          Số điện thoại liên hệ <span className="text-red-600">*</span>
-        </label>
-        <input
-          id="phoneNumber"
-          placeholder="0912 345 678"
-          aria-invalid={Boolean(errors.phoneNumber)}
-          className={inputClass}
-          {...register('phoneNumber')}
-        />
-        <p className="m-0 text-xs text-slate-600">Dùng để mentee liên hệ đặt lịch tư vấn.</p>
-        {error(errors.phoneNumber?.message)}
-      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="githubUrl" className="block text-sm font-semibold text-slate-800">

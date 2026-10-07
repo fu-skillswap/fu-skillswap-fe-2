@@ -123,7 +123,6 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
     return [
       Boolean(values.headline),
       Boolean(values.expertiseDescription),
-      Boolean(values.phoneNumber),
       Boolean(values.foundationSupportLevel),
       Boolean(values.outputReviewSupportLevel),
       Boolean(values.directionSupportLevel),
@@ -346,7 +345,7 @@ function ReviewStep({
     {
       step: 1,
       title: 'Thông tin cơ bản',
-      lines: [values.headline || 'Chưa có tiêu đề', values.phoneNumber || 'Chưa có số điện thoại'],
+      lines: [values.headline || 'Chưa có tiêu đề'],
     },
     {
       step: 2,
