@@ -30,7 +30,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { ServiceDescriptionFields } from '@/components/domain/mentor-service/ServiceDescriptionFields';
 
 const formatScoin = (value: number | null) =>
   value === null ? '—' : `${new Intl.NumberFormat('vi-VN').format(value)} S-coins`;
@@ -258,32 +259,25 @@ export function MentorServiceDetailView({
                   )}
                 </div>
 
-                <div className="grid gap-3 lg:grid-cols-2">
-                  <div>
-                    <label
-                      className="text-sm font-semibold text-slate-700"
-                      htmlFor="service-description"
-                    >
-                      Mô tả dịch vụ <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="service-description"
-                      className={fieldClassName}
-                      rows={3}
-                      {...form.register('description')}
-                    />
-                    {form.formState.errors.description && (
-                      <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                        {form.formState.errors.description.message}
-                      </span>
+                <div className="space-y-4">
+                  <Controller
+                    control={form.control}
+                    name="description"
+                    render={({ field, fieldState }) => (
+                      <ServiceDescriptionFields
+                        idPrefix="service"
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        error={fieldState.error?.message}
+                      />
                     )}
-                  </div>
+                  />
                   <div>
                     <label
                       className="text-sm font-semibold text-slate-700"
                       htmlFor="service-outcome"
                     >
-                      Kết quả mong đợi <span className="text-red-500">*</span>
+                      Kết quả sau buổi tư vấn <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       id="service-outcome"

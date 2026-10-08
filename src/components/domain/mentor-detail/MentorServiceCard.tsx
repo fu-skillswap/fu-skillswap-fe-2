@@ -17,7 +17,10 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import { parseServiceDescription, splitOutcome } from './parseServiceDescription';
+import {
+  parseServiceDescription,
+  splitOutcome,
+} from '@/components/domain/mentor-service/serviceDescription';
 
 interface MentorServiceCardProps {
   service: MentorService;
@@ -40,7 +43,8 @@ export function MentorServiceCard({
   );
   const hasStructure = parsed.items.length > 0;
   const isFree = service.priceScoins === 0;
-  const outcome = parsed.outcome ? splitOutcome(parsed.outcome) : null;
+  const outcomeText = parsed.outcome ?? service.expectedOutcome?.trim();
+  const outcome = outcomeText ? splitOutcome(outcomeText) : null;
   const titleId = `service-${service.id}-title`;
 
   return (
@@ -63,9 +67,9 @@ export function MentorServiceCard({
           </div>
         </div>
 
-        {!hasStructure && service.description && (
+        {!hasStructure && parsed.intro.trim() && (
           <p className="m-0 whitespace-pre-line text-sm leading-relaxed text-slate-600">
-            {service.description}
+            {parsed.intro.trim()}
           </p>
         )}
 
@@ -106,13 +110,10 @@ export function MentorServiceCard({
           <div className="flex items-start gap-3 rounded-xl bg-primary-light px-4 py-3 text-sm leading-relaxed text-slate-700">
             <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
             <p className="m-0">
-              {outcome.lead ? (
-                <>
-                  <b className="font-semibold text-slate-900">{outcome.lead}:</b> {outcome.rest}
-                </>
-              ) : (
-                outcome.rest
-              )}
+              <b className="font-semibold text-slate-900">
+                {outcome.lead || 'Kết quả sau buổi tư vấn'}:
+              </b>{' '}
+              {outcome.rest}
             </p>
           </div>
         )}
