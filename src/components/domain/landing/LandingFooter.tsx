@@ -14,7 +14,14 @@ const socialIcons = {
   youtube: Play,
 } as const;
 
-export function LandingFooter({ locale }: { locale: string }) {
+interface LandingFooterProps {
+  locale: string;
+  /** Set outside the landing page so section anchors link back to `/${locale}#…`. */
+  isOutsideLanding?: boolean;
+}
+
+export function LandingFooter({ locale, isOutsideLanding = false }: LandingFooterProps) {
+  const sectionHref = (anchor: string) => (isOutsideLanding ? `/${locale}${anchor}` : anchor);
   const linkClassName =
     'w-fit text-sm leading-5 text-[#536a84] transition-colors duration-150 hover:text-primary focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#eaf5ff] sm:text-[15px]';
   const socialClassName =
@@ -49,22 +56,22 @@ export function LandingFooter({ locale }: { locale: string }) {
           <h2 className="text-base leading-6 font-bold text-[#12386e] sm:text-[17px]">Sản phẩm</h2>
           <ul className="mt-4 grid gap-2.5 sm:gap-3">
             <li>
-              <a href="#mentee" className={linkClassName}>
+              <a href={sectionHref('#mentee')} className={linkClassName}>
                 Dành cho mentee
               </a>
             </li>
             <li>
-              <a href="#mentor" className={linkClassName}>
+              <a href={sectionHref('#mentor')} className={linkClassName}>
                 Dành cho mentor
               </a>
             </li>
             <li>
-              <a href="#courses" className={linkClassName}>
+              <a href={sectionHref('#courses')} className={linkClassName}>
                 Khóa học ngắn
               </a>
             </li>
             <li>
-              <a href="#pricing" className={linkClassName}>
+              <a href={sectionHref('#pricing')} className={linkClassName}>
                 Chi phí
               </a>
             </li>
@@ -78,13 +85,18 @@ export function LandingFooter({ locale }: { locale: string }) {
           <h2 className="text-base leading-6 font-bold text-[#12386e] sm:text-[17px]">Hỗ trợ</h2>
           <ul className="mt-4 grid gap-2.5 sm:gap-3">
             <li>
-              <a href="#faq" className={linkClassName}>
+              <a href={sectionHref('#faq')} className={linkClassName}>
                 Câu hỏi thường gặp
               </a>
             </li>
             <li>
               <Link href={`/${locale}/login`} className={linkClassName}>
                 Đăng nhập
+              </Link>
+            </li>
+            <li>
+              <Link href={`/${locale}/chinh-sach-bao-mat`} className={linkClassName}>
+                Chính sách bảo mật
               </Link>
             </li>
             {CONTACT_EMAIL ? (
