@@ -964,8 +964,8 @@ export interface SaveMentorProfileRequest {
   githubUrl?: string;
   /** Trang Portfolio cá nhân (tùy chọn) */
   portfolioUrl?: string;
-  /** Số điện thoại liên hệ (không còn thu thập trong form đăng ký mentor) */
-  phoneNumber?: string;
+  /** Số điện thoại liên hệ */
+  phoneNumber: string;
   /** Thời gian báo trước tối thiểu khi đặt lịch (tính bằng phút) */
   minimumBookingLeadTimeMinutes: number;
   /** Thời gian mở lịch đặt trước tối đa (tính bằng ngày) */
