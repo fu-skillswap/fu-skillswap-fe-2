@@ -1,7 +1,7 @@
 /**
  * @file BlogMarkdown.tsx
  * @description Hiển thị nội dung Markdown của bài Blog thành phần tử React (không dùng HTML thô).
- * Hỗ trợ tiêu đề (## có id cho mục lục), đoạn văn, danh sách, trích dẫn, khối ghi chú
+ * Hỗ trợ tiêu đề (## và ### có id cho mục lục), đoạn văn, danh sách, trích dẫn, khối ghi chú
  * (> [!meo] / [!luu-y] / [!quan-trong]), khối code, ảnh (khối ảnh có chú thích và cỡ),
  * liên kết, in đậm / nghiêng / gạch ngang / code, chữ màu và tô nền ([chữ]{.xanh}, [chữ]{.to-vang}).
  */
@@ -149,14 +149,15 @@ function slugify(text: string) {
 const HEADING_LINE = /^(#{1,6})\s+(.*)$/;
 const isFence = (line: string) => line.trimStart().startsWith('```');
 
-export interface BlogHeading {
+export interface BlogTocItem {
   id: string;
   title: string;
+  level: 2 | 3;
 }
 
-/** "## " section headings in document order, with the ids the renderer gives them. */
-export function getBlogHeadings(content: string): BlogHeading[] {
-  const headings: BlogHeading[] = [];
+/** "## " and "### " headings in document order, with the ids the renderer gives them. */
+export function extractToc(content: string): BlogTocItem[] {
+  const headings: BlogTocItem[] = [];
   const used = new Map<string, number>();
   let inFence = false;
   for (const line of content.replace(/\r\n?/g, '\n').split('\n')) {
@@ -166,20 +167,73 @@ export function getBlogHeadings(content: string): BlogHeading[] {
     }
     if (inFence) continue;
     const heading = HEADING_LINE.exec(line);
-    if (!heading || heading[1].length !== 2) continue;
+    const hashes = heading?.[1].length;
+    if (!heading || (hashes !== 2 && hashes !== 3)) continue;
     const title = plainText(heading[2]);
     const base = `muc-${slugify(title)}`;
     const count = (used.get(base) ?? 0) + 1;
     used.set(base, count);
-    headings.push({ id: count > 1 ? `${base}-${count}` : base, title });
+    headings.push({
+      id: count > 1 ? `${base}-${count}` : base,
+      title,
+      level: hashes === 2 ? 2 : 3,
+    });
   }
   return headings;
 }
 
-const HEADING_CLASS: Record<number, string> = {
-  2: 'mt-8 mb-3 text-xl font-extrabold',
-  3: 'mt-6 mb-2 text-lg font-bold',
-  4: 'mt-5 mb-2 text-base font-bold',
+const normalizeEcho = (text: string) => plainText(text).replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * Drops a first heading that repeats the post title, then a first paragraph that repeats the
+ * excerpt; the reader page already shows both above the content.
+ */
+export function removeLeadingTitleEcho(
+  content: string,
+  title?: string | null,
+  excerpt?: string | null,
+) {
+  const lines = content.replace(/\r\n?/g, '\n').split('\n');
+  let start = 0;
+  const skipBlank = () => {
+    while (start < lines.length && !lines[start].trim()) start += 1;
+  };
+
+  skipBlank();
+  const heading = HEADING_LINE.exec(lines[start] ?? '');
+  if (title?.trim() && heading && normalizeEcho(heading[2]) === normalizeEcho(title)) {
+    start += 1;
+    skipBlank();
+  }
+
+  if (excerpt?.trim()) {
+    let end = start;
+    while (end < lines.length && lines[end].trim()) end += 1;
+    const paragraph = lines.slice(start, end).join(' ');
+    if (paragraph.trim() && normalizeEcho(paragraph) === normalizeEcho(excerpt)) start = end;
+  }
+
+  return lines.slice(start).join('\n');
+}
+
+type BlogMarkdownVariant = 'default' | 'reader';
+
+const HEADING_CLASS: Record<BlogMarkdownVariant, Record<number, string>> = {
+  default: {
+    2: 'mt-8 mb-3 text-xl font-extrabold',
+    3: 'mt-6 mb-2 text-lg font-bold',
+    4: 'mt-5 mb-2 text-base font-bold',
+  },
+  reader: {
+    2: 'mt-10 mb-4 text-[26px] leading-tight font-extrabold tracking-[-0.02em]',
+    3: 'mt-8 mb-3 text-xl leading-snug font-bold',
+    4: 'mt-6 mb-2 text-lg font-bold',
+  },
+};
+
+const BODY_CLASS: Record<BlogMarkdownVariant, string> = {
+  default: 'break-words text-[15px] leading-7 text-text-secondary',
+  reader: 'break-words text-[17px] leading-[1.8] text-slate-700',
 };
 
 const LIST_ITEM = /^\s*([-*+]|\d+[.)])\s+(.*)$/;
@@ -207,9 +261,21 @@ function renderLines(lines: string[], keyPrefix: string) {
   ));
 }
 
-export function BlogMarkdown({ content }: { content: string }) {
-  const lines = content.replace(/\r\n?/g, '\n').split('\n');
-  const sectionIds = getBlogHeadings(content).map((heading) => heading.id);
+export function BlogMarkdown({
+  content,
+  title,
+  excerpt,
+  variant = 'default',
+}: {
+  content: string;
+  /** With title/excerpt, a leading heading or paragraph that repeats them is not rendered again. */
+  title?: string | null;
+  excerpt?: string | null;
+  variant?: BlogMarkdownVariant;
+}) {
+  const body = title || excerpt ? removeLeadingTitleEcho(content, title, excerpt) : content;
+  const lines = body.replace(/\r\n?/g, '\n').split('\n');
+  const sectionIds = extractToc(body).map((heading) => heading.id);
   let sectionIndex = 0;
   const blocks: ReactNode[] = [];
   let i = 0;
@@ -243,15 +309,15 @@ export function BlogMarkdown({ content }: { content: string }) {
     const heading = HEADING_LINE.exec(line);
     if (heading) {
       const hashes = heading[1].length;
-      // "#" and "##" → h2, "###" → h3, deeper → h4. Only "##" is a table-of-contents section.
+      // "#" and "##" → h2, "###" → h3, deeper → h4. "##" and "###" get table-of-contents ids.
       const level = hashes <= 2 ? 2 : Math.min(hashes, 4);
       const Tag = `h${level}` as 'h2' | 'h3' | 'h4';
-      const id = hashes === 2 ? sectionIds[sectionIndex++] : undefined;
+      const id = hashes === 2 || hashes === 3 ? sectionIds[sectionIndex++] : undefined;
       blocks.push(
         <Tag
           key={key}
           id={id}
-          className={`${HEADING_CLASS[level]} text-text-main ${id ? 'scroll-mt-24' : ''}`.trim()}
+          className={`${HEADING_CLASS[variant][level]} text-text-main ${id ? 'scroll-mt-24' : ''}`.trim()}
         >
           {renderInline(heading[2], key)}
         </Tag>,
@@ -375,5 +441,5 @@ export function BlogMarkdown({ content }: { content: string }) {
     );
   }
 
-  return <div className="break-words text-[15px] leading-7 text-text-secondary">{blocks}</div>;
+  return <div className={BODY_CLASS[variant]}>{blocks}</div>;
 }
