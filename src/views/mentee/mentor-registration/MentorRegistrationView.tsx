@@ -25,7 +25,7 @@ import { ReviewStep } from './components/ReviewStep';
 import { MENTOR_REVIEW_DURATION, MENTOR_STEPS, STEP_FIELDS } from './mentorRegistration.constants';
 
 /** Required items counted on the review step (fields, evidence and terms). */
-const REQUIRED_ITEM_COUNT = 10;
+const REQUIRED_ITEM_COUNT = 11;
 
 const levelOptions: SelectOption[] = [1, 2, 3, 4, 5].map((value) => ({
   value: String(value),
@@ -127,6 +127,7 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
     return [
       Boolean(values.headline),
       Boolean(values.expertiseDescription),
+      Boolean(values.phoneNumber),
       Boolean(values.foundationSupportLevel),
       Boolean(values.outputReviewSupportLevel),
       Boolean(values.directionSupportLevel),
