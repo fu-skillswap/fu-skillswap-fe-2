@@ -94,7 +94,9 @@ export function ReviewStep({
         }))
       : existingExpertise.map(toEvidenceItem);
 
-  const basicComplete = Boolean(values.headline && values.expertiseDescription);
+  const basicComplete = Boolean(
+    values.headline && values.expertiseDescription && values.phoneNumber,
+  );
   const experienceComplete = SUPPORT_LEVELS.every(({ key }) => Boolean(values[key]));
   const bookingComplete = Boolean(
     values.minimumBookingLeadTimeMinutes && values.maximumBookingHorizonDays,
@@ -123,6 +125,9 @@ export function ReviewStep({
             ) : (
               <Value required />
             )}
+          </Field>
+          <Field label="Số điện thoại liên hệ">
+            <Value text={values.phoneNumber} required />
           </Field>
           <Field label="GitHub">
             <LinkValue url={values.githubUrl} />
