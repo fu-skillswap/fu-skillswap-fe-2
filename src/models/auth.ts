@@ -853,6 +853,11 @@ export interface MentorDiscoveryDetailResponse {
       specializationName?: string;
       programName?: string;
     };
+    /** Published blog posts shown on the public mentor profile. */
+    authorityContent?: {
+      publishedArticleCount?: number;
+      recentPublicArticles?: MentorPublicArticlePreviewResponse[];
+    };
   };
   reputation: {
     ratingState?: 'NO_REVIEWS' | 'RATED';
@@ -866,6 +871,17 @@ export interface MentorDiscoveryDetailResponse {
     suspendedUntil?: string | null;
     canRequestBooking?: boolean;
   };
+}
+
+/** A published blog post preview on the public mentor profile. */
+export interface MentorPublicArticlePreviewResponse {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  coverImageUrl?: string | null;
+  readingTimeMinutes?: number | null;
+  publishedAt?: string | null;
 }
 
 /** Một đánh giá công khai của mentor (`GET /api/mentors/{mentorUserId}/reviews`). */
