@@ -5,18 +5,12 @@
 
 'use client';
 
+import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminMentor, AdminUser } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
 import { showError } from '@/utils/toast';
-import {
-  ChevronLeft,
-  ChevronRight,
-  LoaderCircle,
-  RefreshCw,
-  UserRoundSearch,
-  Users,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -267,7 +261,7 @@ function MenteeTable({
       </thead>
       <tbody>
         {loading ? (
-          <LoadingRow message="Đang tải danh sách mentee..." />
+          <AdminTableState variant="loading" colSpan={6} title="Đang tải danh sách mentee…" />
         ) : users.length ? (
           users.map((user) => <MenteeRow key={user.userId} user={user} locale={locale} />)
         ) : (
@@ -303,7 +297,7 @@ function MentorTable({
       </thead>
       <tbody>
         {loading ? (
-          <LoadingRow message="Đang tải danh sách mentor..." />
+          <AdminTableState variant="loading" colSpan={6} title="Đang tải danh sách mentor…" />
         ) : mentors.length ? (
           mentors.map((mentor) => (
             <MentorRow key={mentor.mentorUserId} mentor={mentor} locale={locale} />
@@ -316,33 +310,21 @@ function MentorTable({
   );
 }
 
-function LoadingRow({ message }: { message: string }) {
-  return (
-    <tr>
-      <td colSpan={6} className="admin-users-state">
-        <div className="admin-users-feedback" role="status" aria-live="polite">
-          <LoaderCircle className="is-loading" aria-hidden="true" />
-          <strong>{message}</strong>
-          <span>Vui lòng chờ trong giây lát.</span>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
 function EmptyRow({ statusFilter, label }: { statusFilter: string; label: string }) {
-  return (
-    <tr>
-      <td colSpan={6} className="admin-users-state">
-        <div className="admin-users-feedback">
-          <UserRoundSearch aria-hidden="true" />
-          <strong>
-            {statusFilter ? `Không có ${label} ở trạng thái đã chọn.` : `Chưa có ${label} nào.`}
-          </strong>
-          <span>Thử chọn trạng thái khác hoặc làm mới danh sách.</span>
-        </div>
-      </td>
-    </tr>
+  return statusFilter ? (
+    <AdminTableState
+      variant="no-results"
+      colSpan={6}
+      title={`Không có ${label} ở trạng thái đã chọn`}
+      description="Thử chọn trạng thái khác hoặc làm mới danh sách."
+    />
+  ) : (
+    <AdminTableState
+      variant="empty"
+      colSpan={6}
+      title={`Chưa có ${label} nào`}
+      description="Tài khoản mới sẽ xuất hiện tại đây."
+    />
   );
 }
 

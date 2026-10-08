@@ -200,7 +200,7 @@ export function AdminMentorDetailView({
         <div className="admin-mentor-detail-grid">
           <div className="admin-mentor-detail-main">
             <section className="admin-mentor-detail-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <GraduationCap aria-hidden="true" /> Chuyên môn &amp; hỗ trợ
               </h2>
               <p className="admin-mentor-description">
@@ -213,7 +213,7 @@ export function AdminMentorDetailView({
               </div>
             </section>
             <section className="admin-mentor-detail-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <BookOpenCheck aria-hidden="true" /> Kết quả môn học
               </h2>
               {subjects.length ? (
@@ -256,7 +256,7 @@ export function AdminMentorDetailView({
           </div>
           <aside className="admin-mentor-detail-side">
             <section className="admin-mentor-detail-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <UserRoundCheck aria-hidden="true" /> Trạng thái hồ sơ
               </h2>
               <dl className="admin-mentor-info-list">
@@ -283,7 +283,7 @@ export function AdminMentorDetailView({
               </dl>
             </section>
             <section className="admin-mentor-detail-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <TrendingUp aria-hidden="true" /> Liên kết chuyên môn
               </h2>
               <div className="admin-mentor-links">
@@ -375,7 +375,7 @@ function MentorCollection({ title, icon, items, type }: MentorCollectionProps) {
 
   return (
     <section className="admin-mentor-detail-card">
-      <h2>
+      <h2 className="admin-card-title">
         {icon} {title}
       </h2>
       {collectionItems.length ? (

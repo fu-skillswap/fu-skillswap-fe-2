@@ -5,6 +5,7 @@
 
 'use client';
 
+import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminBooking } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
@@ -201,18 +202,25 @@ export function AdminBookingsView() {
               </thead>
               <tbody>
                 {loading ? (
-                  <BookingStateRow message="Đang tải danh sách lịch hẹn..." />
+                  <AdminTableState
+                    variant="loading"
+                    colSpan={5}
+                    title="Đang tải danh sách lịch hẹn…"
+                  />
                 ) : visibleBookings.length ? (
                   visibleBookings.map((booking) => (
                     <BookingRow key={booking.bookingId} booking={booking} />
                   ))
                 ) : (
-                  <BookingStateRow
-                    message={
-                      statusFilter || searchTerm
-                        ? 'Không tìm thấy lịch hẹn phù hợp.'
-                        : 'Chưa có lịch hẹn nào.'
-                    }
+                  <AdminTableState
+                    colSpan={5}
+                    {...(statusFilter || searchTerm
+                      ? { variant: 'no-results', title: 'Không tìm thấy lịch hẹn phù hợp' }
+                      : {
+                          variant: 'empty',
+                          title: 'Chưa có lịch hẹn nào',
+                          description: 'Lịch hẹn giữa mentor và mentee sẽ xuất hiện tại đây.',
+                        })}
                   />
                 )}
               </tbody>
@@ -278,16 +286,6 @@ function BookingMetric({
         <strong>{new Intl.NumberFormat('vi-VN').format(value)}</strong>
       </div>
     </article>
-  );
-}
-
-function BookingStateRow({ message }: { message: string }) {
-  return (
-    <tr>
-      <td colSpan={5} className="admin-users-state">
-        <span>{message}</span>
-      </td>
-    </tr>
   );
 }
 

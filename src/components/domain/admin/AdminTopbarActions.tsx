@@ -120,7 +120,7 @@ export function AdminTopbarActions() {
     <div className="admin-topbar-actions">
       <label className="admin-global-search">
         <Search aria-hidden="true" className="admin-global-search-icon" />
-        <input aria-label="Tìm kiếm" placeholder="Tìm kiếm..." />
+        <input aria-label="Tìm kiếm" placeholder="Tìm người dùng, hồ sơ, báo cáo…" />
       </label>
       <div className="relative">
         <button
@@ -200,16 +200,18 @@ export function AdminTopbarActions() {
       <div className="relative" ref={profileMenuRef}>
         <button
           type="button"
-          className="admin-topbar-avatar"
+          className="admin-topbar-profile"
           aria-label="Hồ sơ quản trị viên"
           aria-expanded={isProfileOpen}
           onClick={() => setIsProfileOpen((current) => !current)}
         >
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
-          ) : (
-            initials || 'A'
-          )}
+          <span className="admin-topbar-avatar" aria-hidden="true">
+            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials || 'A'}
+          </span>
+          <span className="admin-topbar-profile-text">
+            <strong>{user?.fullName || 'Quản trị viên'}</strong>
+            <span>Quản trị viên</span>
+          </span>
         </button>
         {isProfileOpen && (
           <section

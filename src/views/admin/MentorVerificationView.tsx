@@ -5,11 +5,12 @@
 
 'use client';
 
+import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { MentorVerificationRequest, MentorVerificationStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
 import { showError } from '@/utils/toast';
-import { FileSearch, RefreshCw, Search, UserRound } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -244,11 +245,11 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr>
-                      <td colSpan={6} className="mentor-table-state">
-                        <span className="mentor-inline-loading">Đang tải danh sách hồ sơ...</span>
-                      </td>
-                    </tr>
+                    <AdminTableState
+                      variant="loading"
+                      colSpan={6}
+                      title="Đang tải danh sách hồ sơ…"
+                    />
                   ) : requests.length ? (
                     requests.map((request) => (
                       <tr key={request.requestId}>
@@ -283,21 +284,21 @@ export function MentorVerificationView({ locale }: { locale: string }) {
                       </tr>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan={6} className="mentor-table-state">
-                        <div className="mentor-empty-state">
-                          <div aria-hidden="true">
-                            <UserRound />
-                            <FileSearch />
-                          </div>
-                          <strong>Không tìm thấy hồ sơ phù hợp.</strong>
-                          <span>
-                            Thử thay đổi từ khóa tìm kiếm hoặc chuyển sang tab khác
-                            <br /> để xem thêm kết quả.
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
+                    <AdminTableState
+                      colSpan={6}
+                      {...(search.trim()
+                        ? {
+                            variant: 'no-results',
+                            title: 'Không tìm thấy hồ sơ phù hợp',
+                            description:
+                              'Thử thay đổi từ khóa tìm kiếm hoặc chuyển sang tab khác để xem thêm kết quả.',
+                          }
+                        : {
+                            variant: 'empty',
+                            title: 'Không có hồ sơ nào cần xử lý',
+                            description: 'Hồ sơ mentor mới gửi sẽ xuất hiện tại đây.',
+                          })}
+                    />
                   )}
                 </tbody>
               </table>
