@@ -18,14 +18,25 @@ const navigation = [
   { label: 'Câu hỏi thường gặp', href: '#faq' },
 ] as const;
 
-export function LandingHeader({ locale }: { locale: string }) {
+interface LandingHeaderProps {
+  locale: string;
+  /**
+   * Set when the header is rendered outside the landing page: section anchors (`#faq`…) then
+   * link back to the landing page (`/${locale}#faq`) instead of scrolling the current page.
+   */
+  isOutsideLanding?: boolean;
+}
+
+export function LandingHeader({ locale, isOutsideLanding = false }: LandingHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const closeMenu = () => setIsOpen(false);
-  const navigationHref = (href: string) =>
-    href.startsWith('#') ? href : `/${locale}${href === '/' ? '' : href}`;
+  const navigationHref = (href: string) => {
+    if (href.startsWith('#')) return isOutsideLanding ? `/${locale}${href}` : href;
+    return `/${locale}${href === '/' ? '' : href}`;
+  };
   const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
     closeMenu();
-    if (!href.startsWith('#')) return;
+    if (!href.startsWith('#') || isOutsideLanding) return;
 
     const target = document.querySelector(href);
     if (!target) return;

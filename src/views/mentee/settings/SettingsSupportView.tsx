@@ -109,15 +109,21 @@ function SettingsCard({
   title,
   description,
   children,
+  id,
 }: {
   icon: typeof UserRound;
   tone: string;
   title: string;
   description: string;
   children: React.ReactNode;
+  /** Anchor target for deep links (e.g. from the privacy policy page). */
+  id?: string;
 }) {
   return (
-    <section className="rounded-[20px] border border-solid border-border-light bg-white p-5 shadow-[0_4px_18px_rgba(16,50,90,0.045)] sm:p-6">
+    <section
+      id={id}
+      className="scroll-mt-24 rounded-[20px] border border-solid border-border-light bg-white p-5 shadow-[0_4px_18px_rgba(16,50,90,0.045)] sm:p-6"
+    >
       <header className="mb-4 flex items-center gap-3">
         <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[14px] ${tone}`}>
           <Icon className="h-5 w-5" aria-hidden="true" />
@@ -494,6 +500,7 @@ function PrivacySettings({ profile }: { profile: StudentProfileResponse | null }
   };
   return (
     <SettingsCard
+      id="quyen-rieng-tu"
       icon={ShieldCheck}
       tone="bg-emerald-50 text-emerald-600"
       title="Quyền riêng tư"
