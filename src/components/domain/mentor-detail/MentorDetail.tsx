@@ -12,6 +12,8 @@ import type {
   MentorProjectResponse,
   MentorReviewResponse,
 } from '@/models/auth';
+import type { BlogPostReaderCardResponse } from '@/models/blog';
+import { MentorBlogPostGrid } from '@/components/domain/blog/MentorBlogPostGrid';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
 import { useAuth } from '@/providers/AuthProvider';
@@ -30,6 +32,7 @@ import {
   Star,
   Trophy,
 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 /** Tạo chữ cái đầu tên cho avatar */
@@ -85,7 +88,12 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'services' | 'blog'>('services');
+  const [articles, setArticles] = useState<BlogPostReaderCardResponse[]>([]);
+  const [articleCount, setArticleCount] = useState<number>();
   const servicesRef = useRef<HTMLElement>(null);
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale || 'vi';
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
 
   useEffect(() => {
@@ -120,6 +128,21 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
           setAchievements(detail.evidence?.achievements ?? []);
           setGithubUrl(detail.evidence?.githubUrl || undefined);
           setPortfolioUrl(detail.evidence?.portfolioUrl || undefined);
+          const authority = detail.evidence?.authorityContent;
+          setArticleCount(authority?.publishedArticleCount);
+          setArticles(
+            (authority?.recentPublicArticles ?? [])
+              .filter((article) => article.id && article.slug)
+              .map((article) => ({
+                ...article,
+                author: {
+                  id: targetUserId,
+                  displayName: detail.identity?.displayName || mappedMentor.name,
+                  avatarUrl: detail.identity?.avatarUrl ?? mappedMentor.avatarUrl,
+                  authorType: 'MENTOR' as const,
+                },
+              })),
+          );
         }
         setServices(
           detail.services
@@ -343,7 +366,13 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
 
               <button
                 type="button"
-                onClick={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => {
+                  setActiveTab('services');
+                  // Wait one frame so the services section is visible before scrolling.
+                  requestAnimationFrame(() =>
+                    servicesRef.current?.scrollIntoView({ behavior: 'smooth' }),
+                  );
+                }}
                 className="flex-1 lg:flex-initial inline-flex flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap cursor-pointer shrink-0 border-0"
               >
                 <CalendarDays className="w-4 h-4 shrink-0 text-white" />
@@ -400,16 +429,27 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         <nav className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-1.5 flex items-center justify-around sm:justify-start sm:gap-6 px-6">
           <button
             type="button"
-            className="py-3 px-3 text-xs sm:text-sm font-bold text-sky-600 border-b-2 border-sky-500 transition-all cursor-pointer bg-transparent border-t-0 border-x-0"
+            aria-pressed={activeTab === 'services'}
+            onClick={() => setActiveTab('services')}
+            className={
+              activeTab === 'services'
+                ? 'py-3 px-3 text-xs sm:text-sm font-bold text-sky-600 border-b-2 border-sky-500 transition-all cursor-pointer bg-transparent border-t-0 border-x-0'
+                : 'py-3 px-3 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all cursor-pointer bg-transparent border-0'
+            }
           >
             Dịch vụ &amp; Lịch dạy
           </button>
           <button
             type="button"
-            onClick={() => handleProtectedTabClick('Blog của Mentor')}
-            className="py-3 px-3 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all cursor-pointer bg-transparent border-0"
+            aria-pressed={activeTab === 'blog'}
+            onClick={() => setActiveTab('blog')}
+            className={
+              activeTab === 'blog'
+                ? 'py-3 px-3 text-xs sm:text-sm font-bold text-sky-600 border-b-2 border-sky-500 transition-all cursor-pointer bg-transparent border-t-0 border-x-0'
+                : 'py-3 px-3 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all cursor-pointer bg-transparent border-0'
+            }
           >
-            Blog
+            Blog{articleCount ? ` (${articleCount})` : ''}
           </button>
           <button
             type="button"
@@ -420,8 +460,30 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
           </button>
         </nav>
 
+        {/* SECTION BLOG CỦA MENTOR */}
+        {activeTab === 'blog' && (
+          <section className="space-y-4" aria-labelledby="mentor-blog-title">
+            <h3
+              id="mentor-blog-title"
+              className="text-xl font-extrabold text-slate-900 tracking-tight m-0 pb-4"
+            >
+              Bài viết của Mentor
+            </h3>
+            <MentorBlogPostGrid
+              posts={articles}
+              locale={locale}
+              isLoading={isLoading}
+              isError={Boolean(servicesError)}
+              emptyText="Mentor chưa xuất bản bài viết nào."
+            />
+          </section>
+        )}
+
         {/* SECTION DỊCH VỤ TƯ VẤN 1:1 */}
-        <section ref={servicesRef} className="space-y-4">
+        <section
+          ref={servicesRef}
+          className={`space-y-4 ${activeTab === 'services' ? '' : 'hidden'}`}
+        >
           <h3 className="text-xl font-extrabold text-slate-900 tracking-tight m-0 pb-4">
             Dịch vụ tư vấn 1:1
           </h3>
@@ -502,7 +564,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         </section>
 
         {/* SECTION ĐÁNH GIÁ TỪ MENTEE */}
-        <section className="space-y-4">
+        <section className={`space-y-4 ${activeTab === 'services' ? '' : 'hidden'}`}>
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight m-0">
               Đánh giá từ mentee

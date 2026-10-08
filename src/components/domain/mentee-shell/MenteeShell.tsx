@@ -44,6 +44,7 @@ function routeTitle(pathname: string) {
   if (pathname.includes('/my-bookings')) return 'Booking của tôi';
   if (pathname.includes('/mentor-booking')) return 'Tìm Mentor';
   if (pathname.includes('/post-detail/')) return 'Chi tiết bài viết';
+  if (/\/blog(\/|$)/.test(pathname)) return 'Blog';
   return 'Bảng tin';
 }
 

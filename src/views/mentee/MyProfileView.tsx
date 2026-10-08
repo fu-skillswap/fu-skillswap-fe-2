@@ -52,6 +52,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { MentorAvailabilityCard, toMentorProfileRequest } from './MentorAvailabilityCard';
+import { MyBlogPostsSection } from './MyBlogPostsSection';
 import styles from './MyProfileView.module.css';
 
 /** Tạo chữ viết tắt 2 ký tự làm Avatar */
@@ -303,21 +305,12 @@ export function MyProfileView() {
     setError(undefined);
     try {
       if (isMentor && mentorProfile) {
-        const updatedMentor = await mentorProfileRepo.save({
-          headline: mentorProfile.headline || values.displayName || 'Mentor',
-          expertiseDescription: values.bio || mentorProfile.expertiseDescription || '',
-          isAvailable: mentorProfile.isAvailable ?? true,
-          subjectResults: mentorProfile.subjectResults || [],
-          foundationSupportLevel: mentorProfile.foundationSupportLevel || 5,
-          outputReviewSupportLevel: mentorProfile.outputReviewSupportLevel || 5,
-          directionSupportLevel: mentorProfile.directionSupportLevel || 5,
-          githubUrl: mentorProfile.githubUrl || undefined,
-          portfolioUrl: mentorProfile.portfolioUrl || undefined,
-          phoneNumber: mentorProfile.phoneNumber || '',
-          minimumBookingLeadTimeMinutes: mentorProfile.minimumBookingLeadTimeMinutes || 60,
-          maximumBookingHorizonDays: mentorProfile.maximumBookingHorizonDays || 30,
-          bookingTimezone: mentorProfile.bookingTimezone || 'Asia/Ho_Chi_Minh',
-        });
+        const updatedMentor = await mentorProfileRepo.save(
+          toMentorProfileRequest(mentorProfile, {
+            headline: mentorProfile.headline || values.displayName || 'Mentor',
+            expertiseDescription: values.bio || mentorProfile.expertiseDescription || '',
+          }),
+        );
         setMentorProfile(updatedMentor);
       }
 
@@ -782,6 +775,10 @@ export function MyProfileView() {
           )}
         </div>
       </article>
+
+      {isMentor && mentorProfile && (
+        <MentorAvailabilityCard profile={mentorProfile} onUpdated={setMentorProfile} />
+      )}
 
       {/* Segmented Profile Tabs */}
       <section
@@ -1499,6 +1496,10 @@ export function MyProfileView() {
             )}
           </div>
         </div>
+      )}
+
+      {isMentor && mentorProfile && (
+        <MyBlogPostsSection locale={locale} authorName={displayName} authorAvatarUrl={avatarUrl} />
       )}
 
       {/* Modal Thêm/Sửa Dự án */}

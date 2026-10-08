@@ -6,6 +6,7 @@
 'use client';
 
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { MentorBlogPostDetailResponse, MentorBlogPostCreateRequest } from '@/models/auth';
@@ -26,6 +27,12 @@ const EMPTY_FORM: MentorPostFormValues = {
 
 export function useMentorPosts() {
   const { isBootstrapping } = useAuth();
+  const queryClient = useQueryClient();
+  /** Reader-side lists (Blog page, profiles) cache posts: drop them after a status change. */
+  const invalidateReaderLists = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
+    void queryClient.invalidateQueries({ queryKey: ['my-blog-posts'] });
+  }, [queryClient]);
   const [posts, setPosts] = useState<MentorBlogPostDetailResponse[]>([]);
   const [editingPost, setEditingPost] = useState<MentorBlogPostDetailResponse | null>();
   const [archiveTarget, setArchiveTarget] = useState<MentorBlogPostDetailResponse>();
@@ -135,6 +142,7 @@ export function useMentorPosts() {
           : { title: 'Đã lưu bản nháp', description: 'Bạn có thể tiếp tục chỉnh sửa sau.' },
       );
       setEditingPost(undefined);
+      invalidateReaderLists();
       await refresh();
     } catch (reason) {
       showError(reason, { title: 'Không thể lưu bài viết' });
@@ -156,6 +164,7 @@ export function useMentorPosts() {
         description: 'Bài viết đã được chuyển khỏi danh sách đang hoạt động.',
       });
       setArchiveTarget(undefined);
+      invalidateReaderLists();
       await refresh();
     } catch (reason) {
       showError(reason, { title: 'Không thể lưu trữ bài viết' });

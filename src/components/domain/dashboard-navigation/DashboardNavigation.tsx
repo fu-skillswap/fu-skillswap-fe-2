@@ -8,14 +8,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Home, Search, X } from 'lucide-react';
+import { Calendar, Home, Newspaper, Search, X } from 'lucide-react';
 
-type NavIcon = 'home' | 'search' | 'calendar';
+type NavIcon = 'home' | 'search' | 'calendar' | 'blog';
 
 /** Helper render Icon tương ứng từ lucide-react cho sidebar item */
 function Icon({ name }: { name: NavIcon }) {
   if (name === 'search') {
     return <Search className="w-5 h-5 shrink-0" aria-hidden="true" />;
+  }
+  if (name === 'blog') {
+    return <Newspaper className="w-5 h-5 shrink-0" aria-hidden="true" />;
   }
   if (name === 'calendar') {
     return <Calendar className="w-5 h-5 shrink-0" aria-hidden="true" />;
@@ -42,10 +45,12 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
   const bookingsHref = `/${locale}/my-bookings`;
+  const blogHref = `/${locale}/blog`;
   const dashboardActive =
     pathname === dashboardHref || pathname.startsWith(`/${locale}/post-detail/`);
   const mentorActive = pathname.startsWith(mentorHref);
   const bookingsActive = pathname.startsWith(bookingsHref);
+  const blogActive = pathname.startsWith(blogHref);
 
   return (
     <aside
@@ -98,6 +103,18 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         >
           <Icon name="search" />
           <span>Tìm Mentor</span>
+        </Link>
+        <Link
+          href={blogHref}
+          onClick={onClose}
+          className={
+            blogActive
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+          }
+        >
+          <Icon name="blog" />
+          <span>Blog</span>
         </Link>
         <Link
           href={bookingsHref}

@@ -25,7 +25,7 @@ import { ReviewStep } from './components/ReviewStep';
 import { MENTOR_REVIEW_DURATION, MENTOR_STEPS, STEP_FIELDS } from './mentorRegistration.constants';
 
 /** Required items counted on the review step (fields, evidence and terms). */
-const REQUIRED_ITEM_COUNT = 10;
+const REQUIRED_ITEM_COUNT = 11;
 
 const levelOptions: SelectOption[] = [1, 2, 3, 4, 5].map((value) => ({
   value: String(value),
@@ -127,6 +127,7 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
     return [
       Boolean(values.headline),
       Boolean(values.expertiseDescription),
+      Boolean(values.phoneNumber),
       Boolean(values.foundationSupportLevel),
       Boolean(values.outputReviewSupportLevel),
       Boolean(values.directionSupportLevel),
@@ -145,7 +146,7 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
       </main>
     );
 
-  if (isPendingReview) return <StatusScreen locale={locale} />;
+  if (isPendingReview) return <StatusScreen locale={locale} onWithdraw={withdrawProfile} />;
 
   if (isApproved)
     return (
@@ -338,7 +339,18 @@ export function MentorRegistrationView({ locale }: { locale: string }) {
   );
 }
 
-function StatusScreen({ locale }: { locale: string }) {
+function StatusScreen({ locale, onWithdraw }: { locale: string; onWithdraw: () => Promise<void> }) {
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  const handleWithdraw = async () => {
+    setIsWithdrawing(true);
+    try {
+      await onWithdraw();
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   return (
     <main className="grid min-h-[70vh] place-items-center bg-slate-50 px-4 py-10">
       <section className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-sm sm:p-10">
@@ -362,6 +374,15 @@ function StatusScreen({ locale }: { locale: string }) {
           >
             Trợ giúp & hỗ trợ
           </Link>
+          <Button
+            type="button"
+            variant="secondary"
+            loading={isWithdrawing}
+            onClick={handleWithdraw}
+            className="min-h-11 px-4 text-sm"
+          >
+            Rút hồ sơ
+          </Button>
           <Link
             href={`/${locale}/dashboard`}
             className="inline-flex min-h-11 items-center rounded-xl bg-sky-600 px-5 text-sm font-bold text-white no-underline"
