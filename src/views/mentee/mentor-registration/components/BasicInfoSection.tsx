@@ -107,9 +107,6 @@ export function BasicInfoSection({ register, errors, watch, setValue, disabled }
           className={inputClass}
           {...register('phoneNumber')}
         />
-        <p className="m-0 text-xs text-slate-600">
-          Dùng để SkillSwap liên hệ với bạn về hồ sơ mentor.
-        </p>
         {error(errors.phoneNumber?.message)}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
