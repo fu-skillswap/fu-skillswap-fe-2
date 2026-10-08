@@ -158,8 +158,8 @@ export function CommentItem({
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <strong className="font-extrabold text-text-main">{comment.authorName}</strong>
             {comment.authorRole?.toUpperCase() === 'MENTOR' && (
-              <span className="rounded-md bg-primary-light px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                Mentor
+              <span className="rounded-lg bg-success-soft px-1.5 py-0.5 text-[10px] font-bold text-success">
+                MENTOR
               </span>
             )}
             <span className="text-text-muted">· {comment.createdAt}</span>
