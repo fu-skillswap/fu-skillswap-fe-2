@@ -173,3 +173,29 @@ export interface AiKnowledgeSearchResult {
   query: string;
   passages: AiKnowledgePassage[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Mentor recommendations                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One item of the backend's `/api/mentors/recommendations`, passed through unchanged by the AI
+ * service. `mentor` is the grouped card (identity / mentoring / evidence / reputation); the mentor
+ * id lives only in `mentor.identity.mentorUserId`. Parse it with `mapApiMentorToEntity`.
+ */
+export interface MentorRecommendationItem {
+  mentor: Record<string, unknown>;
+  matchScore?: number;
+  /** Rule-based reasons from the backend (strings, or objects with a text field). */
+  matchReasons?: unknown[];
+  /** Personalised reason added by the AI when `reranked` is true. */
+  aiReason?: string;
+}
+
+/** `GET /v1/recommendations?limit=N` (camelCase). 502 when the backend list failed. */
+export interface AiRecommendations {
+  items: MentorRecommendationItem[];
+  reranked: boolean;
+  cached: boolean;
+  requestId: string;
+}

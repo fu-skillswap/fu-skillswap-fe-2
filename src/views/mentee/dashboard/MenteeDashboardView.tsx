@@ -7,6 +7,7 @@
 
 import { PostCard } from '@/components/domain/post-card/PostCard';
 import { MenteeQuestionModal } from '@/views/mentee/dashboard/MenteeQuestionModal';
+import { MentorRecommendationsSection } from '@/views/mentee/dashboard/components/MentorRecommendationsSection';
 import type { ForumPostResponse } from '@/models/auth';
 import type { Mentor, Post } from '@/models/entities';
 import { useAuth } from '@/providers/AuthProvider';
@@ -180,6 +181,8 @@ export function MenteeDashboardView({
           href="#community-feed"
         />
       </section>
+
+      <MentorRecommendationsSection locale={locale} />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_330px]">
         <section id="community-feed" className="min-w-0 scroll-mt-24" aria-labelledby="feed-title">

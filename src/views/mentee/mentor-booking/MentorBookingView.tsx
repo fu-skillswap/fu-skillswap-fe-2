@@ -7,6 +7,7 @@ import { BookingFlow } from '@/components/domain/booking-flow/BookingFlow';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { MentorCard } from '@/components/domain/mentor-card/MentorCard';
 import { MentorDetail } from '@/components/domain/mentor-detail/MentorDetail';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useMentorBooking } from './useMentorBooking';
@@ -69,6 +70,32 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
   useEffect(() => {
     setMentorList(mentors);
   }, [mentors]);
+
+  // Deep link `?mentorId=` (e.g. from dashboard recommendations) opens that mentor's profile.
+  // MentorDetail loads the full profile by id, so a minimal entity is enough when the mentor
+  // is not in the first page of the list.
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const linkedMentorId = searchParams.get('mentorId');
+  useEffect(() => {
+    if (!linkedMentorId) return;
+    setDetailMentor(
+      mentors.find((mentor) => (mentor.mentorUserId || mentor.id) === linkedMentorId) ?? {
+        id: linkedMentorId,
+        mentorUserId: linkedMentorId,
+        name: 'Mentor',
+        expertise: [],
+        bio: '',
+        rating: null,
+      },
+    );
+  }, [linkedMentorId, mentors]);
+
+  const closeDetail = () => {
+    setDetailMentor(undefined);
+    if (linkedMentorId) router.replace(pathname, { scroll: false });
+  };
 
   // Gọi API backend GET /api/mentors với param keyword khi ô tìm kiếm thay đổi
   useEffect(() => {
@@ -137,7 +164,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
         <MentorDetail
           mentor={detailMentor}
           mentorUserId={detailMentor.mentorUserId || detailMentor.id}
-          onBack={() => setDetailMentor(undefined)}
+          onBack={closeDetail}
           onBook={(service) => openBooking(detailMentor, service)}
         />
       ) : (
