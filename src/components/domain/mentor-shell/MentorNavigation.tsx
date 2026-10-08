@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BookOpen,
+  Newspaper,
   FileText,
   GraduationCap,
   Home,
@@ -36,6 +37,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
   const mentorPostsHref = `/${locale}/mentor/posts`;
   const coursesHref = `/${locale}/mentor/my-courses`;
   const walletHref = `/${locale}/mentor/wallet`;
+  const blogHref = `/${locale}/blog`;
 
   return (
     <aside
@@ -104,6 +106,19 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         >
           <Search className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Tìm Mentor</span>
+        </Link>
+
+        <Link
+          href={blogHref}
+          onClick={onClose}
+          className={
+            pathname.startsWith(blogHref)
+              ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
+              : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
+          }
+        >
+          <Newspaper className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <span>Blog</span>
         </Link>
 
         <Link
