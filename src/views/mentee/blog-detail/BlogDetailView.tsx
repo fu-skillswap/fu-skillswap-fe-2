@@ -1,12 +1,16 @@
 /**
  * @file BlogDetailView.tsx
- * @description Trang đọc bài Blog: nội dung Markdown, thích / lưu bài, thẻ tác giả dẫn tới đặt lịch
+ * @description Trang đọc bài Blog: khối tiêu đề, ảnh bìa, lưới đọc (mục lục · bài viết · cột tác giả)
  * và bài viết liên quan. Tải ở trình duyệt để bài dành cho người đã đăng nhập dùng được token.
  */
 
 'use client';
 
-import { BlogMarkdown } from '@/components/domain/blog/BlogMarkdown';
+import {
+  BlogMarkdown,
+  extractToc,
+  removeLeadingTitleEcho,
+} from '@/components/domain/blog/BlogMarkdown';
 import { BlogPostCard } from '@/components/domain/blog/BlogPostCard';
 import {
   authorInitials,
@@ -20,23 +24,22 @@ import { ApiClientError } from '@/models/apiClient';
 import type { BlogPostReaderDetailResponse } from '@/models/blog';
 import { useAuth } from '@/providers/AuthProvider';
 import { blogRepo } from '@/repositories/blogRepo';
-import { showError } from '@/utils/toast';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BadgeCheck, Bookmark, Eye, Heart, Star } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { BlogAuthorCta, BlogAuthorRail } from './BlogAuthorRail';
+import { BlogToc, BlogTocMobile } from './BlogToc';
 
-const actionBase =
-  'inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-solid px-3.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60';
-const actionIdle =
-  'border-border-light bg-white text-text-secondary hover:border-primary-border hover:text-primary';
-const actionActive = 'border-primary-border bg-primary-light text-primary';
+// Three reading columns need ~1100px of content width next to the 256px app sidebar.
+const READING_GRID =
+  'grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_250px] lg:gap-x-2 min-[1380px]:grid-cols-[200px_minmax(0,760px)_250px] min-[1380px]:justify-center';
 
 export function BlogDetailView({ slug, locale }: { slug: string; locale: string }) {
   const { setHeaderTitle } = useMenteeShell();
   const { user, isBootstrapping } = useAuth();
   const listHref = `/${locale}/blog`;
+  const articleRef = useRef<HTMLElement>(null);
 
   const post = useQuery({
     queryKey: ['blog-post', slug, user?.id ?? null],
@@ -101,91 +104,73 @@ export function BlogDetailView({ slug, locale }: { slug: string; locale: string 
 
   const data = post.data;
   const relatedPosts = (related.data ?? []).filter((item) => item.id !== data.id);
+  const content = data.contentMarkdown ?? '';
+  const tocItems = extractToc(removeLeadingTitleEcho(content, data.title, data.excerpt));
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto w-full max-w-[1280px]">
       <Link
         href={listHref}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-text-secondary no-underline hover:text-primary"
+        className="mb-6 inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-text-secondary no-underline hover:text-primary"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Tất cả bài viết
       </Link>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <article className="min-w-0 overflow-hidden rounded-3xl border border-solid border-border-light bg-white">
-          {data.coverImageUrl && (
-            <img
-              src={data.coverImageUrl}
-              alt=""
-              className="aspect-[16/7] w-full bg-primary-light object-cover"
-            />
-          )}
-          <div className="p-5 sm:p-8">
-            {data.categories && data.categories.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {data.categories.map((category) => (
-                  <span
-                    key={category.id}
-                    className="rounded-lg bg-primary-light px-2 py-0.5 text-[11px] font-bold text-primary"
-                  >
-                    {category.name}
-                  </span>
-                ))}
-              </div>
-            )}
-            <h1 className="m-0 text-2xl font-extrabold leading-tight text-text-main sm:text-[30px]">
-              {data.title}
-            </h1>
-            <p className="m-0 mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
-              <span className="font-bold text-text-secondary">
-                {data.author?.displayName ?? 'SkillSwap'}
-              </span>
-              <span>{formatBlogDate(data.publishedAt ?? data.createdAt)}</span>
-              {data.readingTimeMinutes ? <span>{data.readingTimeMinutes} phút đọc</span> : null}
-              <span className="inline-flex items-center gap-1">
-                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                {formatCount(data.viewCount)} lượt xem
-              </span>
-            </p>
+      <TitleBlock post={data} />
 
-            {data.excerpt && (
-              <p className="mb-0 mt-5 text-base font-semibold leading-7 text-text-main">
-                {data.excerpt}
-              </p>
-            )}
+      {data.coverImageUrl && (
+        <img
+          src={data.coverImageUrl}
+          alt={data.title}
+          className="mx-auto mt-8 block aspect-[16/7] w-full max-w-[820px] rounded-[20px] bg-primary-light object-cover"
+        />
+      )}
 
-            {data.contentMarkdown?.trim() ? (
-              <BlogMarkdown content={data.contentMarkdown} />
+      <div className={`mt-10 ${READING_GRID}`}>
+        <div className="hidden min-[1380px]:col-start-1 min-[1380px]:row-start-1 min-[1380px]:block">
+          <BlogToc items={tocItems} articleRef={articleRef} />
+        </div>
+
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1 lg:px-10 min-[1380px]:col-start-2">
+          <BlogTocMobile items={tocItems} />
+          <article ref={articleRef} className="mx-auto max-w-[680px]">
+            {content.trim() ? (
+              <BlogMarkdown
+                content={content}
+                title={data.title}
+                excerpt={data.excerpt}
+                variant="reader"
+              />
             ) : (
               <p className="text-sm text-text-muted">Bài viết chưa có nội dung.</p>
             )}
 
             {data.tags && data.tags.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2">
+              <ul className="m-0 mt-8 flex list-none flex-wrap gap-2 p-0" aria-label="Thẻ">
                 {data.tags.map((tag) => (
-                  <span
+                  <li
                     key={tag.id}
-                    className="rounded-lg bg-surface-subtle px-2 py-0.5 text-xs font-bold text-text-secondary"
+                    className="rounded-full bg-surface-subtle px-3 py-1 text-xs font-bold text-text-secondary"
                   >
                     #{tag.name}
-                  </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
 
-            <EngagementBar post={data} slug={slug} />
-          </div>
-        </article>
+            <BlogAuthorCta post={data} locale={locale} />
+          </article>
+        </div>
 
-        <aside className="space-y-5">
-          <AuthorCard post={data} locale={locale} />
-        </aside>
+        <div className="lg:col-start-2 lg:row-start-1 min-[1380px]:col-start-3">
+          <BlogAuthorRail post={data} slug={slug} locale={locale} />
+        </div>
       </div>
 
       {relatedPosts.length > 0 && (
-        <section className="mt-8" aria-labelledby="blog-related-title">
-          <h2 id="blog-related-title" className="m-0 mb-3 text-lg font-extrabold text-text-main">
+        <section className="mt-14" aria-labelledby="blog-related-title">
+          <h2 id="blog-related-title" className="m-0 mb-4 text-xl font-extrabold text-text-main">
             Bài viết liên quan
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -199,153 +184,98 @@ export function BlogDetailView({ slug, locale }: { slug: string; locale: string 
   );
 }
 
-function EngagementBar({ post, slug }: { post: BlogPostReaderDetailResponse; slug: string }) {
-  const { isAuthenticated, user, showAuthRequiredModal } = useAuth();
-  const queryClient = useQueryClient();
-  const [pending, setPending] = useState<'like' | 'bookmark'>();
-
-  const toggle = async (kind: 'like' | 'bookmark') => {
-    if (!isAuthenticated) {
-      showAuthRequiredModal(
-        kind === 'like'
-          ? 'Bạn cần đăng nhập để thích bài viết.'
-          : 'Bạn cần đăng nhập để lưu bài viết.',
-      );
-      return;
-    }
-    setPending(kind);
-    try {
-      const active = kind === 'like' ? post.likedByCurrentUser : post.bookmarkedByCurrentUser;
-      const result =
-        kind === 'like'
-          ? await (active ? blogRepo.unlike(post.id) : blogRepo.like(post.id))
-          : await (active ? blogRepo.unbookmark(post.id) : blogRepo.bookmark(post.id));
-      queryClient.setQueryData<BlogPostReaderDetailResponse>(
-        ['blog-post', slug, user?.id ?? null],
-        (current) => (current ? { ...current, ...result, id: current.id } : current),
-      );
-    } catch (reason) {
-      showError(reason, {
-        title: kind === 'like' ? 'Chưa thích được bài viết' : 'Chưa lưu được bài viết',
-      });
-    } finally {
-      setPending(undefined);
-    }
-  };
-
-  return (
-    <div className="mt-8 flex flex-wrap gap-2 border-0 border-t border-solid border-border-light pt-5">
-      <button
-        type="button"
-        aria-pressed={Boolean(post.likedByCurrentUser)}
-        disabled={pending !== undefined}
-        onClick={() => void toggle('like')}
-        className={`${actionBase} ${post.likedByCurrentUser ? actionActive : actionIdle}`}
-      >
-        <Heart
-          className="h-4 w-4"
-          fill={post.likedByCurrentUser ? 'currentColor' : 'none'}
-          aria-hidden="true"
-        />
-        {post.likedByCurrentUser ? 'Đã thích' : 'Thích'} · {formatCount(post.likeCount)}
-      </button>
-      <button
-        type="button"
-        aria-pressed={Boolean(post.bookmarkedByCurrentUser)}
-        disabled={pending !== undefined}
-        onClick={() => void toggle('bookmark')}
-        className={`${actionBase} ${post.bookmarkedByCurrentUser ? actionActive : actionIdle}`}
-      >
-        <Bookmark
-          className="h-4 w-4"
-          fill={post.bookmarkedByCurrentUser ? 'currentColor' : 'none'}
-          aria-hidden="true"
-        />
-        {post.bookmarkedByCurrentUser ? 'Đã lưu' : 'Lưu bài'}
-      </button>
-    </div>
-  );
-}
-
-function AuthorCard({ post, locale }: { post: BlogPostReaderDetailResponse; locale: string }) {
-  const router = useRouter();
+function TitleBlock({ post }: { post: BlogPostReaderDetailResponse }) {
   const author = post.author;
   const conversion = post.authorConversion;
-  const mentorUserId = conversion?.mentorUserId;
-
   return (
-    <section
-      className="rounded-3xl border border-solid border-border-light bg-white p-5 lg:sticky lg:top-24"
-      aria-label="Tác giả"
-    >
-      <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-text-muted">Tác giả</p>
-      <div className="mt-3 flex items-center gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-light text-sm font-extrabold text-primary">
-          {author?.avatarUrl ? (
-            <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            authorInitials(author?.displayName)
-          )}
-        </span>
-        <div className="min-w-0">
-          <p className="m-0 flex items-center gap-1 text-[15px] font-bold text-text-main">
-            <span className="truncate">{author?.displayName ?? 'SkillSwap'}</span>
-            {conversion?.verifiedMentor && (
-              <BadgeCheck
-                className="h-4 w-4 shrink-0 text-primary"
-                aria-label="Mentor đã xác minh"
-              />
-            )}
-          </p>
-          {conversion?.headline && (
-            <p className="m-0 line-clamp-2 text-xs text-text-secondary">{conversion.headline}</p>
-          )}
-        </div>
-      </div>
-
-      {(conversion?.averageRating || conversion?.completedSessions) && (
-        <p className="m-0 mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-secondary">
-          {conversion.averageRating ? (
-            <span className="inline-flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 text-warning" fill="currentColor" aria-hidden="true" />
-              {conversion.averageRating.toFixed(1)}
+    <header className="mx-auto max-w-[820px]">
+      {post.categories && post.categories.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {post.categories.map((category) => (
+            <span
+              key={category.id}
+              className="rounded-full bg-primary-light px-3 py-1 text-[13px] font-bold text-sky-700"
+            >
+              {category.name}
             </span>
-          ) : null}
-          {conversion.completedSessions ? (
-            <span>{conversion.completedSessions} buổi đã hoàn thành</span>
-          ) : null}
+          ))}
+        </div>
+      )}
+      <h1 className="m-0 text-[32px] font-extrabold leading-[1.18] tracking-[-0.03em] text-text-main sm:text-[42px]">
+        {post.title}
+      </h1>
+      {post.excerpt && (
+        <p className="m-0 mt-4 text-lg leading-[1.65] text-slate-700 sm:text-[19px]">
+          {post.excerpt}
         </p>
       )}
 
-      {author?.authorType !== 'PLATFORM' && mentorUserId && (
-        <Button
-          type="button"
-          className="mt-4 w-full"
-          onClick={() => {
-            blogRepo.recordAuthorCtaClick(post.id, blogSessionId(), 'BOOK_MENTOR').catch(() => {});
-            router.push(`/${locale}/mentor-booking?mentorId=${encodeURIComponent(mentorUserId)}`);
-          }}
-        >
-          {conversion?.primaryCtaLabel?.trim() || 'Đặt lịch với Mentor'}
-        </Button>
-      )}
-    </section>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-0 border-t border-solid border-border-light pt-[18px]">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-light text-sm font-extrabold text-primary">
+            {author?.avatarUrl ? (
+              <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              authorInitials(author?.displayName)
+            )}
+          </span>
+          <div className="min-w-0">
+            <p className="m-0 flex items-center gap-1 text-[15px] font-bold text-text-main">
+              <span className="truncate">{author?.displayName ?? 'SkillSwap'}</span>
+              {conversion?.verifiedMentor && (
+                <BadgeCheck
+                  className="h-4 w-4 shrink-0 text-primary"
+                  aria-label="Mentor đã xác minh"
+                />
+              )}
+            </p>
+            {conversion?.headline && (
+              <p className="m-0 line-clamp-1 text-sm text-text-muted">{conversion.headline}</p>
+            )}
+          </div>
+        </div>
+        <p className="m-0 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-muted">
+          <span>{formatBlogDate(post.publishedAt ?? post.createdAt)}</span>
+          {post.readingTimeMinutes ? <span>{post.readingTimeMinutes} phút đọc</span> : null}
+          <span>{formatCount(post.viewCount)} lượt xem</span>
+        </p>
+      </div>
+    </header>
   );
 }
 
 function DetailSkeleton() {
+  const bar = 'block rounded bg-surface-subtle';
   return (
-    <div className="mx-auto max-w-6xl animate-pulse motion-reduce:animate-none" aria-busy="true">
-      <span className="mb-4 block h-4 w-32 rounded bg-surface-subtle" />
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="rounded-3xl border border-solid border-border-light bg-white p-8">
-          <span className="block h-7 w-3/4 rounded bg-surface-subtle" />
-          <span className="mt-3 block h-3 w-1/3 rounded bg-surface-subtle" />
-          {Array.from({ length: 6 }, (_, index) => (
-            <span key={index} className="mt-4 block h-3 w-full rounded bg-surface-subtle" />
+    <div
+      className="mx-auto w-full max-w-[1280px] animate-pulse motion-reduce:animate-none"
+      aria-busy="true"
+    >
+      <span className={`${bar} mb-6 h-4 w-32`} />
+      <div className="mx-auto max-w-[820px]">
+        <span className={`${bar} h-6 w-40 rounded-full`} />
+        <span className={`${bar} mt-4 h-10 w-full`} />
+        <span className={`${bar} mt-3 h-10 w-2/3`} />
+        <span className={`${bar} mt-5 h-4 w-full`} />
+        <span className={`${bar} mt-2 h-4 w-4/5`} />
+        <div className="mt-6 flex items-center gap-3 border-0 border-t border-solid border-border-light pt-[18px]">
+          <span className="h-11 w-11 rounded-full bg-surface-subtle" />
+          <span className={`${bar} h-4 w-40`} />
+        </div>
+        <span className="mt-8 block aspect-[16/7] w-full rounded-[20px] bg-surface-subtle" />
+      </div>
+      <div className={`mt-10 ${READING_GRID}`}>
+        <div className="hidden space-y-2 min-[1380px]:col-start-1 min-[1380px]:row-start-1 min-[1380px]:block">
+          {Array.from({ length: 4 }, (_, index) => (
+            <span key={index} className={`${bar} h-4 w-full`} />
           ))}
         </div>
-        <div className="h-40 rounded-3xl border border-solid border-border-light bg-white" />
+        <div className="space-y-4 lg:col-start-1 lg:row-start-1 lg:px-10 min-[1380px]:col-start-2">
+          {Array.from({ length: 8 }, (_, index) => (
+            <span key={index} className={`${bar} mx-auto h-4 w-full max-w-[680px]`} />
+          ))}
+        </div>
+        <div className="h-56 rounded-[20px] border border-solid border-border-light bg-white lg:col-start-2 lg:row-start-1 min-[1380px]:col-start-3" />
       </div>
       <span className="sr-only" role="status">
         Đang tải bài viết…
