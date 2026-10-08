@@ -274,7 +274,7 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
         {activeTab === 'overview' ? (
           <div className="admin-user-detail-grid">
             <section className="admin-user-detail-card admin-user-account-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <span>
                   <CircleUserRound aria-hidden="true" />
                 </span>{' '}
@@ -312,7 +312,7 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
               </dl>
             </section>
             <section className="admin-user-detail-card admin-user-academic-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <span>
                   <GraduationCap aria-hidden="true" />
                 </span>{' '}
@@ -368,7 +368,7 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
               )}
             </section>
             <section className="admin-user-detail-card admin-user-mentor-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <span>
                   <Star aria-hidden="true" />
                 </span>{' '}
@@ -410,7 +410,7 @@ export function AdminUserDetailView({ locale, userId }: { locale: string; userId
               )}
             </section>
             <section className="admin-user-detail-card admin-user-activity-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <span>
                   <TrendingUp aria-hidden="true" />
                 </span>{' '}
@@ -557,7 +557,7 @@ function UserFocusPanel({
   if (tab === 'bookings') {
     return (
       <section className="admin-user-focus-card">
-        <h2>Booking</h2>
+        <h2 className="admin-card-title">Booking</h2>
         <p>Tổng quan lịch hẹn của người dùng trên nền tảng.</p>
         <div className="admin-user-focus-metrics">
           <FocusMetric label="Lịch đặt với vai trò mentee" value={activity.menteeBookingCount} />
@@ -570,7 +570,7 @@ function UserFocusPanel({
   if (tab === 'reviews') {
     return (
       <section className="admin-user-focus-card">
-        <h2>Review</h2>
+        <h2 className="admin-card-title">Review</h2>
         {mentorProfile?.exists ? (
           <div className="admin-user-focus-metrics">
             <FocusMetric
@@ -591,7 +591,7 @@ function UserFocusPanel({
 
   return (
     <section className="admin-user-focus-card">
-      <h2>Báo cáo</h2>
+      <h2 className="admin-card-title">Báo cáo</h2>
       <p>Tổng số báo cáo diễn đàn mà người dùng đã tạo.</p>
       <div className="admin-user-focus-metrics">
         <FocusMetric label="Báo cáo đã tạo" value={activity.forumReportCreatedCount} />
