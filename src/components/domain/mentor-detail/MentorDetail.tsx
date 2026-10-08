@@ -15,6 +15,7 @@ import type {
 import type { BlogPostReaderCardResponse } from '@/models/blog';
 import { MentorBlogPostGrid } from '@/components/domain/blog/MentorBlogPostGrid';
 import { useMentorArticles } from '@/components/domain/blog/useMentorArticles';
+import { MentorServiceCard } from './MentorServiceCard';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
 import { useAuth } from '@/providers/AuthProvider';
@@ -487,9 +488,14 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
           ref={servicesRef}
           className={`space-y-4 ${activeTab === 'services' ? '' : 'hidden'}`}
         >
-          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight m-0 pb-4">
-            Dịch vụ tư vấn 1:1
-          </h3>
+          <div className="flex items-baseline justify-between gap-4 pb-4">
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight m-0">
+              Dịch vụ tư vấn 1:1
+            </h3>
+            {!isLoading && !servicesError && services.length > 0 && (
+              <span className="text-sm text-slate-500">{services.length} dịch vụ</span>
+            )}
+          </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -512,55 +518,13 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {services.map((service) => (
-                <article
+                <MentorServiceCard
                   key={service.id}
-                  onClick={() => handleServiceClick(service)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      handleServiceClick(service);
-                    }
-                  }}
-                  className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4 hover:border-sky-300 hover:shadow-md transition-all cursor-pointer"
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center shrink-0">
-                        <BriefcaseBusiness className="w-5 h-5" />
-                      </div>
-                      <h4 className="text-base font-bold text-slate-900 m-0 leading-snug">
-                        {service.name}
-                      </h4>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <strong className="text-lg font-black text-slate-900 block leading-tight">
-                        {service.priceScoins === 0 ? 'Miễn phí' : priceLabel(service.priceScoins)}
-                      </strong>
-                      {service.priceScoins !== 0 && (
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                          S-coins
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed m-0">
-                    {service.description}
-                  </p>
-
-                  <div className="pt-1 flex items-center gap-2 text-xs text-slate-500">
-                    <span className="px-3 py-1 rounded-md bg-slate-100 text-slate-600 font-medium">
-                      {service.durationMinutes} phút
-                    </span>
-                    {service.completedCount !== undefined && (
-                      <span className="text-slate-400">
-                        • {service.completedCount} phiên đã hoàn thành
-                      </span>
-                    )}
-                  </div>
-                </article>
+                  service={service}
+                  priceText={priceLabel(service.priceScoins)}
+                  onBook={handleServiceClick}
+                  onViewSchedule={handleServiceClick}
+                />
               ))}
             </div>
           )}
