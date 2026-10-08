@@ -6,7 +6,8 @@
 
 'use client';
 
-import { BlogMarkdown } from '@/components/domain/blog/BlogMarkdown';
+import { BlogMarkdown, getBlogHeadings } from '@/components/domain/blog/BlogMarkdown';
+import { BlogToc } from '@/components/domain/blog/BlogToc';
 import { BlogPostCard } from '@/components/domain/blog/BlogPostCard';
 import {
   authorInitials,
@@ -101,6 +102,7 @@ export function BlogDetailView({ slug, locale }: { slug: string; locale: string 
 
   const data = post.data;
   const relatedPosts = (related.data ?? []).filter((item) => item.id !== data.id);
+  const headings = getBlogHeadings(data.contentMarkdown ?? '');
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -121,7 +123,7 @@ export function BlogDetailView({ slug, locale }: { slug: string; locale: string 
               className="aspect-[16/7] w-full bg-primary-light object-cover"
             />
           )}
-          <div className="p-5 sm:p-8">
+          <div className="p-5 sm:p-8 lg:px-10">
             {data.categories && data.categories.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
                 {data.categories.map((category) => (
@@ -155,6 +157,8 @@ export function BlogDetailView({ slug, locale }: { slug: string; locale: string 
               </p>
             )}
 
+            <BlogToc headings={headings} variant="mobile" />
+
             {data.contentMarkdown?.trim() ? (
               <BlogMarkdown content={data.contentMarkdown} />
             ) : (
@@ -180,6 +184,7 @@ export function BlogDetailView({ slug, locale }: { slug: string; locale: string 
 
         <aside className="space-y-5">
           <AuthorCard post={data} locale={locale} />
+          <BlogToc headings={headings} variant="desktop" />
         </aside>
       </div>
 
