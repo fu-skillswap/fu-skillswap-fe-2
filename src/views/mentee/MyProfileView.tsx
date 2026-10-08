@@ -53,6 +53,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { MentorAvailabilityCard, toMentorProfileRequest } from './MentorAvailabilityCard';
+import { MyBlogPostsSection } from './MyBlogPostsSection';
 import styles from './MyProfileView.module.css';
 
 /** Tạo chữ viết tắt 2 ký tự làm Avatar */
@@ -1495,6 +1496,10 @@ export function MyProfileView() {
             )}
           </div>
         </div>
+      )}
+
+      {isMentor && mentorProfile && (
+        <MyBlogPostsSection locale={locale} authorName={displayName} authorAvatarUrl={avatarUrl} />
       )}
 
       {/* Modal Thêm/Sửa Dự án */}
