@@ -5,6 +5,8 @@
 
 import * as yup from 'yup';
 
+const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+
 export const mentorSubjectSchema = yup.object().shape({
   subjectCode: yup.string().trim().required('Mã môn học là bắt buộc.'),
   subjectName: yup.string().trim().required('Tên môn học là bắt buộc.'),
@@ -65,9 +67,11 @@ export const mentorProfileSchema = yup.object().shape({
     .max(1500, 'Mô tả tối đa 1500 ký tự.'),
   // Optional: a mentor may submit the profile while not yet ready to take bookings.
   isAvailable: yup.boolean().default(false),
-  // Phone is no longer collected in the mentor application (it must not be shown to mentees).
-  // Kept optional so previously saved values still pass validation.
-  phoneNumber: yup.string().trim().optional(),
+  phoneNumber: yup
+    .string()
+    .trim()
+    .required('Vui lòng nhập số điện thoại liên hệ.')
+    .matches(phoneRegex, 'Số điện thoại không đúng định dạng (VD: 0912345678).'),
   githubUrl: yup
     .string()
     .trim()

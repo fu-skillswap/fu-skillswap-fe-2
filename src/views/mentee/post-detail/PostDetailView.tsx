@@ -6,6 +6,7 @@
 'use client';
 
 import { CommentSection } from '@/components/domain/post-comments/CommentSection';
+import { KouKouAnswerCard } from '@/components/domain/post-comments/KouKouAnswerCard';
 import { ForumPostEditModal } from '@/components/domain/post-card/ForumPostEditModal';
 import { ForumReportModal } from '@/components/domain/post-card/ForumReportModal';
 import { usePostCard } from '@/components/domain/post-card/usePostCard';
@@ -53,6 +54,7 @@ export function PostDetailView({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [botAnswer, setBotAnswer] = useState<Comment>();
   const { likes, liked, isUpdatingLike, toggleLike } = usePostCard(
     currentPost.id,
     currentPost.likes,
@@ -244,6 +246,8 @@ export function PostDetailView({
             </div>
           </article>
 
+          {botAnswer && <KouKouAnswerCard comment={botAnswer} locale={locale} />}
+
           <section
             id="post-comments"
             className="scroll-mt-24 overflow-hidden rounded-[20px] border border-solid border-border-light bg-white shadow-[0_4px_16px_rgba(16,50,90,0.04)]"
@@ -253,6 +257,7 @@ export function PostDetailView({
               initialComments={initialComments}
               initialCount={commentCount}
               onCountChange={setCommentCount}
+              onBotAnswerChange={setBotAnswer}
               variant="full"
             />
           </section>

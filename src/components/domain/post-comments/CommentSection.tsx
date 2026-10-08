@@ -7,9 +7,12 @@
 
 import type { Comment } from '@/models/entities';
 import { useAuth } from '@/providers/AuthProvider';
-import { useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
+import { KouKouAnswerCard } from './KouKouAnswerCard';
+import { isKouKouComment } from './koukouComment';
 import { usePostComments } from './usePostComments';
 
 interface CommentSectionProps {
@@ -19,6 +22,11 @@ interface CommentSectionProps {
   onCountChange?: (count: number) => void;
   autoLoad?: boolean;
   variant?: 'compact' | 'full';
+  /**
+   * When set, the KouKou bot comment is not rendered here; it is reported to the parent so it
+   * can be shown elsewhere (e.g. right under the post card). Otherwise it renders first in the list.
+   */
+  onBotAnswerChange?: (comment: Comment | undefined) => void;
 }
 
 export function CommentSection({
@@ -28,7 +36,9 @@ export function CommentSection({
   onCountChange,
   autoLoad = false,
   variant = 'compact',
+  onBotAnswerChange,
 }: CommentSectionProps) {
+  const { locale } = useParams<{ locale: string }>();
   const { user, isAuthenticated, showAuthRequiredModal } = useAuth();
   const commentsState = usePostComments(postId, initialComments, onCountChange);
   const content = commentsState.form.watch('content');
@@ -37,6 +47,23 @@ export function CommentSection({
   useEffect(() => {
     if (autoLoad) void commentsState.loadComments();
   }, [autoLoad, commentsState.loadComments]);
+
+  // The forum bot posts at most one top-level answer; show it apart from the discussion.
+  const botComment = useMemo(
+    () => commentsState.comments.find(isKouKouComment),
+    [commentsState.comments],
+  );
+  const regularComments = useMemo(
+    () =>
+      botComment
+        ? commentsState.comments.filter((comment) => comment.id !== botComment.id)
+        : commentsState.comments,
+    [botComment, commentsState.comments],
+  );
+
+  useEffect(() => {
+    onBotAnswerChange?.(botComment);
+  }, [botComment, onBotAnswerChange]);
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     if (!isAuthenticated) {
@@ -85,15 +112,21 @@ export function CommentSection({
         </div>
       )}
 
-      {commentsState.isLoaded && commentsState.comments.length === 0 && (
+      {botComment && !onBotAnswerChange && (
+        <div className="mt-4">
+          <KouKouAnswerCard comment={botComment} locale={locale} />
+        </div>
+      )}
+
+      {commentsState.isLoaded && regularComments.length === 0 && (
         <p className="mb-0 mt-4 text-sm text-text-muted">
           Chưa có bình luận. Hãy bắt đầu cuộc thảo luận.
         </p>
       )}
 
-      {commentsState.comments.length > 0 && (
+      {regularComments.length > 0 && (
         <div className="mt-3 divide-y divide-border-light">
-          {commentsState.comments.map((comment) => (
+          {regularComments.map((comment) => (
             <CommentItem
               key={comment.id}
               comment={comment}
