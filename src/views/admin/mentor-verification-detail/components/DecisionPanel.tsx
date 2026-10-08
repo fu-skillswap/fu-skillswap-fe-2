@@ -13,6 +13,7 @@ import {
   automaticChecklistLabels,
   formatClock,
   formatRemaining,
+  getChecklistProgress,
   manualChecklist,
   type ManualCheckKey,
 } from '../mentorVerificationDetail.constants';
@@ -174,10 +175,7 @@ export function DecisionPanel({
   onReject,
   ...lockProps
 }: DecisionPanelProps) {
-  const automaticDone = automaticChecklistLabels.filter(([key]) => detail.checklist[key]).length;
-  const manualDone = manualChecklist.filter((item) => manualChecks[item.key]).length;
-  const manualRemaining = manualChecklist.length - manualDone;
-  const total = automaticChecklistLabels.length + manualChecklist.length;
+  const { done, total, manualRemaining } = getChecklistProgress(detail.checklist, manualChecks);
 
   return (
     <aside className={styles.decisionPanel} aria-labelledby="decision-title">
@@ -190,7 +188,7 @@ export function DecisionPanel({
         <header className={styles.checklistHeader}>
           <h3 id="checklist-title">Rà soát</h3>
           <span>
-            {automaticDone + manualDone}/{total} đã kiểm
+            {done}/{total} đã kiểm
           </span>
         </header>
         <p className={styles.groupLabel}>Hệ thống đã kiểm</p>

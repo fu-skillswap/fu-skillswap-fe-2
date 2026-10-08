@@ -118,8 +118,8 @@ export function AdminTopbarActions() {
 
   return (
     <div className="admin-topbar-actions">
-      <label className="admin-global-search">
-        <Search aria-hidden="true" className="admin-global-search-icon" />
+      <label className="admin-search-field admin-global-search">
+        <Search aria-hidden="true" />
         <input aria-label="Tìm kiếm" placeholder="Tìm người dùng, hồ sơ, báo cáo…" />
       </label>
       <div className="relative">

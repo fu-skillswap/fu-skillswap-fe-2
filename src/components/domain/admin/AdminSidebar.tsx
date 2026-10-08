@@ -5,6 +5,7 @@
 
 'use client';
 
+import { AI_FLAGGED_ENABLED } from '@/constants/featureFlags';
 import { adminRepo } from '@/repositories/adminRepo';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -18,6 +19,7 @@ import {
   LayoutDashboard,
   Menu,
   ShieldCheck,
+  Sparkles,
   TriangleAlert,
   Users,
   X,
@@ -84,13 +86,19 @@ export function AdminSidebar({ locale }: { locale: string }) {
     { href: `${adminRoot}/reports`, label: 'Báo cáo & đánh giá', icon: ChartNoAxesCombined },
   ];
   const aiNavigation: NavigationItem[] = [
+    { href: `${adminRoot}/ai`, label: 'Tổng quan AI', icon: Sparkles },
     { href: `${adminRoot}/ai-knowledge`, label: 'Kho tri thức & chi phí', icon: BookOpen },
-    {
-      href: `${adminRoot}/reports?source=ai`,
-      label: 'Nội dung AI gắn cờ',
-      icon: TriangleAlert,
-      source: 'ai',
-    },
+    // Hidden until the moderation queue API exists (same flag as the reports "AI gắn cờ" tab).
+    ...(AI_FLAGGED_ENABLED
+      ? [
+          {
+            href: `${adminRoot}/reports?source=ai`,
+            label: 'Nội dung AI gắn cờ',
+            icon: TriangleAlert,
+            source: 'ai',
+          },
+        ]
+      : []),
   ];
   const isActive = (item: NavigationItem) => {
     const path = item.href.split('?')[0];

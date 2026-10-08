@@ -11,6 +11,7 @@ import { DocumentPreviewDialog } from '@/components/domain/admin/DocumentPreview
 import type { MentorVerificationDocument } from '@/models/admin';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ApplicantInfoCard } from './components/ApplicantInfoCard';
 import { DecisionPanel } from './components/DecisionPanel';
@@ -22,8 +23,10 @@ import { ReviewTimeline } from './components/ReviewTimeline';
 import styles from './MentorVerificationDetailView.module.css';
 import {
   formatFileSize,
+  getChecklistProgress,
   getDocumentTypeLabel,
   getFileKind,
+  truncateMiddle,
   type ManualCheckKey,
 } from './mentorVerificationDetail.constants';
 import { useMentorVerificationDetail } from './useMentorVerificationDetail';
@@ -34,6 +37,12 @@ const initialManualChecks: Record<ManualCheckKey, boolean> = {
   bioClean: false,
 };
 
+function getDocumentMeta(document: MentorVerificationDocument) {
+  return `${getFileKind(document)} · ${formatFileSize(document.sizeBytes)} · ${truncateMiddle(
+    document.originalFilename,
+  )}`;
+}
+
 export function MentorVerificationDetailView({
   locale,
   requestId,
@@ -41,9 +50,10 @@ export function MentorVerificationDetailView({
   locale: string;
   requestId: string;
 }) {
+  const router = useRouter();
   const review = useMentorVerificationDetail(requestId);
   const { detail } = review;
-  const [selectedDocument, setSelectedDocument] = useState<MentorVerificationDocument>();
+  const [previewIndex, setPreviewIndex] = useState<number>();
   const [dialog, setDialog] = useState<ReviewDialog>();
   const [note, setNote] = useState('');
   const [manualChecks, setManualChecks] = useState(initialManualChecks);
@@ -63,10 +73,20 @@ export function MentorVerificationDetailView({
       </main>
     );
 
+  const { documents } = detail;
+  const previewDocument = previewIndex === undefined ? undefined : documents[previewIndex];
+  const checklistProgress = getChecklistProgress(detail.checklist, manualChecks);
+
+  const openDocument = (document: MentorVerificationDocument) =>
+    setPreviewIndex(documents.findIndex((item) => item.id === document.id));
+
   const openDocumentType = (documentType: string) => {
-    const document = detail.documents.find((item) => item.documentType === documentType);
-    if (document) setSelectedDocument(document);
+    const index = documents.findIndex((item) => item.documentType === documentType);
+    if (index >= 0) setPreviewIndex(index);
   };
+
+  const documentTypeAt = (index: number) =>
+    documents[index] ? getDocumentTypeLabel(documents[index].documentType) : undefined;
 
   return (
     <main className="mentor-detail-page">
@@ -87,8 +107,8 @@ export function MentorVerificationDetailView({
             <ApplicantInfoCard detail={detail} />
             <RegistrationInfoCard detail={detail} />
             <EvidenceCard
-              documents={detail.documents}
-              onView={setSelectedDocument}
+              documents={documents}
+              onView={openDocument}
               onDownload={(document) => void review.downloadDocument(document)}
             />
             <ReviewTimeline events={detail.timeline} />
@@ -119,16 +139,24 @@ export function MentorVerificationDetailView({
             onReject={() => setDialog('reject')}
           />
         </div>
-        {selectedDocument && (
+        {previewDocument && previewIndex !== undefined && (
           <DocumentPreviewDialog
             document={{
-              ...selectedDocument,
-              meta: `${getDocumentTypeLabel(selectedDocument.documentType)} · ${getFileKind(
-                selectedDocument,
-              )} · ${formatFileSize(selectedDocument.sizeBytes)}`,
+              id: previewDocument.id,
+              title: getDocumentTypeLabel(previewDocument.documentType),
+              originalFilename: previewDocument.originalFilename,
+              contentType: previewDocument.contentType,
+              meta: getDocumentMeta(previewDocument),
             }}
-            resolveUrl={() => review.resolveDocumentUrl(selectedDocument.id)}
-            onClose={() => setSelectedDocument(undefined)}
+            resolveUrl={() => review.resolveDocumentUrl(previewDocument.id)}
+            onClose={() => setPreviewIndex(undefined)}
+            navigation={{
+              index: previewIndex,
+              total: documents.length,
+              nextLabel: documentTypeAt(previewIndex + 1),
+              onPrevious: () => setPreviewIndex(previewIndex - 1),
+              onNext: () => setPreviewIndex(previewIndex + 1),
+            }}
           />
         )}
         {dialog && (
@@ -136,8 +164,15 @@ export function MentorVerificationDetailView({
             dialog={dialog}
             mentorFullName={detail.mentorFullName}
             initialNote={note}
+            checklistDone={checklistProgress.done}
+            checklistTotal={checklistProgress.total}
+            lock={review.lock}
+            lockReceivedAt={review.lockReceivedAt}
             onClose={() => setDialog(undefined)}
-            onApprove={review.approve}
+            onApprove={async () => {
+              await review.approve();
+              router.push(listHref);
+            }}
             onRequestRevision={async (value) => {
               await review.requestRevision(value);
               setNote('');

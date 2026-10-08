@@ -1,0 +1,43 @@
+/* Mentor verification list — page-specific bits. Shared list styles: AdminList.module.css. */
+
+.table {
+  min-width: 760px;
+}
+
+.table th:nth-child(1) {
+  width: 40%;
+}
+
+.table th:nth-child(2) {
+  width: 16%;
+}
+
+.table th:nth-child(3) {
+  width: 12%;
+}
+
+.table th:nth-child(4) {
+  width: 18%;
+}
+
+.table th:nth-child(5) {
+  width: 14%;
+}
+
+.waiting {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: #475569;
+  background: #eef3f9;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.waiting.isOverdue {
+  color: #b45309;
+  background: #fff4e5;
+}

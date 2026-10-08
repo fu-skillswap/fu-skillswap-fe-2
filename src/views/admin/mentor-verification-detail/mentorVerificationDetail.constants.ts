@@ -161,3 +161,66 @@ export function describeTimelineEvent(event: MentorVerificationTimelineItem) {
   };
   return sentences[code] ?? 'Cập nhật hồ sơ';
 }
+
+export const OTHER_REASON = 'Khác';
+
+export const rejectReasons = [
+  'Minh chứng sinh viên không hợp lệ',
+  'Thông tin không khớp minh chứng',
+  'Chưa đủ điều kiện làm mentor',
+  'Nội dung vi phạm quy định',
+  OTHER_REASON,
+];
+
+export const revisionReasons = [
+  'Minh chứng sinh viên chưa rõ hoặc thiếu',
+  'Minh chứng chuyên môn chưa đủ',
+  'Thông tin không khớp minh chứng',
+  'Phần giới thiệu cần chỉnh sửa',
+  OTHER_REASON,
+];
+
+/** Note sent to the API: "<reason>: <message>", or just the message for "Khác". */
+export function composeDecisionNote(reason: string, message: string) {
+  const trimmed = message.trim();
+  return reason === OTHER_REASON ? trimmed : `${reason}: ${trimmed}`;
+}
+
+export function getChecklistProgress(
+  checklist: MentorVerificationRequestDetail['checklist'],
+  manualChecks: Record<ManualCheckKey, boolean>,
+) {
+  const automaticDone = automaticChecklistLabels.filter(([key]) => checklist[key]).length;
+  const manualDone = manualChecklist.filter((item) => manualChecks[item.key]).length;
+  return {
+    done: automaticDone + manualDone,
+    total: automaticChecklistLabels.length + manualChecklist.length,
+    manualRemaining: manualChecklist.length - manualDone,
+  };
+}
+
+/** "1 giờ 42 phút", "42 phút". */
+export function formatDuration(seconds: number) {
+  const totalMinutes = Math.max(0, Math.ceil(seconds / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (!hours) return `${minutes} phút`;
+  return minutes ? `${hours} giờ ${minutes} phút` : `${hours} giờ`;
+}
+
+/** "23:26 hôm nay", "00:26 ngày mai", "23:26, 12/10/2026". */
+export function formatExpiry(value: string | Date) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const clock = new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+  const dayDiff = Math.round(
+    (new Date(date).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000,
+  );
+  if (dayDiff === 0) return `${clock} hôm nay`;
+  if (dayDiff === 1) return `${clock} ngày mai`;
+  return formatDateTime(date.toISOString());
+}

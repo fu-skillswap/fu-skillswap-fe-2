@@ -1,0 +1,305 @@
+/* Shared admin list page pieces: card, underline tabs, toolbar, table cells, footer, pagination.
+   Admin tokens (--admin-*) come from `.admin-area-shell`. */
+
+.card {
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Underline tabs */
+.tabs {
+  display: flex;
+  gap: 24px;
+  padding: 0 20px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--admin-border);
+  scrollbar-width: thin;
+}
+
+.tabs button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0 12px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--admin-copy);
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--admin-transition-fast),
+    border-color var(--admin-transition-fast);
+}
+
+.tabs button:hover {
+  color: var(--admin-navy);
+}
+
+.tabs button:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--admin-blue);
+  outline-offset: 2px;
+}
+
+.tabs button.isActive {
+  border-bottom-color: var(--admin-blue);
+  color: var(--admin-navy);
+  font-weight: 700;
+}
+
+.tabCount {
+  display: inline-flex;
+  min-width: 22px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: var(--admin-copy);
+  background: #eef3f9;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.isActive .tabCount {
+  color: #fff;
+  background: var(--admin-blue);
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.toolbarEnd {
+  margin-left: auto;
+}
+
+.selectField select {
+  height: 40px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  color: var(--admin-navy);
+  background: #fff;
+  font-size: 13.5px;
+  transition:
+    border-color var(--admin-transition-fast),
+    box-shadow var(--admin-transition-fast);
+}
+
+.selectField select:focus {
+  border-color: var(--admin-blue);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(17, 156, 247, 0.15);
+}
+
+.selectField {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectField span {
+  color: var(--admin-copy);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.selectField select {
+  min-width: 150px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.toolbar :global(.admin-button) {
+  min-height: 40px;
+}
+
+.toolbar :global(.admin-button) svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Table */
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table td {
+  color: var(--admin-navy);
+}
+
+.person {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.person > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.person strong {
+  overflow: hidden;
+  color: var(--admin-navy);
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person > div > span {
+  overflow: hidden;
+  color: var(--admin-copy);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  display: inline-flex;
+  width: var(--avatar-size, 38px);
+  height: var(--avatar-size, 38px);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  color: var(--admin-blue-dark);
+  background: var(--admin-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--admin-muted);
+}
+
+.date {
+  color: var(--admin-copy);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.actionCell {
+  text-align: right;
+}
+
+.actionCell :global(.admin-button) {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Footer + pagination */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid #edf2f8;
+  color: var(--admin-copy);
+  font-size: 13px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination button {
+  display: inline-flex;
+  min-width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: 9px;
+  color: var(--admin-copy);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--admin-transition-fast),
+    border-color var(--admin-transition-fast),
+    background-color var(--admin-transition-fast);
+}
+
+.pagination button:not(:disabled):hover {
+  border-color: #b9d9f2;
+  color: var(--admin-blue-dark);
+}
+
+.pagination button:focus-visible {
+  outline: 2px solid var(--admin-blue);
+  outline-offset: 2px;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.pagination button.isCurrent {
+  border-color: #cfe5fb;
+  color: var(--admin-blue-dark);
+  background: var(--admin-soft);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.pageGap {
+  min-width: 20px;
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .tabs,
+  .toolbar,
+  .footer {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .selectField {
+    flex: 1;
+  }
+
+  .selectField select {
+    flex: 1;
+  }
+
+  .toolbarEnd {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,87 @@
+/* Admin users list — page-specific bits. Shared list styles: AdminList.module.css. */
+
+.menteeTable,
+.mentorTable {
+  min-width: 860px;
+}
+
+.menteeTable th:nth-child(1) {
+  width: 34%;
+}
+
+.menteeTable th:nth-child(2) {
+  width: 14%;
+}
+
+.menteeTable th:nth-child(3) {
+  width: 14%;
+}
+
+.menteeTable th:nth-child(4) {
+  width: 16%;
+}
+
+.menteeTable th:nth-child(5) {
+  width: 12%;
+}
+
+.menteeTable th:nth-child(6) {
+  width: 10%;
+}
+
+.mentorTable th:nth-child(1) {
+  width: 30%;
+}
+
+.mentorTable th:nth-child(2) {
+  width: 17%;
+}
+
+.mentorTable th:nth-child(3),
+.mentorTable th:nth-child(4) {
+  width: 11%;
+}
+
+.mentorTable th:nth-child(5) {
+  width: 11%;
+}
+
+.mentorTable th:nth-child(6) {
+  width: 11%;
+}
+
+.mentorTable th:nth-child(7) {
+  width: 9%;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: #475569;
+  background: #eef3f9;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.status.isActive {
+  color: #047857;
+  background: var(--success-soft);
+}
+
+.status.isLocked {
+  color: #b91c1c;
+  background: var(--danger-soft);
+}

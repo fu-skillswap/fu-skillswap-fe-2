@@ -5,23 +5,37 @@
 
 'use client';
 
+import {
+  AdminListTabs,
+  AdminPagination,
+  AdminPersonCell,
+  adminListStyles as list,
+} from '@/components/domain/admin/AdminListControls';
 import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminMentor, AdminUser } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { showError } from '@/utils/toast';
-import { ChevronLeft, ChevronRight, RefreshCw, Users } from 'lucide-react';
+import { getUserFriendlyErrorMessage, showError } from '@/utils/toast';
+import { RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import styles from './AdminUsersView.module.css';
 
-const pageSize = 10;
+const pageSize = 20;
 
 type UserListTab = 'mentee' | 'mentor';
+type StatusFilter = '' | 'active' | 'locked';
 
 const userTabs: Array<{ value: UserListTab; label: string }> = [
   { value: 'mentee', label: 'Mentee' },
   { value: 'mentor', label: 'Mentor' },
+];
+
+const statusFilterOptions: Array<{ value: StatusFilter; label: string }> = [
+  { value: '', label: 'Tất cả' },
+  { value: 'active', label: 'Đang hoạt động' },
+  { value: 'locked', label: 'Đã khóa' },
 ];
 
 const statusLabels: Record<string, string> = {
@@ -32,33 +46,59 @@ const statusLabels: Record<string, string> = {
   BANNED: 'Đã khóa',
 };
 
-const statusOptions = ['ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED', 'BANNED'];
-
-function formatDate(value: string | null) {
-  if (!value) return 'Chưa đăng nhập';
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Không xác định';
-
-  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
-}
-
-function formatRating(value: number | null) {
-  return value === null ? 'Chưa có' : value.toFixed(1);
+function getStatusGroup(status: string): Exclude<StatusFilter, ''> | 'other' {
+  if (status === 'ACTIVE') return 'active';
+  if (status === 'BANNED' || status === 'SUSPENDED') return 'locked';
+  return 'other';
 }
 
 function getStatusLabel(status: string) {
   return statusLabels[status] ?? status.replaceAll('_', ' ').toLocaleLowerCase('vi-VN');
 }
 
-function InitialAvatar({ name }: { name: string }) {
-  return <span className="admin-user-initial">{name.trim().charAt(0).toUpperCase() || '?'}</span>;
+function StatusBadge({ status }: { status: string }) {
+  const group = getStatusGroup(status);
+  const tone = group === 'active' ? styles.isActive : group === 'locked' ? styles.isLocked : '';
+  return <span className={`${styles.status} ${tone}`}>{getStatusLabel(status)}</span>;
 }
 
-function getPageNumbers(currentPage: number, totalPages: number) {
-  const start = Math.max(0, Math.min(currentPage - 2, Math.max(totalPages - 5, 0)));
-  const end = Math.min(totalPages, start + 5);
-  return Array.from({ length: end - start }, (_, index) => start + index);
+function formatDay(value: string | null) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
+/** "Vừa xong", "5 phút trước", "2 giờ trước", "Hôm qua", "12 ngày trước", then dd/MM/yyyy. */
+function formatRelative(value: string, now: number) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  const minutes = Math.floor((now - date.getTime()) / 60000);
+  if (minutes < 1) return 'Vừa xong';
+  if (minutes < 60) return `${minutes} phút trước`;
+  const dayDiff = Math.round(
+    (new Date(now).setHours(0, 0, 0, 0) - new Date(date).setHours(0, 0, 0, 0)) / 86400000,
+  );
+  if (dayDiff <= 0) return `${Math.floor(minutes / 60)} giờ trước`;
+  if (dayDiff === 1) return 'Hôm qua';
+  if (dayDiff < 30) return `${dayDiff} ngày trước`;
+  return formatDay(value);
+}
+
+function formatRating(value: number | null) {
+  return value === null ? 'Chưa có' : value.toFixed(1);
+}
+
+function matchesKeyword(keyword: string, ...fields: Array<string | null | undefined>) {
+  return fields.some((field) => field?.toLocaleLowerCase('vi-VN').includes(keyword));
+}
+
+function matchesStatus(filter: StatusFilter, status: string) {
+  return !filter || getStatusGroup(status) === filter;
 }
 
 export function AdminUsersView() {
@@ -69,11 +109,17 @@ export function AdminUsersView() {
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const [now, setNow] = useState(() => Date.now());
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
+    setError(undefined);
+    setNow(Date.now());
     try {
       if (activeTab === 'mentee') {
         const data = await adminRepo.getUsers({ page, size: pageSize });
@@ -87,6 +133,7 @@ export function AdminUsersView() {
         setTotalPages(data.totalPages);
       }
     } catch (reason) {
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải danh sách người dùng.'));
       showError(reason, { title: 'Không thể tải danh sách người dùng' });
     } finally {
       setLoading(false);
@@ -97,29 +144,94 @@ export function AdminUsersView() {
     void loadAccounts();
   }, [loadAccounts]);
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  // TODO(api): keyword search + status filter on /api/admin/users and /api/admin/mentors.
+  // Until then both filters only apply to the page already loaded.
+  const keyword = search.toLocaleLowerCase('vi-VN');
   const visibleMentees = useMemo(
     () =>
       mentees.filter(
         (mentee) =>
-          mentee.roles.includes('MENTEE') && (!statusFilter || mentee.status === statusFilter),
+          mentee.roles.includes('MENTEE') &&
+          matchesStatus(statusFilter, mentee.status) &&
+          (!keyword ||
+            matchesKeyword(
+              keyword,
+              mentee.fullName,
+              mentee.email,
+              mentee.academicProfile?.claimedStudentCode,
+            )),
       ),
-    [mentees, statusFilter],
+    [mentees, statusFilter, keyword],
   );
   const visibleMentors = useMemo(
-    () => mentors.filter((mentor) => !statusFilter || mentor.mentorStatus === statusFilter),
-    [mentors, statusFilter],
+    () =>
+      mentors.filter(
+        (mentor) =>
+          matchesStatus(statusFilter, mentor.mentorStatus) &&
+          (!keyword ||
+            matchesKeyword(keyword, mentor.displayName, mentor.email, mentor.primaryLabel)),
+      ),
+    [mentors, statusFilter, keyword],
   );
-  const displayedCount = activeTab === 'mentee' ? visibleMentees.length : visibleMentors.length;
-  const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
-  const firstEntry = displayedCount ? page * pageSize + 1 : 0;
-  const lastEntry = Math.min((page + 1) * pageSize, totalElements);
-  const activeLabel = activeTab === 'mentee' ? 'mentee' : 'mentor';
+
+  const isMenteeTab = activeTab === 'mentee';
+  const loadedCount = isMenteeTab ? mentees.length : mentors.length;
+  const visibleCount = isMenteeTab ? visibleMentees.length : visibleMentors.length;
+  const columnCount = isMenteeTab ? 6 : 7;
+  const isFiltered = Boolean(search || statusFilter);
+  const rangeStart = loadedCount ? page * pageSize + 1 : 0;
+  const rangeEnd = Math.min(page * pageSize + loadedCount, totalElements);
 
   const selectTab = (tab: UserListTab) => {
     setActiveTab(tab);
     setPage(0);
+  };
+
+  const clearFilters = () => {
+    setSearchInput('');
+    setSearch('');
     setStatusFilter('');
   };
+
+  const statusFilterLabel =
+    statusFilterOptions.find((option) => option.value === statusFilter)?.label ?? '';
+
+  const tableState = loading ? (
+    <AdminTableState
+      variant="loading"
+      colSpan={columnCount}
+      title={`Đang tải danh sách ${activeTab}…`}
+    />
+  ) : error ? (
+    <AdminTableState variant="error" colSpan={columnCount} onRetry={() => void loadAccounts()} />
+  ) : visibleCount ? null : isFiltered ? (
+    <AdminTableState
+      variant="no-results"
+      colSpan={columnCount}
+      searchTerm={search}
+      title={search ? undefined : `Không có ${activeTab} ở trạng thái "${statusFilterLabel}"`}
+      description={
+        search && statusFilter
+          ? `Kiểm tra lại chính tả, hoặc bỏ lọc trạng thái "${statusFilterLabel}".`
+          : search
+            ? undefined
+            : 'Chọn trạng thái khác hoặc xóa bộ lọc để xem toàn bộ danh sách.'
+      }
+      onClearFilters={clearFilters}
+    />
+  ) : (
+    <AdminTableState
+      variant="empty"
+      colSpan={columnCount}
+      title={`Chưa có ${activeTab} nào`}
+      description="Tài khoản mới sẽ xuất hiện tại đây."
+    />
+  );
 
   return (
     <main className="admin-users-page">
@@ -132,103 +244,107 @@ export function AdminUsersView() {
       <div className="admin-users-content">
         <section className="admin-page-heading">
           <div>
-            <h1>Quản lý người dùng</h1>
-            <p>Theo dõi các tài khoản mentee và mentor trên nền tảng.</p>
+            <h1>Người dùng</h1>
+            <p>Tài khoản mentee và mentor trên nền tảng.</p>
           </div>
         </section>
-        <section className="admin-users-table" aria-labelledby="admin-users-title">
-          <div className="admin-users-toolbar">
-            <div>
-              <Users aria-hidden="true" />
-              <span id="admin-users-title">Danh sách tài khoản</span>
-            </div>
-            <div className="admin-users-toolbar-controls">
-              <div className="admin-users-tabs" role="tablist" aria-label="Loại người dùng">
-                {userTabs.map((tab) => (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === tab.value}
-                    className={activeTab === tab.value ? 'is-active' : ''}
-                    onClick={() => selectTab(tab.value)}
-                  >
-                    {tab.label}
-                  </button>
+        <section className={list.card} aria-label="Danh sách người dùng">
+          <AdminListTabs
+            ariaLabel="Loại người dùng"
+            tabs={userTabs}
+            value={activeTab}
+            onChange={selectTab}
+          />
+          <div className={list.toolbar}>
+            <label className="admin-search-field admin-toolbar-search">
+              <Search aria-hidden="true" />
+              <input
+                type="search"
+                aria-label="Tìm người dùng"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Tìm theo tên, email hoặc mã sinh viên"
+              />
+            </label>
+            <label className={list.selectField}>
+              <span>Trạng thái</span>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+              >
+                {statusFilterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
-              </div>
-              <label className="admin-users-status-filter">
-                <span>Trạng thái</span>
-                <select
-                  aria-label="Lọc trạng thái"
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                >
-                  <option value="">Tất cả</option>
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {getStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="button" onClick={() => void loadAccounts()} disabled={loading}>
-                <RefreshCw aria-hidden="true" /> Làm mới
-              </button>
-            </div>
+              </select>
+            </label>
+            <button
+              type="button"
+              className={`admin-button ${list.toolbarEnd}`}
+              onClick={() => void loadAccounts()}
+              disabled={loading}
+            >
+              <RefreshCw aria-hidden="true" /> Làm mới
+            </button>
           </div>
-          <div className="admin-users-table-scroll">
-            {activeTab === 'mentee' ? (
-              <MenteeTable
-                users={visibleMentees}
-                locale={locale}
-                loading={loading}
-                statusFilter={statusFilter}
-              />
+          <div className={list.tableScroll}>
+            {isMenteeTab ? (
+              <table className={`${list.table} ${styles.menteeTable}`}>
+                <thead>
+                  <tr>
+                    <th>Người dùng</th>
+                    <th>Mã sinh viên</th>
+                    <th>Trạng thái</th>
+                    <th>Đăng nhập gần nhất</th>
+                    <th>Ngày tạo</th>
+                    <th>
+                      <span className="sr-only">Thao tác</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableState ??
+                    visibleMentees.map((user) => (
+                      <MenteeRow key={user.userId} user={user} locale={locale} now={now} />
+                    ))}
+                </tbody>
+              </table>
             ) : (
-              <MentorTable
-                mentors={visibleMentors}
-                locale={locale}
-                loading={loading}
-                statusFilter={statusFilter}
-              />
+              <table className={`${list.table} ${styles.mentorTable}`}>
+                <thead>
+                  <tr>
+                    <th>Mentor</th>
+                    <th>Chuyên môn</th>
+                    <th>Buổi hoàn thành</th>
+                    <th>Điểm đánh giá</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>
+                      <span className="sr-only">Thao tác</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableState ??
+                    visibleMentors.map((mentor) => (
+                      <MentorRow key={mentor.mentorUserId} mentor={mentor} locale={locale} />
+                    ))}
+                </tbody>
+              </table>
             )}
           </div>
-          <footer className="admin-users-pagination">
+          <footer className={list.footer}>
             <span>
-              Hiển thị {firstEntry}–{lastEntry} / {totalElements} {activeLabel}
+              Hiển thị {rangeStart}–{rangeEnd} trong {totalElements} {activeTab}
+              {isFiltered && !loading && ` · ${visibleCount} kết quả lọc trên trang này`}
             </span>
-            <div aria-label="Phân trang">
-              <button
-                type="button"
-                aria-label="Trang trước"
-                disabled={loading || page === 0}
-                onClick={() => setPage((current) => current - 1)}
-              >
-                <ChevronLeft aria-hidden="true" />
-              </button>
-              {pageNumbers.map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  className={pageNumber === page ? 'is-active' : ''}
-                  aria-label={`Trang ${pageNumber + 1}`}
-                  aria-current={pageNumber === page ? 'page' : undefined}
-                  disabled={loading}
-                  onClick={() => setPage(pageNumber)}
-                >
-                  {pageNumber + 1}
-                </button>
-              ))}
-              <button
-                type="button"
-                aria-label="Trang sau"
-                disabled={loading || page >= totalPages - 1}
-                onClick={() => setPage((current) => current + 1)}
-              >
-                <ChevronRight aria-hidden="true" />
-              </button>
-            </div>
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              disabled={loading}
+              onChange={setPage}
+            />
           </footer>
         </section>
       </div>
@@ -236,123 +352,40 @@ export function AdminUsersView() {
   );
 }
 
-function MenteeTable({
-  users,
-  locale,
-  loading,
-  statusFilter,
-}: {
-  users: AdminUser[];
-  locale: string;
-  loading: boolean;
-  statusFilter: string;
-}) {
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>Người dùng</th>
-          <th>Mã sinh viên</th>
-          <th>Vai trò</th>
-          <th>Trạng thái</th>
-          <th>Đăng nhập gần nhất</th>
-          <th>Ngày tạo</th>
-        </tr>
-      </thead>
-      <tbody>
-        {loading ? (
-          <AdminTableState variant="loading" colSpan={6} title="Đang tải danh sách mentee…" />
-        ) : users.length ? (
-          users.map((user) => <MenteeRow key={user.userId} user={user} locale={locale} />)
-        ) : (
-          <EmptyRow statusFilter={statusFilter} label="mentee" />
-        )}
-      </tbody>
-    </table>
-  );
-}
-
-function MentorTable({
-  mentors,
-  locale,
-  loading,
-  statusFilter,
-}: {
-  mentors: AdminMentor[];
-  locale: string;
-  loading: boolean;
-  statusFilter: string;
-}) {
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>Mentor</th>
-          <th>Chuyên môn</th>
-          <th>Buổi hoàn thành</th>
-          <th>Điểm đánh giá</th>
-          <th>Trạng thái</th>
-          <th>Ngày tạo</th>
-        </tr>
-      </thead>
-      <tbody>
-        {loading ? (
-          <AdminTableState variant="loading" colSpan={6} title="Đang tải danh sách mentor…" />
-        ) : mentors.length ? (
-          mentors.map((mentor) => (
-            <MentorRow key={mentor.mentorUserId} mentor={mentor} locale={locale} />
-          ))
-        ) : (
-          <EmptyRow statusFilter={statusFilter} label="mentor" />
-        )}
-      </tbody>
-    </table>
-  );
-}
-
-function EmptyRow({ statusFilter, label }: { statusFilter: string; label: string }) {
-  return statusFilter ? (
-    <AdminTableState
-      variant="no-results"
-      colSpan={6}
-      title={`Không có ${label} ở trạng thái đã chọn`}
-      description="Thử chọn trạng thái khác hoặc làm mới danh sách."
-    />
-  ) : (
-    <AdminTableState
-      variant="empty"
-      colSpan={6}
-      title={`Chưa có ${label} nào`}
-      description="Tài khoản mới sẽ xuất hiện tại đây."
-    />
-  );
-}
-
-function MenteeRow({ user, locale }: { user: AdminUser; locale: string }) {
+function MenteeRow({ user, locale, now }: { user: AdminUser; locale: string; now: number }) {
+  const studentCode = user.academicProfile?.claimedStudentCode;
   return (
     <tr>
       <td>
-        <Link className="admin-user-profile" href={`/${locale}/admin/users/${user.userId}`}>
-          {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" loading="lazy" />
-          ) : (
-            <InitialAvatar name={user.fullName} />
-          )}
-          <span>
-            <b>{user.fullName}</b>
-            <small>{user.email}</small>
-          </span>
+        <AdminPersonCell
+          name={user.fullName}
+          email={user.email}
+          avatarUrl={user.avatarUrl}
+          avatarSize={36}
+        />
+      </td>
+      <td>{studentCode ?? <span className={list.muted}>Chưa có</span>}</td>
+      <td>
+        <StatusBadge status={user.status} />
+      </td>
+      <td className={list.date}>
+        {user.lastLoginAt ? (
+          <time
+            dateTime={user.lastLoginAt}
+            title={new Date(user.lastLoginAt).toLocaleString('vi-VN')}
+          >
+            {formatRelative(user.lastLoginAt, now)}
+          </time>
+        ) : (
+          <span className={list.muted}>Chưa đăng nhập</span>
+        )}
+      </td>
+      <td className={list.date}>{formatDay(user.createdAt)}</td>
+      <td className={list.actionCell}>
+        <Link className="admin-button" href={`/${locale}/admin/users/${user.userId}`}>
+          Xem
         </Link>
       </td>
-      <td>{user.academicProfile?.claimedStudentCode ?? 'Chưa cập nhật'}</td>
-      <td>{user.roles.length ? user.roles.join(', ') : 'Chưa phân quyền'}</td>
-      <td>
-        <span className={`admin-user-status ${user.status.toLowerCase().replaceAll('_', '-')}`}>
-          {getStatusLabel(user.status)}
-        </span>
-      </td>
-      <td>{formatDate(user.lastLoginAt)}</td>
-      <td>{formatDate(user.createdAt)}</td>
     </tr>
   );
 }
@@ -361,32 +394,25 @@ function MentorRow({ mentor, locale }: { mentor: AdminMentor; locale: string }) 
   return (
     <tr>
       <td>
-        <Link
-          className="admin-user-profile"
-          href={`/${locale}/admin/mentors/${mentor.mentorUserId}`}
-        >
-          {mentor.avatarUrl ? (
-            <img src={mentor.avatarUrl} alt="" loading="lazy" />
-          ) : (
-            <InitialAvatar name={mentor.displayName} />
-          )}
-          <span>
-            <b>{mentor.displayName}</b>
-            <small>{mentor.email}</small>
-          </span>
-        </Link>
+        <AdminPersonCell
+          name={mentor.displayName}
+          email={mentor.email}
+          avatarUrl={mentor.avatarUrl}
+          avatarSize={36}
+        />
       </td>
-      <td>{mentor.primaryLabel ?? 'Chưa cập nhật'}</td>
+      <td>{mentor.primaryLabel ?? <span className={list.muted}>Chưa cập nhật</span>}</td>
       <td>{mentor.completedSessions}</td>
       <td>{formatRating(mentor.ratingAverage)}</td>
       <td>
-        <span
-          className={`admin-user-status ${mentor.mentorStatus.toLowerCase().replaceAll('_', '-')}`}
-        >
-          {getStatusLabel(mentor.mentorStatus)}
-        </span>
+        <StatusBadge status={mentor.mentorStatus} />
       </td>
-      <td>{formatDate(mentor.createdAt)}</td>
+      <td className={list.date}>{formatDay(mentor.createdAt)}</td>
+      <td className={list.actionCell}>
+        <Link className="admin-button" href={`/${locale}/admin/mentors/${mentor.mentorUserId}`}>
+          Xem
+        </Link>
+      </td>
     </tr>
   );
 }

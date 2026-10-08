@@ -225,6 +225,47 @@ export interface AdminForumReportsQuery {
   targetType?: 'POST' | 'COMMENT';
 }
 
+/** Category returned by the AI moderation service. */
+export type AiModerationCategory = 'sexual' | 'toxic' | 'hate' | 'political' | 'spam';
+
+/** 0 = none … 3 = high. */
+export type AiModerationSeverity = 0 | 1 | 2 | 3;
+
+/**
+ * A post or comment the AI moderation service marked `decision = review`: it stays published
+ * and waits for an admin. `block` decisions are never published, so they never appear here.
+ * TODO(api): GET /api/admin/moderation/queue?decision=review — confirm field names with the backend.
+ */
+export interface AiFlaggedItem {
+  id: string;
+  targetType: 'POST' | 'COMMENT';
+  targetId: string;
+  /** Post title; null for comments. */
+  title: string | null;
+  /** Title of the post a comment belongs to. */
+  parentPostTitle: string | null;
+  excerpt: string;
+  authorUserId: string;
+  authorFullName: string;
+  categories: AiModerationCategory[];
+  maxSeverity: AiModerationSeverity;
+  publishedAt: string;
+}
+
+export interface AiFlaggedQuery {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  category?: AiModerationCategory;
+  severity?: AiModerationSeverity;
+}
+
+export interface AiFlaggedResponse {
+  content: AiFlaggedItem[];
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface AdminCaseOwnership {
   caseType: string;
   caseId: string;
