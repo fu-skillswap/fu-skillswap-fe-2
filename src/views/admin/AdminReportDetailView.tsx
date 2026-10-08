@@ -114,7 +114,7 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
       <header className="admin-topbar">
         <div className="admin-breadcrumb">
           Quản trị <span>›</span>{' '}
-          <Link href={`/${locale}/admin/reports`}>Đánh giá &amp; báo cáo</Link> <span>›</span>{' '}
+          <Link href={`/${locale}/admin/reports`}>Báo cáo &amp; đánh giá</Link> <span>›</span>{' '}
           <b>Chi tiết</b>
         </div>
         <AdminTopbarActions />
@@ -134,7 +134,7 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
         <div className="admin-report-detail-grid">
           <div>
             <section className="admin-report-card">
-              <h2>Thông tin báo cáo</h2>
+              <h2 className="admin-card-title">Thông tin báo cáo</h2>
               <dl className="admin-report-fields">
                 <div>
                   <dt>Loại nội dung</dt>
@@ -155,11 +155,11 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
               </dl>
             </section>
             <section className="admin-report-card admin-report-reason">
-              <h2>Lý do và mô tả</h2>
+              <h2 className="admin-card-title">Lý do và mô tả</h2>
               <p>{report.description ?? 'Người dùng không cung cấp mô tả bổ sung.'}</p>
             </section>
             <section className="admin-report-card">
-              <h2>Nội dung bị báo cáo</h2>
+              <h2 className="admin-card-title">Nội dung bị báo cáo</h2>
               <div className="admin-report-content">
                 <h3>{report.targetTitle ?? 'Không có tiêu đề'}</h3>
                 <p>{report.targetContentPreview ?? 'Không có nội dung xem trước.'}</p>
@@ -176,7 +176,7 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
               </dl>
             </section>
             <section className="admin-report-card">
-              <h2>Hoạt động xử lý</h2>
+              <h2 className="admin-card-title">Hoạt động xử lý</h2>
               {activity.length ? (
                 <ol className="admin-report-activity">
                   {activity.map((item, index) => (
@@ -199,7 +199,7 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
           </div>
           <aside>
             <section className="admin-report-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <UserRound aria-hidden="true" /> Phân công xử lý
               </h2>
               <p className="admin-report-owner">
@@ -218,7 +218,7 @@ export function AdminReportDetailView({ locale, reportId }: { locale: string; re
               {ownership?.assignedAt && <small>Nhận lúc {formatDate(ownership.assignedAt)}</small>}
             </section>
             <section className="admin-report-card">
-              <h2>
+              <h2 className="admin-card-title">
                 <ClipboardCheck aria-hidden="true" /> Mã vụ việc
               </h2>
               <dl className="admin-report-fields compact">

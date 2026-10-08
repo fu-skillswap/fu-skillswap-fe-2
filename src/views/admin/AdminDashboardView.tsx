@@ -221,7 +221,7 @@ export function AdminDashboardView() {
           <div className="admin-dashboard-columns">
             <section className="admin-panel" id="attention">
               <header className="admin-panel-heading">
-                <h2>Cần xử lý</h2>
+                <h2 className="admin-card-title">Cần xử lý</h2>
                 <Link href={`/${locale}/admin/mentor-verification`}>
                   Xem tất cả <ArrowRight aria-hidden="true" />
                 </Link>
@@ -269,7 +269,7 @@ export function AdminDashboardView() {
             </section>
             <section className="admin-panel" id="reports">
               <header className="admin-panel-heading">
-                <h2>Hoạt động quản trị gần đây</h2>
+                <h2 className="admin-card-title">Hoạt động quản trị gần đây</h2>
                 <Link href={getQueueHref(locale, activeQueue)}>
                   Xem tất cả <ArrowRight aria-hidden="true" />
                 </Link>
@@ -316,7 +316,7 @@ export function AdminDashboardView() {
           </div>
           <section className="admin-case-panel" id="queue-details">
             <header className="admin-panel-heading">
-              <h2>Chi tiết hàng đợi</h2>
+              <h2 className="admin-card-title">Chi tiết hàng đợi</h2>
               {!!activeQueue && (
                 <Link href={getQueueHref(locale, activeQueue)}>
                   Xem tất cả <ArrowRight aria-hidden="true" />

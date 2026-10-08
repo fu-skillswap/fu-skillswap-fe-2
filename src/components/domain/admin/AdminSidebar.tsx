@@ -5,17 +5,20 @@
 
 'use client';
 
+import { adminRepo } from '@/repositories/adminRepo';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   ArrowUpRight,
+  BookOpen,
   CalendarDays,
   ChartNoAxesCombined,
   CircleUserRound,
   LayoutDashboard,
   Menu,
   ShieldCheck,
+  TriangleAlert,
   Users,
   X,
   type LucideIcon,
@@ -26,23 +29,101 @@ type NavigationItem = {
   label: string;
   icon: LucideIcon;
   exact?: boolean;
+  /** Query param `source` value this item represents; items without it match only when absent. */
+  source?: string;
+  badge?: { count: number; variant?: 'primary' | 'warning' };
 };
+
+type PendingVerification = { count: number; overdue: boolean };
+
+function formatBadgeCount(count: number) {
+  return count > 99 ? '99+' : String(count);
+}
 
 export function AdminSidebar({ locale }: { locale: string }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState<PendingVerification>();
   const adminRoot = `/${locale}/admin`;
+  const source = searchParams.get('source') ?? undefined;
+
+  useEffect(() => {
+    let cancelled = false;
+    adminRepo
+      .getQueues()
+      .then(({ queues }) => {
+        const queue = queues.find((item) => item.queueKey === 'MENTOR_VERIFICATION');
+        if (!cancelled && queue) {
+          setPendingVerification({ count: queue.pendingCount, overdue: queue.slaBreachCount > 0 });
+        }
+      })
+      .catch(() => {
+        // The badge is optional; navigation must keep working without it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
   const navigation: NavigationItem[] = [
     { href: `${adminRoot}/dashboard`, label: 'Tổng quan', icon: LayoutDashboard, exact: true },
-    { href: `${adminRoot}/mentor-verification`, label: 'Xác minh mentor', icon: ShieldCheck },
+    {
+      href: `${adminRoot}/mentor-verification`,
+      label: 'Xác minh mentor',
+      icon: ShieldCheck,
+      badge: pendingVerification?.count
+        ? {
+            count: pendingVerification.count,
+            variant: pendingVerification.overdue ? 'warning' : 'primary',
+          }
+        : undefined,
+    },
     { href: `${adminRoot}/users`, label: 'Người dùng', icon: Users },
     { href: `${adminRoot}/bookings`, label: 'Lịch hẹn', icon: CalendarDays },
-    { href: `${adminRoot}/reports`, label: 'Đánh giá & báo cáo', icon: ChartNoAxesCombined },
+    { href: `${adminRoot}/reports`, label: 'Báo cáo & đánh giá', icon: ChartNoAxesCombined },
   ];
-  const isActive = (item: NavigationItem) =>
-    item.exact
-      ? pathname === item.href
-      : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const aiNavigation: NavigationItem[] = [
+    { href: `${adminRoot}/ai-knowledge`, label: 'Kho tri thức & chi phí', icon: BookOpen },
+    {
+      href: `${adminRoot}/reports?source=ai`,
+      label: 'Nội dung AI gắn cờ',
+      icon: TriangleAlert,
+      source: 'ai',
+    },
+  ];
+  const isActive = (item: NavigationItem) => {
+    const path = item.href.split('?')[0];
+    const pathMatches = item.exact
+      ? pathname === path
+      : pathname === path || pathname.startsWith(`${path}/`);
+    return pathMatches && item.source === source;
+  };
+
+  const renderItem = (item: NavigationItem) => {
+    const Icon = item.icon;
+    const active = isActive(item);
+    return (
+      <Link
+        key={item.href}
+        className={active ? 'is-active' : ''}
+        href={item.href}
+        aria-current={active ? 'page' : undefined}
+        onClick={() => setIsOpen(false)}
+      >
+        <Icon aria-hidden="true" />
+        <span>{item.label}</span>
+        {item.badge && (
+          <span
+            className={`admin-navigation-badge ${item.badge.variant === 'warning' ? 'is-warning' : ''}`}
+            aria-label={`${item.badge.count} đang chờ`}
+          >
+            {formatBadgeCount(item.badge.count)}
+          </span>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -82,26 +163,14 @@ export function AdminSidebar({ locale }: { locale: string }) {
             <X aria-hidden="true" />
           </button>
           <div>
-            <span>Không gian quản trị</span>
             <strong>SkillSwap Admin</strong>
+            <span>Quản trị nền tảng</span>
           </div>
         </div>
         <nav className="admin-navigation-links" aria-label="Điều hướng quản trị">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                className={isActive(item) ? 'is-active' : ''}
-                href={item.href}
-                aria-current={isActive(item) ? 'page' : undefined}
-                onClick={() => setIsOpen(false)}
-              >
-                <Icon aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+          {navigation.map(renderItem)}
+          <p className="admin-navigation-group-label">Trợ lý AI</p>
+          {aiNavigation.map(renderItem)}
         </nav>
         <div className="admin-navigation-footer">
           <a href={`/${locale}`} target="_blank" rel="noreferrer">

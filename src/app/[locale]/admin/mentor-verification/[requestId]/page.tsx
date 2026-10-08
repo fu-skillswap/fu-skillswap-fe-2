@@ -3,7 +3,7 @@
  * @description Route xem chi tiết một hồ sơ xác minh mentor.
  */
 
-import { MentorVerificationDetailView } from '@/views/admin/MentorVerificationDetailView';
+import { MentorVerificationDetailView } from '@/views/admin/mentor-verification-detail/MentorVerificationDetailView';
 
 export default async function MentorVerificationDetailPage({
   params,

@@ -5,6 +5,7 @@
 
 'use client';
 
+import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminForumReport, ForumReportStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
@@ -88,7 +89,7 @@ export function AdminReportsView() {
     <main className="admin-reports-page">
       <header className="admin-topbar">
         <div className="admin-breadcrumb">
-          Quản trị <span>›</span> <b>Đánh giá &amp; báo cáo</b>
+          Quản trị <span>›</span> <b>Báo cáo &amp; đánh giá</b>
         </div>
         <AdminTopbarActions />
       </header>
@@ -151,13 +152,22 @@ export function AdminReportsView() {
               </thead>
               <tbody>
                 {loading ? (
-                  <StateRow message="Đang tải báo cáo..." />
+                  <AdminTableState variant="loading" colSpan={6} title="Đang tải báo cáo…" />
                 ) : reports.length ? (
                   reports.map((report) => (
                     <ReportRow key={report.reportId} report={report} locale={locale} />
                   ))
                 ) : (
-                  <StateRow message="Không tìm thấy báo cáo phù hợp." />
+                  <AdminTableState
+                    colSpan={6}
+                    {...(keyword.trim() || status
+                      ? { variant: 'no-results', title: 'Không tìm thấy báo cáo phù hợp' }
+                      : {
+                          variant: 'empty',
+                          title: 'Chưa có báo cáo nào',
+                          description: 'Các báo cáo từ người dùng sẽ xuất hiện tại đây.',
+                        })}
+                  />
                 )}
               </tbody>
             </table>
@@ -201,16 +211,6 @@ export function AdminReportsView() {
         </section>
       </div>
     </main>
-  );
-}
-
-function StateRow({ message }: { message: string }) {
-  return (
-    <tr>
-      <td colSpan={6} className="admin-users-state">
-        <span>{message}</span>
-      </td>
-    </tr>
   );
 }
 
