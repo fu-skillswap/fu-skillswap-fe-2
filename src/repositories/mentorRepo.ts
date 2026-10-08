@@ -9,6 +9,7 @@ import type {
   PublicAvailabilitySlotResponse,
   UserBookingItem,
 } from '@/models/auth';
+import type { MentorRecommendationItem } from '@/models/ai';
 import type { Mentor } from '@/models/entities';
 import { apiClient } from '@/models/apiClient';
 
@@ -236,6 +237,17 @@ function fetchDeduplicated<T>(key: string, fetchFn: () => Promise<T>): Promise<T
 }
 
 export const mentorRepo = {
+  /**
+   * Backend rule-based recommendations `GET /api/mentors/recommendations` (auth required).
+   * Fallback when the AI rerank is unavailable. Items wrap the card in `mentor` with
+   * `matchScore` / `matchReasons`. Rejects on failure.
+   */
+  async getRecommendations(): Promise<MentorRecommendationItem[]> {
+    const res = await apiClient<any>('/api/mentors/recommendations');
+    const list = Array.isArray(res) ? res : (res?.items ?? res?.content ?? []);
+    return Array.isArray(list) ? list : [];
+  },
+
   /**
    * Lấy danh sách Chuyên gia / Mentor từ Backend API GET /api/mentors.
    * @param query - Các tham số tìm kiếm/lọc tùy chọn (keyword, campusId, specializationId, page, size,...)

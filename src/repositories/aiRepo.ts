@@ -19,6 +19,7 @@ import type {
   AiFeedbackList,
   AiFeedbackRequest,
   AiKnowledgeSearchResult,
+  AiRecommendations,
   AiTextDocumentInput,
   AiUsage,
 } from '@/models/ai';
@@ -258,6 +259,23 @@ export const aiRepo = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+  },
+
+  /**
+   * Mentor recommendations reranked by the AI (`GET /v1/recommendations`, max 20). Items are the
+   * backend's recommendation items plus an optional `aiReason`. Client-side only: the server has
+   * no user token. Rejects on any failure so callers can fall back to the backend endpoint.
+   */
+  async getRecommendations(limit = 6): Promise<AiRecommendations> {
+    const raw = await aiJson<Partial<AiRecommendations>>(
+      `/v1/recommendations${toQuery({ limit })}`,
+    );
+    return {
+      items: Array.isArray(raw.items) ? raw.items : [],
+      reranked: Boolean(raw.reranked),
+      cached: Boolean(raw.cached),
+      requestId: raw.requestId ?? '',
+    };
   },
 
   /* ------------------------------- Ops (admin) ------------------------------ */
