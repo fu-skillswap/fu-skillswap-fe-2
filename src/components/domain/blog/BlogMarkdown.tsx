@@ -216,7 +216,8 @@ export function removeLeadingTitleEcho(
   return lines.slice(start).join('\n');
 }
 
-type BlogMarkdownVariant = 'default' | 'reader';
+/** "preview" looks like "reader" and tags image blocks with their source line for the editor. */
+type BlogMarkdownVariant = 'default' | 'reader' | 'preview';
 
 const HEADING_CLASS: Record<BlogMarkdownVariant, Record<number, string>> = {
   default: {
@@ -229,16 +230,67 @@ const HEADING_CLASS: Record<BlogMarkdownVariant, Record<number, string>> = {
     3: 'mt-8 mb-3 text-xl leading-snug font-bold',
     4: 'mt-6 mb-2 text-lg font-bold',
   },
+  preview: {
+    2: 'mt-8 mb-3 text-[22px] leading-tight font-extrabold tracking-[-0.02em]',
+    3: 'mt-6 mb-2 text-lg leading-snug font-bold',
+    4: 'mt-5 mb-2 text-base font-bold',
+  },
 };
 
 const BODY_CLASS: Record<BlogMarkdownVariant, string> = {
   default: 'break-words text-[15px] leading-7 text-text-secondary',
   reader: 'break-words text-[17px] leading-[1.8] text-slate-700',
+  preview: 'break-words text-[15px] leading-[1.8] text-slate-700',
 };
 
 const LIST_ITEM = /^\s*([-*+]|\d+[.)])\s+(.*)$/;
 const IMAGE_BLOCK =
   /^\s*!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+"([^"]*)")?\s*\)(?:\{\.([a-z0-9-]+)\})?\s*$/;
+
+export type BlogImageSize = 'nho' | 'vua' | 'rong';
+
+export interface BlogImageBlock {
+  alt: string;
+  url: string;
+  caption: string;
+  size: BlogImageSize;
+}
+
+/** Reads a line that holds only an image block; undefined for any other line. */
+export function parseImageBlock(line: string): BlogImageBlock | undefined {
+  const image = IMAGE_BLOCK.exec(line);
+  if (!image) return undefined;
+  const size = image[4] === 'nho' || image[4] === 'rong' ? image[4] : 'vua';
+  return { alt: image[1], url: image[2], caption: image[3] ?? '', size };
+}
+
+const cleanImageText = (value: string) =>
+  value
+    .replace(/[[\]"\n]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+export function formatImageBlock({ alt, url, caption, size }: BlogImageBlock) {
+  return `![${cleanImageText(alt)}](${url} "${cleanImageText(caption)}"){.${size}}`;
+}
+
+/** Visible words of the whole document, for word counts. */
+export function stripFormatting(content: string) {
+  return content
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .filter((line) => !isFence(line) && !parseImageBlock(line))
+    .map((line) =>
+      plainText(
+        line.replace(/^\s*>\s?(\[![a-z-]+\])?/, '').replace(/^\s*(#{1,6}|[-*+]|\d+[.)])\s+/, ''),
+      ),
+    )
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const PREVIEW_RONG = 'my-8 -mx-5';
 
 const FIGURE_CLASS: Record<string, string> = {
   vua: 'mx-0 my-6',
@@ -336,13 +388,36 @@ export function BlogMarkdown({
 
     const image = IMAGE_BLOCK.exec(line);
     if (image) {
+      const lineIndex = i;
       i += 1;
+      const isPreview = variant === 'preview';
+      if (isPreview && image[2].startsWith('uploading:')) {
+        blocks.push(
+          <div
+            key={key}
+            className="my-6 flex h-32 items-center justify-center rounded-2xl bg-surface-subtle text-sm text-text-muted"
+          >
+            Ảnh đang tải lên…
+          </div>,
+        );
+        continue;
+      }
       const src = safeUrl(image[2]);
       if (!src) continue;
       const caption = image[3]?.trim();
       const size = image[4] && FIGURE_CLASS[image[4]] ? image[4] : 'vua';
       blocks.push(
-        <figure key={key} className={FIGURE_CLASS[size]}>
+        <figure
+          key={key}
+          data-line={isPreview ? lineIndex : undefined}
+          tabIndex={isPreview ? 0 : undefined}
+          aria-label={isPreview ? `Chỉnh ảnh${image[1] ? `: ${image[1]}` : ''}` : undefined}
+          className={`${isPreview && size === 'rong' ? PREVIEW_RONG : FIGURE_CLASS[size]} ${
+            isPreview
+              ? 'cursor-pointer rounded-2xl outline-offset-4 hover:outline hover:outline-2 hover:outline-primary-border'
+              : ''
+          }`.trim()}
+        >
           <img
             src={src}
             alt={image[1]}
