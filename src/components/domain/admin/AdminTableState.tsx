@@ -14,7 +14,14 @@ type AdminTableStateProps = {
   colSpan: number;
   title?: string;
   description?: string;
+  /** Custom action; overrides the `onRetry` / `onClearFilters` buttons. */
   action?: ReactNode;
+  /** no-results: the searched text, shown as `Không tìm thấy "<term>"`. */
+  searchTerm?: string;
+  /** error: renders a primary "Thử lại" button. */
+  onRetry?: () => void;
+  /** no-results: renders a "Xóa bộ lọc" button. */
+  onClearFilters?: () => void;
   skeletonRows?: number;
 };
 
@@ -30,12 +37,12 @@ const variantContent: Record<
   'no-results': {
     icon: Search,
     title: 'Không tìm thấy kết quả phù hợp',
-    description: 'Thử thay đổi từ khóa hoặc bộ lọc để xem thêm kết quả.',
+    description: 'Kiểm tra lại chính tả hoặc bỏ bớt bộ lọc.',
   },
   error: {
     icon: TriangleAlert,
-    title: 'Không thể tải dữ liệu',
-    description: 'Đã có lỗi xảy ra. Vui lòng thử lại sau.',
+    title: 'Không tải được danh sách',
+    description: 'Máy chủ không phản hồi. Dữ liệu chưa bị thay đổi, bạn có thể thử lại.',
   },
 };
 
@@ -45,6 +52,9 @@ export function AdminTableState({
   title,
   description,
   action,
+  searchTerm,
+  onRetry,
+  onClearFilters,
   skeletonRows = 5,
 }: AdminTableStateProps) {
   if (variant === 'loading') {
@@ -78,6 +88,20 @@ export function AdminTableState({
 
   const content = variantContent[variant];
   const Icon = content.icon;
+  const term = searchTerm?.trim();
+  const resolvedTitle =
+    title ?? (variant === 'no-results' && term ? `Không tìm thấy "${term}"` : content.title);
+  const resolvedAction =
+    action ??
+    (variant === 'error' && onRetry ? (
+      <button type="button" className="admin-button is-primary" onClick={onRetry}>
+        Thử lại
+      </button>
+    ) : variant === 'no-results' && onClearFilters ? (
+      <button type="button" className="admin-button" onClick={onClearFilters}>
+        Xóa bộ lọc
+      </button>
+    ) : null);
 
   return (
     <tr className="admin-table-state-row">
@@ -89,9 +113,9 @@ export function AdminTableState({
           <span className="admin-table-feedback-icon" aria-hidden="true">
             <Icon />
           </span>
-          <strong>{title ?? content.title}</strong>
+          <strong>{resolvedTitle}</strong>
           <p>{description ?? content.description}</p>
-          {action && <div className="admin-table-feedback-action">{action}</div>}
+          {resolvedAction && <div className="admin-table-feedback-action">{resolvedAction}</div>}
         </div>
       </td>
     </tr>

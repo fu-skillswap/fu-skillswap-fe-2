@@ -1,10 +1,27 @@
 /**
  * @file aiRepo.ts
- * @description Repository gọi dịch vụ AI (origin riêng `NEXT_PUBLIC_AI_URL`): chat streaming và feedback.
+ * @description Repository gọi dịch vụ AI (origin riêng `NEXT_PUBLIC_AI_URL`): chat streaming, feedback,
+ * số liệu vận hành (ngân sách, mức dùng, tính năng) và kho tri thức. Response của dịch vụ AI là
+ * snake_case; repo đổi sang camelCase trước khi trả về.
  * Dùng chung Access Token với Backend qua header `Authorization: Bearer <token>`.
  */
 
-import type { AiChatEvent, AiChatMessageInput, AiFeedbackRequest } from '@/models/ai';
+import type {
+  AiBudget,
+  AiChatEvent,
+  AiChatMessageInput,
+  AiDocument,
+  AiDocumentList,
+  AiDocumentsQuery,
+  AiDocumentUploadInput,
+  AiFeatureConfig,
+  AiFeedbackFeature,
+  AiFeedbackList,
+  AiFeedbackRequest,
+  AiKnowledgeSearchResult,
+  AiTextDocumentInput,
+  AiUsage,
+} from '@/models/ai';
 import { ApiClientError, getAccessToken, refreshSession } from '@/models/apiClient';
 
 // TODO(env): set NEXT_PUBLIC_AI_URL (e.g. https://ai.skillswap.asia) for every environment.
@@ -57,6 +74,122 @@ export async function aiFetch(path: string, init: RequestInit = {}): Promise<Res
 
   if (!response.ok) throw await toApiError(response);
   return response;
+}
+
+/** JSON request helper on top of `aiFetch`. */
+async function aiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await aiFetch(path, init);
+  return (await response.json()) as T;
+}
+
+/**
+ * For ops endpoints the AI service has not shipped yet: resolves to `null` on 404 so the admin UI
+ * can show its "chưa có dữ liệu" state instead of an error.
+ */
+async function aiJsonOrMissing<T>(path: string): Promise<T | null> {
+  try {
+    return await aiJson<T>(path);
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+function toQuery(params: Record<string, string | number | undefined>) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') query.set(key, String(value));
+  });
+  const text = query.toString();
+  return text ? `?${text}` : '';
+}
+
+/* ---------------------------- snake_case payloads --------------------------- */
+
+type RawBudget = {
+  day: string;
+  spent_vnd: number;
+  budget_vnd: number;
+  remaining_vnd: number;
+  by_feature: Record<string, number>;
+};
+
+type RawUsage = {
+  days: Array<{ day: string; spent_vnd: number }>;
+  today: Array<{
+    feature: string;
+    calls: number;
+    input_tokens: number;
+    output_tokens: number;
+    cost_vnd: number;
+  }>;
+};
+
+type RawFeature = {
+  key: string;
+  enabled: boolean;
+  paused_reason?: string | null;
+  model_main: string;
+  model_classify?: string | null;
+  limits?: Record<string, number>;
+};
+
+type RawFeedbackList = {
+  items: Array<{
+    id: number;
+    feature: string;
+    rating: 1 | -1;
+    message_excerpt: string | null;
+    prompt_version: string | null;
+    created_at: string;
+  }>;
+  total: number;
+};
+
+type RawDocument = {
+  id: string;
+  title: string;
+  source_type: string;
+  school_code: string | null;
+  topic: string | null;
+  filename: string | null;
+  size_bytes: number | null;
+  status: string;
+  error: string | null;
+  chunk_count: number;
+  is_active: boolean;
+  created_at: string;
+  indexed_at: string | null;
+};
+
+type RawSearch = {
+  query: string;
+  passages: Array<{
+    chunk_id: string;
+    document_id: string;
+    document_title: string;
+    heading: string | null;
+    content: string;
+    score: number;
+  }>;
+};
+
+function toDocument(raw: RawDocument): AiDocument {
+  return {
+    id: raw.id,
+    title: raw.title,
+    sourceType: raw.source_type,
+    schoolCode: raw.school_code,
+    topic: raw.topic,
+    filename: raw.filename,
+    sizeBytes: raw.size_bytes,
+    status: raw.status,
+    error: raw.error,
+    chunkCount: raw.chunk_count,
+    isActive: raw.is_active,
+    createdAt: raw.created_at,
+    indexedAt: raw.indexed_at,
+  };
 }
 
 /** Parses one SSE block (`event: <name>` + `data: <json>` lines) into an event. */
@@ -125,5 +258,194 @@ export const aiRepo = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+  },
+
+  /* ------------------------------- Ops (admin) ------------------------------ */
+
+  /** `GET /v1/ops/budget` — today's spend vs the daily budget, per ledger feature. */
+  async getBudget(): Promise<AiBudget> {
+    const raw = await aiJson<RawBudget>('/v1/ops/budget');
+    return {
+      day: raw.day,
+      spentVnd: raw.spent_vnd,
+      budgetVnd: raw.budget_vnd,
+      remainingVnd: raw.remaining_vnd,
+      byFeature: raw.by_feature ?? {},
+    };
+  },
+
+  /**
+   * Daily spend for the last `days` days plus today's calls/tokens per feature.
+   * Resolves to `null` while the endpoint does not exist (404).
+   * TODO(api): GET /v1/ops/usage?days=7 →
+   *   { days: [{ day, spent_vnd }], today: [{ feature, calls, input_tokens, output_tokens, cost_vnd }] }
+   */
+  async getUsage(days = 7): Promise<AiUsage | null> {
+    const raw = await aiJsonOrMissing<RawUsage>(`/v1/ops/usage${toQuery({ days })}`);
+    if (!raw) return null;
+    return {
+      days: raw.days.map((item) => ({ day: item.day, spentVnd: item.spent_vnd })),
+      today: raw.today.map((item) => ({
+        feature: item.feature,
+        calls: item.calls,
+        inputTokens: item.input_tokens,
+        outputTokens: item.output_tokens,
+        costVnd: item.cost_vnd,
+      })),
+    };
+  },
+
+  /**
+   * Feature switches, models and limits. Resolves to `null` while the endpoint does not exist (404).
+   * TODO(api): GET /v1/ops/features →
+   *   [{ key, enabled, paused_reason?, model_main, model_classify?, limits: { ... } }]
+   */
+  async getFeatures(): Promise<AiFeatureConfig[] | null> {
+    const raw = await aiJsonOrMissing<RawFeature[]>('/v1/ops/features');
+    if (!raw) return null;
+    return raw.map((item) => ({
+      key: item.key,
+      enabled: item.enabled,
+      pausedReason: item.paused_reason ?? null,
+      modelMain: item.model_main,
+      modelClassify: item.model_classify ?? null,
+      limits: item.limits ?? {},
+    }));
+  },
+
+  /**
+   * Thumbs up/down ratings stored in the `ai_feedback` table. Resolves to `null` while the
+   * endpoint does not exist (404).
+   * TODO(api): GET /v1/ops/feedback?feature=chat&rating=-1&limit=&offset= →
+   *   { items: [{ id, feature, rating, message_excerpt, prompt_version, created_at }], total }
+   */
+  async getFeedback(
+    feature: AiFeedbackFeature,
+    rating?: 1 | -1,
+    page: { limit?: number; offset?: number } = {},
+  ): Promise<AiFeedbackList | null> {
+    const raw = await aiJsonOrMissing<RawFeedbackList>(
+      `/v1/ops/feedback${toQuery({ feature, rating, limit: page.limit, offset: page.offset })}`,
+    );
+    if (!raw) return null;
+    return {
+      total: raw.total,
+      items: raw.items.map((item) => ({
+        id: item.id,
+        feature: item.feature,
+        rating: item.rating,
+        messageExcerpt: item.message_excerpt,
+        promptVersion: item.prompt_version,
+        createdAt: item.created_at,
+      })),
+    };
+  },
+
+  /* ----------------------------- Knowledge base ----------------------------- */
+
+  /** `GET /v1/documents` (admin). */
+  async listDocuments(query: AiDocumentsQuery = {}): Promise<AiDocumentList> {
+    const raw = await aiJson<{ items: RawDocument[]; total: number }>(
+      `/v1/documents${toQuery({
+        status: query.status,
+        school_code: query.schoolCode,
+        topic: query.topic,
+        limit: query.limit,
+        offset: query.offset,
+      })}`,
+    );
+    return { items: raw.items.map(toDocument), total: raw.total };
+  },
+
+  /** `GET /v1/documents/{id}` — poll this while a document is `pending` / `processing`. */
+  async getDocument(documentId: string): Promise<AiDocument> {
+    return toDocument(await aiJson<RawDocument>(`/v1/documents/${encodeURIComponent(documentId)}`));
+  },
+
+  /**
+   * `POST /v1/documents` (multipart) — PDF, DOCX, MD, TXT up to 20MB. Indexing runs in the
+   * background, so the returned document starts as `pending`. 409 = duplicate, 413 = too large,
+   * 415 = unsupported type.
+   */
+  async uploadDocument({
+    file,
+    title,
+    schoolCode,
+    topic,
+  }: AiDocumentUploadInput): Promise<AiDocument> {
+    const form = new FormData();
+    form.append('file', file);
+    if (title) form.append('title', title);
+    if (schoolCode) form.append('school_code', schoolCode);
+    if (topic) form.append('topic', topic);
+    // No Content-Type header: the browser sets the multipart boundary.
+    return toDocument(await aiJson<RawDocument>('/v1/documents', { method: 'POST', body: form }));
+  },
+
+  /** `POST /v1/documents/text` — pasted text (at least 50 characters). */
+  async createTextDocument({
+    title,
+    content,
+    schoolCode,
+    topic,
+  }: AiTextDocumentInput): Promise<AiDocument> {
+    return toDocument(
+      await aiJson<RawDocument>('/v1/documents/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, school_code: schoolCode, topic }),
+      }),
+    );
+  },
+
+  /** `GET /v1/documents/{id}/download` — presigned URL of the original file. */
+  async getDocumentDownloadUrl(documentId: string): Promise<string> {
+    const { url } = await aiJson<{ url: string }>(
+      `/v1/documents/${encodeURIComponent(documentId)}/download`,
+    );
+    return url;
+  },
+
+  /** `POST /v1/documents/{id}/reindex` — 409 when the original file was not stored. */
+  async reindexDocument(documentId: string): Promise<AiDocument> {
+    return toDocument(
+      await aiJson<RawDocument>(`/v1/documents/${encodeURIComponent(documentId)}/reindex`, {
+        method: 'POST',
+      }),
+    );
+  },
+
+  /** `DELETE /v1/documents/{id}` (responds 204; chunks are deleted too). */
+  async deleteDocument(documentId: string): Promise<void> {
+    await aiFetch(`/v1/documents/${encodeURIComponent(documentId)}`, { method: 'DELETE' });
+  },
+
+  /**
+   * `GET /v1/knowledge/search` — retrieval only (no generated answer), to check which passages
+   * the chatbot would use. `q` must be 2–500 characters; `topK` 1–20 (default 5).
+   */
+  async searchKnowledge({
+    q,
+    topK,
+    schoolCode,
+  }: {
+    q: string;
+    topK?: number;
+    schoolCode?: string;
+  }): Promise<AiKnowledgeSearchResult> {
+    const raw = await aiJson<RawSearch>(
+      `/v1/knowledge/search${toQuery({ q, top_k: topK, school_code: schoolCode })}`,
+    );
+    return {
+      query: raw.query,
+      passages: raw.passages.map((item) => ({
+        chunkId: item.chunk_id,
+        documentId: item.document_id,
+        documentTitle: item.document_title,
+        heading: item.heading,
+        content: item.content,
+        score: item.score,
+      })),
+    };
   },
 };

@@ -5,34 +5,35 @@
 
 'use client';
 
+import {
+  AdminListTabs,
+  AdminPagination,
+  AdminPersonCell,
+  adminListStyles as list,
+} from '@/components/domain/admin/AdminListControls';
 import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { MentorVerificationRequest, MentorVerificationStatus } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
-import { showError } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError } from '@/utils/toast';
 import { RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import styles from './MentorVerificationView.module.css';
 
-const tabs: Array<{ label: string; value?: MentorVerificationStatus }> = [
-  { label: 'Chờ duyệt', value: 'PENDING_REVIEW' },
-  { label: 'Cần bổ sung', value: 'NEEDS_REVISION' },
-  { label: 'Đã duyệt', value: 'APPROVED' },
-  { label: 'Từ chối', value: 'REJECTED' },
-  { label: 'Tất cả' },
+const tabs: Array<{ label: string; value?: MentorVerificationStatus; emptyTitle: string }> = [
+  { label: 'Chờ duyệt', value: 'PENDING_REVIEW', emptyTitle: 'Không có hồ sơ chờ duyệt' },
+  { label: 'Cần bổ sung', value: 'NEEDS_REVISION', emptyTitle: 'Không có hồ sơ cần bổ sung' },
+  { label: 'Đã duyệt', value: 'APPROVED', emptyTitle: 'Chưa có hồ sơ được duyệt' },
+  { label: 'Từ chối', value: 'REJECTED', emptyTitle: 'Chưa có hồ sơ bị từ chối' },
+  { label: 'Tất cả', emptyTitle: 'Chưa có hồ sơ nào' },
 ];
 
-const statusLabels: Record<string, string> = {
-  DRAFT: 'Chờ duyệt',
-  PENDING: 'Chờ duyệt',
-  SUBMITTED: 'Chờ duyệt',
-  UNDER_REVIEW: 'Đang xem xét',
-  PENDING_REVIEW: 'Chờ duyệt',
-  NEEDS_REVISION: 'Cần bổ sung',
-  APPROVED: 'Đã duyệt',
-  REJECTED: 'Từ chối',
-  WITHDRAWN: 'Đã rút hồ sơ',
-};
+const sortOptions = {
+  oldest: { label: 'Chờ lâu nhất', direction: 'ASC' },
+  newest: { label: 'Mới gửi nhất', direction: 'DESC' },
+} as const;
+type SortKey = keyof typeof sortOptions;
 
 const allRequestStatuses: MentorVerificationStatus[] = [
   'DRAFT',
@@ -44,27 +45,49 @@ const allRequestStatuses: MentorVerificationStatus[] = [
 ];
 const pageSize = 10;
 const allStatusesBatchSize = 100;
+const columnCount = 5;
+const dayInMinutes = 24 * 60;
 type VerificationCountKey = MentorVerificationStatus | 'ALL';
 
 function formatDate(value: string | null) {
   if (!value) return 'Chưa gửi';
-  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  );
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const time = new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+  const day = new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+  return `${time}, ${day}`;
 }
 
-function getStatusLabel(status: string) {
-  return statusLabels[status] ?? status.replaceAll('_', ' ').toLocaleLowerCase('vi-VN');
+function getWaitingMinutes(submittedAt: string | null, now: number) {
+  if (!submittedAt) return null;
+  const submitted = new Date(submittedAt).getTime();
+  return Number.isNaN(submitted) ? null : Math.max(0, Math.floor((now - submitted) / 60000));
 }
 
-function InitialAvatar({ name }: { name: string }) {
-  return (
-    <span className="mentor-initial-avatar">{name.trim().charAt(0).toUpperCase() || '?'}</span>
-  );
+/** "40 phút", "5 giờ", "1 ngày 2 giờ". */
+function formatWaiting(minutes: number) {
+  const days = Math.floor(minutes / dayInMinutes);
+  const hours = Math.floor((minutes % dayInMinutes) / 60);
+  if (days) return hours ? `${days} ngày ${hours} giờ` : `${days} ngày`;
+  if (hours) return `${hours} giờ`;
+  return `${Math.max(1, minutes)} phút`;
+}
+
+function getSubmittedTime(request: MentorVerificationRequest) {
+  return new Date(request.submittedAt ?? request.createdAt).getTime();
 }
 
 /** Tải toàn bộ trạng thái riêng lẻ vì API không truyền status mặc định chỉ trả hàng chờ duyệt. */
-async function getAllMentorVerificationRequests(keyword: string) {
+async function getAllMentorVerificationRequests(keyword: string, sort: SortKey) {
+  const { direction } = sortOptions[sort];
   const initialResponses = await Promise.all(
     allRequestStatuses.map((status) =>
       adminRepo.getMentorVerificationRequests({
@@ -72,8 +95,8 @@ async function getAllMentorVerificationRequests(keyword: string) {
         keyword: keyword || undefined,
         page: 0,
         size: allStatusesBatchSize,
-        sortBy: 'updatedAt',
-        direction: 'DESC',
+        sortBy: 'submittedAt',
+        direction,
       }),
     ),
   );
@@ -85,8 +108,8 @@ async function getAllMentorVerificationRequests(keyword: string) {
           keyword: keyword || undefined,
           page: pageIndex + 1,
           size: allStatusesBatchSize,
-          sortBy: 'updatedAt',
-          direction: 'DESC',
+          sortBy: 'submittedAt',
+          direction,
         }),
       ),
     ),
@@ -95,8 +118,9 @@ async function getAllMentorVerificationRequests(keyword: string) {
   [...initialResponses, ...remainingResponses].forEach((response) => {
     response.content.forEach((request) => uniqueRequests.set(request.requestId, request));
   });
+  const sign = direction === 'ASC' ? 1 : -1;
   return [...uniqueRequests.values()].sort(
-    (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
+    (left, right) => sign * (getSubmittedTime(left) - getSubmittedTime(right)),
   );
 }
 
@@ -109,7 +133,10 @@ export function MentorVerificationView({ locale }: { locale: string }) {
     'PENDING_REVIEW',
   );
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortKey>('oldest');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const [now, setNow] = useState(() => Date.now());
   const [statusCounts, setStatusCounts] = useState<Partial<Record<VerificationCountKey, number>>>(
     {},
   );
@@ -135,10 +162,12 @@ export function MentorVerificationView({ locale }: { locale: string }) {
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
+    setError(undefined);
+    setNow(Date.now());
     try {
       const keyword = search.trim();
       if (!activeStatus) {
-        const allRequests = await getAllMentorVerificationRequests(keyword);
+        const allRequests = await getAllMentorVerificationRequests(keyword, sort);
         setRequests(allRequests.slice(page * pageSize, (page + 1) * pageSize));
         setTotalElements(allRequests.length);
         setTotalPages(Math.ceil(allRequests.length / pageSize));
@@ -149,18 +178,20 @@ export function MentorVerificationView({ locale }: { locale: string }) {
         keyword: keyword || undefined,
         page,
         size: pageSize,
-        sortBy: 'updatedAt',
-        direction: 'DESC',
+        sortBy: 'submittedAt',
+        direction: sortOptions[sort].direction,
       });
       setRequests(data.content);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
     } catch (reason) {
+      setRequests([]);
+      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải hồ sơ xác minh.'));
       showError(reason, { title: 'Không thể tải hồ sơ xác minh' });
     } finally {
       setLoading(false);
     }
-  }, [activeStatus, page, search]);
+  }, [activeStatus, page, search, sort]);
 
   useEffect(() => {
     void loadRequests();
@@ -169,6 +200,16 @@ export function MentorVerificationView({ locale }: { locale: string }) {
   useEffect(() => {
     void loadStatusCounts();
   }, [loadStatusCounts]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const refresh = () => void Promise.all([loadRequests(), loadStatusCounts()]);
+  const activeTab = tabs.find((tab) => tab.value === activeStatus) ?? tabs[tabs.length - 1];
+  const rangeStart = requests.length ? page * pageSize + 1 : 0;
+  const rangeEnd = Math.min(page * pageSize + requests.length, totalElements);
 
   return (
     <main className="admin-dashboard mentor-verification-page">
@@ -180,153 +221,159 @@ export function MentorVerificationView({ locale }: { locale: string }) {
           <AdminTopbarActions />
         </header>
         <div className="mentor-verification-content">
-          <section className="mentor-verification-heading">
+          <section className="admin-page-heading">
             <div>
               <h1>Xác minh mentor</h1>
-              <p>Rà soát hồ sơ mentor và xác minh thông tin đã gửi.</p>
+              <p>Hồ sơ chờ lâu nhất hiện ở đầu danh sách. Mở hồ sơ để nhận xử lý.</p>
+            </div>
+            <div>
+              <button type="button" className="admin-button" disabled={loading} onClick={refresh}>
+                <RefreshCw aria-hidden="true" /> Làm mới
+              </button>
             </div>
           </section>
-          <section className="mentor-verification-table">
-            <div className="mentor-tabs-scroll">
-              <div className="mentor-tabs" role="tablist">
-                {tabs.map((tab) => {
-                  const countKey = tab.value ?? 'ALL';
-                  const count = statusCounts[countKey];
-                  return (
-                    <button
-                      key={tab.label}
-                      type="button"
-                      role="tab"
-                      aria-selected={activeStatus === tab.value}
-                      className={`mentor-tab-${countKey.toLowerCase().replaceAll('_', '-')} ${activeStatus === tab.value ? 'is-active' : ''}`}
-                      onClick={() => {
-                        setActiveStatus(tab.value);
-                        setPage(0);
-                      }}
-                    >
-                      <span>{tab.label}</span>
-                      <b>{count === undefined ? '—' : count}</b>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="mentor-table-toolbar">
-              <label>
+
+          <section className={list.card} aria-label="Danh sách hồ sơ xác minh">
+            <AdminListTabs
+              ariaLabel="Trạng thái hồ sơ"
+              tabs={tabs.map((tab) => ({
+                value: tab.value,
+                label: tab.label,
+                count: statusCounts[tab.value ?? 'ALL'],
+              }))}
+              value={activeStatus}
+              onChange={(value) => {
+                setActiveStatus(value);
+                setPage(0);
+              }}
+            />
+
+            <div className={list.toolbar}>
+              <label className="admin-search-field admin-toolbar-search">
                 <Search aria-hidden="true" />
                 <input
+                  type="search"
+                  aria-label="Tìm hồ sơ"
                   value={search}
                   onChange={(event) => {
                     setSearch(event.target.value);
                     setPage(0);
                   }}
-                  placeholder="Tìm theo tên hoặc email..."
+                  placeholder="Tìm theo tên, email hoặc mã sinh viên"
                 />
               </label>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => void Promise.all([loadRequests(), loadStatusCounts()])}
-              >
-                <RefreshCw aria-hidden="true" /> Làm mới
-              </button>
+              <label className={list.selectField}>
+                <span>Sắp xếp</span>
+                <select
+                  value={sort}
+                  onChange={(event) => {
+                    setSort(event.target.value as SortKey);
+                    setPage(0);
+                  }}
+                >
+                  {Object.entries(sortOptions).map(([key, option]) => (
+                    <option key={key} value={key}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            <div className="mentor-table-scroll">
-              <table>
+
+            <div className={list.tableScroll}>
+              <table className={`${list.table} ${styles.table}`}>
                 <thead>
                   <tr>
                     <th>Ứng viên</th>
-                    <th>Trạng thái</th>
-                    <th>Số lần bổ sung</th>
+                    <th>Đã chờ</th>
+                    {/* TODO(api): add lockedByAdminFullName + lockExpiresAt to list items to show "Người xử lý" */}
+                    <th>Lần bổ sung</th>
                     <th>Gửi lúc</th>
-                    <th>Cập nhật lúc</th>
-                    <th>Thao tác</th>
+                    <th>
+                      <span className="sr-only">Thao tác</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <AdminTableState
                       variant="loading"
-                      colSpan={6}
+                      colSpan={columnCount}
                       title="Đang tải danh sách hồ sơ…"
                     />
+                  ) : error ? (
+                    <AdminTableState variant="error" colSpan={columnCount} onRetry={refresh} />
                   ) : requests.length ? (
-                    requests.map((request) => (
-                      <tr key={request.requestId}>
-                        <td>
-                          <div className="mentor-applicant">
-                            {request.mentorAvatarUrl ? (
-                              <img src={request.mentorAvatarUrl} alt="" />
+                    requests.map((request) => {
+                      const waiting = getWaitingMinutes(request.submittedAt, now);
+                      return (
+                        <tr key={request.requestId}>
+                          <td>
+                            <AdminPersonCell
+                              name={request.mentorFullName}
+                              email={request.mentorEmail}
+                              avatarUrl={request.mentorAvatarUrl}
+                            />
+                          </td>
+                          <td>
+                            {waiting === null ? (
+                              <span className={list.muted}>—</span>
                             ) : (
-                              <InitialAvatar name={request.mentorFullName} />
+                              <span
+                                className={`${styles.waiting} ${
+                                  waiting >= dayInMinutes ? styles.isOverdue : ''
+                                }`}
+                              >
+                                {formatWaiting(waiting)}
+                              </span>
                             )}
-                            <span>
-                              <b>{request.mentorFullName}</b>
-                              <small>{request.mentorEmail}</small>
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                          <span
-                            className={`mentor-status ${request.status.toLowerCase().replaceAll('_', '-')}`}
-                          >
-                            {getStatusLabel(request.status)}
-                          </span>
-                        </td>
-                        <td>{request.revisionCount}</td>
-                        <td>{formatDate(request.submittedAt)}</td>
-                        <td>{formatDate(request.updatedAt)}</td>
-                        <td>
-                          <Link href={`/${locale}/admin/mentor-verification/${request.requestId}`}>
-                            Xem xét
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td>{request.revisionCount}</td>
+                          <td className={list.date}>{formatDate(request.submittedAt)}</td>
+                          <td className={list.actionCell}>
+                            <Link
+                              className="admin-button is-primary"
+                              href={`/${locale}/admin/mentor-verification/${request.requestId}`}
+                            >
+                              Mở hồ sơ
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : search.trim() ? (
+                    <AdminTableState
+                      variant="no-results"
+                      colSpan={columnCount}
+                      searchTerm={search}
+                      description="Kiểm tra lại chính tả, hoặc chuyển sang tab khác."
+                      onClearFilters={() => {
+                        setSearch('');
+                        setPage(0);
+                      }}
+                    />
                   ) : (
                     <AdminTableState
-                      colSpan={6}
-                      {...(search.trim()
-                        ? {
-                            variant: 'no-results',
-                            title: 'Không tìm thấy hồ sơ phù hợp',
-                            description:
-                              'Thử thay đổi từ khóa tìm kiếm hoặc chuyển sang tab khác để xem thêm kết quả.',
-                          }
-                        : {
-                            variant: 'empty',
-                            title: 'Không có hồ sơ nào cần xử lý',
-                            description: 'Hồ sơ mentor mới gửi sẽ xuất hiện tại đây.',
-                          })}
+                      variant="empty"
+                      colSpan={columnCount}
+                      title={activeTab.emptyTitle}
+                      description="Hồ sơ mới gửi sẽ hiện ở đây."
                     />
                   )}
                 </tbody>
               </table>
             </div>
-            <footer className="mentor-pagination">
+
+            <footer className={list.footer}>
               <span>
-                Hiển thị {requests.length ? page * pageSize + 1 : 0}–
-                {Math.min((page + 1) * pageSize, totalElements)} trong tổng số {totalElements} hồ sơ
+                Hiển thị {rangeStart}–{rangeEnd} trong {totalElements} hồ sơ
               </span>
-              <div>
-                <button
-                  type="button"
-                  aria-label="Trang trước"
-                  disabled={page === 0}
-                  onClick={() => setPage((current) => current - 1)}
-                >
-                  Trước
-                </button>
-                <b aria-current="page">{page + 1}</b>
-                <button
-                  type="button"
-                  aria-label="Trang sau"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  Sau
-                </button>
-              </div>
+              <AdminPagination
+                page={page}
+                totalPages={totalPages}
+                disabled={loading}
+                onChange={setPage}
+              />
             </footer>
           </section>
         </div>

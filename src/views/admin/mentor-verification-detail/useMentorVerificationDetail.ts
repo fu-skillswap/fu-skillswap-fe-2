@@ -72,13 +72,15 @@ export function useMentorVerificationDetail(requestId: string) {
     }
   };
 
-  /** Throws on failure so the confirm dialog can show the error. */
+  /** Returns the updated lock; throws on failure so the confirm dialog can show the error. */
   const updateLock = async (action: LockAction) => {
-    setLock(
+    // TODO(api): custom duration — the refresh endpoint only extends by the system default.
+    const updatedLock =
       action === 'release'
         ? await adminRepo.releaseMentorVerificationLock(requestId)
-        : await adminRepo.refreshMentorVerificationLock(requestId),
-    );
+        : await adminRepo.refreshMentorVerificationLock(requestId);
+    setLock(updatedLock);
+    return updatedLock;
   };
 
   const approve = async () => {

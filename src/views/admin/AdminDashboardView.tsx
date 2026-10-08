@@ -5,6 +5,7 @@
 
 'use client';
 
+import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type {
   AdminDashboardOverviewResponse,
@@ -18,7 +19,6 @@ import {
   ArrowRight,
   CalendarDays,
   CirclePlus,
-  ClipboardClock,
   ClipboardList,
   FileText,
   Flag,
@@ -68,6 +68,9 @@ export function AdminDashboardView() {
   const [mentorVerificationCount, setMentorVerificationCount] = useState<number>();
   const [loading, setLoading] = useState(true);
   const [assigningCase, setAssigningCase] = useState<string>();
+  const [queueItemsStatus, setQueueItemsStatus] = useState<'loading' | 'ready' | 'error'>(
+    'loading',
+  );
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
@@ -98,10 +101,13 @@ export function AdminDashboardView() {
   }, []);
   const loadQueueItems = useCallback(async () => {
     if (!activeQueue) return;
+    setQueueItemsStatus('loading');
     try {
       const page = await adminRepo.getQueueItems({ queueKey: activeQueue, page: 0, size: 4 });
       setQueueItems(page.content);
+      setQueueItemsStatus('ready');
     } catch (reason) {
+      setQueueItemsStatus('error');
       showError(reason, { title: 'Không thể tải dữ liệu xác minh' });
     }
   }, [activeQueue]);
@@ -284,9 +290,29 @@ export function AdminDashboardView() {
                       <th>Thời gian</th>
                     </tr>
                   </thead>
-                  {!!queueItems.length && (
-                    <tbody>
-                      {queueItems.map((item) => (
+                  <tbody>
+                    {loading || (activeQueue && queueItemsStatus === 'loading') ? (
+                      <AdminTableState
+                        variant="loading"
+                        colSpan={4}
+                        skeletonRows={4}
+                        title="Đang tải hoạt động gần đây…"
+                      />
+                    ) : queueItemsStatus === 'error' ? (
+                      <AdminTableState
+                        variant="error"
+                        colSpan={4}
+                        onRetry={() => void loadQueueItems()}
+                      />
+                    ) : !queueItems.length ? (
+                      <AdminTableState
+                        variant="empty"
+                        colSpan={4}
+                        title="Chưa có hoạt động gần đây"
+                        description="Khi có hồ sơ hoặc báo cáo mới trong hàng đợi, hoạt động sẽ hiện ở đây."
+                      />
+                    ) : (
+                      queueItems.map((item) => (
                         <tr key={item.caseId}>
                           <td>
                             <i
@@ -298,19 +324,10 @@ export function AdminDashboardView() {
                           <td>{item.assignedAdminEmail ?? 'Chưa phân công'}</td>
                           <td>{formatTime(item.submittedAt)}</td>
                         </tr>
-                      ))}
-                    </tbody>
-                  )}
+                      ))
+                    )}
+                  </tbody>
                 </table>
-                {!queueItems.length && (
-                  <div className="admin-dashboard-empty">
-                    <i>
-                      <ClipboardClock aria-hidden="true" />
-                    </i>
-                    <strong>Chưa có hoạt động gần đây.</strong>
-                    <span>Các hoạt động quản trị sẽ được hiển thị tại đây.</span>
-                  </div>
-                )}
               </div>
             </section>
           </div>

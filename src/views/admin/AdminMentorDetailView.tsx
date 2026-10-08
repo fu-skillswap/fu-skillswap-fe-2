@@ -5,6 +5,7 @@
 
 'use client';
 
+import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type {
   AdminMentorAchievement,
@@ -216,30 +217,35 @@ export function AdminMentorDetailView({
               <h2 className="admin-card-title">
                 <BookOpenCheck aria-hidden="true" /> Kết quả môn học
               </h2>
-              {subjects.length ? (
-                <div className="admin-mentor-subject-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Mã môn</th>
-                        <th>Tên môn</th>
-                        <th>Điểm</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {subjects.map((subject) => (
+              <div className="admin-mentor-subject-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mã môn</th>
+                      <th>Tên môn</th>
+                      <th>Điểm</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subjects.length ? (
+                      subjects.map((subject) => (
                         <tr key={subject.id}>
                           <td>{subject.subjectCode}</td>
                           <td>{subject.subjectName}</td>
                           <td>{subject.scoreValue ?? 'Chưa có'}</td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="admin-mentor-empty">Chưa có kết quả môn học.</p>
-              )}
+                      ))
+                    ) : (
+                      <AdminTableState
+                        variant="empty"
+                        colSpan={3}
+                        title="Chưa có kết quả môn học"
+                        description="Mentor chưa thêm điểm môn học nào vào hồ sơ."
+                      />
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </section>
             <MentorCollection
               title="Dự án nổi bật"

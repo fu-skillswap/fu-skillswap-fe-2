@@ -76,15 +76,18 @@ export function AdminBookingsView() {
   const [statusFilter, setStatusFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
+    setFailed(false);
     try {
       const data = await adminRepo.getBookings({ page, size: pageSize });
       setBookings(data.content);
       setTotalElements(data.totalElements);
       setTotalPages(data.totalPages);
     } catch (reason) {
+      setFailed(true);
       showError(reason, { title: 'Không thể tải lịch hẹn' });
     } finally {
       setLoading(false);
@@ -159,9 +162,10 @@ export function AdminBookingsView() {
         </section>
         <section className="admin-bookings-table" aria-labelledby="admin-bookings-title">
           <div className="admin-bookings-toolbar">
-            <label className="admin-bookings-search">
+            <label className="admin-search-field admin-toolbar-search">
               <Search aria-hidden="true" />
               <input
+                type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Tìm mentor hoặc mentee..."
@@ -207,20 +211,44 @@ export function AdminBookingsView() {
                     colSpan={5}
                     title="Đang tải danh sách lịch hẹn…"
                   />
+                ) : failed ? (
+                  <AdminTableState
+                    variant="error"
+                    colSpan={5}
+                    onRetry={() => void loadBookings()}
+                  />
                 ) : visibleBookings.length ? (
                   visibleBookings.map((booking) => (
                     <BookingRow key={booking.bookingId} booking={booking} />
                   ))
+                ) : statusFilter || searchTerm.trim() ? (
+                  <AdminTableState
+                    variant="no-results"
+                    colSpan={5}
+                    searchTerm={searchTerm}
+                    title={
+                      searchTerm.trim()
+                        ? undefined
+                        : `Không có lịch hẹn ở trạng thái "${getLabel(statusFilter)}" trên trang này`
+                    }
+                    description={
+                      searchTerm.trim() && statusFilter
+                        ? `Kiểm tra lại chính tả, hoặc bỏ lọc trạng thái "${getLabel(statusFilter)}".`
+                        : searchTerm.trim()
+                          ? undefined
+                          : 'Chọn trạng thái khác, xóa bộ lọc hoặc chuyển trang.'
+                    }
+                    onClearFilters={() => {
+                      setSearchTerm('');
+                      setStatusFilter('');
+                    }}
+                  />
                 ) : (
                   <AdminTableState
+                    variant="empty"
                     colSpan={5}
-                    {...(statusFilter || searchTerm
-                      ? { variant: 'no-results', title: 'Không tìm thấy lịch hẹn phù hợp' }
-                      : {
-                          variant: 'empty',
-                          title: 'Chưa có lịch hẹn nào',
-                          description: 'Lịch hẹn giữa mentor và mentee sẽ xuất hiện tại đây.',
-                        })}
+                    title="Chưa có lịch hẹn nào"
+                    description="Khi mentee đặt lịch với mentor, lịch hẹn sẽ hiện ở đây."
                   />
                 )}
               </tbody>
