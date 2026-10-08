@@ -14,6 +14,7 @@ import type {
 } from '@/models/auth';
 import type { BlogPostReaderCardResponse } from '@/models/blog';
 import { MentorBlogPostGrid } from '@/components/domain/blog/MentorBlogPostGrid';
+import { useMentorArticles } from '@/components/domain/blog/useMentorArticles';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
 import { useAuth } from '@/providers/AuthProvider';
@@ -95,6 +96,8 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale || 'vi';
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
+  const mentorArticles = useMentorArticles(targetUserId, articles);
+  const blogCount = Math.max(articleCount ?? 0, mentorArticles.articles.length);
 
   useEffect(() => {
     let isMounted = true;
@@ -449,7 +452,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                 : 'py-3 px-3 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all cursor-pointer bg-transparent border-0'
             }
           >
-            Blog{articleCount ? ` (${articleCount})` : ''}
+            Blog{blogCount ? ` (${blogCount})` : ''}
           </button>
           <button
             type="button"
@@ -470,10 +473,10 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
               Bài viết của Mentor
             </h3>
             <MentorBlogPostGrid
-              posts={articles}
+              posts={mentorArticles.articles}
               locale={locale}
-              isLoading={isLoading}
-              isError={Boolean(servicesError)}
+              isLoading={!mentorArticles.articles.length && (isLoading || mentorArticles.isLoading)}
+              isError={Boolean(servicesError) && !mentorArticles.articles.length}
               emptyText="Mentor chưa xuất bản bài viết nào."
             />
           </section>
