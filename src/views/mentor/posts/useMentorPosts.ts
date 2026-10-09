@@ -84,6 +84,15 @@ export function useMentorPosts() {
     setEditingPost(null);
   }, [form]);
 
+  /** Opens a new post with a suggested title (empty-state topic starters). */
+  const openCreateWithTitle = useCallback(
+    (title: string) => {
+      form.reset({ ...EMPTY_FORM, title });
+      setEditingPost(null);
+    },
+    [form],
+  );
+
   const openEdit = useCallback(
     async (post: MentorBlogPostDetailResponse) => {
       setIsSaving(true);
@@ -118,6 +127,10 @@ export function useMentorPosts() {
   const save = async (values: MentorPostFormValues, shouldPublish: boolean) => {
     setIsSaving(true);
     let postId = editingPost?.id;
+    // A published post is only updated in place; publishing it again is not needed.
+    // Not verified against the backend: if it rejects PUT on PUBLISHED posts, the error toast
+    // below shows its reason. TODO(api): allow PUT on PUBLISHED posts if it turns out it does not.
+    const isUpdatingPublished = editingPost?.status === 'PUBLISHED';
     try {
       const payload: MentorBlogPostCreateRequest = {
         title: values.title.trim(),
@@ -136,16 +149,18 @@ export function useMentorPosts() {
         : await mentorPostRepo.create(payload);
       postId = saved.id;
       setEditingPost(saved);
-      if (shouldPublish) {
+      if (shouldPublish && !isUpdatingPublished) {
         // The update response can carry the version from before the write, which made publish
         // fail with 409 for drafts saved earlier. Publish against the stored version instead.
         const current = editingPost ? await mentorPostRepo.detail(saved.id) : saved;
         await mentorPostRepo.publish(saved.id, { expectedVersion: current.version });
       }
       showSuccess(
-        shouldPublish
-          ? { title: 'Đã đăng bài', description: 'Bài viết của bạn đã được xuất bản.' }
-          : { title: 'Đã lưu bản nháp', description: 'Bạn có thể tiếp tục chỉnh sửa sau.' },
+        isUpdatingPublished
+          ? { title: 'Đã cập nhật bài viết', description: 'Thay đổi đã hiển thị cho người đọc.' }
+          : shouldPublish
+            ? { title: 'Đã đăng bài', description: 'Bài viết của bạn đã được xuất bản.' }
+            : { title: 'Đã lưu bản nháp', description: 'Bạn có thể tiếp tục chỉnh sửa sau.' },
       );
       setEditingPost(undefined);
       invalidateReaderLists();
@@ -202,6 +217,7 @@ export function useMentorPosts() {
     isLoading: isLoading || isBootstrapping,
     isSaving,
     openCreate,
+    openCreateWithTitle,
     openEdit,
     posts: visiblePosts,
     refresh,
