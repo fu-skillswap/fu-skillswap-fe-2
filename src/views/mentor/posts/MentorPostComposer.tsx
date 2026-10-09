@@ -273,7 +273,7 @@ export function MentorPostComposer({ posts }: { posts: MentorPostsController }) 
             disabled={isBusy}
             onClick={() => void posts.submitPublish()}
           >
-            Đăng bài
+            {editingPost?.status === 'PUBLISHED' ? 'Cập nhật bài' : 'Đăng bài'}
           </Button>
         </div>
       </header>
