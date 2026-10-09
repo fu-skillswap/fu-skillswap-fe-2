@@ -54,18 +54,49 @@ export function useMarkdownEditor(form: UseFormReturn<MentorPostFormValues>) {
 
   const getValue = useCallback(() => form.getValues('contentMarkdown') ?? '', [form]);
 
-  /** Writes the new content, then restores focus and the given selection. */
-  const commit = useCallback(
-    (next: string, selectionStart: number, selectionEnd = selectionStart) => {
+  /**
+   * Writes the new content without moving the view. Assigning `textarea.value` sends the caret
+   * to the end, and focusing it then scrolls to the bottom, so the selection and scroll position
+   * are put back explicitly. `focus` is used by toolbar actions to return to typing.
+   */
+  const writeContent = useCallback(
+    (next: string, selectionStart: number, selectionEnd: number, focus: boolean) => {
+      const textarea = textareaRef.current;
+      const scrollTop = textarea?.scrollTop ?? 0;
       form.setValue('contentMarkdown', next, { shouldDirty: true });
-      requestAnimationFrame(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        textarea.focus();
-        textarea.setSelectionRange(selectionStart, selectionEnd);
-      });
+      const restore = () => {
+        const field = textareaRef.current;
+        if (!field) return;
+        if (focus) field.focus({ preventScroll: true });
+        field.setSelectionRange(selectionStart, selectionEnd);
+        field.scrollTop = scrollTop;
+      };
+      restore();
+      // Re-apply after React re-renders the editor with the new content.
+      requestAnimationFrame(restore);
     },
     [form],
+  );
+
+  /** Writes the new content, then restores focus and the given selection. */
+  const commit = useCallback(
+    (next: string, selectionStart: number, selectionEnd = selectionStart) =>
+      writeContent(next, selectionStart, selectionEnd, true),
+    [writeContent],
+  );
+
+  /** Writes content changed elsewhere (image edits, uploads), keeping the caret where it was. */
+  const writeKeepingCaret = useCallback(
+    (previous: string, next: string, changedAt: number) => {
+      const textarea = textareaRef.current;
+      const delta = next.length - previous.length;
+      const shift = (position: number) =>
+        position > changedAt ? Math.max(changedAt, position + delta) : position;
+      const start = textarea ? shift(textarea.selectionStart) : next.length;
+      const end = textarea ? shift(textarea.selectionEnd) : next.length;
+      writeContent(next, start, end, false);
+    },
+    [writeContent],
   );
 
   const getSelection = useCallback(() => {
@@ -191,30 +222,33 @@ export function useMarkdownEditor(form: UseFormReturn<MentorPostFormValues>) {
   /** Replaces one source line (by index); `null` removes it together with one blank neighbour. */
   const replaceLine = useCallback(
     (lineIndex: number, nextLine: string | null) => {
-      const lines = getValue().split('\n');
+      const value = getValue();
+      const lines = value.split('\n');
       if (lineIndex < 0 || lineIndex >= lines.length) return;
+      const changedAt = lines.slice(0, lineIndex).join('\n').length;
       if (nextLine === null) {
         lines.splice(lineIndex, 1);
         if (!lines[lineIndex]?.trim() && !lines[lineIndex - 1]?.trim()) lines.splice(lineIndex, 1);
       } else {
         lines[lineIndex] = nextLine;
       }
-      form.setValue('contentMarkdown', lines.join('\n'), { shouldDirty: true });
+      writeKeepingCaret(value, lines.join('\n'), changedAt);
     },
-    [form, getValue],
+    [getValue, writeKeepingCaret],
   );
 
   /** Replaces an exact snippet (e.g. an upload placeholder) wherever it now sits. */
   const replaceText = useCallback(
     (search: string, replacement: string) => {
       const value = getValue();
-      if (!value.includes(search)) return false;
+      const changedAt = value.indexOf(search);
+      if (changedAt === -1) return false;
       let next = value.replace(search, replacement);
       if (!replacement) next = next.replace(/\n{3,}/g, '\n\n');
-      form.setValue('contentMarkdown', next, { shouldDirty: true });
+      writeKeepingCaret(value, next, changedAt);
       return true;
     },
-    [form, getValue],
+    [getValue, writeKeepingCaret],
   );
 
   const onKeyDown = useCallback(
