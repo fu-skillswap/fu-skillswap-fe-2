@@ -5,13 +5,15 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   AlertTriangle,
   CalendarDays,
   CheckCircle2,
   CreditCard,
+  LayoutGrid,
+  List,
   LogIn,
   MessageSquare,
   RefreshCw,
@@ -25,6 +27,10 @@ import { Modal } from '@/components/ui/Modal';
 import { SelectField } from '@/components/ui/SelectField';
 import type { BookingIssueType, MentorBookingResponse } from '@/models/auth';
 import { showError, showSuccess } from '@/utils/toast';
+import { getBookingActions } from './bookingActions';
+import { BookingCalendar } from './calendar/BookingCalendar';
+import { readStorage, writeStorage } from './calendar/calendarUtils';
+import { BookingActionBanner } from './components/BookingActionBanner';
 import { type MenteeBookingMutation, type MenteeBookingTab, useMyBookings } from './useMyBookings';
 
 const TABS: Array<{ value: MenteeBookingTab; label: string }> = [
@@ -40,6 +46,20 @@ const TABS: Array<{ value: MenteeBookingTab; label: string }> = [
 ];
 
 type FormAction = 'cancel' | 'confirm' | 'reportIssue' | 'respondIssue';
+
+type BookingsViewMode = 'list' | 'week' | 'month';
+
+const VIEW_STORAGE_KEY = 'skillswap.myBookings.view';
+
+const VIEW_OPTIONS: Array<{ value: BookingsViewMode; label: string; icon: typeof List }> = [
+  { value: 'list', label: 'Danh sách', icon: List },
+  { value: 'week', label: 'Tuần', icon: LayoutGrid },
+  { value: 'month', label: 'Tháng', icon: CalendarDays },
+];
+
+function isViewMode(value: unknown): value is BookingsViewMode {
+  return value === 'list' || value === 'week' || value === 'month';
+}
 
 function formatSchedule(value: string) {
   const date = new Date(value);
@@ -75,6 +95,25 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
     type: FormAction;
     booking: MentorBookingResponse;
   }>();
+  const [view, setViewState] = useState<BookingsViewMode>('list');
+  const locale = params.locale || 'vi';
+
+  // ?view= wins over the remembered choice; default is the list.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('view');
+    const stored = readStorage(VIEW_STORAGE_KEY);
+    if (isViewMode(fromUrl)) setViewState(fromUrl);
+    else if (isViewMode(stored)) setViewState(stored);
+  }, []);
+
+  const setView = useCallback((next: BookingsViewMode) => {
+    setViewState(next);
+    writeStorage(VIEW_STORAGE_KEY, next);
+    const url = new URL(window.location.href);
+    if (next === 'list') url.searchParams.delete('view');
+    else url.searchParams.set('view', next);
+    window.history.replaceState(window.history.state, '', url);
+  }, []);
 
   useEffect(() => {
     setHeaderTitle('Lịch đặt');
@@ -90,6 +129,21 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
       showError(reason, { title: 'Không thể cập nhật lịch đặt' });
     }
   };
+
+  const openMessages = (booking: MentorBookingResponse) =>
+    router.push(
+      `/${locale}/messages?participantId=${encodeURIComponent(booking.mentorUserId || '')}`,
+    );
+
+  const renderBookingCard = (booking: MentorBookingResponse) => (
+    <BookingCard
+      booking={booking}
+      key={booking.bookingId}
+      onAction={(type) => setFormAction({ type, booking })}
+      onImmediate={(mutation) => void execute(booking, mutation)}
+      onMessage={() => openMessages(booking)}
+    />
+  );
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
@@ -121,15 +175,46 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
 
       {/* Line 2: Sort Filter & Refresh Button */}
       <div className="flex flex-col gap-3 rounded-2xl border border-border-color/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full sm:w-64">
-          <SelectField
-            value={sortDirection}
-            onValueChange={(val) => setSortDirection(val as 'ASC' | 'DESC')}
-            options={[
-              { value: 'DESC', label: 'Sắp xếp: Gần nhất trước' },
-              { value: 'ASC', label: 'Sắp xếp: Xa nhất trước' },
-            ]}
-          />
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <span className="hidden shrink-0 text-sm font-semibold text-text-secondary sm:inline">
+              Xem theo
+            </span>
+            <div
+              role="group"
+              aria-label="Xem theo"
+              className="grid w-full grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 sm:inline-grid sm:w-auto"
+            >
+              {VIEW_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                const active = view === option.value;
+                return (
+                  <button
+                    type="button"
+                    key={option.value}
+                    aria-pressed={active}
+                    onClick={() => setView(option.value)}
+                    className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-primary/20 ${active ? 'bg-white text-primary shadow-xs' : 'text-text-secondary hover:text-text-main'}`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {view === 'list' && (
+            <div className="w-full sm:w-64">
+              <SelectField
+                value={sortDirection}
+                onValueChange={(val) => setSortDirection(val as 'ASC' | 'DESC')}
+                options={[
+                  { value: 'DESC', label: 'Sắp xếp: Gần nhất trước' },
+                  { value: 'ASC', label: 'Sắp xếp: Xa nhất trước' },
+                ]}
+              />
+            </div>
+          )}
         </div>
         <Button
           variant="outline"
@@ -150,7 +235,32 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
           {error}
         </div>
       )}
-      {isLoading ? (
+      {!isLoading && (
+        <BookingActionBanner
+          bookings={bookings}
+          isSaving={isSaving}
+          onPay={(booking) => void execute(booking, { type: 'pay' })}
+          onConfirm={(booking) => setFormAction({ type: 'confirm', booking })}
+          onReportIssue={(booking) => setFormAction({ type: 'reportIssue', booking })}
+          onShowPending={() => setActiveTab('WAITING')}
+        />
+      )}
+      {view !== 'list' ? (
+        <BookingCalendar
+          bookings={bookings}
+          view={view}
+          onViewChange={setView}
+          isLoading={isLoading}
+          isSaving={isSaving}
+          locale={locale}
+          handlers={{
+            onAction: (booking, type) => setFormAction({ type, booking }),
+            onImmediate: (booking, mutation) => void execute(booking, mutation),
+            onMessage: openMessages,
+          }}
+          renderBookingCard={renderBookingCard}
+        />
+      ) : isLoading ? (
         <div className="grid gap-4" aria-label="Đang tải lịch đặt">
           {[1, 2, 3].map((item) => (
             <div className="h-32 animate-pulse rounded-2xl bg-slate-100" key={item} />
@@ -163,21 +273,7 @@ export function MyBookingsView({ locale: _locale }: { locale: string }) {
           <span className="text-sm text-text-muted">Các booking của bạn sẽ xuất hiện tại đây.</span>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {bookings.map((booking) => (
-            <BookingCard
-              booking={booking}
-              key={booking.bookingId}
-              onAction={(type) => setFormAction({ type, booking })}
-              onImmediate={(mutation) => void execute(booking, mutation)}
-              onMessage={() =>
-                router.push(
-                  `/${params.locale || 'vi'}/messages?participantId=${encodeURIComponent(booking.mentorUserId || '')}`,
-                )
-              }
-            />
-          ))}
-        </div>
+        <div className="grid gap-4">{bookings.map(renderBookingCard)}</div>
       )}
       <ActionModal
         action={formAction}
@@ -200,25 +296,7 @@ function BookingCard({
   onImmediate: (mutation: MenteeBookingMutation) => void;
   onMessage: () => void;
 }) {
-  const canCheckIn = Boolean(
-    booking.attendance?.canCheckIn && !booking.attendance.currentUserCheckedIn,
-  );
-  const canMessage =
-    Boolean(booking.conversationId || booking.mentorUserId) &&
-    [
-      'UPCOMING',
-      'IN_SESSION',
-      'WAITING_CONFIRMATION',
-      'UNDER_REVIEW',
-      'FEEDBACK_REQUIRED',
-      'COMPLETED',
-    ].includes(booking.displayState);
-
-  const isPendingStatus =
-    booking.bookingStatus === 'PENDING' ||
-    booking.bookingStatus === 'REQUESTED' ||
-    booking.displayState === 'PENDING_MENTOR_RESPONSE';
-  const canCancel = booking.canCancel && isPendingStatus;
+  const { canCheckIn, canMessage, canCancel, canJoin } = getBookingActions(booking);
 
   return (
     <article className="grid gap-4 rounded-2xl border border-border-color bg-white p-5 shadow-xs">
@@ -248,7 +326,7 @@ function BookingCard({
             Check-in
           </Button>
         )}
-        {booking.canJoin && booking.meetingLink && (
+        {canJoin && (
           <Button
             leftIcon={<Video />}
             onClick={() => window.open(booking.meetingLink || '', '_blank', 'noopener,noreferrer')}
