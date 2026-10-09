@@ -84,6 +84,8 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
   const title = headerTitle ?? routeTitle(pathname);
   const isMentor = user?.roles?.includes('MENTOR');
   const isDashboard = pathname.endsWith('/dashboard') && !pathname.includes('/mentor/dashboard');
+  // On the blog the watermark sits behind the cards and reads as a broken image.
+  const hidesMascot = isDashboard || pathname.includes('/blog');
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -111,7 +113,7 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
   return (
     <MenteeShellContext.Provider value={contextValue}>
       <div className="min-h-screen bg-bg text-text-main flex relative overflow-x-clip">
-        {!isDashboard && (
+        {!hidesMascot && (
           <div
             className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
             aria-hidden="true"
