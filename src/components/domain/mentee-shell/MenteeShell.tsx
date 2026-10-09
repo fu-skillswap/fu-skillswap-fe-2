@@ -84,8 +84,9 @@ export function MenteeShell({ children, locale }: { children: React.ReactNode; l
   const title = headerTitle ?? routeTitle(pathname);
   const isMentor = user?.roles?.includes('MENTOR');
   const isDashboard = pathname.endsWith('/dashboard') && !pathname.includes('/mentor/dashboard');
-  // On the blog the watermark sits behind the cards and reads as a broken image.
-  const hidesMascot = isDashboard || pathname.includes('/blog');
+  // On the blog and mentor list the watermark sits behind the cards and reads as a broken image.
+  const hidesMascot =
+    isDashboard || pathname.includes('/blog') || pathname.includes('/mentor-booking');
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
