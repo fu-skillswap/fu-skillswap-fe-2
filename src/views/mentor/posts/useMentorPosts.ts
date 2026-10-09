@@ -9,6 +9,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { ApiClientError } from '@/models/apiClient';
 import type { MentorBlogPostDetailResponse, MentorBlogPostCreateRequest } from '@/models/auth';
 import { mentorPostSchema, type MentorPostFormValues } from '@/models/schemas/mentorPostSchema';
 import { useAuth } from '@/providers/AuthProvider';
@@ -116,6 +117,7 @@ export function useMentorPosts() {
 
   const save = async (values: MentorPostFormValues, shouldPublish: boolean) => {
     setIsSaving(true);
+    let postId = editingPost?.id;
     try {
       const payload: MentorBlogPostCreateRequest = {
         title: values.title.trim(),
@@ -132,9 +134,13 @@ export function useMentorPosts() {
             expectedVersion: editingPost.version,
           })
         : await mentorPostRepo.create(payload);
+      postId = saved.id;
       setEditingPost(saved);
       if (shouldPublish) {
-        await mentorPostRepo.publish(saved.id, { expectedVersion: saved.version });
+        // The update response can carry the version from before the write, which made publish
+        // fail with 409 for drafts saved earlier. Publish against the stored version instead.
+        const current = editingPost ? await mentorPostRepo.detail(saved.id) : saved;
+        await mentorPostRepo.publish(saved.id, { expectedVersion: current.version });
       }
       showSuccess(
         shouldPublish
@@ -145,7 +151,18 @@ export function useMentorPosts() {
       invalidateReaderLists();
       await refresh();
     } catch (reason) {
-      showError(reason, { title: 'Không thể lưu bài viết' });
+      showError(reason, {
+        title: 'Không thể lưu bài viết',
+        conflictDescription: 'Bài viết vừa được cập nhật. Bạn bấm lưu hoặc đăng lại nhé.',
+      });
+      // A version conflict would repeat on every retry with the stale version: resync it.
+      if (postId && reason instanceof ApiClientError && reason.status === 409) {
+        try {
+          setEditingPost(await mentorPostRepo.detail(postId));
+        } catch {
+          // Keep the current state; the next attempt shows the error again.
+        }
+      }
     } finally {
       setIsSaving(false);
     }
