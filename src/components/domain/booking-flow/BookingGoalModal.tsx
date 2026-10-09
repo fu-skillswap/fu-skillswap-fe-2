@@ -6,6 +6,7 @@
 
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { MentorService } from '@/models/entities';
@@ -32,7 +33,12 @@ interface BookingGoalModalProps {
   isSubmitting: boolean;
   /** Callback khi người dùng nhấn Xác nhận đặt lịch */
   onConfirm: () => void;
+  /** Field error returned by the server for the title (shown under the input). */
+  titleServerError?: string;
 }
+
+const TITLE_MAX_LENGTH = 200;
+const DESCRIPTION_MAX_LENGTH = 2000;
 
 function formatPrice(price?: number) {
   return price ? new Intl.NumberFormat('en-US').format(price) : '—';
@@ -49,7 +55,34 @@ export function BookingGoalModal({
   onDescriptionChange,
   isSubmitting,
   onConfirm,
+  titleServerError,
 }: BookingGoalModalProps) {
+  const titleRef = useRef<HTMLInputElement>(null);
+  const [titleError, setTitleError] = useState<string>();
+
+  useEffect(() => {
+    if (!open) setTitleError(undefined);
+  }, [open]);
+
+  useEffect(() => {
+    if (open && titleServerError && !learningGoalTitle.trim()) {
+      setTitleError(titleServerError);
+      titleRef.current?.focus();
+    }
+    // Only when the modal opens or a new server error arrives, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, titleServerError]);
+
+  const submit = () => {
+    if (!learningGoalTitle.trim()) {
+      setTitleError('Vui lòng nhập tiêu đề buổi học.');
+      titleRef.current?.focus();
+      return;
+    }
+    setTitleError(undefined);
+    onConfirm();
+  };
+
   return (
     <Modal
       open={open}
@@ -148,6 +181,7 @@ export function BookingGoalModal({
         {/* Form Field 1: Tiêu đề buổi học (learningGoalTitle) */}
         <div className="ui-form-field" style={{ gap: '8px' }}>
           <label
+            htmlFor="booking-goal-title"
             className="ui-form-label"
             style={{
               fontWeight: '700',
@@ -155,30 +189,50 @@ export function BookingGoalModal({
               color: 'var(--text-main)',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '4px',
             }}
           >
             Tiêu đề buổi học
+            <span className="font-bold text-danger" aria-hidden="true">
+              *
+            </span>
           </label>
           <input
+            ref={titleRef}
+            id="booking-goal-title"
             type="text"
-            className="ui-input w-full !border-gray-300 focus:!border-primary focus:!ring-primary"
+            required
+            aria-required="true"
+            aria-invalid={Boolean(titleError)}
+            aria-describedby="booking-goal-title-hint"
+            maxLength={TITLE_MAX_LENGTH}
+            className={`ui-input w-full focus:!ring-primary ${titleError ? '!border-danger focus:!border-danger' : '!border-gray-300 focus:!border-primary'}`}
             value={learningGoalTitle}
-            onChange={(e) => onTitleChange(e.target.value)}
+            onChange={(e) => {
+              onTitleChange(e.target.value);
+              if (titleError && e.target.value.trim()) setTitleError(undefined);
+            }}
             placeholder="Review lộ trình học Spring Boot và chuẩn bị phỏng vấn intern"
             style={{ fontSize: '13px', padding: '0 16px', height: '44px', borderRadius: '10px' }}
           />
           <p
-            className="ui-form-helper"
-            style={{ marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}
+            id="booking-goal-title-hint"
+            className={`ui-form-helper ${titleError ? 'font-medium text-danger' : ''}`}
+            role={titleError ? 'alert' : undefined}
+            style={{
+              marginTop: '2px',
+              fontSize: '11.5px',
+              color: titleError ? undefined : 'var(--text-muted)',
+            }}
           >
-            Nội dung chủ đề chính bạn mong muốn Mentor giải đáp
+            {titleError || 'Nội dung chủ đề chính bạn mong muốn Mentor giải đáp'}
           </p>
         </div>
 
         {/* Form Field 2: Mô tả mong muốn (learningGoalDescription) */}
         <div className="ui-form-field" style={{ gap: '8px' }}>
           <label
+            htmlFor="booking-goal-description"
             className="ui-form-label"
             style={{
               fontWeight: '700',
@@ -190,8 +244,11 @@ export function BookingGoalModal({
             }}
           >
             Mô tả mong muốn
+            <span className="text-xs font-medium text-text-muted">(không bắt buộc)</span>
           </label>
           <textarea
+            id="booking-goal-description"
+            maxLength={DESCRIPTION_MAX_LENGTH}
             rows={4}
             className="ui-textarea w-full !border-gray-300 focus:!border-primary focus:!ring-primary"
             value={learningGoalDescription}
@@ -253,7 +310,7 @@ export function BookingGoalModal({
           <Button
             variant="primary"
             disabled={isSubmitting}
-            onClick={onConfirm}
+            onClick={submit}
             style={{
               height: '44px',
               padding: '0 28px',
