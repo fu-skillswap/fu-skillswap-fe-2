@@ -1,20 +1,24 @@
 /**
  * @file LegalText.tsx
- * @description Hiển thị một dòng văn bản pháp lý: `**chữ**` thành in đậm, `[chỗ trống]` được tô
- * vàng ở môi trường dev để nhóm dễ thấy giá trị chưa điền (production hiển thị chữ thường).
+ * @description Hiển thị một dòng văn bản pháp lý: `**chữ**` thành in đậm, địa chỉ email thành
+ * liên kết `mailto:`.
  */
 
 import { Fragment } from 'react';
 
-const highlightPlaceholders = process.env.NODE_ENV !== 'production';
+const EMAIL_PATTERN = /([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
 
-function withPlaceholders(text: string, key: string) {
-  if (!highlightPlaceholders) return text;
-  return text.split(/(\[[^\]]+\])/g).map((part, index) =>
-    /^\[[^\]]+\]$/.test(part) ? (
-      <mark key={`${key}-${index}`} className="rounded bg-amber-100 px-1 text-amber-900">
+function withEmailLinks(text: string, key: string) {
+  // `split` with a capture group puts the matched emails at the odd indexes.
+  return text.split(EMAIL_PATTERN).map((part, index) =>
+    index % 2 === 1 ? (
+      <a
+        key={`${key}-${index}`}
+        href={`mailto:${part}`}
+        className="break-all rounded-sm text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
         {part}
-      </mark>
+      </a>
     ) : (
       <Fragment key={`${key}-${index}`}>{part}</Fragment>
     ),
@@ -25,10 +29,10 @@ export function LegalText({ text }: { text: string }) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
     part.startsWith('**') && part.endsWith('**') && part.length > 4 ? (
       <strong key={index} className="font-bold text-[#12386e]">
-        {withPlaceholders(part.slice(2, -2), `b${index}`)}
+        {withEmailLinks(part.slice(2, -2), `b${index}`)}
       </strong>
     ) : (
-      <Fragment key={index}>{withPlaceholders(part, `t${index}`)}</Fragment>
+      <Fragment key={index}>{withEmailLinks(part, `t${index}`)}</Fragment>
     ),
   );
 }

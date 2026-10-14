@@ -12,6 +12,8 @@ import { bookingRepo } from '@/repositories/bookingRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
 import { useAuth } from '@/providers/AuthProvider';
 import { showInfo, showSuccess } from '@/utils/toast';
+import { SKILLSWAP_CONTACT_EMAIL } from '@/constants/contact';
+import { ACCOUNT_DELETION_EMAIL_SUBJECT } from '@/constants/privacyPolicy';
 import type { MentorBookingResponse, StudentProfileResponse } from '@/models/auth';
 import {
   AlertTriangle,
@@ -282,7 +284,6 @@ function AccountSettings({
   isMentor: boolean;
 }) {
   const router = useRouter();
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -362,57 +363,6 @@ function AccountSettings({
           </Button>
         </SettingRow>
       </SettingsCard>
-
-      <section className="rounded-[20px] border border-solid border-red-200 bg-white p-5 shadow-[0_4px_18px_rgba(16,50,90,0.035)] sm:p-6">
-        <div className="flex items-start gap-3">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] bg-red-50 text-red-700">
-            <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="m-0 text-base font-extrabold text-text-main">Xóa tài khoản</h2>
-            <p className="mb-0 mt-1 text-xs leading-5 text-text-secondary">
-              Xóa vĩnh viễn hồ sơ, bài viết và lịch sử booking. Không thể hoàn tác.
-            </p>
-          </div>
-        </div>
-        {!confirmDelete ? (
-          <Button
-            className="mt-4"
-            size="sm"
-            variant="outline"
-            onClick={() => setConfirmDelete(true)}
-          >
-            Xóa tài khoản
-          </Button>
-        ) : (
-          <div className="mt-4 rounded-xl bg-red-50 p-4" role="alert">
-            <p className="m-0 text-sm font-semibold leading-6 text-red-900">
-              Bạn chắc chắn muốn xóa? Các buổi booking sắp tới sẽ bị hủy và mentor sẽ được thông
-              báo.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                autoFocus
-                onClick={() => setConfirmDelete(false)}
-                className="h-9 cursor-pointer rounded-xl border border-solid border-primary-border bg-white px-3.5 text-xs font-bold text-primary outline-none hover:bg-primary-light focus-visible:ring-4 focus-visible:ring-primary/20"
-              >
-                Giữ tài khoản
-              </button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => {
-                  // TODO(api): Xóa tài khoản sau khi backend hỗ trợ kiểm tra booking liên quan.
-                  showInfo('Yêu cầu xóa tài khoản chưa được gửi vì API chưa hỗ trợ.');
-                }}
-              >
-                Xóa vĩnh viễn
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
     </div>
   );
 }
@@ -491,6 +441,86 @@ function NotificationSettings() {
 }
 
 function PrivacySettings({ profile }: { profile: StudentProfileResponse | null }) {
+  return (
+    <div className="space-y-4">
+      <PrivacyPreferences profile={profile} />
+      <DeleteAccountCard accountEmail={profile?.email} />
+    </div>
+  );
+}
+
+/** Account deletion flow described in section 7 of the privacy policy (request by email). */
+function DeleteAccountCard({ accountEmail }: { accountEmail?: string }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  // TODO(api): Replace the email request with an account deletion endpoint when the backend has one.
+  const mailto = `mailto:${SKILLSWAP_CONTACT_EMAIL}?subject=${encodeURIComponent(
+    ACCOUNT_DELETION_EMAIL_SUBJECT,
+  )}&body=${encodeURIComponent(`Email tài khoản: ${accountEmail || ''}`)}`;
+
+  return (
+    <section
+      id="xoa-tai-khoan"
+      className="rounded-[20px] border border-solid border-red-200 bg-white p-5 shadow-[0_4px_18px_rgba(16,50,90,0.035)] sm:p-6"
+    >
+      <div className="flex items-start gap-3">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] bg-red-50 text-red-700">
+          <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className="m-0 text-base font-extrabold text-text-main">Xóa tài khoản</h2>
+          <p className="mb-0 mt-1 text-xs leading-5 text-text-secondary">
+            Gửi yêu cầu qua email. Tài khoản bị khóa trong 3 ngày làm việc và dữ liệu được xóa vĩnh
+            viễn sau 30 ngày.
+          </p>
+        </div>
+      </div>
+      {!confirmDelete ? (
+        <Button className="mt-4" size="sm" variant="outline" onClick={() => setConfirmDelete(true)}>
+          Xóa tài khoản
+        </Button>
+      ) : (
+        <div className="mt-4 rounded-xl bg-red-50 p-4" role="alert">
+          <ul className="m-0 grid gap-1.5 pl-5 text-sm leading-6 text-red-900">
+            <li>
+              Sẽ bị xóa: hồ sơ, tin nhắn, lịch sử đặt lịch, minh chứng xác minh. Bài viết và bình
+              luận bị xóa hoặc chuyển thành &quot;Người dùng đã xóa&quot;.
+            </li>
+            <li>
+              Được giữ lại: lịch sử giao dịch thanh toán, trong thời hạn pháp luật về kế toán, thuế
+              yêu cầu.
+            </li>
+            <li>
+              Hãy hoàn tất hoặc hủy các buổi học sắp diễn ra và rút hết SCoin trước khi gửi yêu cầu.
+            </li>
+            <li>
+              Nhóm hỗ trợ trả lời trong 3 ngày làm việc và khóa tài khoản. Dữ liệu được xóa vĩnh
+              viễn sau 30 ngày; trong thời gian này bạn có thể trả lời thư để hủy yêu cầu.
+            </li>
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setConfirmDelete(false)}
+              className="h-9 cursor-pointer rounded-xl border border-solid border-primary-border bg-white px-3.5 text-xs font-bold text-primary outline-none hover:bg-primary-light focus-visible:ring-4 focus-visible:ring-primary/20"
+            >
+              Giữ tài khoản
+            </button>
+            <a
+              href={mailto}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-red-600 px-3.5 text-xs font-bold text-white no-underline outline-none hover:bg-red-700 focus-visible:ring-4 focus-visible:ring-red-600/20"
+            >
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              Gửi yêu cầu xóa
+            </a>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PrivacyPreferences({ profile }: { profile: StudentProfileResponse | null }) {
   const [visibility, setVisibility] = useState('everyone');
   const [values, setValues] = useState({ school: true, preBookingMessage: true, anonymous: false });
   const toggle = (key: keyof typeof values, value: boolean) => {

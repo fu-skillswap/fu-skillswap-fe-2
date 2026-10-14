@@ -7,19 +7,24 @@
 import { LandingFooter } from '@/components/domain/landing/LandingFooter';
 import { LandingHeader } from '@/components/domain/landing/LandingHeader';
 import {
+  ACCOUNT_DELETION_EMAIL_SUBJECT,
   PRIVACY_POLICY_META,
   PRIVACY_QUICK_READ,
   PRIVACY_SECTIONS,
   type PrivacyBlock,
   type PrivacySection,
 } from '@/constants/privacyPolicy';
-import { ArrowUp, CircleCheck, Info, Settings, TriangleAlert } from 'lucide-react';
+import { ArrowUp, CircleCheck, Info, Mail, Settings, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { LegalText } from './LegalText';
 import { PrivacyToc } from './PrivacyToc';
 
-/** Section 7 (account deletion) ends with a shortcut to the privacy settings. */
-const SETTINGS_LINK_SECTION: PrivacySection['id'] = 'xoa-tai-khoan';
+/** Section 7 (account deletion) ends with the deletion email and privacy settings shortcuts. */
+const ACCOUNT_DELETION_SECTION: PrivacySection['id'] = 'xoa-tai-khoan';
+
+const deletionMailto = `mailto:${PRIVACY_POLICY_META.contactEmail}?subject=${encodeURIComponent(
+  ACCOUNT_DELETION_EMAIL_SUBJECT,
+)}`;
 
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
@@ -171,9 +176,7 @@ export function PrivacyPolicyView({ locale }: { locale: string }) {
                   ·
                 </span>
                 Có hiệu lực từ:{' '}
-                <b className="text-[#12386e]">
-                  <LegalText text={PRIVACY_POLICY_META.effectiveFrom} />
-                </b>
+                <b className="text-[#12386e]">{PRIVACY_POLICY_META.effectiveFrom}</b>
               </p>
             </div>
 
@@ -210,7 +213,7 @@ export function PrivacyPolicyView({ locale }: { locale: string }) {
           </div>
 
           <article className="min-w-0 max-w-[72ch] text-base leading-[1.75] text-[#435b78]">
-            {PRIVACY_SECTIONS.map((section, index) => (
+            {PRIVACY_SECTIONS.map((section) => (
               <section
                 key={section.id}
                 aria-labelledby={section.id}
@@ -220,19 +223,29 @@ export function PrivacyPolicyView({ locale }: { locale: string }) {
                   id={section.id}
                   className="mb-2 mt-6 scroll-mt-[120px] text-2xl font-extrabold leading-tight text-[#12386e]"
                 >
-                  {index + 1}. {section.title}
+                  {section.title}
                 </h2>
                 {section.blocks.map((block, blockIndex) => (
                   <Block key={blockIndex} block={block} />
                 ))}
-                {section.id === SETTINGS_LINK_SECTION && (
-                  <Link
-                    href={`/${locale}/settings?section=settings&tab=privacy#quyen-rieng-tu`}
-                    className={`mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white no-underline transition hover:bg-primary-hover ${focusRing}`}
-                  >
-                    <Settings className="h-4 w-4" aria-hidden="true" />
-                    Mở Cài đặt quyền riêng tư
-                  </Link>
+                {section.id === ACCOUNT_DELETION_SECTION && (
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    {/* Works without login: required as the Google Play data-deletion link. */}
+                    <a
+                      href={deletionMailto}
+                      className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white no-underline transition hover:bg-primary-hover ${focusRing}`}
+                    >
+                      <Mail className="h-4 w-4" aria-hidden="true" />
+                      Gửi email yêu cầu xóa
+                    </a>
+                    <Link
+                      href={`/${locale}/settings?section=settings&tab=privacy#quyen-rieng-tu`}
+                      className={`inline-flex min-h-11 items-center gap-2 rounded-xl border border-solid border-sky-200 bg-white px-5 text-sm font-bold text-primary no-underline transition hover:bg-sky-50 ${focusRing}`}
+                    >
+                      <Settings className="h-4 w-4" aria-hidden="true" />
+                      Mở Cài đặt quyền riêng tư
+                    </Link>
+                  </div>
                 )}
               </section>
             ))}
