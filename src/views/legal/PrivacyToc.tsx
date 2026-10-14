@@ -19,7 +19,7 @@ const linkBase =
 function TocLinks({ items, activeId }: { items: TocItem[]; activeId?: string }) {
   return (
     <ol className="m-0 grid list-none gap-0.5 p-0">
-      {items.map((item, index) => {
+      {items.map((item) => {
         const isActive = item.id === activeId;
         return (
           <li key={item.id}>
@@ -32,7 +32,7 @@ function TocLinks({ items, activeId }: { items: TocItem[]; activeId?: string }) 
                   : 'text-[#536a84] hover:bg-sky-50/70 hover:text-[#12386e]'
               }`}
             >
-              {index + 1}. {item.title}
+              {item.title}
             </a>
           </li>
         );

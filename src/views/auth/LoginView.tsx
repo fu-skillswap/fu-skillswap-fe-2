@@ -9,6 +9,7 @@
 
 import { showError } from '@/utils/toast';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { useLoginLogic } from './useLoginLogic';
 
@@ -73,7 +74,13 @@ export function LoginView({ locale, adminOnly = false }: { locale: string; admin
           <p className="mb-0 mt-8 text-sm leading-6 text-[#6B7A90]">
             Khi tiếp tục, bạn đồng ý với{' '}
             <span className="font-medium text-primary">Điều khoản</span> và{' '}
-            <span className="font-medium text-primary">Chính sách quyền riêng tư</span>.
+            <Link
+              href={`/${locale}/chinh-sach-bao-mat`}
+              className="font-medium text-primary no-underline hover:underline"
+            >
+              Chính sách bảo mật
+            </Link>
+            .
           </p>
         </section>
       </section>
