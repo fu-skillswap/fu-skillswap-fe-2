@@ -11,7 +11,8 @@
 
   display: grid;
   gap: 16px;
-  max-width: 880px;
+  width: 100%;
+  max-width: 1120px;
   margin: 0 auto;
   min-width: 0;
 }
@@ -175,12 +176,11 @@
 .tabs {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
   padding: 4px;
   margin: -4px;
-  scrollbar-width: thin;
 }
 
 .tab {
@@ -882,6 +882,16 @@
 @media (max-width: 767px) {
   .headerCard {
     padding: 20px;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .toolbar {
