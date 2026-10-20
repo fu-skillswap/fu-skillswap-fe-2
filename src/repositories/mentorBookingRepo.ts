@@ -38,6 +38,9 @@ export const mentorBookingRepo = {
     apiClient<MentorBookingResponse>(`/api/mentor/bookings/${bookingId}/reject`, {
       method: 'POST',
       data,
+      headers: {
+        'Idempotency-Key': createIdempotencyKey(),
+      },
     }),
   complete: (
     bookingId: string,
@@ -54,5 +57,8 @@ export const mentorBookingRepo = {
     apiClient<MentorBookingResponse>(`/api/mentor/bookings/${bookingId}/cancel`, {
       method: 'POST',
       data,
+      headers: {
+        'Idempotency-Key': createIdempotencyKey(),
+      },
     }),
 };
