@@ -34,7 +34,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { SelectField } from '@/components/ui/SelectField';
 import { ApiClientError } from '@/models/apiClient';
-import type { GoogleCalendarStatusResponse, MentorBookingResponse } from '@/models/auth';
+import type { MentorBookingResponse } from '@/models/auth';
 import { BOOKING_TONES } from '@/views/mentee/my-bookings/bookingStatusConfig';
 import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
 import {
@@ -60,20 +60,10 @@ import {
   timeRange,
   toDate,
 } from './mentorInbox';
+import { AcceptBookingModal, menteeFirstName } from './AcceptBookingModal';
 import { type MentorBookingMutation, useMentorBookings } from './useMentorBookings';
 
-type BookingAction = 'accept' | 'complete' | 'cancel';
-type MeetingPlatform = NonNullable<MentorBookingResponse['meetingPlatform']>;
-
-const MEETING_PLATFORMS: MeetingPlatform[] = [
-  'GOOGLE_MEET',
-  'ZOOM',
-  'MICROSOFT_TEAMS',
-  'DISCORD',
-  'OFFLINE',
-  'OTHER',
-];
-
+type BookingAction = 'complete' | 'cancel';
 const FOCUS_RING = 'outline-none focus-visible:ring-4 focus-visible:ring-primary/20';
 const RECENT_LIMIT = 5;
 const LIST_STEP = 10;
@@ -85,10 +75,6 @@ const REJECT_REASONS = [
   'Lý do khác',
 ] as const;
 const OTHER_REASON = 'Lý do khác';
-
-function meetingPlatformOf(value: string): MeetingPlatform | undefined {
-  return MEETING_PLATFORMS.find((platform) => platform === value);
-}
 
 function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']) {
   if (platform === 'GOOGLE_MEET') return 'Google Meet';
@@ -189,6 +175,7 @@ export function MentorBookingsView() {
   const [detail, setDetail] = useState<MentorBookingResponse>();
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [action, setAction] = useState<{ type: BookingAction; booking: MentorBookingResponse }>();
+  const [acceptTarget, setAcceptTarget] = useState<MentorBookingResponse>();
   const [rejectingId, setRejectingId] = useState<string>();
   const [acceptingIds, setAcceptingIds] = useState<ReadonlySet<string>>(() => new Set());
   const [justAcceptedIds, setJustAcceptedIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -271,7 +258,7 @@ export function MentorBookingsView() {
     booking: MentorBookingResponse,
     data: Extract<MentorBookingMutation, { type: 'accept' }>['data'],
   ) => {
-    const mentee = booking.menteeDisplayName || 'Mentee';
+    const mentee = menteeFirstName(booking.menteeDisplayName);
     setCardError(booking.bookingId, undefined);
     markAccepting(booking.bookingId, true);
     markJustAccepted(booking.bookingId, true);
@@ -288,17 +275,26 @@ export function MentorBookingsView() {
     }
   };
 
-  /**
-   * One tap when Google Calendar can create the Meet link; otherwise the backend needs a
-   * platform and link/location, so the existing accept form opens first.
-   */
+  /** One tap when Google Calendar can create the Meet link; otherwise the accept modal opens. */
   const handleAccept = (booking: MentorBookingResponse) => {
     if (canAutoGenerateGoogleMeet) {
       void acceptBooking(booking, { meetingPlatform: 'GOOGLE_MEET' });
       return;
     }
     setDetail(undefined);
-    setAction({ type: 'accept', booking });
+    setAcceptTarget(booking);
+  };
+
+  /** Accept from the modal: it stays open while saving and shows API errors inline. */
+  const acceptFromModal = async (
+    booking: MentorBookingResponse,
+    data: Extract<MentorBookingMutation, { type: 'accept' }>['data'],
+  ) => {
+    setCardError(booking.bookingId, undefined);
+    await mutate(booking.bookingId, { type: 'accept', data }, acceptedPatch(booking));
+    markJustAccepted(booking.bookingId, true);
+    setAcceptTarget(undefined);
+    showSuccess(`Đã nhận lịch. ${menteeFirstName(booking.menteeDisplayName)} đã được thông báo.`);
   };
 
   const startReject = (booking: MentorBookingResponse) => {
@@ -318,11 +314,7 @@ export function MentorBookingsView() {
   };
 
   const executeAction = async (mutation: MentorBookingMutation) => {
-    if (!action) return;
-    if (mutation.type === 'accept') {
-      await acceptBooking(action.booking, mutation.data);
-      return;
-    }
+    if (!action || mutation.type === 'accept') return;
     try {
       await mutate(action.booking.bookingId, mutation);
       showSuccess(
@@ -679,9 +671,15 @@ export function MentorBookingsView() {
         onAction={(type) => detail && setAction({ type, booking: detail })}
         onClose={() => setDetail(undefined)}
       />
+      <AcceptBookingModal
+        booking={acceptTarget}
+        googleCalendarStatus={googleCalendarStatus}
+        onClose={() => setAcceptTarget(undefined)}
+        onAccept={acceptFromModal}
+        errorMessage={(reason) => actionErrorMessage(reason, 'accept')}
+      />
       <BookingActionModal
         action={action}
-        googleCalendarStatus={googleCalendarStatus}
         isSaving={isSaving}
         onClose={() => setAction(undefined)}
         onSubmit={(mutation) => void executeAction(mutation)}
@@ -1236,6 +1234,15 @@ function BookingDetailModal({
             <Info icon={<MapPin />} label="Địa điểm" value={booking.location} />
           </div>
         )}
+        {booking.mentorResponseNote?.trim() && (
+          <div className="mt-3">
+            <Info
+              icon={<MessageSquare />}
+              label="Ghi chú của bạn"
+              value={booking.mentorResponseNote.trim()}
+            />
+          </div>
+        )}
         {booking.calendarSyncErrorMessage && (
           <div
             className="mt-3 rounded-xl border border-amber-200 bg-warning-soft p-3 text-sm text-amber-700"
@@ -1301,46 +1308,22 @@ function Info({ icon, label, value }: { icon: ReactNode; label: string; value: s
 
 function BookingActionModal({
   action,
-  googleCalendarStatus,
   isSaving,
   onClose,
   onSubmit,
 }: {
   action?: { type: BookingAction; booking: MentorBookingResponse };
-  googleCalendarStatus?: GoogleCalendarStatusResponse;
   isSaving: boolean;
   onClose: () => void;
   onSubmit: (mutation: MentorBookingMutation) => void;
 }) {
   const [note, setNote] = useState('');
-  const [meetingPlatform, setMeetingPlatform] = useState('');
-  const [meetingLink, setMeetingLink] = useState('');
-  const [location, setLocation] = useState('');
-  const canAutoGenerateGoogleMeet = Boolean(
-    googleCalendarStatus?.connected && !googleCalendarStatus.needsReconnect,
-  );
-  const shouldAutoGenerateGoogleMeet =
-    meetingPlatform === 'GOOGLE_MEET' && canAutoGenerateGoogleMeet;
-  const requiresMeetingLink = Boolean(
-    meetingPlatform && meetingPlatform !== 'OFFLINE' && !shouldAutoGenerateGoogleMeet,
-  );
-  const requiresLocation = meetingPlatform === 'OFFLINE';
-  const isAcceptFormValid = Boolean(
-    meetingPlatform &&
-    (!requiresMeetingLink || meetingLink.trim()) &&
-    (!requiresLocation || location.trim()),
-  );
-
   useEffect(() => {
     setNote('');
-    setMeetingPlatform(canAutoGenerateGoogleMeet ? 'GOOGLE_MEET' : '');
-    setMeetingLink('');
-    setLocation('');
-  }, [action, canAutoGenerateGoogleMeet]);
+  }, [action]);
 
   if (!action) return null;
   const title = {
-    accept: 'Nhận lịch',
     complete: 'Kết thúc buổi mentoring',
     cancel: 'Hủy lịch đặt',
   }[action.type];
@@ -1349,18 +1332,6 @@ function BookingActionModal({
   const submit = () => {
     const trimmedNote = note.trim();
     if (requiresReason && !trimmedNote) return;
-    if (action.type === 'accept') {
-      if (!isAcceptFormValid) return;
-      onSubmit({
-        type: 'accept',
-        data: {
-          mentorResponseNote: trimmedNote || undefined,
-          meetingPlatform: meetingPlatformOf(meetingPlatform),
-          meetingLink: requiresMeetingLink ? meetingLink.trim() : undefined,
-          location: requiresLocation ? location.trim() : undefined,
-        },
-      });
-    }
     if (action.type === 'complete') {
       onSubmit({ type: 'complete', data: { completionNote: trimmedNote || undefined } });
     }
@@ -1372,69 +1343,6 @@ function BookingActionModal({
   return (
     <Modal open onClose={onClose} title={title}>
       <div className="grid gap-4 [&_input]:h-11 [&_input]:rounded-xl [&_input]:border [&_input]:border-border-color [&_input]:px-3 [&_label]:grid [&_label]:gap-2 [&_label]:text-sm [&_select]:h-11 [&_select]:rounded-xl [&_select]:border [&_select]:border-border-color [&_select]:bg-white [&_select]:px-3 [&_textarea]:min-h-28 [&_textarea]:rounded-xl [&_textarea]:border [&_textarea]:border-border-color [&_textarea]:p-3">
-        {action.type === 'accept' && (
-          <>
-            <SelectField
-              label="Nền tảng buổi mentoring"
-              required
-              placeholder="Chọn nền tảng"
-              value={meetingPlatform}
-              onValueChange={(val) => setMeetingPlatform(val)}
-              options={[
-                { value: 'GOOGLE_MEET', label: 'Google Meet' },
-                { value: 'ZOOM', label: 'Zoom' },
-                { value: 'MICROSOFT_TEAMS', label: 'Microsoft Teams' },
-                { value: 'DISCORD', label: 'Discord' },
-                { value: 'OFFLINE', label: 'Trực tiếp' },
-                { value: 'OTHER', label: 'Khác' },
-              ]}
-            />
-            {shouldAutoGenerateGoogleMeet ? (
-              <div className="flex gap-3 rounded-xl border border-primary-border bg-primary-light p-3 text-sm text-primary">
-                <CalendarDays aria-hidden="true" />
-                <div>
-                  <strong>Google Meet sẽ được tạo tự động</strong>
-                  <span>
-                    Booking sẽ được đồng bộ với {googleCalendarStatus?.email || 'Google Calendar'}.
-                    Link tham gia do hệ thống tạo và không cần nhập thủ công.
-                  </span>
-                </div>
-              </div>
-            ) : googleCalendarStatus?.needsReconnect && meetingPlatform === 'GOOGLE_MEET' ? (
-              <div className="rounded-xl border border-amber-200 bg-warning-soft p-3 text-sm text-amber-700">
-                Kết nối Google Calendar cần được xác thực lại. Vui lòng kết nối lại trong Cài đặt
-                lịch để tự động tạo Google Meet.
-              </div>
-            ) : null}
-            {requiresMeetingLink && (
-              <label>
-                <span>
-                  Liên kết cuộc họp <span className="text-danger">*</span>
-                </span>
-                <input
-                  required
-                  type="url"
-                  value={meetingLink}
-                  onChange={(event) => setMeetingLink(event.target.value)}
-                  placeholder="https://..."
-                />
-              </label>
-            )}
-            {requiresLocation && (
-              <label>
-                <span>
-                  Địa điểm <span className="text-danger">*</span>
-                </span>
-                <input
-                  required
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                  placeholder="Nhập địa điểm gặp"
-                />
-              </label>
-            )}
-          </>
-        )}
         <label>
           {requiresReason ? 'Lý do' : 'Ghi chú (không bắt buộc)'}
           <textarea
@@ -1453,12 +1361,10 @@ function BookingActionModal({
         <Button
           loading={isSaving}
           variant={requiresReason ? 'destructive' : 'primary'}
-          disabled={
-            (requiresReason && !note.trim()) || (action.type === 'accept' && !isAcceptFormValid)
-          }
+          disabled={requiresReason && !note.trim()}
           onClick={submit}
         >
-          {action.type === 'accept' ? 'Nhận lịch' : 'Xác nhận'}
+          Xác nhận
         </Button>
       </footer>
     </Modal>
