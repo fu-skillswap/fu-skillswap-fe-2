@@ -335,9 +335,31 @@ export interface BookingActions {
   cancelLabel: 'Hủy yêu cầu' | 'Hủy lịch';
 }
 
+const FINALIZED_KEYS: BookingStateKey[] = [
+  'CANCELED_BY_ME',
+  'CANCELED_BY_MENTOR',
+  'REJECTED',
+  'EXPIRED',
+];
+
+/** Rejected, canceled or expired: closed for good, nothing can reopen or change it. */
+export const isFinalizedBooking = (booking: MentorBookingResponse) =>
+  FINALIZED_KEYS.includes(getBookingStateKey(booking));
+
 /** Derives card actions from the same backend capability flags the page used before. */
 export function getBookingActions(booking: MentorBookingResponse): BookingActions {
   const key = getBookingStateKey(booking);
+  if (FINALIZED_KEYS.includes(key)) {
+    // Never offer cancel / pay / edit on a finalized booking, whatever the flags say.
+    return {
+      canCheckIn: false,
+      canMessage: false,
+      canReportIssue: false,
+      canRespondIssue: false,
+      canCancel: false,
+      cancelLabel: 'Hủy lịch',
+    };
+  }
   const canCheckIn = Boolean(
     booking.attendance?.canCheckIn && !booking.attendance.currentUserCheckedIn,
   );
@@ -351,11 +373,9 @@ export function getBookingActions(booking: MentorBookingResponse): BookingAction
       'FEEDBACK_REQUIRED',
       'COMPLETED',
     ].includes(booking.displayState);
-  const isPendingStatus =
-    booking.bookingStatus === 'PENDING' ||
-    booking.bookingStatus === 'REQUESTED' ||
-    booking.displayState === 'PENDING_MENTOR_RESPONSE';
-  const canCancel = Boolean(booking.canCancel && isPendingStatus);
+  // Pending requests and accepted bookings alike, when the backend allows it; both go through
+  // the confirmation dialog.
+  const canCancel = Boolean(booking.canCancel);
   const platform = getPlatformLabel(booking);
   const joinTarget =
     booking.meetingPlatform && booking.meetingPlatform !== 'OFFLINE' && platform !== 'Online 1:1'

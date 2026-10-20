@@ -51,6 +51,23 @@ const GROUP_BY_STATE: Record<BookingStateKey, InboxGroup> = {
 export const inboxGroupOf = (booking: MentorBookingResponse) =>
   GROUP_BY_STATE[getBookingStateKey(booking)];
 
+/** Rejected, canceled or expired: closed for good, nothing can reopen or change it. */
+export const isFinalized = (booking: MentorBookingResponse) => inboxGroupOf(booking) === 'CANCELED';
+
+/**
+ * Lifecycle actions the mentor may take. Finalized bookings never get any, whatever the
+ * backend flags say, so no view can offer to accept / reject / cancel them again.
+ */
+export function mentorActions(booking: MentorBookingResponse) {
+  const open = !isFinalized(booking);
+  return {
+    canAccept: open && booking.canAccept,
+    canReject: open && booking.canReject,
+    canCancel: open && booking.canCancel && !booking.canReject,
+    canComplete: open && booking.canCompleteByMentor,
+  };
+}
+
 /* ------------------------------ Status labels ------------------------------ */
 
 // The shared config speaks to the mentee ("Bạn đã hủy"); these are the mentor's words.
