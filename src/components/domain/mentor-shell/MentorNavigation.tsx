@@ -131,7 +131,7 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
           }
         >
           <BookOpen className="w-5 h-5 shrink-0" aria-hidden="true" />
-          <span>Booking của tôi</span>
+          <span>Lịch đặt</span>
         </Link>
 
         {/* Phần dành riêng cho Mentor */}
