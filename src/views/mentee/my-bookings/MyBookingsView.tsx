@@ -20,6 +20,7 @@ import {
   getBookingTabGroup,
   getMentorName,
   isActionableExpiry,
+  toDate,
 } from './bookingStatusConfig';
 import { ActionModal, type NoteActionType } from './components/ActionModal';
 import { BookingCard, type BookingFormAction } from './components/BookingCard';
@@ -28,14 +29,23 @@ import styles from './MyBookingsView.module.css';
 import { useDismissedExpiries } from './useDismissedExpiries';
 import { type MenteeBookingMutation, useMyBookings } from './useMyBookings';
 
+type BookingSortMode = 'UPCOMING' | 'RECENT';
+
+const SORT_OPTIONS: Array<{ value: BookingSortMode; label: string }> = [
+  { value: 'UPCOMING', label: 'Sắp diễn ra trước' },
+  { value: 'RECENT', label: 'Mới đặt gần đây' },
+];
+
+const timeOf = (value?: string | null) => toDate(value)?.getTime() ?? 0;
+
 export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale || localeProp || 'vi';
   const { setHeaderTitle } = useMenteeShell();
   // The hook's own status filter stays on 'ALL'; user-facing tab groups are derived here.
-  const { bookings, error, isLoading, isSaving, mutate, refresh, setSortDirection, sortDirection } =
-    useMyBookings();
+  const { bookings, error, isLoading, isSaving, mutate, refresh } = useMyBookings();
+  const [sortMode, setSortMode] = useState<BookingSortMode>('UPCOMING');
   const [activeGroup, setActiveGroup] = useState<BookingTabGroup>('ALL');
   const { dismissedIds, dismiss, now } = useDismissedExpiries();
   const [noteAction, setNoteAction] = useState<{
@@ -83,17 +93,28 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
     return result;
   }, [actionableExpiryIds, bookings]);
 
-  const visibleBookings = useMemo(
-    () =>
+  const visibleBookings = useMemo(() => {
+    const groupOf = (booking: MentorBookingResponse) =>
+      getBookingTabGroup(booking, actionableExpiryIds.has(booking.bookingId));
+    const filtered =
       activeGroup === 'ALL'
-        ? bookings
-        : bookings.filter(
-            (booking) =>
-              getBookingTabGroup(booking, actionableExpiryIds.has(booking.bookingId)) ===
-              activeGroup,
-          ),
-    [actionableExpiryIds, activeGroup, bookings],
-  );
+        ? [...bookings]
+        : bookings.filter((booking) => groupOf(booking) === activeGroup);
+
+    if (sortMode === 'RECENT') {
+      return filtered.sort((left, right) => timeOf(right.createdAt) - timeOf(left.createdAt));
+    }
+    // UPCOMING: bookings that still matter come first, soonest session first; ended and
+    // canceled ones follow, most recent session first.
+    const isClosed = (booking: MentorBookingResponse) =>
+      ['ENDED', 'CANCELED'].includes(groupOf(booking));
+    return filtered.sort((left, right) => {
+      const leftClosed = isClosed(left);
+      if (leftClosed !== isClosed(right)) return leftClosed ? 1 : -1;
+      const diff = timeOf(left.selectedStartTime) - timeOf(right.selectedStartTime);
+      return leftClosed ? -diff : diff;
+    });
+  }, [actionableExpiryIds, activeGroup, bookings, sortMode]);
 
   const openChat = (booking: MentorBookingResponse) =>
     router.push(
@@ -196,12 +217,9 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
             <SelectField
               placeholder="Sắp xếp lịch đặt"
               triggerClassName="h-11 text-sm"
-              value={sortDirection}
-              onValueChange={(val) => setSortDirection(val as 'ASC' | 'DESC')}
-              options={[
-                { value: 'DESC', label: 'Gần nhất trước' },
-                { value: 'ASC', label: 'Xa nhất trước' },
-              ]}
+              value={sortMode}
+              onValueChange={(val) => setSortMode(val as BookingSortMode)}
+              options={SORT_OPTIONS}
             />
           </div>
           <button

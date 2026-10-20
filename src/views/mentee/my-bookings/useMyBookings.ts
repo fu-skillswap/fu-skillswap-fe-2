@@ -108,7 +108,6 @@ export function useMyBookings() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [activeTab, setActiveTab] = useState<MenteeBookingTab>('ALL');
-  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -128,17 +127,10 @@ export function useMyBookings() {
     if (!isBootstrapping) void refresh();
   }, [isBootstrapping, refresh]);
 
+  // Ordering lives in the view: it depends on the tab grouping (active vs ended) derived there.
   const bookings = useMemo(
-    () =>
-      allBookings
-        .filter((booking) => activeTab === 'ALL' || tabOf(booking) === activeTab)
-        .sort((left, right) => {
-          const diff =
-            new Date(left.selectedStartTime).getTime() -
-            new Date(right.selectedStartTime).getTime();
-          return sortDirection === 'ASC' ? diff : -diff;
-        }),
-    [activeTab, allBookings, sortDirection],
+    () => allBookings.filter((booking) => activeTab === 'ALL' || tabOf(booking) === activeTab),
+    [activeTab, allBookings],
   );
 
   const counts = useMemo(() => {
@@ -193,8 +185,6 @@ export function useMyBookings() {
     mutate,
     refresh,
     setActiveTab,
-    setSortDirection,
-    sortDirection,
     totalCount: allBookings.length,
   };
 }
