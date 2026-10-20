@@ -1,6 +1,6 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import type { MentorBookingResponse } from '@/models/auth';
 import {
   BOOKING_TONES,
@@ -118,6 +118,58 @@ export function BookingProgress({ booking }: { booking: MentorBookingResponse })
               </span>
             </span>
             {subLine && <span className={styles.stepSub}>{subLine}</span>}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/**
+ * Tracker for a request that expired because the mentor never accepted it: the request step is
+ * done (grey), "Mentor không phản hồi" is the current step and the remaining steps are hollow.
+ */
+export function ExpiredBookingProgress({ booking }: { booking: MentorBookingResponse }) {
+  const steps = getSteps(booking);
+  const created = toDate(booking.createdAt);
+
+  return (
+    <ol className={styles.tracker} aria-label="Tiến trình buổi học">
+      {steps.map((step, index) => {
+        const isLast = index === steps.length - 1;
+        const isRequest = step.id === 'request';
+        const isCurrent = step.id === 'accept';
+        return (
+          <li
+            className={`${styles.step} ${isCurrent ? styles.stepCurrent : ''}`}
+            key={step.id}
+            aria-current={isCurrent ? 'step' : undefined}
+          >
+            {!isLast && (
+              <span
+                className={`${styles.stepConnector} ${isRequest ? '' : styles.stepConnectorDashed}`}
+                aria-hidden="true"
+              />
+            )}
+            <span
+              className={`${styles.stepMarker} ${isRequest ? styles.stepMarkerMuted : ''} ${isCurrent ? styles.stepMarkerExpired : ''} ${!isRequest && !isCurrent ? styles.stepMarkerHollow : ''}`}
+              aria-hidden="true"
+            >
+              {isRequest && <Check strokeWidth={3} />}
+              {isCurrent && <X strokeWidth={3} />}
+            </span>
+            <span
+              className={`${styles.stepLabel} ${isRequest || isCurrent ? styles.stepLabelExpired : styles.stepLabelFuture}`}
+            >
+              {isCurrent ? 'Mentor không phản hồi' : step.label}
+              <span className={styles.srOnly}>
+                {isRequest ? ' (đã xong)' : isCurrent ? ' (bước hiện tại)' : ''}
+              </span>
+            </span>
+            {isRequest && created && (
+              <span className={styles.stepSub}>{formatRelativeStamp(created)}</span>
+            )}
+            {/* TODO(api): expiredAt — show "Hết hạn HH:mm, dd/MM" under this step once exposed. */}
           </li>
         );
       })}

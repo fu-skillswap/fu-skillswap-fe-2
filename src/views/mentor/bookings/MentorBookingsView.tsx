@@ -511,7 +511,7 @@ function BookingRow({
     booking.attendance?.canCheckIn && !booking.attendance.currentUserCheckedIn,
   );
   const primaryAction = booking.canAccept
-    ? { label: 'Xác nhận', icon: <Check />, action: () => onAction('accept') }
+    ? { label: 'Nhận lịch', icon: <Check />, action: () => onAction('accept') }
     : booking.canCompleteByMentor
       ? { label: 'Kết thúc', icon: <Square />, action: () => onAction('complete') }
       : booking.canJoin && booking.meetingLink
@@ -587,9 +587,21 @@ function BookingRow({
             {primaryAction.label}
           </Button>
         )}
+        {/* TODO(api): propose/reschedule endpoint — add outline "Đề xuất giờ khác" here.
+            TODO(api): responseDeadline + nudgedAt — "Hết hạn sau {X}" badge, the auto-cancel
+            notice and "Mentee đã nhắc bạn lúc HH:mm" for pending requests. */}
         <Button className="min-w-24 flex-1 sm:flex-none" variant="outline" onClick={onDetail}>
           Chi tiết
         </Button>
+        {booking.canAccept && booking.canReject && (
+          <Button
+            className="min-w-20 flex-1 text-danger! hover:bg-danger-soft! sm:flex-none"
+            variant="ghost"
+            onClick={() => onAction('reject')}
+          >
+            Từ chối
+          </Button>
+        )}
         {canOpenMessages || canCheckIn ? (
           <div className="relative">
             <button
@@ -774,7 +786,7 @@ function BookingDetailModal({
               className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
               onClick={() => onAction('accept')}
             >
-              Xác nhận
+              Nhận lịch
             </Button>
           )}
           {booking.canCompleteByMentor && (

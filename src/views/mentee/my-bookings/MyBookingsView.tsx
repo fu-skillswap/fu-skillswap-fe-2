@@ -19,11 +19,13 @@ import {
   getBookingStateKey,
   getBookingTabGroup,
   getMentorName,
+  isActionableExpiry,
 } from './bookingStatusConfig';
 import { ActionModal, type NoteActionType } from './components/ActionModal';
 import { BookingCard, type BookingFormAction } from './components/BookingCard';
 import { CancelBookingModal } from './components/CancelBookingModal';
 import styles from './MyBookingsView.module.css';
+import { useDismissedExpiries } from './useDismissedExpiries';
 import { type MenteeBookingMutation, useMyBookings } from './useMyBookings';
 
 export function MyBookingsView({ locale: localeProp }: { locale: string }) {
@@ -35,6 +37,7 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   const { bookings, error, isLoading, isSaving, mutate, refresh, setSortDirection, sortDirection } =
     useMyBookings();
   const [activeGroup, setActiveGroup] = useState<BookingTabGroup>('ALL');
+  const { dismissedIds, dismiss, now } = useDismissedExpiries();
   const [noteAction, setNoteAction] = useState<{
     type: NoteActionType;
     booking: MentorBookingResponse;
@@ -48,6 +51,23 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
     return () => setHeaderTitle(undefined);
   }, [setHeaderTitle]);
 
+  // Notification links open `#booking-<id>`; the list loads async, so scroll once it is rendered.
+  useEffect(() => {
+    if (isLoading || !window.location.hash.startsWith('#booking-')) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: 'center' });
+  }, [isLoading]);
+
+  // Mentor-expired requests whose session is still ahead stay in "Cần bạn xử lý" until dismissed.
+  const actionableExpiryIds = useMemo(
+    () =>
+      new Set(
+        bookings
+          .filter((booking) => isActionableExpiry(booking, dismissedIds, now))
+          .map((booking) => booking.bookingId),
+      ),
+    [bookings, dismissedIds, now],
+  );
+
   const counts = useMemo(() => {
     const result: Record<BookingTabGroup, number> = {
       ALL: bookings.length,
@@ -58,17 +78,21 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
       CANCELED: 0,
     };
     bookings.forEach((booking) => {
-      result[getBookingTabGroup(booking)] += 1;
+      result[getBookingTabGroup(booking, actionableExpiryIds.has(booking.bookingId))] += 1;
     });
     return result;
-  }, [bookings]);
+  }, [actionableExpiryIds, bookings]);
 
   const visibleBookings = useMemo(
     () =>
       activeGroup === 'ALL'
         ? bookings
-        : bookings.filter((booking) => getBookingTabGroup(booking) === activeGroup),
-    [activeGroup, bookings],
+        : bookings.filter(
+            (booking) =>
+              getBookingTabGroup(booking, actionableExpiryIds.has(booking.bookingId)) ===
+              activeGroup,
+          ),
+    [actionableExpiryIds, activeGroup, bookings],
   );
 
   const openChat = (booking: MentorBookingResponse) =>
@@ -158,7 +182,11 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
                 onClick={() => setActiveGroup(tab.value)}
               >
                 {tab.label}
-                <span className={styles.tabCount}>{count}</span>
+                <span
+                  className={`${styles.tabCount} ${tab.value === 'NEEDS_ACTION' && count > 0 ? styles.tabCountAlert : ''}`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -223,6 +251,8 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
               booking={booking}
               key={booking.bookingId}
               locale={locale}
+              isActionableExpiry={actionableExpiryIds.has(booking.bookingId)}
+              onDismissExpiry={() => dismiss(booking.bookingId)}
               onAction={(type, trigger) => handleAction(booking, type, trigger)}
               onImmediate={(mutation) => void execute(booking, mutation)}
               onMessage={() => openChat(booking)}
