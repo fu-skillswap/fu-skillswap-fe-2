@@ -17,6 +17,8 @@ interface ModalProps {
   title?: string;
   /** Ẩn thanh header mặc định nếu tự render header riêng */
   hideHeader?: boolean;
+  /** id của tiêu đề tự render (dùng cho aria-labelledby thay cho aria-label) */
+  labelledBy?: string;
   /** Callback xử lý đóng Modal */
   onClose: () => void;
   /** Nội dung bên trong Modal */
@@ -39,6 +41,7 @@ export function Modal({
   open,
   title,
   hideHeader = false,
+  labelledBy,
   onClose,
   children,
   className = '',
@@ -118,7 +121,8 @@ export function Modal({
         className={`bg-white rounded-3xl shadow-2xl border border-solid border-slate-200/80 w-full ${defaultWidthClass} max-h-[90vh] overflow-hidden flex flex-col transition-all animate-in fade-in-0 duration-200 ${disableScaleAnimation ? '' : 'zoom-in-95'} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-label={title || 'Hộp thoại'}
+        aria-labelledby={labelledBy}
+        aria-label={labelledBy ? undefined : title || 'Hộp thoại'}
         onMouseDown={(event) => event.stopPropagation()}
       >
         {!hideHeader && (
