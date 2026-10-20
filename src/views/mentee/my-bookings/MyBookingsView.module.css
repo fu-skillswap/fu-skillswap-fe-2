@@ -92,35 +92,6 @@
   background: #fef3f2;
 }
 
-.btnDanger {
-  background: var(--mb-danger);
-  color: #fff;
-}
-
-.btnDanger:hover:not(:disabled) {
-  background: #a92a08;
-}
-
-.btnDanger:disabled {
-  background: #f4d9d0;
-  color: #fff;
-}
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 999px;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .link {
   min-height: 44px;
   display: inline-flex;
@@ -589,6 +560,20 @@
   color: var(--mb-muted);
 }
 
+.compactLock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+
+.compactLock svg {
+  width: 12px;
+  height: 12px;
+}
+
 .compactRight {
   display: flex;
   align-items: center;
@@ -665,211 +650,7 @@
   background: #f1f5f9;
 }
 
-/* ------------------------------ Cancel modal ------------------------------ */
-
-.modal {
-  --mb-navy: #001c64;
-  --mb-ice: #f0f6fc;
-  --mb-line: #d0e0ee;
-  --mb-muted: #6b7896;
-  --mb-slate: #475569;
-  --mb-danger-text: #b42318;
-  --mb-danger: #c4320a;
-}
-
-.modalBody {
-  display: grid;
-  gap: 18px;
-  padding: 24px 24px 8px;
-}
-
-.modalHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.modalIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: #fee4e2;
-  color: var(--mb-danger-text);
-  flex-shrink: 0;
-}
-
-.modalIcon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.modalTitle {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--mb-navy);
-}
-
-.modalSubtitle {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--mb-muted);
-}
-
-.modalClose {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin-top: -8px;
-  margin-right: -8px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--mb-slate);
-  cursor: pointer;
-}
-
-.modalClose:hover {
-  background: #f1f5f9;
-}
-
-.modalClose:focus-visible,
-.chip:focus-visible {
-  outline: 3px solid var(--mb-navy);
-  outline-offset: 3px;
-}
-
-.summary {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: var(--mb-ice);
-}
-
-.miniTile {
-  display: grid;
-  justify-items: center;
-  width: 48px;
-  padding: 4px;
-  border-radius: 10px;
-  background: #fff;
-  color: var(--mb-navy);
-  flex-shrink: 0;
-}
-
-.miniTileDay {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.miniTileMonth {
-  font-size: 11px;
-  color: var(--mb-slate);
-}
-
-.summaryTitle {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--mb-navy);
-  overflow-wrap: anywhere;
-}
-
-.summaryMeta {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--mb-slate);
-}
-
-.consequences {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 13px;
-  color: #334155;
-}
-
-.consequences li {
-  display: flex;
-  gap: 10px;
-}
-
-.consequences svg {
-  width: 16px;
-  height: 16px;
-  margin-top: 1px;
-  flex-shrink: 0;
-  color: #64748b;
-}
-
-.fieldset {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-width: 0;
-}
-
-.legend {
-  margin-bottom: 10px;
-  padding: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--mb-navy);
-}
-
-.reasonChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.reasonChip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  border: 1px solid var(--mb-line);
-  background: #fff;
-  color: var(--mb-navy);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.reasonChip:hover {
-  border-color: var(--primary);
-}
-
-.reasonChip:has(input:focus-visible) {
-  outline: 3px solid var(--mb-navy);
-  outline-offset: 3px;
-}
-
-.reasonChipSelected,
-.reasonChipSelected:hover {
-  background: var(--mb-navy);
-  border-color: var(--mb-navy);
-  color: #fff;
-}
-
-.reasonChip svg {
-  width: 16px;
-  height: 16px;
-}
+/* -------------------------------- Utilities -------------------------------- */
 
 .srOnly {
   position: absolute;
@@ -881,83 +662,6 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.hint {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #e0f2fe;
-  color: #075985;
-  font-size: 13px;
-}
-
-.noteLabel {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--mb-navy);
-}
-
-.noteHint {
-  font-weight: 400;
-  color: var(--mb-muted);
-}
-
-.textarea {
-  width: 100%;
-  min-height: 88px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--mb-line);
-  font: inherit;
-  font-size: 14px;
-  color: var(--mb-navy);
-  resize: vertical;
-}
-
-.textarea:focus-visible {
-  outline: 3px solid var(--mb-navy);
-  outline-offset: 1px;
-}
-
-.counter {
-  margin-top: 4px;
-  font-size: 12px;
-  text-align: right;
-  color: var(--mb-muted);
-}
-
-.inlineError {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #fef3f2;
-  border: 1px solid #fecdca;
-  color: var(--mb-danger-text);
-  font-size: 13px;
-}
-
-.modalFooter {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid #e8eef5;
-  background: #fff;
-}
-
-.modalHelper {
-  margin-right: auto;
-  font-size: 13px;
-  color: var(--mb-muted);
 }
 
 /* -------------------------------- Responsive ------------------------------- */
@@ -1038,21 +742,5 @@
   .compactRight {
     grid-column: 2;
     flex-wrap: wrap;
-  }
-
-  .modalBody {
-    padding: 20px 16px 8px;
-  }
-
-  .modalFooter {
-    padding: 12px 16px;
-  }
-
-  .modalFooter .btn {
-    flex: 1;
-  }
-
-  .modalHelper {
-    flex-basis: 100%;
   }
 }
