@@ -7,6 +7,7 @@ import {
   Clock,
   CreditCard,
   Info,
+  Lock,
   Search,
   LogIn,
   MessageCircle,
@@ -28,6 +29,7 @@ import {
   getMentorName,
   getPlatformLabel,
   isBookingPaid,
+  isFinalizedBooking,
   toDate,
 } from '../bookingStatusConfig';
 import { BookingProgress, ExpiredBookingProgress } from './BookingProgress';
@@ -227,12 +229,18 @@ function EndedBookingCard({ booking, locale }: { booking: MentorBookingResponse;
           {config.label}
           {reason ? ` · Lý do: ${reason}` : ''}
         </p>
+        {isFinalizedBooking(booking) && (
+          <p className={styles.compactLock}>
+            <Lock aria-hidden="true" />
+            Đã chốt, không khôi phục được
+          </p>
+        )}
       </div>
       <div className={styles.compactRight}>
         <BookingStatusPill booking={booking} />
         {rebookHref && (
           <Link className={styles.link} href={rebookHref}>
-            Đặt lại
+            Đặt lịch mới
           </Link>
         )}
       </div>

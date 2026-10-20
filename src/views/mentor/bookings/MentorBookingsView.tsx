@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -17,6 +17,7 @@ import {
   Clock3,
   ExternalLink,
   Filter,
+  Lock,
   LogIn,
   MapPin,
   MessageSquare,
@@ -29,6 +30,11 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
+import {
+  ConfirmEndBookingDialog,
+  composeEndReason,
+  isBookingAlreadyEnded,
+} from '@/components/domain/booking-end/ConfirmEndBookingDialog';
 import { BookingStatusBadge } from '@/components/ui/BookingStatusBadge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -36,7 +42,7 @@ import { SelectField } from '@/components/ui/SelectField';
 import { ApiClientError } from '@/models/apiClient';
 import type { MentorBookingResponse } from '@/models/auth';
 import { BOOKING_TONES } from '@/views/mentee/my-bookings/bookingStatusConfig';
-import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
 import {
   INBOX_TABS,
   type InboxGroup,
@@ -52,6 +58,8 @@ import {
   inboxGroupOf,
   isBookingPaid,
   isExpired,
+  isFinalized,
+  mentorActions,
   mentorStatusPill,
   priceLabel,
   sentLabel,
@@ -63,19 +71,10 @@ import {
 import { AcceptBookingModal, menteeFirstName } from './AcceptBookingModal';
 import { type MentorBookingMutation, useMentorBookings } from './useMentorBookings';
 
-type BookingAction = 'complete' | 'cancel';
+type EndVariant = 'mentor-reject' | 'mentor-cancel';
 const FOCUS_RING = 'outline-none focus-visible:ring-4 focus-visible:ring-primary/20';
 const RECENT_LIMIT = 5;
 const LIST_STEP = 10;
-const REJECT_NOTE_MAX = 300;
-const REJECT_REASONS = [
-  'Bận đột xuất giờ này',
-  'Không đúng chuyên môn của mình',
-  'Mentee cần dịch vụ khác',
-  'Lý do khác',
-] as const;
-const OTHER_REASON = 'Lý do khác';
-
 function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']) {
   if (platform === 'GOOGLE_MEET') return 'Google Meet';
   if (platform === 'MICROSOFT_TEAMS') return 'Microsoft Teams';
@@ -174,9 +173,12 @@ export function MentorBookingsView() {
   const [showFilters, setShowFilters] = useState(false);
   const [detail, setDetail] = useState<MentorBookingResponse>();
   const [isDetailLoading, setIsDetailLoading] = useState(false);
-  const [action, setAction] = useState<{ type: BookingAction; booking: MentorBookingResponse }>();
+  const [completeTarget, setCompleteTarget] = useState<MentorBookingResponse>();
   const [acceptTarget, setAcceptTarget] = useState<MentorBookingResponse>();
-  const [rejectingId, setRejectingId] = useState<string>();
+  const [endTarget, setEndTarget] = useState<{
+    variant: EndVariant;
+    booking: MentorBookingResponse;
+  }>();
   const [acceptingIds, setAcceptingIds] = useState<ReadonlySet<string>>(() => new Set());
   const [justAcceptedIds, setJustAcceptedIds] = useState<ReadonlySet<string>>(() => new Set());
   const [cardErrors, setCardErrors] = useState<Record<string, string | undefined>>({});
@@ -262,7 +264,6 @@ export function MentorBookingsView() {
     setCardError(booking.bookingId, undefined);
     markAccepting(booking.bookingId, true);
     markJustAccepted(booking.bookingId, true);
-    setAction(undefined);
     setDetail(undefined);
     try {
       await mutate(booking.bookingId, { type: 'accept', data }, acceptedPatch(booking));
@@ -297,42 +298,55 @@ export function MentorBookingsView() {
     showSuccess(`Đã nhận lịch. ${menteeFirstName(booking.menteeDisplayName)} đã được thông báo.`);
   };
 
-  const startReject = (booking: MentorBookingResponse) => {
+  /** Reject and cancel always go through the confirmation dialog; nothing ends a booking directly. */
+  const openEnd = (booking: MentorBookingResponse, variant: EndVariant) => {
     setDetail(undefined);
     setCardError(booking.bookingId, undefined);
-    setRejectingId(booking.bookingId);
-    if (inboxGroupOf(booking) === 'PENDING' && activeTab !== 'ALL' && activeTab !== 'PENDING') {
-      setActiveTab('PENDING');
-    }
+    setEndTarget({ variant, booking });
   };
 
-  const submitReject = async (booking: MentorBookingResponse, rejectReason: string) => {
-    await mutate(booking.bookingId, { type: 'reject', data: { rejectReason } });
-    setRejectingId(undefined);
-    // TODO(api): no "suggest another mentor" flow is built on the mentee side for rejections.
-    showSuccess(`Đã từ chối yêu cầu của ${booking.menteeDisplayName || 'mentee'}.`);
-  };
-
-  const executeAction = async (mutation: MentorBookingMutation) => {
-    if (!action || mutation.type === 'accept') return;
+  /** No optimistic change: the booking moves only after the server confirms. */
+  const confirmEnd = async (reason: string, note: string) => {
+    if (!endTarget) return;
+    const { booking, variant } = endTarget;
+    const mentee = booking.menteeDisplayName || 'Mentee';
+    const text = composeEndReason(reason, note);
     try {
-      await mutate(action.booking.bookingId, mutation);
-      showSuccess(
-        mutation.type === 'cancel'
-          ? { title: 'Đã hủy lịch', description: 'Buổi mentoring đã được hủy.' }
-          : {
-              title: 'Đã hoàn thành buổi mentoring',
-              description: 'Trạng thái buổi mentoring đã được cập nhật.',
-            },
+      await mutate(
+        booking.bookingId,
+        variant === 'mentor-reject'
+          ? { type: 'reject', data: { rejectReason: text } }
+          : { type: 'cancel', data: { cancelReason: text } },
       );
-      setAction(undefined);
+    } catch (failure) {
+      void refresh(true);
+      if (!isBookingAlreadyEnded(failure)) throw failure;
+      setEndTarget(undefined);
+      showInfo(`Lịch này đã được ${mentee} hủy trước đó.`);
+      return;
+    }
+    setEndTarget(undefined);
+    // TODO(api): no "suggest another mentor" flow is built on the mentee side for rejections.
+    showSuccess(
+      variant === 'mentor-reject'
+        ? `Đã từ chối yêu cầu. ${mentee} đã được thông báo.`
+        : `Đã hủy buổi học. ${mentee} đã được thông báo.`,
+    );
+  };
+
+  const completeSession = async (completionNote?: string) => {
+    if (!completeTarget) return;
+    try {
+      await mutate(completeTarget.bookingId, { type: 'complete', data: { completionNote } });
+      showSuccess({
+        title: 'Đã hoàn thành buổi mentoring',
+        description: 'Trạng thái buổi mentoring đã được cập nhật.',
+      });
+      setCompleteTarget(undefined);
       setDetail(undefined);
     } catch (reason) {
-      showError(actionErrorMessage(reason, mutation.type), {
-        title:
-          mutation.type === 'complete'
-            ? 'Chưa thể kết thúc buổi mentoring'
-            : 'Không thể cập nhật booking',
+      showError(actionErrorMessage(reason, 'complete'), {
+        title: 'Chưa thể kết thúc buổi mentoring',
       });
       void refresh(true);
     }
@@ -361,12 +375,9 @@ export function MentorBookingsView() {
             booking={booking}
             error={cardErrors[booking.bookingId]}
             isAccepting={acceptingIds.has(booking.bookingId)}
-            isRejecting={rejectingId === booking.bookingId}
             onAccept={() => handleAccept(booking)}
             onDetail={() => void openDetail(booking)}
-            onStartReject={() => startReject(booking)}
-            onCancelReject={() => setRejectingId(undefined)}
-            onSubmitReject={(reason) => submitReject(booking, reason)}
+            onReject={() => openEnd(booking, 'mentor-reject')}
           />
         ))}
       </div>
@@ -397,7 +408,7 @@ export function MentorBookingsView() {
                 onDetail={() => void openDetail(booking)}
                 onMessage={() => openMessages(booking)}
                 onCheckIn={() => void checkIn(booking)}
-                onComplete={() => setAction({ type: 'complete', booking })}
+                onComplete={() => setCompleteTarget(booking)}
               />
             ))}
           </div>
@@ -667,9 +678,20 @@ export function MentorBookingsView() {
         booking={detail}
         isLoading={isDetailLoading}
         onAccept={() => detail && handleAccept(detail)}
-        onReject={() => detail && startReject(detail)}
-        onAction={(type) => detail && setAction({ type, booking: detail })}
+        onReject={() => detail && openEnd(detail, 'mentor-reject')}
+        onCancel={() => detail && openEnd(detail, 'mentor-cancel')}
+        onComplete={() => detail && setCompleteTarget(detail)}
         onClose={() => setDetail(undefined)}
+      />
+      <ConfirmEndBookingDialog
+        variant={endTarget?.variant ?? 'mentor-reject'}
+        booking={endTarget?.booking}
+        otherName={endTarget?.booking.menteeDisplayName || 'Mentee'}
+        onConfirm={confirmEnd}
+        onClose={() => setEndTarget(undefined)}
+        errorMessage={(reason) =>
+          actionErrorMessage(reason, endTarget?.variant === 'mentor-cancel' ? 'cancel' : 'reject')
+        }
       />
       <AcceptBookingModal
         booking={acceptTarget}
@@ -678,11 +700,11 @@ export function MentorBookingsView() {
         onAccept={acceptFromModal}
         errorMessage={(reason) => actionErrorMessage(reason, 'accept')}
       />
-      <BookingActionModal
-        action={action}
+      <CompleteSessionModal
+        booking={completeTarget}
         isSaving={isSaving}
-        onClose={() => setAction(undefined)}
-        onSubmit={(mutation) => void executeAction(mutation)}
+        onClose={() => setCompleteTarget(undefined)}
+        onSubmit={(note) => void completeSession(note)}
       />
     </section>
   );
@@ -721,22 +743,16 @@ function RequestCard({
   booking,
   error,
   isAccepting,
-  isRejecting,
   onAccept,
   onDetail,
-  onStartReject,
-  onCancelReject,
-  onSubmitReject,
+  onReject,
 }: {
   booking: MentorBookingResponse;
   error?: string;
   isAccepting: boolean;
-  isRejecting: boolean;
   onAccept: () => void;
   onDetail: () => void;
-  onStartReject: () => void;
-  onCancelReject: () => void;
-  onSubmitReject: (reason: string) => Promise<void>;
+  onReject: () => void;
 }) {
   const mentee = booking.menteeDisplayName || 'Mentee';
   const service = booking.serviceTitle || 'buổi mentoring';
@@ -745,14 +761,7 @@ function RequestCard({
   const platform = getPlatformLabel(booking);
   const message = booking.learningGoalDescription?.trim();
   const goal = booking.learningGoalTitle?.trim();
-  const rejectButtonRef = useRef<HTMLButtonElement>(null);
-  const wasRejecting = useRef(false);
-
-  // Return focus to "Từ chối" when the inline form closes via "Quay lại".
-  useEffect(() => {
-    if (wasRejecting.current && !isRejecting) rejectButtonRef.current?.focus();
-    wasRejecting.current = isRejecting;
-  }, [isRejecting]);
+  const actions = mentorActions(booking);
 
   // TODO(api): responseDeadline — show the "Hết hạn sau {X}" pill, the urgent #FBD5B5 border
   // and "Không phản hồi trước HH:mm … thì yêu cầu tự hủy." once the backend exposes it.
@@ -806,155 +815,33 @@ function RequestCard({
         </p>
       )}
 
-      {isRejecting ? (
-        <RejectReasonForm mentee={mentee} onCancel={onCancelReject} onSubmit={onSubmitReject} />
-      ) : (
-        <footer className="flex flex-col gap-3 border-t border-solid border-border-light pt-4 md:flex-row md:items-center md:justify-between">
-          <p className="m-0 text-xs leading-5 text-text-secondary">
-            Giờ này nằm trong lịch rảnh bạn đã mở.
-          </p>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            {booking.canAccept && (
-              <Button
-                className="order-first h-11 w-full text-sm md:order-last md:w-auto"
-                loading={isAccepting}
-                onClick={onAccept}
-              >
-                Nhận lịch
-              </Button>
-            )}
-            {booking.canReject && (
-              <button
-                ref={rejectButtonRef}
-                type="button"
-                disabled={isAccepting}
-                onClick={onStartReject}
-                className={`h-11 cursor-pointer rounded-xl border-none bg-transparent px-4 text-sm font-bold text-[#C4320A] transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
-              >
-                Từ chối
-              </button>
-            )}
-          </div>
-        </footer>
-      )}
-    </article>
-  );
-}
-
-function RejectReasonForm({
-  mentee,
-  onCancel,
-  onSubmit,
-}: {
-  mentee: string;
-  onCancel: () => void;
-  onSubmit: (reason: string) => Promise<void>;
-}) {
-  const [choice, setChoice] = useState<string>();
-  const [note, setNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string>();
-  const fieldsetRef = useRef<HTMLFieldSetElement>(null);
-  const isOther = choice === OTHER_REASON;
-  const reason = isOther ? note.trim() : choice;
-
-  useEffect(() => fieldsetRef.current?.focus(), []);
-
-  const submit = async () => {
-    if (!reason || isSubmitting) return;
-    setIsSubmitting(true);
-    setError(undefined);
-    try {
-      await onSubmit(reason);
-    } catch (failure) {
-      setError(
-        getUserFriendlyErrorMessage(failure, 'Không thể từ chối yêu cầu. Vui lòng thử lại.'),
-      );
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="grid gap-4 border-t border-solid border-border-light pt-4">
-      <fieldset
-        ref={fieldsetRef}
-        tabIndex={-1}
-        className="m-0 grid gap-3 rounded-xl border-none p-0 outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-      >
-        <legend className="mb-3 p-0 text-sm font-semibold text-text-main">
-          Vì sao bạn từ chối?
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {REJECT_REASONS.map((option) => {
-            const checked = choice === option;
-            return (
-              <label
-                key={option}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border border-solid px-4 text-sm font-semibold transition-colors focus-within:ring-4 focus-within:ring-primary/20 ${checked ? 'border-primary bg-primary text-white' : 'border-border-color bg-white text-text-secondary hover:border-primary-border hover:text-primary'}`}
-              >
-                <input
-                  type="radio"
-                  name="reject-reason"
-                  value={option}
-                  checked={checked}
-                  onChange={() => setChoice(option)}
-                  className="sr-only"
-                />
-                {option}
-              </label>
-            );
-          })}
-        </div>
-        {isOther && (
-          <label className="grid gap-1.5 text-xs font-medium text-text-secondary">
-            Lý do của bạn
-            <textarea
-              required
-              rows={3}
-              maxLength={REJECT_NOTE_MAX}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Nhập lý do để mentee hiểu"
-              className={`w-full resize-y rounded-xl border border-solid border-border-color bg-white px-3 py-2.5 text-sm text-text-main ${FOCUS_RING}`}
-            />
-            <span className="justify-self-end text-text-muted">
-              {note.length}/{REJECT_NOTE_MAX}
-            </span>
-          </label>
-        )}
-        {/* The mentee-side "suggest another mentor" list is not built, so that half is dropped. */}
-        <p className="m-0 text-xs text-text-muted">{mentee} sẽ thấy lý do này.</p>
-      </fieldset>
-      {error && (
-        <p className="m-0 text-sm text-danger" role="alert">
-          {error}
+      <footer className="flex flex-col gap-3 border-t border-solid border-border-light pt-4 md:flex-row md:items-center md:justify-between">
+        <p className="m-0 text-xs leading-5 text-text-secondary">
+          Giờ này nằm trong lịch rảnh bạn đã mở.
         </p>
-      )}
-      <div className="flex flex-col gap-2 md:flex-row md:justify-end">
-        <button
-          type="button"
-          disabled={!reason || isSubmitting}
-          onClick={() => void submit()}
-          className={`order-first inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border-none bg-[#C4320A] px-5 text-sm font-bold text-white transition-colors hover:bg-[#a92a08] disabled:cursor-not-allowed disabled:opacity-50 md:order-last ${FOCUS_RING}`}
-        >
-          {isSubmitting && (
-            <span
-              className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-              aria-hidden="true"
-            />
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+          {actions.canAccept && (
+            <Button
+              className="order-first h-11 w-full text-sm md:order-last md:w-auto"
+              loading={isAccepting}
+              onClick={onAccept}
+            >
+              Nhận lịch
+            </Button>
           )}
-          Từ chối yêu cầu
-        </button>
-        <Button
-          variant="outline"
-          className="h-11 text-sm"
-          disabled={isSubmitting}
-          onClick={onCancel}
-        >
-          Quay lại
-        </Button>
-      </div>
-    </div>
+          {actions.canReject && (
+            <button
+              type="button"
+              disabled={isAccepting}
+              onClick={onReject}
+              className={`h-11 cursor-pointer rounded-xl border-none bg-transparent px-4 text-sm font-bold text-[#C4320A] transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+            >
+              Từ chối
+            </button>
+          )}
+        </div>
+      </footer>
+    </article>
   );
 }
 
@@ -1104,6 +991,7 @@ function EndedRow({
           {booking.serviceTitle || 'Buổi mentoring'} · {mentee}
         </button>
         <p className="m-0 mt-0.5 text-xs text-text-muted">{endedExplanation(booking)}</p>
+        {isFinalized(booking) && <LockedLine />}
       </div>
       <div className="flex flex-wrap items-center gap-3 md:justify-end">
         {pill && (
@@ -1128,6 +1016,16 @@ function EndedRow({
   );
 }
 
+/** Shown on every rejected / canceled / expired booking: it cannot be reopened. */
+function LockedLine() {
+  return (
+    <p className="m-0 mt-1 inline-flex items-center gap-1 text-xs text-text-muted">
+      <Lock className="h-3 w-3" aria-hidden="true" />
+      Đã chốt, không khôi phục được
+    </p>
+  );
+}
+
 /* ------------------------------ Detail / action ----------------------------- */
 
 function BookingDetailModal({
@@ -1135,17 +1033,20 @@ function BookingDetailModal({
   isLoading,
   onAccept,
   onReject,
-  onAction,
+  onCancel,
+  onComplete,
   onClose,
 }: {
   booking?: MentorBookingResponse;
   isLoading: boolean;
   onAccept: () => void;
   onReject: () => void;
-  onAction: (type: BookingAction) => void;
+  onCancel: () => void;
+  onComplete: () => void;
   onClose: () => void;
 }) {
   if (!booking) return null;
+  const actions = mentorActions(booking);
   const meetingLabel = meetingPlatformLabel(booking.meetingPlatform) || 'Chưa thiết lập';
   return (
     <Modal open onClose={onClose} title="Chi tiết lịch đặt" className="max-w-2xl">
@@ -1252,39 +1153,51 @@ function BookingDetailModal({
           </div>
         )}
       </div>
-      <footer className="mt-5 flex flex-col-reverse gap-2 border-t border-border-light pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <Button variant="outline" className="h-10 sm:min-w-24" onClick={onClose}>
-          Đóng
-        </Button>
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          {booking.canReject && (
-            <Button variant="destructive" className="h-10" onClick={onReject}>
-              Từ chối
-            </Button>
-          )}
-          {booking.canCancel && !booking.canReject && (
-            <Button variant="destructive" className="h-10" onClick={() => onAction('cancel')}>
-              Hủy lịch
-            </Button>
-          )}
-          {booking.canAccept && (
-            <Button
-              className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
-              onClick={onAccept}
-            >
-              Nhận lịch
-            </Button>
-          )}
-          {booking.canCompleteByMentor && (
-            <Button
-              className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
-              onClick={() => onAction('complete')}
-            >
-              Kết thúc
-            </Button>
-          )}
-        </div>
-      </footer>
+      {isFinalized(booking) ? (
+        <footer className="mt-5 flex flex-col-reverse gap-3 border-t border-border-light pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="m-0 inline-flex items-center gap-1.5 text-sm text-text-secondary">
+            <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Lịch hẹn đã hủy, chỉ xem được.
+          </p>
+          <Button variant="outline" className="h-10 sm:min-w-24" onClick={onClose}>
+            Đóng
+          </Button>
+        </footer>
+      ) : (
+        <footer className="mt-5 flex flex-col-reverse gap-2 border-t border-border-light pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="outline" className="h-10 sm:min-w-24" onClick={onClose}>
+            Đóng
+          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            {actions.canReject && (
+              <Button variant="destructive" className="h-10" onClick={onReject}>
+                Từ chối
+              </Button>
+            )}
+            {actions.canCancel && (
+              <Button variant="destructive" className="h-10" onClick={onCancel}>
+                Hủy lịch
+              </Button>
+            )}
+            {actions.canAccept && (
+              <Button
+                className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
+                onClick={onAccept}
+              >
+                Nhận lịch
+              </Button>
+            )}
+            {actions.canComplete && (
+              <Button
+                className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]"
+                onClick={onComplete}
+              >
+                Kết thúc
+              </Button>
+            )}
+          </div>
+        </footer>
+      )}
     </Modal>
   );
 }
@@ -1306,64 +1219,41 @@ function Info({ icon, label, value }: { icon: ReactNode; label: string; value: s
   );
 }
 
-function BookingActionModal({
-  action,
+function CompleteSessionModal({
+  booking,
   isSaving,
   onClose,
   onSubmit,
 }: {
-  action?: { type: BookingAction; booking: MentorBookingResponse };
+  booking?: MentorBookingResponse;
   isSaving: boolean;
   onClose: () => void;
-  onSubmit: (mutation: MentorBookingMutation) => void;
+  onSubmit: (completionNote?: string) => void;
 }) {
   const [note, setNote] = useState('');
   useEffect(() => {
     setNote('');
-  }, [action]);
+  }, [booking]);
 
-  if (!action) return null;
-  const title = {
-    complete: 'Kết thúc buổi mentoring',
-    cancel: 'Hủy lịch đặt',
-  }[action.type];
-  const requiresReason = action.type === 'cancel';
-
-  const submit = () => {
-    const trimmedNote = note.trim();
-    if (requiresReason && !trimmedNote) return;
-    if (action.type === 'complete') {
-      onSubmit({ type: 'complete', data: { completionNote: trimmedNote || undefined } });
-    }
-    if (action.type === 'cancel') {
-      onSubmit({ type: 'cancel', data: { cancelReason: trimmedNote } });
-    }
-  };
+  if (!booking) return null;
 
   return (
-    <Modal open onClose={onClose} title={title}>
-      <div className="grid gap-4 [&_input]:h-11 [&_input]:rounded-xl [&_input]:border [&_input]:border-border-color [&_input]:px-3 [&_label]:grid [&_label]:gap-2 [&_label]:text-sm [&_select]:h-11 [&_select]:rounded-xl [&_select]:border [&_select]:border-border-color [&_select]:bg-white [&_select]:px-3 [&_textarea]:min-h-28 [&_textarea]:rounded-xl [&_textarea]:border [&_textarea]:border-border-color [&_textarea]:p-3">
-        <label>
-          {requiresReason ? 'Lý do' : 'Ghi chú (không bắt buộc)'}
-          <textarea
-            value={note}
-            required={requiresReason}
-            maxLength={action.type === 'complete' ? 2000 : undefined}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder={requiresReason ? 'Nhập lý do để người học biết...' : 'Nhập ghi chú...'}
-          />
-        </label>
-      </div>
+    <Modal open onClose={onClose} title="Kết thúc buổi mentoring">
+      <label className="grid gap-2 text-sm">
+        Ghi chú (không bắt buộc)
+        <textarea
+          value={note}
+          maxLength={2000}
+          onChange={(event) => setNote(event.target.value)}
+          placeholder="Nhập ghi chú..."
+          className="min-h-28 rounded-xl border border-border-color p-3"
+        />
+      </label>
       <footer className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border-light pt-4">
         <Button variant="outline" onClick={onClose} disabled={isSaving}>
           Đóng
         </Button>
-        <Button
-          loading={isSaving}
-          variant={requiresReason ? 'destructive' : 'primary'}
-          disabled={requiresReason && !note.trim()}
-          onClick={submit}
-        >
+        <Button loading={isSaving} onClick={() => onSubmit(note.trim() || undefined)}>
           Xác nhận
         </Button>
       </footer>

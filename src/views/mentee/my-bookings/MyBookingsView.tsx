@@ -9,10 +9,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { CalendarDays, Plus, RefreshCw } from 'lucide-react';
+import {
+  ConfirmEndBookingDialog,
+  composeEndReason,
+  isBookingAlreadyEnded,
+} from '@/components/domain/booking-end/ConfirmEndBookingDialog';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { SelectField } from '@/components/ui/SelectField';
 import type { MentorBookingResponse } from '@/models/auth';
-import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
+import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
 import {
   BOOKING_TAB_GROUPS,
   type BookingTabGroup,
@@ -24,7 +29,6 @@ import {
 } from './bookingStatusConfig';
 import { ActionModal, type NoteActionType } from './components/ActionModal';
 import { BookingCard, type BookingFormAction } from './components/BookingCard';
-import { CancelBookingModal } from './components/CancelBookingModal';
 import styles from './MyBookingsView.module.css';
 import { useDismissedExpiries } from './useDismissedExpiries';
 import { type MenteeBookingMutation, useMyBookings } from './useMyBookings';
@@ -37,6 +41,8 @@ const SORT_OPTIONS: Array<{ value: BookingSortMode; label: string }> = [
 ];
 
 const timeOf = (value?: string | null) => toDate(value)?.getTime() ?? 0;
+const isCancelRequest = (booking: MentorBookingResponse) =>
+  getBookingStateKey(booking) === 'PENDING';
 
 export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   const router = useRouter();
@@ -53,7 +59,6 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
     booking: MentorBookingResponse;
   }>();
   const [cancelTarget, setCancelTarget] = useState<MentorBookingResponse>();
-  const [cancelError, setCancelError] = useState<string>();
   const cancelTriggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -133,7 +138,6 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
 
   const closeCancel = () => {
     setCancelTarget(undefined);
-    setCancelError(undefined);
     const trigger = cancelTriggerRef.current;
     // Modal restores its own previous focus first; re-focus the card's cancel button after it.
     window.setTimeout(() => {
@@ -141,20 +145,26 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
     }, 0);
   };
 
-  const submitCancel = async (reason: string) => {
+  /** No optimistic change: `mutate` refetches, so the card moves only after the server confirms. */
+  const submitCancel = async (reason: string, note: string) => {
     if (!cancelTarget) return;
     const booking = cancelTarget;
-    setCancelError(undefined);
+    const mentor = getMentorName(booking);
     try {
-      await mutate(booking.bookingId, { type: 'cancel', reason });
-      const subject = getBookingStateKey(booking) === 'PENDING' ? 'yêu cầu' : 'lịch';
-      showSuccess(`Đã hủy ${subject}. ${getMentorName(booking)} đã được thông báo.`);
-      closeCancel();
+      await mutate(booking.bookingId, { type: 'cancel', reason: composeEndReason(reason, note) });
     } catch (failure) {
-      setCancelError(
-        getUserFriendlyErrorMessage(failure, 'Không thể hủy lịch lúc này. Vui lòng thử lại sau.'),
-      );
+      if (!isBookingAlreadyEnded(failure)) throw failure;
+      closeCancel();
+      void refresh();
+      showInfo(`Lịch này đã được ${mentor} hủy trước đó.`);
+      return;
     }
+    closeCancel();
+    showSuccess(
+      isCancelRequest(booking)
+        ? `Đã hủy yêu cầu. ${mentor} đã được thông báo.`
+        : `Đã hủy buổi học. ${mentor} đã được thông báo.`,
+    );
   };
 
   const handleAction = (
@@ -164,7 +174,6 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   ) => {
     if (type === 'cancel') {
       cancelTriggerRef.current = trigger ?? null;
-      setCancelError(undefined);
       setCancelTarget(booking);
       return;
     }
@@ -285,18 +294,26 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
         onClose={() => setNoteAction(undefined)}
         onSubmit={(mutation) => noteAction && void execute(noteAction.booking, mutation)}
       />
-      <CancelBookingModal
+      <ConfirmEndBookingDialog
+        variant={
+          cancelTarget && !isCancelRequest(cancelTarget) ? 'mentee-cancel' : 'mentee-cancel-request'
+        }
         booking={cancelTarget}
-        isSaving={isSaving}
-        error={cancelError}
+        otherName={cancelTarget ? getMentorName(cancelTarget) : 'Mentor'}
+        onConfirm={submitCancel}
         onClose={closeCancel}
-        onSubmit={(reason) => void submitCancel(reason)}
-        onMessage={() => {
-          const booking = cancelTarget;
-          setCancelTarget(undefined);
-          setCancelError(undefined);
-          if (booking) openChat(booking);
-        }}
+        errorMessage={(failure) =>
+          getUserFriendlyErrorMessage(failure, 'Không thể hủy lịch lúc này. Vui lòng thử lại sau.')
+        }
+        onMessage={
+          cancelTarget?.mentorUserId
+            ? () => {
+                const booking = cancelTarget;
+                setCancelTarget(undefined);
+                openChat(booking);
+              }
+            : undefined
+        }
       />
     </section>
   );

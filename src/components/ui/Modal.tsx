@@ -19,6 +19,10 @@ interface ModalProps {
   hideHeader?: boolean;
   /** id của tiêu đề tự render (dùng cho aria-labelledby thay cho aria-label) */
   labelledBy?: string;
+  /** id của đoạn mô tả chính (aria-describedby) */
+  describedBy?: string;
+  /** "alertdialog" cho hộp thoại xác nhận thao tác không hoàn tác được */
+  role?: 'dialog' | 'alertdialog';
   /** Callback xử lý đóng Modal */
   onClose: () => void;
   /** Nội dung bên trong Modal */
@@ -42,6 +46,8 @@ export function Modal({
   title,
   hideHeader = false,
   labelledBy,
+  describedBy,
+  role = 'dialog',
   onClose,
   children,
   className = '',
@@ -119,9 +125,10 @@ export function Modal({
       <section
         ref={dialogRef}
         className={`bg-white rounded-3xl shadow-2xl border border-solid border-slate-200/80 w-full ${defaultWidthClass} max-h-[90vh] overflow-hidden flex flex-col transition-all animate-in fade-in-0 duration-200 ${disableScaleAnimation ? '' : 'zoom-in-95'} ${className}`.trim()}
-        role="dialog"
+        role={role}
         aria-modal="true"
         aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
         aria-label={labelledBy ? undefined : title || 'Hộp thoại'}
         onMouseDown={(event) => event.stopPropagation()}
       >
