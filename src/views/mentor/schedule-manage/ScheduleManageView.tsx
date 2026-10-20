@@ -12,7 +12,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
 import { getGoogleCalendarClientId, getGoogleCalendarRedirectUri } from '@/lib/auth/google';
-import { formatDateVi, formatLocalTime } from './mentorTemplateHelpers';
+import { formatDateVi } from './mentorTemplateHelpers';
 import { ApiClientError } from '@/models/apiClient';
 import type {
   AvailabilityTemplateResponse,
@@ -527,7 +527,6 @@ export function ScheduleManageView() {
     useState<AvailabilityTemplateResponse | null>(null);
   const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false);
   const [isSubmittingTemplate, setIsSubmittingTemplate] = useState(false);
-  const isCreatingTemplateRef = useRef(false);
   const [templateStaleNotice, setTemplateStaleNotice] = useState<string | null>(null);
 
   const [pendingTemplateActionConfirm, setPendingTemplateActionConfirm] = useState<{
@@ -742,51 +741,22 @@ export function ScheduleManageView() {
     setIsTemplateFormOpen(true);
   };
 
-  const onSubmitCreateTemplate = async (data: CreateAvailabilityTemplateRequest) => {
-    if (isCreatingTemplateRef.current) return;
-
-    const normalizedWeekdays = [...data.weekdays].sort().join(',');
-    const duplicateTemplate = templates.find(
-      (template) =>
-        template.configuredStatus !== 'ARCHIVED' &&
-        template.effectiveStatus !== 'ARCHIVED' &&
-        [...template.weekdays].sort().join(',') === normalizedWeekdays &&
-        formatLocalTime(template.startTime) === data.startTime.slice(0, 5) &&
-        formatLocalTime(template.endTime) === data.endTime.slice(0, 5) &&
-        template.effectiveFrom === data.effectiveFrom &&
-        (template.effectiveTo ?? '') === (data.effectiveTo ?? ''),
-    );
-    if (duplicateTemplate) {
-      showInfo({
-        title: 'Lịch lặp đã tồn tại',
-        description: 'Hãy chỉnh sửa lịch hiện có thay vì tạo thêm một lịch trùng cấu hình.',
-      });
-      return;
-    }
-
-    isCreatingTemplateRef.current = true;
-    setIsSubmittingTemplate(true);
+  // The form creates one template per time range and reports failures inline, so this only
+  // forwards the request and lets errors propagate to the modal.
+  const createTemplate = async (data: CreateAvailabilityTemplateRequest) => {
     setTemplateStaleNotice(null);
-    try {
-      await mentorSchedulingRepo.createAvailabilityTemplate(data);
-      showSuccess({
-        title: 'Đã tạo lịch lặp',
-        description: 'Lịch sẽ tự động mở theo thời gian bạn đã thiết lập.',
-      });
-      setIsTemplateFormOpen(false);
-      await reloadTemplates();
-      await reloadScheduling();
-    } catch (reason) {
-      if (reason instanceof ApiClientError) {
-        showError(reason, { title: 'Không thể tạo lịch lặp' });
-        console.error('Create template error:', reason);
-      } else {
-        showError('Không thể tạo mẫu lịch lặp. Vui lòng thử lại.');
-      }
-    } finally {
-      isCreatingTemplateRef.current = false;
-      setIsSubmittingTemplate(false);
-    }
+    await mentorSchedulingRepo.createAvailabilityTemplate(data);
+  };
+
+  const refreshAfterTemplateCreate = async () => {
+    await reloadTemplates();
+    await reloadScheduling();
+  };
+
+  const onTemplatesCreated = async (summary: string) => {
+    showSuccess(`Đã tạo lịch hàng tuần: ${summary}`);
+    setIsTemplateFormOpen(false);
+    await refreshAfterTemplateCreate();
   };
 
   const onSubmitUpdateTemplate = async (
@@ -3775,13 +3745,16 @@ export function ScheduleManageView() {
         open={isTemplateFormOpen}
         template={selectedTemplateForEdit}
         activeServices={activeOneToOneServices}
+        existingTemplates={templates}
         isSubmitting={isSubmittingTemplate}
         staleNotice={templateStaleNotice}
         onClose={() => {
           setIsTemplateFormOpen(false);
           setSelectedTemplateForEdit(null);
         }}
-        onSubmitCreate={onSubmitCreateTemplate}
+        onCreate={createTemplate}
+        onCreated={onTemplatesCreated}
+        onPartialCreate={() => void refreshAfterTemplateCreate()}
         onSubmitUpdate={onSubmitUpdateTemplate}
       />
 
