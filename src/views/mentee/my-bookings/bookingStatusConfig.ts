@@ -58,8 +58,9 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStateKey, BookingStatusConfig>
     label: 'Chờ mentor nhận',
     tone: 'pending',
     step: 'accept',
-    // TODO(api): confirm whether an unanswered request expires at session start; if so, add
-    // "Nếu đến giờ học mentor vẫn chưa nhận, yêu cầu sẽ chuyển sang Quá hạn." to the detail.
+    // TODO(api): responseDeadline — expose the server-enforced mentor response deadline on
+    // MentorBookingResponse; only then replace this box with the calm/urgent deadline panel.
+    // TODO(api): POST /api/me/bookings/{id}/nudge + nudgedAt to enable the "Nhắc mentor" button.
     nextText: (mentor) => ({
       title: `Việc tiếp theo: đợi ${mentor} nhận lịch.`,
       detail: 'Bạn sẽ có thông báo ngay khi mentor nhận lịch.',
@@ -201,15 +202,48 @@ export const BOOKING_TAB_GROUPS: Array<{ value: BookingTabGroup; label: string }
   { value: 'CANCELED', label: 'Đã hủy' },
 ];
 
+/**
+ * A mentee can still act on an expired request (pick another mentor or resend) while the session
+ * start is in the future and they have not dismissed it; such bookings belong in "Cần bạn xử lý".
+ */
 export function getBookingTabGroup(
   booking: MentorBookingResponse,
+  isActionableExpiry = false,
 ): Exclude<BookingTabGroup, 'ALL'> {
+  if (isActionableExpiry) return 'NEEDS_ACTION';
   const config = getBookingStatusConfig(booking);
   if (config.key === 'NO_SHOW' || config.tone === 'done') return 'ENDED';
   if (config.tone === 'ended') return 'CANCELED';
   if (config.tone === 'payment' || config.tone === 'action') return 'NEEDS_ACTION';
   if (config.tone === 'upcoming') return 'UPCOMING';
   return 'WAITING';
+}
+
+/* --------------------------------- Expiry --------------------------------- */
+
+const MENTOR_EXPIRY_STATUSES = ['REQUEST_EXPIRED', 'EXPIRED_PENDING_MENTOR'];
+
+/** The request expired because the mentor never accepted it (not a missed payment). */
+export function isMentorResponseExpiry(booking: MentorBookingResponse) {
+  return MENTOR_EXPIRY_STATUSES.includes(
+    String(booking.bookingStatus || '')
+      .trim()
+      .toUpperCase(),
+  );
+}
+
+/** Expired by the mentor, session still ahead and not dismissed: the mentee can still rebook. */
+export function isActionableExpiry(
+  booking: MentorBookingResponse,
+  dismissedIds: ReadonlySet<string>,
+  now: number,
+) {
+  const start = toDate(booking.selectedStartTime);
+  return (
+    isMentorResponseExpiry(booking) &&
+    !dismissedIds.has(booking.bookingId) &&
+    Boolean(start && start.getTime() > now)
+  );
 }
 
 /* --------------------------------- Helpers -------------------------------- */

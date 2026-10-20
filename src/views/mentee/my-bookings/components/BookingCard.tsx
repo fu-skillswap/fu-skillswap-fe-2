@@ -7,6 +7,7 @@ import {
   Clock,
   CreditCard,
   Info,
+  Search,
   LogIn,
   MessageCircle,
   Monitor,
@@ -18,6 +19,7 @@ import type { MenteeBookingMutation } from '../useMyBookings';
 import {
   BOOKING_TONES,
   formatDayMonth,
+  formatTime,
   formatTimeRange,
   formatWeekday,
   getBookingActions,
@@ -28,7 +30,7 @@ import {
   isBookingPaid,
   toDate,
 } from '../bookingStatusConfig';
-import { BookingProgress } from './BookingProgress';
+import { BookingProgress, ExpiredBookingProgress } from './BookingProgress';
 import { BookingStatusPill } from './BookingStatusPill';
 import styles from '../MyBookingsView.module.css';
 
@@ -37,6 +39,9 @@ export type BookingFormAction = 'cancel' | 'confirm' | 'reportIssue' | 'respondI
 interface BookingCardProps {
   booking: MentorBookingResponse;
   locale: string;
+  /** Mentor-expired request whose session is still ahead and was not dismissed. */
+  isActionableExpiry?: boolean;
+  onDismissExpiry?: () => void;
   onAction: (type: BookingFormAction, trigger?: HTMLElement | null) => void;
   onImmediate: (mutation: MenteeBookingMutation) => void;
   onMessage: () => void;
@@ -72,6 +77,138 @@ function MentorAvatar({ booking }: { booking: MentorBookingResponse }) {
   );
 }
 
+const bookingAnchorId = (bookingId: string) => `booking-${bookingId}`;
+
+/** Date tile, title + status pill, mentor link and time / price / platform chips. */
+function CardTop({ booking, locale }: { booking: MentorBookingResponse; locale: string }) {
+  const mentor = getMentorName(booking);
+  const profileHref = mentorProfileHref(locale, booking);
+  const price = getBookingPrice(booking);
+  const timeRange = formatTimeRange(booking);
+  const platform = getPlatformLabel(booking);
+  const mentorRow = (
+    <>
+      <MentorAvatar booking={booking} />
+      <span className={styles.mentorName}>{mentor}</span>
+      <span className={styles.mentorRole}>· Mentor</span>
+    </>
+  );
+
+  return (
+    <div className={styles.cardTop}>
+      <DateTile value={booking.selectedStartTime} />
+      <div style={{ minWidth: 0 }}>
+        <div className={styles.cardHeading}>
+          <h3 className={styles.cardTitle}>{booking.serviceTitle || 'Buổi mentoring'}</h3>
+          <BookingStatusPill booking={booking} />
+        </div>
+        {profileHref ? (
+          <Link
+            className={styles.mentorLink}
+            href={profileHref}
+            aria-label={`Xem hồ sơ mentor ${mentor}`}
+          >
+            {mentorRow}
+          </Link>
+        ) : (
+          <span className={styles.mentorLink}>{mentorRow}</span>
+        )}
+        <div className={styles.chips}>
+          {timeRange && (
+            <span className={styles.chip}>
+              <Clock aria-hidden="true" />
+              {timeRange}
+            </span>
+          )}
+          <span className={styles.chip}>
+            <Wallet aria-hidden="true" />
+            {price > 0 ? `${price} S-coins` : 'Miễn phí'}
+            {isBookingPaid(booking) ? ' · đã thanh toán' : ''}
+          </span>
+          {platform && (
+            <span className={styles.chip}>
+              <Monitor aria-hidden="true" />
+              {platform}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Full card for a request the mentor let expire while the session is still ahead: explains what
+ * happened and offers another mentor or a resend. Payment only happens after the mentor accepts,
+ * so an expired request never charged the mentee.
+ */
+function ExpiredBookingCard({
+  booking,
+  locale,
+  onDismiss,
+}: {
+  booking: MentorBookingResponse;
+  locale: string;
+  onDismiss?: () => void;
+}) {
+  const mentor = getMentorName(booking);
+  const start = toDate(booking.selectedStartTime);
+  const resendHref = mentorProfileHref(locale, booking);
+  // TODO(api): the find-mentor page has no service-type / date / time filters yet; pass
+  // ?serviceType, ?date and ?time here once GET /api/mentors supports them.
+  const findMentorHref = `/${locale}/mentor-booking`;
+
+  return (
+    <article className={styles.card} id={bookingAnchorId(booking.bookingId)}>
+      <CardTop booking={booking} locale={locale} />
+      <ExpiredBookingProgress booking={booking} />
+
+      <div className={styles.expiredBox}>
+        <Info aria-hidden="true" />
+        <p style={{ margin: 0 }}>
+          {/* TODO(api): expiredAt / responseDeadline — say "chưa nhận lịch trước HH:mm, dd/MM". */}
+          <strong>Yêu cầu đã tự hủy vì {mentor} chưa nhận lịch.</strong> Bạn không mất phí.
+          {start &&
+            ` Giờ học ${formatTime(start)} ${formatWeekday(start)} vẫn còn kịp: tìm một mentor khác, hoặc gửi lại cho ${mentor}.`}
+        </p>
+      </div>
+
+      {/* TODO(api): endpoint listing mentors of the same service type who are free at this
+          booking's slot (avatar, name, field, service + price, free range, serviceId/slotId) to
+          render the "Mentor … còn trống lúc HH:mm" grid with "Đặt giờ này" deep links. Until then
+          only the "Tìm mentor khác" link below is shown. */}
+
+      <footer className={styles.footer}>
+        <p className={styles.footerNote}>
+          Buổi này sẽ chuyển sang mục &quot;Đã hủy&quot; sau giờ học, hoặc khi bạn bấm Bỏ qua.
+        </p>
+        <div className={styles.footerActions}>
+          {onDismiss && (
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnGhostSlate}`}
+              onClick={onDismiss}
+            >
+              Bỏ qua
+            </button>
+          )}
+          <Link className={`${styles.btn} ${styles.btnOutline}`} href={findMentorHref}>
+            <Search aria-hidden="true" />
+            Tìm mentor khác
+          </Link>
+          {resendHref && (
+            // TODO(api): preselect the same service (and slot) once the booking page accepts
+            // ?serviceId; today it opens the mentor's profile to pick the service again.
+            <Link className={`${styles.btn} ${styles.btnOutline}`} href={resendHref}>
+              Gửi lại cho {mentor}
+            </Link>
+          )}
+        </div>
+      </footer>
+    </article>
+  );
+}
+
 /** Compact, greyed card for canceled / rejected / expired bookings. */
 function EndedBookingCard({ booking, locale }: { booking: MentorBookingResponse; locale: string }) {
   const config = getBookingStatusConfig(booking);
@@ -79,7 +216,7 @@ function EndedBookingCard({ booking, locale }: { booking: MentorBookingResponse;
   const rebookHref = mentorProfileHref(locale, booking);
   // TODO(api): expose canceledAt/rejectedAt so the line can read "Bạn đã hủy lúc HH:mm, dd/MM".
   return (
-    <article className={styles.compact}>
+    <article className={styles.compact} id={bookingAnchorId(booking.bookingId)}>
       <DateTile value={booking.selectedStartTime} muted />
       <div style={{ minWidth: 0 }}>
         <h3 className={styles.compactTitle}>
@@ -106,20 +243,21 @@ function EndedBookingCard({ booking, locale }: { booking: MentorBookingResponse;
 export function BookingCard({
   booking,
   locale,
+  isActionableExpiry = false,
+  onDismissExpiry,
   onAction,
   onImmediate,
   onMessage,
 }: BookingCardProps) {
   const config = getBookingStatusConfig(booking);
+  if (isActionableExpiry) {
+    return <ExpiredBookingCard booking={booking} locale={locale} onDismiss={onDismissExpiry} />;
+  }
   if (config.tone === 'ended') return <EndedBookingCard booking={booking} locale={locale} />;
 
   const tone = BOOKING_TONES[config.tone];
   const mentor = getMentorName(booking);
   const actions = getBookingActions(booking);
-  const profileHref = mentorProfileHref(locale, booking);
-  const price = getBookingPrice(booking);
-  const timeRange = formatTimeRange(booking);
-  const platform = getPlatformLabel(booking);
   const showNext =
     (config.tone === 'pending' || config.tone === 'payment' || config.tone === 'action') &&
     config.nextText;
@@ -142,55 +280,9 @@ export function BookingCard({
     checkIn: <LogIn />,
   };
 
-  const mentorRow = (
-    <>
-      <MentorAvatar booking={booking} />
-      <span className={styles.mentorName}>{mentor}</span>
-      <span className={styles.mentorRole}>· Mentor</span>
-    </>
-  );
-
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTop}>
-        <DateTile value={booking.selectedStartTime} />
-        <div style={{ minWidth: 0 }}>
-          <div className={styles.cardHeading}>
-            <h3 className={styles.cardTitle}>{booking.serviceTitle || 'Buổi mentoring'}</h3>
-            <BookingStatusPill booking={booking} />
-          </div>
-          {profileHref ? (
-            <Link
-              className={styles.mentorLink}
-              href={profileHref}
-              aria-label={`Xem hồ sơ mentor ${mentor}`}
-            >
-              {mentorRow}
-            </Link>
-          ) : (
-            <span className={styles.mentorLink}>{mentorRow}</span>
-          )}
-          <div className={styles.chips}>
-            {timeRange && (
-              <span className={styles.chip}>
-                <Clock aria-hidden="true" />
-                {timeRange}
-              </span>
-            )}
-            <span className={styles.chip}>
-              <Wallet aria-hidden="true" />
-              {price > 0 ? `${price} S-coins` : 'Miễn phí'}
-              {isBookingPaid(booking) ? ' · đã thanh toán' : ''}
-            </span>
-            {platform && (
-              <span className={styles.chip}>
-                <Monitor aria-hidden="true" />
-                {platform}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+    <article className={styles.card} id={bookingAnchorId(booking.bookingId)}>
+      <CardTop booking={booking} locale={locale} />
 
       <BookingProgress booking={booking} />
 

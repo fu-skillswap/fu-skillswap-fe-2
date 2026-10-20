@@ -228,6 +228,13 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Orange count on "Cần bạn xử lý" while something there still needs the mentee. */
+.tabCountAlert,
+.tabActive .tabCountAlert {
+  background: #ea580c;
+  color: #fff;
+}
+
 .toolbarRight {
   display: flex;
   align-items: center;
@@ -280,6 +287,12 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.pillIcon {
+  width: 13px;
+  height: 13px;
   flex-shrink: 0;
 }
 
@@ -580,6 +593,76 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* ------------------------------- Expired card ------------------------------ */
+
+.stepConnectorDashed {
+  height: 0;
+  background: none;
+  border-top: 2px dashed var(--mb-line);
+}
+
+.stepMarkerMuted {
+  background: #94a3b8;
+  border-color: #94a3b8;
+  color: #fff;
+}
+
+.stepMarkerMuted svg,
+.stepMarkerExpired svg {
+  width: 14px;
+  height: 14px;
+}
+
+.stepMarkerExpired {
+  border-color: #94a3b8;
+  color: var(--mb-slate);
+}
+
+.stepMarkerHollow {
+  border-style: dashed;
+}
+
+.stepLabelExpired {
+  color: var(--mb-slate);
+}
+
+.expiredBox {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.expiredBox svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--mb-slate);
+}
+
+.footerNote {
+  flex: 1 1 240px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mb-muted);
+}
+
+.btnGhostSlate {
+  background: transparent;
+  color: var(--mb-slate);
+  padding: 0 12px;
+}
+
+.btnGhostSlate:hover {
+  background: #f1f5f9;
 }
 
 /* ------------------------------ Cancel modal ------------------------------ */

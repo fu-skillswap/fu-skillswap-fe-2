@@ -8,11 +8,24 @@
 import type { Notification } from '@/models/notification';
 import { notificationRepo } from '@/repositories/notificationRepo';
 import { getUserFriendlyErrorMessage, showInfo } from '@/utils/toast';
-import { Bell, CheckCheck } from 'lucide-react';
+import { AlertTriangle, Bell, CheckCheck, Clock, type LucideIcon } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const POLLING_INTERVAL_MS = 30_000;
 const NOTIFICATION_LIMIT = 20;
+
+/**
+ * Booking-deadline notifications get an icon and open the booking card; other types keep the
+ * generic rendering. Title/message come from the backend as-is.
+ * TODO(api): structured fields (mentorName, serviceTitle, responseDeadline, sessionStartAt) to
+ * build the "Còn {X} trước khi yêu cầu tự hủy" copy and to show an inline "Tìm mentor khác"
+ * button on BOOKING_EXPIRED only while the session is still in the future.
+ */
+const BOOKING_DEADLINE_TYPES: Partial<Record<string, { icon: LucideIcon; className: string }>> = {
+  BOOKING_EXPIRING: { icon: AlertTriangle, className: 'bg-warning-soft text-warning' },
+  BOOKING_EXPIRED: { icon: Clock, className: 'bg-surface-subtle text-text-muted' },
+};
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -22,6 +35,9 @@ function formatDate(value: string) {
 }
 
 export function NotificationMenu() {
+  const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale || 'vi';
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -103,6 +119,19 @@ export function NotificationMenu() {
     }
   };
 
+  const openItem = (notification: Notification) => {
+    void markRead(notification);
+    if (!BOOKING_DEADLINE_TYPES[notification.type]) return;
+    const bookingId =
+      notification.relatedEntityType?.toUpperCase() === 'BOOKING'
+        ? notification.relatedEntityId
+        : null;
+    setIsOpen(false);
+    router.push(
+      `/${locale}/my-bookings${bookingId ? `#booking-${encodeURIComponent(bookingId)}` : ''}`,
+    );
+  };
+
   const markAllRead = async () => {
     try {
       await notificationRepo.markAllAsRead();
@@ -169,33 +198,56 @@ export function NotificationMenu() {
               <p className="m-0 py-4 text-center text-xs text-danger">{error}</p>
             ) : items.length ? (
               <div className="flex flex-col gap-1">
-                {items.map((item) => (
-                  <button
-                    key={item.notificationId}
-                    type="button"
-                    className={`flex w-full min-w-0 cursor-pointer flex-col gap-1 rounded-lg border-none p-2.5 text-left transition-all ${
-                      item.read
-                        ? 'bg-transparent text-text-secondary hover:bg-surface-subtle'
-                        : 'bg-primary-light/50 font-semibold text-text-main hover:bg-primary-light'
-                    }`}
-                    onClick={() => void markRead(item)}
-                  >
-                    <div className="flex w-full min-w-0 items-start justify-between gap-2">
-                      <strong className="min-w-0 break-words text-xs font-bold leading-tight">
-                        {item.title}
-                      </strong>
-                      {!item.read && (
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                {items.map((item) => {
+                  const deadline = BOOKING_DEADLINE_TYPES[item.type];
+                  const DeadlineIcon = deadline?.icon;
+                  const body = (
+                    <>
+                      <div className="flex w-full min-w-0 items-start justify-between gap-2">
+                        <strong className="min-w-0 break-words text-xs font-bold leading-tight">
+                          {item.title}
+                        </strong>
+                        {!item.read && (
+                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <span className="line-clamp-2 break-words text-[11px] leading-snug text-text-secondary">
+                        {item.message}
+                      </span>
+                      <small className="text-[10px] text-text-muted">
+                        {formatDate(item.createdAt)}
+                      </small>
+                    </>
+                  );
+                  return (
+                    <button
+                      key={item.notificationId}
+                      type="button"
+                      className={`flex w-full min-w-0 cursor-pointer gap-1 rounded-lg border-none p-2.5 text-left transition-all ${
+                        DeadlineIcon ? 'flex-row items-start gap-2.5' : 'flex-col'
+                      } ${
+                        item.read
+                          ? 'bg-transparent text-text-secondary hover:bg-surface-subtle'
+                          : 'bg-primary-light/50 font-semibold text-text-main hover:bg-primary-light'
+                      }`}
+                      onClick={() => openItem(item)}
+                    >
+                      {DeadlineIcon ? (
+                        <>
+                          <span
+                            className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${deadline.className}`}
+                            aria-hidden="true"
+                          >
+                            <DeadlineIcon className="h-3.5 w-3.5" />
+                          </span>
+                          <div className="flex min-w-0 flex-1 flex-col gap-1">{body}</div>
+                        </>
+                      ) : (
+                        body
                       )}
-                    </div>
-                    <span className="line-clamp-2 break-words text-[11px] leading-snug text-text-secondary">
-                      {item.message}
-                    </span>
-                    <small className="text-[10px] text-text-muted">
-                      {formatDate(item.createdAt)}
-                    </small>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <p className="m-0 py-6 text-center text-xs text-text-muted">Chưa có thông báo nào.</p>
