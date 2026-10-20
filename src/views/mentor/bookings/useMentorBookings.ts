@@ -38,8 +38,6 @@ export type MentorBookingMutation =
   | { type: 'cancel'; data: CancelMentorBookingRequest }
   | { type: 'checkIn' };
 
-const PAGE_SIZE = 5;
-
 export function bookingFilterOf(booking: MentorBookingResponse): MentorBookingFilter {
   const status = String(booking.bookingStatus || booking.displayState || 'PENDING').toUpperCase();
 
@@ -120,17 +118,16 @@ function localDateKey(value: string) {
 export function useMentorBookings() {
   const { isBootstrapping } = useAuth();
   const [allBookings, setAllBookings] = useState<MentorBookingResponse[]>([]);
-  const [activeFilter, setActiveFilter] = useState<MentorBookingFilter>('ALL');
   const [selectedDate, setSelectedDate] = useState('');
-  const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [serviceFilter, setServiceFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [googleCalendarStatus, setGoogleCalendarStatus] = useState<GoogleCalendarStatusResponse>();
 
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
+  /** `silent` keeps the current list on screen (used after mutations, no skeleton flash). */
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     setError(undefined);
     try {
       const [page, calendarStatus] = await Promise.all([
@@ -140,10 +137,10 @@ export function useMentorBookings() {
       setAllBookings(page.content ?? []);
       setGoogleCalendarStatus(calendarStatus);
     } catch (reason) {
-      setAllBookings([]);
+      if (!silent) setAllBookings([]);
       setError(getUserFriendlyErrorMessage(reason, 'Không thể tải lịch đặt. Vui lòng thử lại.'));
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, []);
 
@@ -151,77 +148,63 @@ export function useMentorBookings() {
     if (!isBootstrapping) void refresh();
   }, [isBootstrapping, refresh]);
 
-  const counts = useMemo(() => {
-    const result: Record<MentorBookingFilter, number> = {
-      ALL: allBookings.length,
-      WAITING: 0,
-      IN_PROGRESS: 0,
-      COMPLETED: 0,
-      NO_SHOW: 0,
-      REJECTED: 0,
-      EXPIRED: 0,
-      CANCELLED_BY_MENTEE: 0,
-      CANCELLED_BY_MENTOR: 0,
-    };
-    allBookings.forEach((booking) => {
-      result[bookingFilterOf(booking)] += 1;
-    });
-    return result;
-  }, [allBookings]);
+  const serviceOptions = useMemo(
+    () =>
+      [...new Set(allBookings.map((booking) => booking.serviceTitle?.trim()).filter(Boolean))]
+        .map(String)
+        .sort((a, b) => a.localeCompare(b, 'vi')),
+    [allBookings],
+  );
 
-  // TODO(api): responseDeadline — once exposed, sort PENDING requests by it (soonest first).
-  const filteredBookings = useMemo(() => {
-    return allBookings
-      .filter((booking) => {
-        const matchesStatus = activeFilter === 'ALL' || bookingFilterOf(booking) === activeFilter;
-        const matchesDate =
-          !selectedDate || localDateKey(booking.selectedStartTime) === selectedDate;
-        return matchesStatus && matchesDate;
-      })
-      .sort((left, right) => {
-        const difference =
-          new Date(left.selectedStartTime).getTime() - new Date(right.selectedStartTime).getTime();
-        return sortDirection === 'ASC' ? difference : -difference;
-      });
-  }, [activeFilter, allBookings, selectedDate, sortDirection]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / PAGE_SIZE));
-  const bookings = useMemo(() => {
-    const safePage = Math.min(currentPage, totalPages);
-    const start = (safePage - 1) * PAGE_SIZE;
-    return filteredBookings.slice(start, start + PAGE_SIZE);
-  }, [currentPage, filteredBookings, totalPages]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeFilter, selectedDate, sortDirection]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  // Grouping and ordering per inbox section happen in the view.
+  const bookings = useMemo(
+    () =>
+      allBookings.filter(
+        (booking) =>
+          (!selectedDate || localDateKey(booking.selectedStartTime) === selectedDate) &&
+          (!serviceFilter || booking.serviceTitle?.trim() === serviceFilter),
+      ),
+    [allBookings, selectedDate, serviceFilter],
+  );
 
   const loadDetail = (bookingId: string) => mentorBookingRepo.detail(bookingId);
 
-  const mutate = async (bookingId: string, mutation: MentorBookingMutation) => {
+  /**
+   * Runs a booking action, then refetches quietly. With `optimistic`, the booking is patched
+   * locally first and restored if the request fails (the error is rethrown for the caller).
+   */
+  const mutate = async (
+    bookingId: string,
+    mutation: MentorBookingMutation,
+    optimistic?: Partial<MentorBookingResponse>,
+  ) => {
+    const previous = allBookings.find((booking) => booking.bookingId === bookingId);
+    const patchLocal = (patch: Partial<MentorBookingResponse> | MentorBookingResponse) =>
+      setAllBookings((current) =>
+        current.map((booking) =>
+          booking.bookingId === bookingId ? { ...booking, ...patch } : booking,
+        ),
+      );
     setIsSaving(true);
+    if (optimistic) patchLocal(optimistic);
     try {
       if (mutation.type === 'accept') await mentorBookingRepo.accept(bookingId, mutation.data);
       if (mutation.type === 'reject') await mentorBookingRepo.reject(bookingId, mutation.data);
       if (mutation.type === 'complete') await mentorBookingRepo.complete(bookingId, mutation.data);
       if (mutation.type === 'cancel') await mentorBookingRepo.cancel(bookingId, mutation.data);
       if (mutation.type === 'checkIn') await bookingRepo.checkIn(bookingId);
-      await refresh();
+      void refresh(true);
       return true;
+    } catch (reason) {
+      if (optimistic && previous) patchLocal(previous);
+      throw reason;
     } finally {
       setIsSaving(false);
     }
   };
 
   return {
-    activeFilter,
     bookings,
-    counts,
-    currentPage,
     error,
     googleCalendarStatus,
     isLoading: isLoading || isBootstrapping,
@@ -230,11 +213,9 @@ export function useMentorBookings() {
     mutate,
     refresh,
     selectedDate,
-    setActiveFilter,
-    setCurrentPage,
+    serviceFilter,
+    serviceOptions,
     setSelectedDate,
-    setSortDirection,
-    sortDirection,
-    totalPages,
+    setServiceFilter,
   };
 }
