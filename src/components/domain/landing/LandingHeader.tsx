@@ -1,6 +1,7 @@
 /**
  * @file LandingHeader.tsx
- * @description Thanh điều hướng public responsive của landing page SkillSwap.
+ * @description Public header (landing + policy pages): logo, section links, Gmail login pill and
+ * a mobile menu below 900px.
  */
 
 'use client';
@@ -8,14 +9,16 @@
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, type MouseEvent } from 'react';
+import { useState } from 'react';
+import { GoogleIcon } from '@/components/domain/landing/LandingPrimitives';
+import { publicHref } from '@/constants/publicSite';
 
 const navigation = [
-  { label: 'Trang chủ', href: '/' },
-  { label: 'Dành cho mentee', href: '#mentee' },
-  { label: 'Đăng ký làm mentor', href: '#mentor' },
-  { label: 'Cách hoạt động', href: '#how-it-works' },
-  { label: 'Câu hỏi thường gặp', href: '#faq' },
+  { label: 'Tìm mentor', anchor: '#mentor' },
+  { label: 'Cách hoạt động', anchor: '#cach-hoat-dong' },
+  { label: 'KooKoo AI', anchor: '#koukou' },
+  { label: 'Làm mentor', anchor: '#lam-mentor' },
+  { label: 'Hỏi đáp', anchor: '#faq' },
 ] as const;
 
 interface LandingHeaderProps {
@@ -30,57 +33,51 @@ interface LandingHeaderProps {
 export function LandingHeader({ locale, isOutsideLanding = false }: LandingHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const closeMenu = () => setIsOpen(false);
-  const navigationHref = (href: string) => {
-    if (href.startsWith('#')) return isOutsideLanding ? `/${locale}${href}` : href;
-    return `/${locale}${href === '/' ? '' : href}`;
-  };
-  const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
-    closeMenu();
-    if (!href.startsWith('#') || isOutsideLanding) return;
-
-    const target = document.querySelector(href);
-    if (!target) return;
-
-    event.preventDefault();
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.history.replaceState(null, '', href);
-  };
+  // Plain anchors on the landing page: smooth scrolling comes from CSS and respects reduced motion.
+  const sectionHref = (anchor: string) => (isOutsideLanding ? `/${locale}${anchor}` : anchor);
+  const loginHref = publicHref(locale, 'login') ?? `/${locale}/login`;
 
   return (
-    <header className="landing-load-reveal landing-load-from-top sticky top-0 z-50 bg-white/96 backdrop-blur-md">
-      <div className="mx-auto flex h-[82px] w-[calc(100%_-_32px)] max-w-[1480px] items-center justify-between gap-2 sm:h-[94px] sm:w-[calc(100%_-_40px)] sm:gap-5 md:w-[calc(100%_-_64px)] xl:w-[calc(100%_-_96px)]">
-        <Link href={`/${locale}`} aria-label="Trang chủ SkillSwap" className="shrink-0">
+    <header className="sticky top-0 z-50 border-0 border-b border-solid border-site-line/70 bg-white/95 backdrop-blur-md">
+      <div className="mx-auto flex h-[72px] w-full max-w-[1240px] items-center gap-3 px-4 sm:px-6 min-[900px]:gap-7">
+        <Link
+          href={`/${locale}`}
+          aria-label="SkillSwap – Trang chủ"
+          className="site-focus flex shrink-0 items-center rounded-lg"
+        >
           <Image
             src="/images/SkillSwap_Logo_Text.png"
             alt="SkillSwap"
-            width={280}
-            height={76}
+            width={1920}
+            height={1080}
             priority
-            className="h-[68px] w-[190px] object-contain object-left sm:h-20 sm:w-[250px] xl:w-[230px] 2xl:w-[260px]"
+            unoptimized
+            className="h-14 w-[150px] object-contain object-left sm:w-[170px]"
           />
         </Link>
 
-        <nav aria-label="Điều hướng chính" className="hidden items-center gap-4 xl:flex 2xl:gap-6">
+        <nav
+          aria-label="Điều hướng chính"
+          className="ml-1 hidden items-center gap-6 min-[900px]:flex xl:gap-7"
+        >
           {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={navigationHref(item.href)}
-              onClick={(event) => handleNavigation(event, item.href)}
-              className="relative py-2.5 text-sm font-semibold whitespace-nowrap text-[#435b78] transition-colors after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-200 hover:text-primary hover:after:scale-x-100 focus-visible:rounded focus-visible:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:after:scale-x-100 2xl:text-[15px]"
+            <a
+              key={item.anchor}
+              href={sectionHref(item.anchor)}
+              className="site-focus rounded-sm py-2 font-site-ui text-[15px] font-semibold whitespace-nowrap text-site-body no-underline transition-colors hover:text-site-blue"
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </nav>
 
-        <div className="hidden items-center xl:flex">
-          <Link
-            href={`/${locale}/login`}
-            className="inline-flex h-14 items-center rounded-[14px] bg-primary px-8 text-[15px] font-bold text-white shadow-xs transition hover:-translate-y-px hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            Đăng nhập / Đăng ký
-          </Link>
-        </div>
+        <Link
+          href={loginHref}
+          className="site-focus ml-auto hidden min-h-11 items-center gap-2.5 rounded-full border-[1.5px] border-solid border-site-chip-border bg-white px-5 font-site-ui text-[15px] font-semibold whitespace-nowrap text-site-ink no-underline shadow-site-soft transition-colors hover:border-site-blue sm:inline-flex"
+        >
+          <GoogleIcon />
+          Đăng nhập bằng Gmail
+        </Link>
 
         <button
           type="button"
@@ -88,7 +85,7 @@ export function LandingHeader({ locale, isOutsideLanding = false }: LandingHeade
           aria-expanded={isOpen}
           aria-controls="landing-mobile-menu"
           onClick={() => setIsOpen((current) => !current)}
-          className="grid h-11 w-11 place-items-center rounded-xl border border-border-color text-text-main outline-none hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-primary xl:hidden"
+          className="site-focus ml-auto grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-solid border-site-line-strong bg-white text-site-ink hover:bg-site-tint sm:ml-0 min-[900px]:hidden"
         >
           {isOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
         </button>
@@ -97,28 +94,27 @@ export function LandingHeader({ locale, isOutsideLanding = false }: LandingHeade
       <div
         id="landing-mobile-menu"
         hidden={!isOpen}
-        className="border-t border-border-light bg-white px-5 py-4 xl:hidden"
+        className="border-0 border-t border-solid border-site-line bg-white px-4 py-3 min-[900px]:hidden"
       >
-        <nav aria-label="Điều hướng di động" className="mx-auto grid max-w-[1220px] gap-1">
+        <nav aria-label="Điều hướng di động" className="mx-auto grid max-w-[1240px] gap-1">
           {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={navigationHref(item.href)}
-              onClick={(event) => handleNavigation(event, item.href)}
-              className="rounded-lg px-3 py-2.5 text-sm font-semibold text-text-secondary hover:bg-primary-light hover:text-primary"
+            <a
+              key={item.anchor}
+              href={sectionHref(item.anchor)}
+              onClick={closeMenu}
+              className="site-focus flex min-h-11 items-center rounded-lg px-3 font-site-ui text-[15px] font-semibold text-site-body no-underline hover:bg-site-tint hover:text-site-blue"
             >
               {item.label}
-            </Link>
+            </a>
           ))}
-          <div className="mt-3 border-t border-border-light pt-4">
-            <Link
-              href={`/${locale}/login`}
-              onClick={closeMenu}
-              className="grid min-h-11 w-full place-items-center rounded-xl bg-primary px-3 text-center text-xs font-bold text-white"
-            >
-              Đăng nhập/ Đăng ký
-            </Link>
-          </div>
+          <Link
+            href={loginHref}
+            onClick={closeMenu}
+            className="site-focus mt-2 flex min-h-12 items-center justify-center gap-2.5 rounded-full border-[1.5px] border-solid border-site-chip-border bg-white px-5 font-site-ui text-[15px] font-semibold text-site-ink no-underline sm:hidden"
+          >
+            <GoogleIcon />
+            Đăng nhập bằng Gmail
+          </Link>
         </nav>
       </div>
     </header>

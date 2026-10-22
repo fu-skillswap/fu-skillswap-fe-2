@@ -165,6 +165,39 @@ export const LANDING_FAQ_GROUPS: LandingFaqGroup[] = [
   },
 ];
 
-export const CONFIRMED_LANDING_FAQS = LANDING_FAQ_GROUPS.flatMap(({ items }) => items).filter(
-  ({ isConfirmed }) => isConfirmed,
-);
+// TODO(copy): short S-coin explanation (how to get S-coins and how they convert) once approved.
+export const SCOIN_FAQ_ANSWER =
+  'S-coin là đơn vị SkillSwap dùng để trả cho buổi học: giá của từng dịch vụ được hiển thị bằng S-coin ngay trên hồ sơ mentor. Hướng dẫn nạp và quy đổi chi tiết đang được cập nhật.';
+
+/** "Hỏi nhanh" accordion on the landing page (v2). */
+export const LANDING_QUICK_FAQS: LandingFaqItem[] = [
+  {
+    id: 'who-are-mentors',
+    question: 'Mentor trên SkillSwap là ai?',
+    answer:
+      'Sinh viên và cựu sinh viên FPTU HCM, có thể cùng khóa với bạn, đã qua đúng môn hay kỳ OJT bạn đang cần. Hồ sơ mỗi người ghi rõ khóa, ngành và những môn, mảng họ chia sẻ.',
+    isConfirmed: true,
+  },
+  {
+    id: 'what-are-scoins',
+    question: 'S-coins là gì?',
+    answer: SCOIN_FAQ_ANSWER,
+    isConfirmed: false,
+  },
+  {
+    id: 'where-to-learn',
+    question: 'Học ở đâu?',
+    answer:
+      'Buổi học diễn ra qua Google Meet. Phòng mở trước giờ học, nút vào phòng nằm ngay trong Booking của tôi.',
+    isConfirmed: true,
+  },
+  {
+    id: 'need-account',
+    question: 'Có cần tạo tài khoản không?',
+    answer: 'Bạn chỉ cần đăng nhập bằng Gmail, không cần tạo mật khẩu riêng.',
+    isConfirmed: true,
+  },
+];
+
+/** FAQ structured data must match the visible questions, so it follows the landing accordion. */
+export const CONFIRMED_LANDING_FAQS = LANDING_QUICK_FAQS.filter(({ isConfirmed }) => isConfirmed);

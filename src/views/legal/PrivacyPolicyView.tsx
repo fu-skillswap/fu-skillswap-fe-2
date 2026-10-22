@@ -4,8 +4,8 @@
  * nội dung các mục. Không dùng analytics, cookie hay lưu trữ phía trình duyệt.
  */
 
-import { LandingFooter } from '@/components/domain/landing/LandingFooter';
 import { LandingHeader } from '@/components/domain/landing/LandingHeader';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import {
   ACCOUNT_DELETION_EMAIL_SUBJECT,
   PRIVACY_POLICY_META,
@@ -263,7 +263,7 @@ export function PrivacyPolicyView({ locale }: { locale: string }) {
         </div>
       </main>
 
-      <LandingFooter locale={locale} isOutsideLanding />
+      <SiteFooter locale={locale} />
     </div>
   );
 }

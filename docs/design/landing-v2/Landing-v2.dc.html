@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>SkillSwap – Trang chủ v2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700&amp;family=Inter:wght@400;500&amp;family=Montserrat:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#2563eb}a:hover{color:#1e3a8a}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #001c64;outline-offset:3px}
+.navlinks{display:flex}
+.mbar{display:none}
+@media (max-width:900px){.navlinks{display:none}.mbar{display:flex}.hide-sm{display:none}}
+input::placeholder{color:#6b7896}
+@media (prefers-reduced-motion:no-preference){
+.bob{animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #1f2a3c; background: #ffffff;">
+
+<!-- ===== HERO (light) ===== -->
+<section id="top" style="background: #ffffff; position: relative; overflow: hidden;">
+<svg aria-hidden="true" viewBox="0 0 900 900" style="position: absolute; right: -200px; top: -120px; width: 960px; height: 960px;">
+<path d="M640 120 C 420 40, 200 160, 300 330 C 380 470, 640 420, 640 600 C 640 760, 420 820, 260 760" fill="none" stroke="#e0effc" stroke-width="170" stroke-linecap="round"></path>
+<path d="M640 120 C 420 40, 200 160, 300 330 C 380 470, 640 420, 640 600 C 640 760, 420 820, 260 760" fill="none" stroke="#a8d8fc" stroke-width="2" stroke-dasharray="6 14"></path>
+</svg>
+
+<header style="position: relative; max-width: 1240px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap;">
+<a href="#top" aria-label="SkillSwap – Trang chủ" style="display: flex; align-items: center;"><img src="[EXISTING_LOGO]" alt="SkillSwap" style="height: 38px; width: auto;"></a>
+<nav class="navlinks" style="gap: 28px; margin-left: 12px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 15px;">
+<a href="#mentor" style="color: #1f2a3c; text-decoration: none;">Tìm mentor</a>
+<a href="#cach-hoat-dong" style="color: #1f2a3c; text-decoration: none;">Cách hoạt động</a>
+<a href="#koukou" style="color: #1f2a3c; text-decoration: none;">KooKoo AI</a>
+<a href="#lam-mentor" style="color: #1f2a3c; text-decoration: none;">Làm mentor</a>
+<a href="#faq" style="color: #1f2a3c; text-decoration: none;">Hỏi đáp</a>
+</nav>
+<button type="button" style="margin-left: auto; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1.5px solid #bcd7f2; background: #ffffff; color: #001c64; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; box-shadow: 0 4px 12px rgba(30, 58, 138, .08);">
+<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"></path><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"></path><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"></path><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z"></path></svg>
+Đăng nhập bằng Gmail
+</button>
+</header>
+
+<div style="position: relative; max-width: 1240px; margin: 0 auto; padding: 48px 24px 104px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div style="flex: 1 1 540px; min-width: 0; display: flex; flex-direction: column; gap: 26px;">
+
+<h1 style="margin: 0; font-family: Montserrat, sans-serif; font-weight: 900; font-size: clamp(44px, 6vw, 80px); line-height: .98; letter-spacing: -0.015em; text-transform: uppercase; color: #001c64;">Môn này khó?<br><span style="color: #2563eb;">Có người vừa qua rồi.</span></h1>
+<p style="margin: 0; max-width: 540px; font-size: 18px; line-height: 28px; color: #4b5a86;">Đặt lịch 1:1 với sinh viên FPT đã qua đúng môn, đã trải nghiệm, để nghe chia sẻ kinh nghiệm thực tế. Giá cả, thời gian đều minh bạch rõ ràng từ đầu, bạn không cần phải inbox hỏi thêm.</p>
+
+<form role="search" onSubmit="{{noop}}" style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #bcd7f2; border-radius: 999px; padding: 8px 8px 8px 22px; max-width: 600px; box-shadow: 0 16px 40px rgba(37, 99, 235, .14);">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4b5a86" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Bạn cần mentor cho môn hay việc gì?</label>
+<input id="q" type="search" placeholder="Nhập mã môn, OJT, đồ án EXE…" style="flex: 1; min-width: 0; height: 48px; border: 0; outline: none; font-family: Inter, sans-serif; font-size: 17px; color: #1f2a3c; background: transparent;">
+<button type="submit" style="flex: none; min-height: 52px; padding: 0 28px; border: 0; border-radius: 999px; background: #2563eb; color: #ffffff; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 10px 24px rgba(37, 99, 235, .3);">Tìm mentor</button>
+</form>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+<span style="font-size: 14px; color: #4b5a86; margin-right: 4px;">Đang được tìm nhiều:</span>
+<sc-for list="{{quick}}" as="k" hint-placeholder-count="5">
+<a href="#mentor" style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; color: #1e3a8a; background: #ffffff; text-decoration: none; padding: 9px 14px; border-radius: 999px; border: 1px solid #bcd7f2;">{{k}}</a>
+</sc-for>
+</div>
+
+
+</div>
+
+<!-- Product moment: real screenshots + KooKoo -->
+<div style="flex: 1 1 520px; min-width: 0; position: relative; min-height: 560px;">
+<figure style="margin: 0; position: absolute; top: 0; right: 0; width: 92%; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #d0e0ee; box-shadow: 0 24px 60px rgba(30, 58, 138, .16);">
+<div aria-hidden="true" style="height: 30px; background: #f0f6fc; display: flex; align-items: center; gap: 6px; padding: 0 14px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #c3d4e6;"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #c3d4e6;"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #c3d4e6;"></span></div>
+<img src="/images/landing/service-card.png" alt="Thẻ dịch vụ Hỗ trợ Review CV OJT: miễn phí, 60 phút, tư vấn 1:1, nút Đặt lịch tư vấn" style="display: block; width: 100%; height: auto;">
+</figure>
+<figure style="margin: 0; position: absolute; left: 0; top: 214px; width: 58%; background: #ffffff; border-radius: 18px; overflow: hidden; border: 4px solid #ffffff; box-shadow: 0 24px 60px rgba(30, 58, 138, .22);">
+<img src="/images/landing/booking-slots.png" alt="Bảng chọn giờ trống trong tuần, khung 21:00–22:00 thứ Sáu đang được chọn, kèm tóm tắt lịch đặt" style="display: block; width: 100%; height: auto;">
+</figure>
+<div style="position: absolute; right: 0; bottom: -10px; display: flex; align-items: flex-end; gap: 4px;">
+<p style="margin: 0 0 120px; position: relative; max-width: 190px; background: #ffffff; border: 1.5px solid #bcd7f2; border-radius: 18px; padding: 12px 14px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; line-height: 20px; color: #001c64; box-shadow: 0 8px 24px rgba(30, 58, 138, .12);">Giờ trống mentor mở sẵn, bấm là đặt được liền nè!<span aria-hidden="true" style="position: absolute; right: -8px; bottom: 18px; width: 14px; height: 14px; background: #ffffff; border-right: 1.5px solid #bcd7f2; border-bottom: 1.5px solid #bcd7f2; transform: rotate(-45deg);"></span></p>
+<img class="bob" src="/images/mascot/kookoo.png" alt="KooKoo, mascot cú của SkillSwap" style="width: 170px; height: auto; filter: drop-shadow(0 14px 20px rgba(30, 58, 138, .25));">
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== HOW IT WORKS (real screens) ===== -->
+<section id="cach-hoat-dong" style="background: #f0f6fc;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 96px 24px; display: flex; flex-direction: column; gap: 72px;">
+<h2 style="margin: 0; max-width: 720px; font-family: Montserrat, sans-serif; font-weight: 900; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.02; color: #001c64; text-transform: uppercase;">Từ lúc bí đến lúc có <span style="color: #2563eb;">người chia sẻ</span></h2>
+
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 88px;">
+<li style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center;">
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+<span style="font: 900 64px/1 Montserrat, sans-serif; color: #2563eb;">1</span>
+<h3 style="margin: 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.25; color: #001c64;">KooKoo AI gợi ý người hợp với bạn</h3>
+<p style="margin: 0; max-width: 420px; font-size: 17px; line-height: 26px; color: #4b5a86;">Cho biết mục tiêu môn học, KooKoo AI xếp mentor theo kỹ năng và ngành, kèm lý do vì sao người đó hợp với bạn.</p>
+</div>
+<div style="flex: 1.6 1 520px; min-width: 0; position: relative; padding-top: 100px;">
+<div style="position: absolute; right: 24px; top: 0; display: flex; align-items: flex-start; gap: 10px; z-index: 1;">
+<p style="margin: 14px 0 0; background: #ffffff; border: 1.5px solid #bcd7f2; border-radius: 16px; padding: 10px 14px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; line-height: 19px; color: #001c64; max-width: 240px; box-shadow: 0 8px 24px rgba(30, 58, 138, .1);">Mình là KooKoo AI, mình chọn mentor theo mục tiêu của bạn.</p>
+<img src="/images/mascot/kookoo-peek.png" alt="" aria-hidden="true" style="width: 124px; height: auto;">
+</div>
+<figure style="position: relative; z-index: 2; margin: 0; background: #ffffff; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px rgba(30, 58, 138, 0.10); display: flex; flex-direction: column; gap: 14px;">
+<figcaption style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5a86;"><img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 18px; height: auto;">KooKoo AI sắp xếp theo mục tiêu học của bạn, cập nhật mỗi ngày</figcaption>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+<div style="border: 1px solid #e3edf6; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; gap: 12px; align-items: center;"><span aria-hidden="true" style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font: 700 17px 'Be Vietnam Pro', sans-serif;">L</span><span style="min-width: 0;"><b style="display: block; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 16px; color: #111827;">Lan Anh</b><span style="font-size: 13px; color: #4b5a86;">Sinh viên năm 4 | Phân tích dữ liệu, OJT</span></span></div>
+<p style="margin: 0; background: #eef5ff; border: 1px solid #d6e6fb; border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 19px; color: #1f2a3c;"><b style="font-family: 'Be Vietnam Pro', sans-serif;">Vì sao phù hợp:</b> Có kinh nghiệm thực tập Data Analysis, thành thạo Excel, Google Sheet, Power BI.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;"><span style="font-size: 12px; color: #1f2a3c; background: #f3f6fa; padding: 4px 10px; border-radius: 999px;">Hệ thống thông tin</span><span style="font-size: 12px; color: #1f2a3c; background: #f3f6fa; padding: 4px 10px; border-radius: 999px;">Công nghệ thông tin</span></div>
+<span style="align-self: flex-end; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 12px; background: #0ea5e9; color: #fff; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; white-space: nowrap;">Xem lịch trống</span>
+</div>
+<div style="border: 1px solid #e3edf6; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; gap: 12px; align-items: center;"><span aria-hidden="true" style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #1e3a8a; color: #fff; display: flex; align-items: center; justify-content: center; font: 700 17px 'Be Vietnam Pro', sans-serif;">M</span><span style="min-width: 0;"><b style="display: block; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 16px; color: #111827;">Minh Khoa</b><span style="font-size: 13px; color: #4b5a86;">Java Spring · .NET</span></span></div>
+<p style="margin: 0; background: #eef5ff; border: 1px solid #d6e6fb; border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 19px; color: #1f2a3c;"><b style="font-family: 'Be Vietnam Pro', sans-serif;">Vì sao phù hợp:</b> Có nền tảng Java Spring và .NET, hỗ trợ project và assignment, cùng ngành Kỹ thuật phần mềm.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;"><span style="font-size: 12px; color: #1f2a3c; background: #f3f6fa; padding: 4px 10px; border-radius: 999px;">Kỹ thuật phần mềm</span><span style="font-size: 12px; color: #1f2a3c; background: #f3f6fa; padding: 4px 10px; border-radius: 999px;">Công nghệ thông tin</span></div>
+<span style="align-self: flex-end; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 12px; background: #0ea5e9; color: #fff; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; white-space: nowrap;">Xem lịch trống</span>
+</div>
+</div>
+</figure>
+</div>
+</li>
+
+<li style="display: flex; flex-wrap: wrap-reverse; gap: 48px; align-items: center;">
+<figure style="flex: 1.6 1 520px; min-width: 0; margin: 0; background: #ffffff; border-radius: 24px; padding: 16px; box-shadow: 0 8px 24px rgba(30, 58, 138, 0.10);">
+<img src="/images/landing/booking-slots.png" alt="Lịch giờ trống theo tuần với khung 21:00–22:00 được chọn và tóm tắt lịch đặt" style="display: block; width: 100%; height: auto; border-radius: 12px;">
+</figure>
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+<span style="font: 900 64px/1 Montserrat, sans-serif; color: #2563eb;">2</span>
+<h3 style="margin: 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.25; color: #001c64;">Chọn giờ mentor đã mở sẵn</h3>
+<p style="margin: 0; max-width: 420px; font-size: 17px; line-height: 26px; color: #4b5a86;">Lịch rảnh hiện theo tuần. Bấm một khung giờ, xem tóm tắt dịch vụ, thời gian và chi phí rồi đặt.</p>
+</div>
+</li>
+
+<li style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center;">
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+<span style="font: 900 64px/1 Montserrat, sans-serif; color: #2563eb;">3</span>
+<h3 style="margin: 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.25; color: #001c64;">Theo dõi đến lúc vào học</h3>
+<p style="margin: 0; max-width: 420px; font-size: 17px; line-height: 26px; color: #4b5a86;">Biết buổi học đang ở bước nào, nhắn mentor khi cần. Mentor sẽ để sẵn link meeting cho bạn.</p>
+</div>
+<div style="flex: 1.6 1 520px; min-width: 0; position: relative;">
+<figure style="margin: 0; background: #ffffff; border-radius: 24px; padding: 16px; box-shadow: 0 8px 24px rgba(30, 58, 138, 0.10);">
+<img src="/images/landing/my-booking.png" alt="Thẻ lịch hẹn sắp diễn ra với các bước Gửi yêu cầu, Mentor đã nhận, Học 1:1, Đánh giá và nút vào Google Meet" style="display: block; width: 100%; height: auto; border-radius: 12px;">
+</figure>
+<img class="hide-sm" src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="position: absolute; left: -64px; bottom: -48px; width: 120px; height: auto; transform: scaleX(-1) rotate(-6deg); filter: drop-shadow(0 10px 16px rgba(30, 58, 138, .2));">
+</div>
+</li>
+</ol>
+
+<a href="#top" style="align-self: center; display: inline-flex; align-items: center; min-height: 56px; padding: 0 32px; border-radius: 999px; background: #2563eb; color: #ffffff; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 17px; box-shadow: 0 12px 32px rgba(37, 99, 235, 0.22);">Tìm mentor cho bạn</a>
+</div>
+</section>
+
+<!-- ===== MENTOR GRID (matches the live mentor search UI) ===== -->
+<section id="mentor" style="background: #ffffff;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 88px 24px 80px; display: flex; flex-direction: column; gap: 28px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px;">
+<div style="display: flex; align-items: flex-end; gap: 16px;">
+<img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 84px; height: auto; flex: none;">
+<h2 style="margin: 0; max-width: 640px; font-family: Montserrat, sans-serif; font-weight: 900; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.02; color: #001c64; text-transform: uppercase; width: 705px; height: 145px">Người thật, môn thật,<br><span style="color: #2563eb;">kinh nghiệm thật.</span></h2>
+</div>
+<a href="#mentor" style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 16px; padding: 12px 0; white-space: nowrap;">Xem tất cả mentor</a>
+</div>
+
+<div role="tablist" aria-label="Lọc theo môn hoặc kỹ năng" style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="7">
+<button type="button" role="tab" aria-selected="{{c.sel}}" onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+<sc-for list="{{mentors}}" as="m" hint-placeholder-count="2">
+<article style="background: #ffffff; border: 1px solid #e3edf6; border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 8px 24px rgba(30, 58, 138, 0.06);">
+<div style="display: flex; gap: 14px; align-items: center;">
+<div style="position: relative; flex: none;">
+<div aria-hidden="true" style="{{m.avatar}}">{{m.initials}}</div>
+<span aria-label="Mentor đã xác minh" style="position: absolute; right: -2px; bottom: -2px; width: 18px; height: 18px; border-radius: 50%; background: #2563eb; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+</div>
+<div style="min-width: 0;">
+<h3 style="margin: 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 17px; color: #111827;">{{m.name}}</h3>
+<p style="margin: 2px 0 0; font-size: 13px; color: #4b5a86;">{{m.sub}}</p>
+</div>
+</div>
+<p style="margin: 0; display: flex; gap: 10px; align-items: flex-start; background: #f0f6fc; border-radius: 12px; padding: 12px 14px; font-size: 13.5px; line-height: 20px; color: #1f2a3c;"><img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 20px; height: auto; flex: none; margin-top: 1px;"><span><b style="font-family: 'Be Vietnam Pro', sans-serif; color: #001c64;">Hợp với bạn nếu:</b> {{m.fit}}</span></p>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: #4b5a86; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{m.desc}}</p>
+<p style="margin: 0; display: flex; align-items: center; gap: 8px; background: #f7fafd; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #1f2a3c;"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #16a34a; flex: none;"></span>{{m.status}}</p>
+<div style="margin-top: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<a href="#mentor" style="display: flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 12px; border: 1.5px solid #bcd7f2; color: #1e3a8a; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; white-space: nowrap;">Xem hồ sơ</a>
+<a href="#top" style="display: flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 12px; background: #2563eb; color: #ffffff; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; white-space: nowrap;">Xem lịch trống</a>
+</div>
+</article>
+</sc-for>
+
+<article style="border: 2px dashed #a8d8fc; border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 14px; background: #fbfdff;">
+<img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 64px; height: auto;">
+<h3 style="margin: 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 19px; color: #001c64;">Chưa thấy người hợp?</h3>
+<p style="margin: 0; font-size: 15px; line-height: 23px; color: #4b5a86;">Kể cho KooKoo bạn cần gì: môn đang học, đồ án hay chuẩn bị OJT. KooKoo sẽ tìm trong danh sách mentor giúp bạn.</p>
+<a href="#koukou" style="margin-top: auto; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; border: 1.5px solid #2563eb; color: #2563eb; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 15px;">Hỏi KooKoo</a>
+<a href="#mentor" style="align-self: center; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; padding: 8px 0;">Đăng câu hỏi lên Bảng tin</a>
+</article>
+</div>
+</div>
+</section>
+
+<!-- ===== KOUKOU AI ===== -->
+<section id="koukou" style="background: #f0f6fc; position: relative; overflow: hidden;">
+<svg aria-hidden="true" viewBox="0 0 600 600" style="position: absolute; left: -160px; bottom: -220px; width: 600px; height: 600px;"><circle cx="300" cy="300" r="220" fill="none" stroke="#e0effc" stroke-width="90"></circle></svg>
+<div style="position: relative; max-width: 1240px; margin: 0 auto; padding: 96px 24px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+<p style="margin: 0; display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: #ffffff; border: 1px solid #d0e0ee; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; color: #1e3a8a;"><img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 26px; height: auto;">KooKoo AI · trợ lý của SkillSwap</p>
+<h2 style="margin: 0; font-family: Montserrat, sans-serif; font-weight: 900; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.02; color: #001c64; text-transform: uppercase;">Chưa biết hỏi ai? <span style="color: #2563eb;">Hỏi KooKoo trước.</span></h2>
+<p style="margin: 0; max-width: 480px; font-size: 17px; line-height: 26px; color: #4b5a86;">KooKoo hiểu ngành và học kỳ của bạn, gợi ý mentor hợp, chỉ cách đặt lịch và giải thích S-coin. Bấm thử một câu bên khung chat.</p>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 15px; color: #1f2a3c;">
+<li style="display: flex; gap: 10px; align-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Đánh dấu mentor hợp với hồ sơ của bạn ngay trên từng thẻ</li>
+<li style="display: flex; gap: 10px; align-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Luôn ở góc màn hình, hỏi lúc nào cũng được</li>
+</ul>
+</div>
+
+<div style="flex: 1 1 380px; min-width: 0; display: flex; justify-content: center; position: relative;">
+<img class="hide-sm bob" src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="position: absolute; left: -10px; bottom: -30px; width: 150px; height: auto; z-index: 2; filter: drop-shadow(0 12px 18px rgba(30, 58, 138, .25));">
+<div role="region" aria-label="Thử chat với KooKoo AI" style="width: 100%; max-width: 380px; background: #ffffff; border-radius: 22px; border: 1px solid #d0e0ee; box-shadow: 0 24px 60px rgba(30, 58, 138, .18); overflow: hidden; display: flex; flex-direction: column;">
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #e3edf6;">
+<img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 34px; height: auto;">
+<div style="flex: 1; min-width: 0;">
+<p style="margin: 0; display: flex; align-items: center; gap: 8px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 16px; color: #111827;">KooKoo AI <span style="font-size: 10px; letter-spacing: .04em; color: #1e3a8a; background: #e0effc; padding: 2px 7px; border-radius: 999px;">BETA</span></p>
+<p style="margin: 0; font-size: 12px; color: #4b5a86;">Trợ lý AI của SkillSwap</p>
+</div>
+</div>
+<div aria-live="polite" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 250px; background: #ffffff;">
+<sc-for list="{{msgs}}" as="mm" hint-placeholder-count="1">
+<sc-if value="{{mm.bot}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; gap: 10px; align-items: flex-start;">
+<img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 30px; height: auto; flex: none;">
+<p style="margin: 0; background: #eef5ff; border: 1px solid #d6e6fb; border-radius: 4px 16px 16px 16px; padding: 10px 13px; font-size: 14px; line-height: 21px; color: #1f2a3c; white-space: pre-line;">{{mm.text}}</p>
+</div>
+</sc-if>
+<sc-if value="{{mm.me}}" hint-placeholder-val="{{false}}">
+<p style="margin: 0; align-self: flex-end; max-width: 80%; background: #2563eb; color: #ffffff; border-radius: 16px 4px 16px 16px; padding: 10px 13px; font-size: 14px; line-height: 20px;">{{mm.text}}</p>
+</sc-if>
+</sc-for>
+</div>
+<div style="padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{suggest}}" as="sg" hint-placeholder-count="4">
+<button type="button" onClick="{{sg.ask}}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 8px 12px; background: #ffffff; border: 1px solid #d0e0ee; border-radius: 12px; cursor: pointer; text-align: left; font-family: Inter, sans-serif; font-size: 14px; color: #1f2a3c;"><span aria-hidden="true" style="color: #2563eb; font-weight: 700;">›</span><span style="flex: 1;">{{sg.q}}</span></button>
+</sc-for>
+<sc-if value="{{chatted}}" hint-placeholder-val="{{false}}">
+<button type="button" onClick="{{resetChat}}" style="align-self: flex-start; min-height: 36px; background: none; border: 0; padding: 0; cursor: pointer; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 13px; color: #2563eb;">Hỏi lại từ đầu</button>
+</sc-if>
+</div>
+<div style="border-top: 1px solid #e3edf6; padding: 12px 16px; display: flex; gap: 10px; align-items: center;">
+<label for="kq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Nhập câu hỏi cho KooKoo</label>
+<input id="kq" type="text" placeholder="Nhập câu hỏi của bạn..." style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 1.5px solid #2563eb; border-radius: 12px; font-family: Inter, sans-serif; font-size: 14px; color: #1f2a3c;">
+<button type="button" aria-label="Gửi câu hỏi" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; background: #a8d8fc; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg></button>
+</div>
+<p style="margin: 0; padding: 0 16px 12px; font-size: 11.5px; color: #4b5a86;">KooKoo có thể sai, hãy kiểm tra lại với nguồn được dẫn.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== COMPARISON ===== -->
+<section style="background: #f0f6fc;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 88px 24px; display: flex; flex-direction: column; gap: 32px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+<h2 style="margin: 0; font-family: Montserrat, sans-serif; font-weight: 900; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.02; color: #001c64; text-transform: uppercase;">Vẫn hỏi trong group <span style="color: #2563eb;">được mà?</span></h2>
+</div>
+<div style="position: relative; padding-top: 56px;">
+<div class="hide-sm" style="position: absolute; right: 9%; top: -18px; display: flex; align-items: flex-start; gap: 8px;">
+<p style="margin: 8px 0 0; position: relative; background: #ffffff; border: 1.5px solid #bcd7f2; border-radius: 16px; padding: 10px 14px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; color: #001c64; box-shadow: 0 8px 24px rgba(30, 58, 138, .1);">Khỏi ngồi chờ comment nha!</p>
+<img src="/images/mascot/kookoo-peek.png" alt="" aria-hidden="true" style="width: 96px; height: auto; transform: scaleX(-1);">
+</div>
+<div style="position: relative; border-radius: 28px; overflow: hidden; border: 1px solid #d0e0ee; background: #ffffff;">
+<div style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); background: #ffffff; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 15px;">
+<span style="padding: 18px 24px; color: #4b5a86;"></span>
+<span style="padding: 18px 24px; color: #4b5a86;">Group Facebook</span>
+<span style="padding: 18px 24px; color: #ffffff; background: #2563eb;">SkillSwap</span>
+</div>
+<sc-for list="{{compare}}" as="r" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid #e3edf6; font-size: 15px; line-height: 22px;">
+<span style="padding: 18px 24px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; color: #001c64;">{{r.k}}</span>
+<span style="padding: 18px 24px; color: #4b5a86;">{{r.fb}}</span>
+<span style="padding: 18px 24px; color: #001c64; background: #eef5ff; font-weight: 500;">{{r.ss}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== DUAL FINAL CTA ===== -->
+<section id="lam-mentor" style="background: #ffffff;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 96px 24px; display: flex; flex-wrap: wrap; gap: 20px;">
+<div style="flex: 1 1 460px; min-width: 0; background: #2563eb; color: #ffffff; border-radius: 32px; padding: 44px 44px 44px; display: flex; flex-direction: column; gap: 18px; position: relative; overflow: hidden; min-height: 300px;">
+<svg aria-hidden="true" viewBox="0 0 300 300" style="position: absolute; right: -60px; top: -70px; width: 280px; height: 280px;"><circle cx="150" cy="150" r="120" fill="none" stroke="#22d3ee" stroke-width="40" opacity=".45"></circle></svg>
+<h2 style="position: relative; margin: 0; max-width: 360px; font-family: Montserrat, sans-serif; font-weight: 900; font-size: 34px; line-height: 1.05; text-transform: uppercase;">Sắp thi rồi? Đặt buổi đầu ngay hôm nay.</h2>
+<p style="position: relative; margin: 0; font-size: 16px; line-height: 24px; color: #e6efff; max-width: 330px;">Đăng nhập bằng Gmail, chọn mentor, chọn giờ. Xong.</p>
+<a href="#top" style="position: relative; align-self: flex-start; display: inline-flex; align-items: center; min-height: 56px; padding: 0 30px; border-radius: 999px; background: #ffffff; color: #001c64; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 17px;">Tìm mentor ngay</a>
+<img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="position: absolute; right: 24px; bottom: -36px; width: 170px; height: auto; transform: rotate(6deg); filter: drop-shadow(0 12px 18px rgba(0, 28, 100, .3));">
+</div>
+<div style="flex: 1 1 460px; min-width: 0; background: #e0effc; color: #001c64; border-radius: 32px; padding: 44px; display: flex; flex-direction: column; gap: 18px; position: relative; overflow: hidden; min-height: 300px;">
+<span style="position: relative; align-self: flex-start; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 14px; color: #ffffff; background: #1e3a8a; padding: 6px 12px; border-radius: 999px;">0% hoa hồng năm học này</span>
+<h2 style="position: relative; margin: 0; max-width: 380px; font-family: Montserrat, sans-serif; font-weight: 900; font-size: 34px; line-height: 1.05; text-transform: uppercase;">Bạn qua môn đó rồi? <span style="color: #2563eb;">Chia sẻ lại cho bạn khác.</span></h2>
+<p style="position: relative; margin: 0; font-size: 16px; line-height: 24px; color: #1f2a3c; max-width: 330px;">Tự đặt giá, tự mở giờ rảnh. Nhận lịch khi bạn sẵn sàng.</p>
+<a href="#lam-mentor" style="position: relative; align-self: flex-start; display: inline-flex; align-items: center; min-height: 56px; padding: 0 30px; border-radius: 999px; background: #1e3a8a; color: #ffffff; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 17px;">Đăng ký làm mentor</a>
+<img src="/images/mascot/kookoo-peek.png" alt="" aria-hidden="true" style="position: absolute; right: 20px; bottom: -6px; width: 150px; height: auto; transform: scaleX(-1);">
+</div>
+</div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section id="faq" style="background: #f0f6fc;">
+<div style="max-width: 1040px; margin: 0 auto; padding: 80px 24px; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+<div style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 18px; align-items: flex-start;">
+<h2 style="margin: 0; font-family: Montserrat, sans-serif; font-weight: 900; font-size: 32px; color: #001c64; text-transform: uppercase;">Hỏi nhanh</h2>
+<p style="margin: 0; position: relative; background: #ffffff; border: 1.5px solid #bcd7f2; border-radius: 18px; padding: 12px 16px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 14px; line-height: 20px; color: #001c64; max-width: 240px;">Còn thắc mắc? Hỏi KooKoo AI ở góc màn hình, mình trả lời liền.<span aria-hidden="true" style="position: absolute; left: 40px; bottom: -8px; width: 14px; height: 14px; background: #ffffff; border-right: 1.5px solid #bcd7f2; border-bottom: 1.5px solid #bcd7f2; transform: rotate(45deg);"></span></p>
+<img class="bob" src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 130px; height: auto;">
+</div>
+<div style="flex: 2 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<sc-for list="{{faqs}}" as="f" hint-placeholder-count="4">
+<div style="background: #ffffff; border-radius: 18px; padding: 0 22px;">
+<button type="button" aria-expanded="{{f.open}}" onClick="{{f.toggle}}" style="width: 100%; min-height: 64px; display: flex; justify-content: space-between; align-items: center; gap: 16px; background: none; border: 0; padding: 16px 0; cursor: pointer; text-align: left; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 17px; color: #001c64;">{{f.q}}<span aria-hidden="true" style="font-size: 24px; color: #2563eb;">{{f.sign}}</span></button>
+<sc-if value="{{f.open}}" hint-placeholder-val="{{false}}"><p style="margin: 0 0 20px; font-size: 15px; line-height: 23px; color: #4b5a86;">{{f.a}}</p></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<dc-import name="SiteFooter" top-color="#f0f6fc" hint-size="100%,760px"></dc-import>
+
+<!-- Mobile sticky CTA -->
+<div class="mbar" style="position: sticky; bottom: 0; z-index: 5; padding: 10px 16px; background: #ffffff; box-shadow: 0 -8px 24px rgba(0, 28, 100, .12); align-items: center; gap: 10px;">
+<img src="/images/mascot/kookoo.png" alt="" aria-hidden="true" style="width: 40px; height: auto;">
+<span style="flex: 1; font-size: 14px; line-height: 19px; color: #1f2a3c;">Có mentor mở lịch tuần này</span>
+<a href="#top" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; background: #2563eb; color: #ffffff; text-decoration: none; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 15px;">Tìm mentor</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { cat: 'all', faq: -1, asked: [] }; }
+  renderVals() {
+    var self = this;
+    var all = [
+      { initials: 'LA', color: '#2563eb', name: 'Lan Anh', sub: 'Sinh viên năm 4 | Phân tích dữ liệu, OJT', fit: 'bạn đang chuẩn bị CV và phỏng vấn OJT mảng Data.', desc: 'Từng thực tập Data Analysis, thạo Excel, Google Sheet và Power BI. Review CV OJT miễn phí.', status: 'Trống gần nhất: Th 6, 21:00', cats: ['ojt', 'data'] },
+      { initials: 'MK', color: '#1e3a8a', name: 'Minh Khoa', sub: 'Java Spring · .NET', fit: 'bạn đang làm project, assignment PRN211.', desc: 'Hỗ trợ project và assignment Java Spring, .NET, cùng ngành Kỹ thuật phần mềm.', status: 'Mentor mới', cats: ['prn', 'swp'] },
+      { initials: 'TH', color: '#0891b2', name: 'Thu Hà', sub: 'Kỹ thuật phần mềm · năm 3', fit: 'bạn cần ôn MAE101 trước kỳ thi.', desc: 'Ôn theo dạng đề, chỉ những phần hay mất điểm và cách trình bày bài.', status: 'Trống gần nhất: Th 3, 19:00', cats: ['mae'] },
+      { initials: 'QB', color: '#3b82f6', name: 'Quốc Bảo', sub: 'Team lead SWP391 · năm 4', fit: 'nhóm bạn đang làm SWP391 và cần chia việc.', desc: 'Kinh nghiệm dẫn nhóm SWP391, review cấu trúc code và cách chuẩn bị buổi bảo vệ.', status: 'Trống gần nhất: Th 5, 20:00', cats: ['swp'] },
+      { initials: 'NV', color: '#0e7490', name: 'Ngọc Vy', sub: 'UI/UX · Thiết kế đồ họa', fit: 'bạn cần portfolio UI/UX để xin OJT.', desc: 'Góp ý portfolio, case study và cách trình bày quy trình thiết kế khi phỏng vấn.', status: 'Mentor mới', cats: ['uiux', 'ojt'] }
+    ];
+    var catList = [['all', 'Tất cả'], ['prn', 'PRN211'], ['swp', 'SWP391'], ['mae', 'MAE101'], ['ojt', 'CV & phỏng vấn OJT'], ['data', 'Phân tích dữ liệu'], ['uiux', 'UI/UX']];
+    var tBase = "min-height: 44px; padding: 0 18px; border-radius: 999px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap; ";
+    var cats = catList.map(function (c) {
+      var sel = self.state.cat === c[0];
+      return { label: c[1], sel: sel ? 'true' : 'false',
+        style: tBase + (sel ? 'background: #2563eb; color: #ffffff; border: 1.5px solid #2563eb;' : 'background: #ffffff; color: #1f2a3c; border: 1.5px solid #d0e0ee;'),
+        pick: function () { self.setState({ cat: c[0] }); } };
+    });
+    var mentors = all.filter(function (m) { return self.state.cat === 'all' || m.cats.indexOf(self.state.cat) >= 0; }).map(function (m) {
+      return Object.assign({}, m, { avatar: 'width: 56px; height: 56px; border-radius: 50%; background: ' + m.color + '; color: #ffffff; display: flex; align-items: center; justify-content: center; font: 700 18px "Be Vietnam Pro", sans-serif;' });
+    });
+
+    var qa = [
+      { q: 'Tìm mentor phù hợp với mục tiêu của mình', a: 'Bạn kể mình nghe mục tiêu nhé, ví dụ “ôn MAE101 trước PE” hay “chuẩn bị CV OJT”. Mình sẽ lọc mentor đã qua đúng phần đó và đánh dấu người hợp nhất.' },
+      { q: 'Hướng dẫn cách đặt lịch với mentor', a: '1. Mở hồ sơ mentor, bấm Xem lịch trống.\n2. Chọn một khung giờ còn trống.\n3. Xem tóm tắt rồi bấm Đặt lịch.\nBuổi học hiện trong Booking của tôi, có nút vào Google Meet.' },
+      { q: 'Giải thích về S-coin và cách sử dụng', a: '[Câu trả lời thật của KooKoo về S-coin]' },
+      { q: 'Gợi ý kỹ năng nên học dựa trên mục tiêu', a: 'Bạn đang học kỳ mấy và muốn đi hướng nào? Mình sẽ gợi ý kỹ năng nên ưu tiên và mentor có thể chia sẻ kinh nghiệm với bạn.' }
+    ];
+    var msgs = [{ bot: true, me: false, text: 'Xin chào! 👋\nMình là KooKoo, trợ lý AI của SkillSwap. Mình có thể giúp gì cho bạn hôm nay?' }];
+    this.state.asked.forEach(function (i) {
+      msgs.push({ bot: false, me: true, text: qa[i].q });
+      msgs.push({ bot: true, me: false, text: qa[i].a });
+    });
+    var suggest = qa.map(function (x, i) { return { q: x.q, i: i, ask: function () { self.setState({ asked: self.state.asked.concat([i]) }); } }; })
+      .filter(function (x) { return self.state.asked.indexOf(x.i) < 0; });
+
+    var compare = [
+      { k: 'Tìm người', fb: 'Đăng bài, chờ comment', ss: 'Gõ mã môn, KooKoo AI gợi ý người hợp' },
+      { k: 'Biết người đó có hợp', fb: 'Đoán qua avatar', ss: 'Hồ sơ ghi rõ khóa, ngành, lý do phù hợp' },
+      { k: 'Giá', fb: 'Inbox hỏi từng người', ss: 'Hiện sẵn trên từng dịch vụ' },
+      { k: 'Hẹn lịch', fb: 'Nhắn qua lại nhiều lần', ss: 'Chọn giờ trống, theo dõi tới lúc vào Meet' }
+    ];
+    var fq = [
+      { q: 'Mentor trên SkillSwap là ai?', a: 'Sinh viên và cựu sinh viên FPTU HCM, có thể cùng khóa với bạn, đã qua đúng môn hay kỳ OJT bạn đang cần. Hồ sơ mỗi người ghi rõ khóa, ngành và những môn, mảng họ chia sẻ.' },
+      { q: 'S-coins là gì?', a: '[Giải thích ngắn S-coins: cách có S-coins và quy đổi.]' },
+      { q: 'Học ở đâu?', a: 'Buổi học diễn ra qua Google Meet. Phòng mở trước giờ học, nút vào phòng nằm ngay trong Booking của tôi.' },
+      { q: 'Có cần tạo tài khoản không?', a: 'Bạn chỉ cần đăng nhập bằng Gmail, không cần tạo mật khẩu riêng.' }
+    ];
+    var faqs = fq.map(function (f, i) {
+      var open = self.state.faq === i;
+      return Object.assign({}, f, { open: open, sign: open ? '−' : '+', toggle: function () { self.setState({ faq: open ? -1 : i }); } });
+    });
+    return {
+      quick: ['PRF192', 'MAE101', 'OJT', 'EXE101', 'Chọn chuyên ngành'],
+      noop: function (e) { if (e && e.preventDefault) e.preventDefault(); },
+      cats: cats, mentors: mentors, compare: compare, faqs: faqs,
+      msgs: msgs, suggest: suggest, chatted: this.state.asked.length > 0,
+      resetChat: function () { self.setState({ asked: [] }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

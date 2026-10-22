@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@600;700&family=Montserrat:wght@900&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -38,6 +38,32 @@
   --radius-md: var(--ui-radius-md);
   --radius-lg: var(--ui-radius-lg);
   --radius-full: var(--ui-radius-full);
+
+  /* Public site (landing, policy pages, shared footer) */
+  --color-site-ink: var(--site-ink);
+  --color-site-blue: var(--site-blue);
+  --color-site-blue-hover: var(--site-blue-hover);
+  --color-site-navy: var(--site-navy);
+  --color-site-cyan: var(--site-cyan);
+  --color-site-sky: var(--site-sky);
+  --color-site-body: var(--site-body);
+  --color-site-muted: var(--site-muted);
+  --color-site-tint: var(--site-tint);
+  --color-site-chip: var(--site-chip);
+  --color-site-chip-border: var(--site-chip-border);
+  --color-site-line: var(--site-line);
+  --color-site-line-strong: var(--site-line-strong);
+  --color-site-bubble: var(--site-bubble);
+  --color-site-bubble-border: var(--site-bubble-border);
+  --color-site-on-blue: var(--site-on-blue);
+
+  --shadow-site-soft: var(--site-shadow-soft);
+  --shadow-site-lift: var(--site-shadow-lift);
+  --shadow-site-cta: var(--site-shadow-cta);
+
+  --font-site-display: 'Montserrat', 'Be Vietnam Pro', sans-serif;
+  --font-site-ui: 'Be Vietnam Pro', 'Inter', sans-serif;
+  --font-site-body: 'Inter', system-ui, sans-serif;
 }
 
 :root {
@@ -121,6 +147,28 @@
   --ui-warning-soft: var(--warning-soft);
   --ui-success: var(--success);
   --ui-success-soft: var(--success-soft);
+
+  /* Public site brand kit (landing v2 + shared footer). Darker than --primary for AA text. */
+  --site-ink: #001c64;
+  --site-blue: #2563eb;
+  --site-blue-hover: #1d4ed8;
+  --site-navy: #1e3a8a;
+  --site-cyan: #22d3ee; /* decoration only, never text on white */
+  --site-sky: #a8d8fc;
+  --site-body: #1f2a3c;
+  --site-muted: #4b5a86;
+  --site-tint: #f0f6fc;
+  --site-chip: #e0effc;
+  --site-chip-border: #bcd7f2;
+  --site-line: #e3edf6;
+  --site-line-strong: #d0e0ee;
+  --site-bubble: #eef5ff;
+  --site-bubble-border: #d6e6fb;
+  --site-on-blue: #eef4ff; /* #e6efff in the mockup is 4.47:1 on blue; nudged to pass AA */
+  --site-shadow-soft: 0 8px 24px rgba(30, 58, 138, 0.08);
+  --site-shadow-lift: 0 24px 60px rgba(30, 58, 138, 0.16);
+  --site-shadow-cta: 0 12px 32px rgba(37, 99, 235, 0.22);
+  --site-mobile-bar-height: 68px;
 }
 
 html {
@@ -145,17 +193,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.landing-container {
-  width: 100%;
-  max-width: 1220px;
-  margin-inline: auto;
-  padding-inline: 1.25rem;
-}
-
-.landing-section {
-  padding-block: 5rem;
-}
-
 .landing-hero-canvas {
   position: relative;
   isolation: isolate;
@@ -173,150 +210,59 @@ body {
   display: none;
 }
 
-.landing-hero-glow {
-  position: absolute;
-  top: 70px;
-  right: -120px;
-  z-index: 0;
-  width: 760px;
-  height: 520px;
-  border-radius: 9999px;
-  background: rgba(53, 168, 255, 0.055);
-  filter: blur(70px);
-  pointer-events: none;
+/* ===== Public site (landing v2) ===== */
+.site-focus:focus-visible,
+.site-page :is(a, button, input, [tabindex]):focus-visible {
+  outline: 3px solid var(--site-ink);
+  outline-offset: 3px;
 }
 
-.landing-video-progress {
-  height: 4px;
-  cursor: pointer;
-  appearance: none;
-  border-radius: 9999px;
-  outline: none;
-  background: linear-gradient(
-    to right,
-    #119cf7 0%,
-    #119cf7 var(--video-progress),
-    #dceaf6 var(--video-progress),
-    #dceaf6 100%
-  );
+/* Focus ring on blue grounds (shared footer, blue CTA card); light cards inside flip back. */
+.site-on-blue :is(a, button):focus-visible,
+.site-page .site-on-blue :is(a, button):focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
 }
 
-.landing-video-progress::-webkit-slider-thumb {
-  width: 12px;
-  height: 12px;
-  appearance: none;
-  border: 2px solid #ffffff;
-  border-radius: 9999px;
-  background: #119cf7;
-  box-shadow: 0 2px 6px rgba(18, 56, 110, 0.18);
+.site-on-blue .site-on-light :is(a, button):focus-visible,
+.site-page .site-on-blue .site-on-light :is(a, button):focus-visible {
+  outline-color: var(--site-ink);
 }
 
-.landing-video-progress::-moz-range-thumb {
-  width: 9px;
-  height: 9px;
-  border: 2px solid #ffffff;
-  border-radius: 9999px;
-  background: #119cf7;
-  box-shadow: 0 2px 6px rgba(18, 56, 110, 0.18);
+.site-page section[id] {
+  scroll-margin-top: 88px;
 }
 
-.landing-hero-intro-item {
-  opacity: 0;
-  transform: translateX(-52px);
-  filter: blur(4px);
-  transition:
-    opacity 820ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 820ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 820ms cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--landing-intro-delay, 0ms);
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.site-page) {
+    scroll-behavior: smooth;
+  }
+
+  /* The landing's single orchestrated motion: the mascot's gentle bob. */
+  .site-bob {
+    animation: site-bob 3.2s ease-in-out infinite;
+  }
 }
 
-.landing-hero-intro-visible {
-  opacity: 1;
-  transform: translateX(0);
-  filter: blur(0);
-}
-
-.landing-load-reveal {
-  opacity: 0;
-  transform: translateY(var(--landing-load-offset, 16px));
-  filter: blur(3px);
-  will-change: opacity, transform, filter;
-  animation: landing-load-reveal 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: var(--landing-load-delay, 0ms);
-}
-
-.landing-load-from-top {
-  --landing-load-offset: -10px;
-}
-
-.landing-load-from-left {
-  transform: translateX(-44px);
-}
-
-.landing-load-from-right {
-  transform: translateX(40px);
-}
-
-.landing-load-delay-1 {
-  --landing-load-delay: 150ms;
-}
-
-.landing-load-delay-2 {
-  --landing-load-delay: 260ms;
-}
-
-.landing-load-delay-3 {
-  --landing-load-delay: 370ms;
-}
-
-.landing-load-delay-4 {
-  --landing-load-delay: 480ms;
-}
-
-.landing-load-delay-5 {
-  --landing-load-delay: 590ms;
-}
-
-.landing-load-delay-6 {
-  --landing-load-delay: 480ms;
-}
-
-.landing-load-delay-7 {
-  --landing-load-delay: 560ms;
-}
-
-@keyframes landing-load-reveal {
-  to {
-    opacity: 1;
+@keyframes site-bob {
+  0%,
+  100% {
     transform: translateY(0);
-    filter: blur(0);
+  }
+  50% {
+    transform: translateY(-8px);
   }
 }
 
-@media (min-width: 1024px) {
-  .landing-container {
-    padding-inline: 1.75rem;
+/* Lift the floating KooKoo launcher above the landing's mobile sticky CTA bar. */
+@media (max-width: 899.98px) {
+  .site-page.site-has-mobile-bar button[aria-controls='koukou-chat-panel'] {
+    bottom: calc(var(--site-mobile-bar-height) + 12px);
   }
 
-  .landing-section {
-    padding-block: 6rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  .landing-load-reveal,
-  .landing-hero-intro-item,
-  .landing-hero-intro-visible {
-    opacity: 1;
-    transform: none;
-    filter: none;
-    transition: none;
-    animation: none;
+  .site-page.site-has-mobile-bar #koukou-chat-panel {
+    bottom: calc(var(--site-mobile-bar-height) + 92px);
+    max-height: calc(100dvh - var(--site-mobile-bar-height) - 120px);
   }
 }
 

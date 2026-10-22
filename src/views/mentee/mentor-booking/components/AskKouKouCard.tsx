@@ -7,10 +7,9 @@
 'use client';
 
 import Link from 'next/link';
+import { openKouKou } from '@/components/domain/ai-chat/openKouKou';
 
-export function openKouKou() {
-  window.dispatchEvent(new CustomEvent('skillswap:open-koukou'));
-}
+export { openKouKou };
 
 export function AskKouKouCard({
   locale,
