@@ -108,7 +108,7 @@ export function MentorShowcase({ mentors, locale }: { mentors: Mentor[]; locale:
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div className="flex min-w-0 items-end gap-4">
             <Mascot width={84} className="hidden w-16 sm:block sm:w-[84px]" />
-            <h2 className={`${SITE_HEADLINE} max-w-[640px]`}>
+            <h2 className={`${SITE_HEADLINE} max-w-[720px]`}>
               Người thật, môn thật,
               <br />
               <Highlight>kinh nghiệm thật.</Highlight>
