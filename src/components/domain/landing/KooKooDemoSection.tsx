@@ -192,7 +192,7 @@ export function KooKooDemoSection() {
         <div className="relative flex min-w-0 justify-center">
           <Mascot
             width={150}
-            className="site-bob absolute bottom-[-30px] left-[-10px] z-[2] hidden drop-shadow-[0_12px_18px_rgba(30,58,138,0.25)] min-[900px]:block"
+            className="absolute bottom-[-30px] left-[-10px] z-[2] hidden drop-shadow-[0_12px_18px_rgba(30,58,138,0.25)] min-[900px]:block"
           />
           <DemoChat />
         </div>
