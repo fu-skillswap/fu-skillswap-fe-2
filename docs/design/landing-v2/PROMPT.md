@@ -20,6 +20,7 @@ UI only. Do NOT change auth, booking, mentor search, KooKoo chat logic, API clie
 DESIGN SOURCE (read these first)
 - docs/design/landing-v2/Landing-v2.dc.html  – approved landing mockup
 - docs/design/landing-v2/SiteFooter.dc.html  – approved footer
+Open Landing-v2.dc.html's inline styles as the layout reference; it renders the full page at 1440px.
 These are mockup files in a custom format: ignore <x-dc>, <helmet>, <sc-for>, <sc-if>, <dc-import>, {{holes}}.
 Read the inline styles as the visual spec (sizes, colors, radius, spacing) and the <script> block as sample data.
 "[EXISTING_LOGO]" = the logo file the repo already uses in the header. Do not copy this markup verbatim: rebuild it
@@ -33,6 +34,11 @@ ASSETS (already in public/ after unzipping)
 - /images/mascot/kookoo.png (full KooKoo), /images/mascot/kookoo-peek.png (top half, "peeking").
   If the repo already has a KooKoo asset (the chat widget avatar), reuse that file for small sizes and only add
   these two for the large illustrations. Mascot images are decorative: alt="" aria-hidden.
+
+SECTION ORDER AND BACKGROUNDS (top to bottom)
+ Header (white) → Hero #top (white) → Cách hoạt động #cach-hoat-dong (#f0f6fc) → Mentor list #mentor (white)
+ → KooKoo AI #koukou (#f0f6fc) → So sánh với group (#f0f6fc) → Dành cho mentor #lam-mentor (white) → Mentee CTA banner (white)
+ → FAQ #faq (#f0f6fc) → Footer (#2563eb, wave fill #f0f6fc) → mobile sticky bar.
 
 0. Locate first – do not guess. Report what you found before editing.
 - The landing route + its section components, the current public header and footer.
@@ -70,7 +76,7 @@ Left column:
 - Search form (role="search", white pill, border #bcd7f2, shadow): search icon, visually-hidden label
   "Bạn cần mentor cho môn hay việc gì?", input placeholder "Nhập mã môn, OJT, đồ án EXE…",
   submit button "Tìm mentor" → navigate to the find-mentor route with the query param it supports (?q=…).
-- Row: "Đang được tìm nhiều:" + chip links "PRF192", "MAE101", "OJT", "EXE101", "Chọn chuyên ngành"
+- Row: "Đang được tìm nhiều:" + chip links "DBI201", "ACC203", "PRF192", "MAE101", "OJT", "Chọn chuyên ngành"
   → same route with that query.
 - Remove: the old logo video, the "Khám phá khóa học" button, the 3 trust icons.
 Right column (min-height ~560px, relative):
@@ -96,14 +102,16 @@ Right column (min-height ~560px, relative):
 
 4. Mentor list (#mentor, white)
 - Header row: kookoo.png (~84px) + H2 "Người thật, môn thật," <br> highlighted "kinh nghiệm thật."; right link "Xem tất cả mentor".
-- Filter chips (role="tablist", aria-selected): "Tất cả", "PRN211", "SWP391", "MAE101", "CV & phỏng vấn OJT", "Phân tích dữ liệu", "UI/UX".
+  Give the H2 a max-width (~720px), never a fixed width/height (the mockup has a fixed 705×145 box from manual resizing –
+  do not copy it); it may wrap to 3 lines on desktop as in the PNG.
+- Filter chips (role="tablist", aria-selected): "Tất cả", "DBI201", "ACC203", "PRF192", "MAE101", "SWP391", "CV & phỏng vấn OJT", "UI/UX".
   Selected = #2563eb fill, white text. Map each chip to the filter the find-mentor API supports; if it can't filter
   by these, filter client-side by tags and leave TODO(api).
 - Grid (auto-fill, min 300px) of REAL mentors from the existing list hook, rendered with the existing mentor card
   component (avatar + verified badge, name, subtitle, "Hợp với bạn nếu: …" box with tiny KooKoo icon, 2-line
   description, status row "Mentor mới" / "Trống gần nhất: …", buttons "Xem hồ sơ" + "Xem lịch trống").
   All button labels must stay on one line (white-space: nowrap) – the mockup had a wrapping bug, don't repeat it.
-  Show max 5 cards. If the API needs login, show the sample data from the mockup script behind a clearly named
+  Each card also shows a price row next to the status: "{price} S-coins / {duration}" (lowest-priced active service of that mentor; hide the price row if the API has none). Show max 8 cards + the "Chưa thấy người hợp?" card (3×3 on desktop). If the API needs login, show the sample data from the mockup script behind a clearly named
   constant LANDING_SAMPLE_MENTORS + TODO(api); never use real people's names or photos without permission.
 - Last grid cell: dashed card (#a8d8fc) "Chưa thấy người hợp?" + "Kể cho KooKoo bạn cần gì: môn đang học, đồ án hay chuẩn bị OJT. KooKoo sẽ tìm trong danh sách mentor giúp bạn."
   + outline button "Hỏi KooKoo" (scrolls to #koukou) + link "Đăng câu hỏi lên Bảng tin" (→ community/forum route, or login if required).
@@ -121,7 +129,7 @@ Right column (min-height ~560px, relative):
   supports a prefill; otherwise just opens it. Do NOT call the AI API from the landing.
   Big kookoo.png next to the card (hide < 900px).
 
-6. "Vẫn hỏi trong group được mà?" (bg #f0f6fc or white – alternate with neighbours)
+6. "Vẫn hỏi trong group được mà?" (bg #f0f6fc, directly after the KooKoo section)
 - H2 "Vẫn hỏi trong group" + highlighted "được mà?". kookoo-peek.png (mirrored) above the table's right side with bubble "Khỏi ngồi chờ comment nha!" (hide < 900px).
 - 3-column comparison table (real <table> or role="table"), header cells "", "Group Facebook", "SkillSwap" (SkillSwap header #2563eb, white):
   Tìm người | Đăng bài, chờ comment | Gõ mã môn, KooKoo AI gợi ý người hợp
@@ -130,11 +138,44 @@ Right column (min-height ~560px, relative):
   Hẹn lịch | Nhắn qua lại nhiều lần | Chọn giờ trống, theo dõi tới lúc vào Meet
   Must stay readable at 375px (horizontal scroll inside a rounded box).
 
-7. Two final CTA cards (#lam-mentor), side by side, stack on mobile, radius 32:
-- Blue card (#2563eb, white text, cyan ring decoration, KooKoo bottom-right): "Sắp thi rồi? Đặt buổi đầu ngay hôm nay." /
-  "Đăng nhập bằng Gmail, chọn mentor, chọn giờ. Xong." / white pill "Tìm mentor ngay".
-- Light card (#e0effc): badge "0% hoa hồng năm học này" (#1e3a8a), "Bạn qua môn đó rồi?" + highlighted "Chia sẻ lại cho bạn khác." /
-  "Tự đặt giá, tự mở giờ rảnh. Nhận lịch khi bạn sẵn sàng." / pill "Đăng ký làm mentor" (#1e3a8a) → existing mentor registration route.
+7. "Dành cho mentor" (#lam-mentor, white, pale sky swoosh decoration top-right) – replaces the old 2-card CTA row.
+ a. Header: badge "0% hoa hồng năm học này" (#1e3a8a, white); H2 "Bạn qua môn đó rồi?" <br> highlighted "Chia sẻ lại cho bạn khác.";
+    text "Môn bạn từng học tốt, kỳ OJT bạn từng qua, đều là kinh nghiệm thực tế người khác đang cần. Tự đặt giá, tự mở giờ rảnh, nhận S-coin sau mỗi buổi.";
+    right: mirrored kookoo.png + bubble "Đăng ký khoảng 5 phút thôi, KooKoo chỉ từng bước nè!" (hide < 900px).
+ b. Benefits – 4 cards in a responsive grid (min 250px), icon tile + title + one line:
+    "Thu nhập từ môn mình giỏi" – "Bạn tự đặt giá từng dịch vụ. Mentee trả bằng S-coin, bạn rút về tài khoản ngân hàng của mình."
+    "Lịch do bạn quyết" – "Chỉ mở những giờ bạn rảnh, lặp lại hàng tuần. Mentee chỉ đặt được vào đúng các giờ đó, không bị làm phiền ngoài giờ."
+    "Hồ sơ đẹp để ghi vào CV" – "Huy hiệu mentor đã xác minh, số buổi đã chia sẻ và đánh giá từ mentee, dùng được khi ứng tuyển OJT hay đi làm."
+    "Nhận đủ 100% năm học này" (this card blue #2563eb, white text, "0%" tile) – "SkillSwap chưa thu phí nền tảng 15% trong năm học này. Mọi thay đổi được báo trước ít nhất 7 ngày."
+ c. "Trở thành mentor trong 6 bước" – interactive stepper: left = vertical tablist of 6 step buttons (number + title + one-line
+    description; selected = white card, #2563eb border, filled number), right = tabpanel on #f0f6fc showing a MINI MOCK of the real
+    product screen for that step. Build the mocks as static JSX that reuses the in-app look (light blue #0ea5e9 buttons, toggles,
+    chips) – NOT screenshots, NOT live components, no API calls, sample data only, all non-interactive inside (use <span>/<div>,
+    aria-hidden on decorative parts so screen readers don't hear fake buttons).
+    1 "Đăng nhập Gmail, điền hồ sơ mentor" – registration form: 5-step stepper (Thông tin ✓, Kinh nghiệm ✓, Môn chia sẻ ✓, Minh chứng (current), Gửi),
+      privacy note "Minh chứng chỉ dùng để xác minh, không hiển thị công khai.", 2 uploaded file rows (Bảng điểm FPTU.pdf, Chứng chỉ SQL.jpg) with "Đã tải lên", buttons Lưu nháp / Tiếp tục.
+    2 "Chờ quản trị viên duyệt" – status card "Đang xem xét" + 3-step timeline (gửi hồ sơ / quản trị viên nhận xử lý / kết quả kèm lý do) + note that a human reviews, AI doesn't decide.
+    3 "Tạo dịch vụ và đặt giá" – "Dịch vụ của tôi" with 3 service cards (name, "60 phút · 1:1", toggle on, price): Ôn PE DBI201 59.000 S-coins / Chữa đề SQL cấp tốc 30 phút 29.000 S-coins /
+      Hỏi nhanh về chọn chuyên ngành 15 phút Miễn phí; hint "Gợi ý giá: buổi 30 phút 25.000–39.000 S-coins, buổi 60 phút 49.000–89.000 S-coins. Bạn có thể giữ 1 dịch vụ miễn phí ngắn để mentee làm quen."
+    4 "Mở lịch rảnh" – week grid (Lịch / Lịch lặp toggle, "+ Thêm lịch rảnh"), repeating dashed slots, one solid "Đã đặt" slot; horizontal scroll inside the panel on mobile.
+    5 "Nhận lịch và chia sẻ" – "Chi tiết lịch đặt": Ôn PE DBI201 với Mai Linh, "Sắp diễn ra", start/end, Google Meet, "Bạn nhận 59.000 S-coins", goal, button "Mở liên kết buổi mentoring".
+    6 "Nhận S-coin, rút về ngân hàng" – balance card 413.000 S-coins + link "Xem ví S-coin mẫu" → #vi-scoin.
+    Exact step titles/descriptions and mock copy: see the mockup script (stepData, services) and markup.
+ d. "Tiền về ví S-coin thế nào?" (#vi-scoin) – sub "Ví mẫu của một mentor sau 2 tuần chia sẻ. Bấm thử hai tab."
+    Left: simulated wallet (sample constants, clearly named LANDING_SAMPLE_WALLET): gradient balance card "Số dư khả dụng 413.000 S-coins",
+    chip "Vietcombank •••• 4821", button "Rút tiền"; 3 stat tiles Có thể rút 354.000 / Chờ xác nhận 59.000 / Yêu cầu đang xử lý 1;
+    tabs "Giao dịch gần đây" | "Yêu cầu rút" (real tablist, local state) listing the transactions from the mockup script with
+    status pills (Chờ xác nhận amber, Đã cộng green, Đang xử lý blue, Đã chuyển grey). Numbers must stay consistent:
+    available 413.000 = withdrawable 354.000 + pending 59.000.
+    Right: 3 numbered how-to steps "Thêm tài khoản nhận tiền" / "Hoàn thành buổi học" / "Bấm Rút tiền" + dashed KooKoo help card.
+    Business rule (confirmed by the team): S-coin from a completed session sits in "Chờ xác nhận" for 24 hours, then moves to
+    "Có thể rút". Step 2 copy: "S-coin của buổi học vào mục Chờ xác nhận. Sau 24 giờ được xác nhận, số S-coin này chuyển sang Có thể rút."
+    Read the 24h value from the wallet/backend config if the repo has it; otherwise a constant WITHDRAW_HOLD_HOURS = 24.
+    The [50.000] minimum and [1–3] ngày làm việc values are still placeholders → constants with TODO(copy).
+ e. Bottom CTAs: pill "Đăng ký làm mentor" (#1e3a8a) → existing mentor registration route; link "Đọc quy định dành cho mentor" → PUBLIC_ROUTES.mentorRules (TODO(route)).
+
+7b. Mentee CTA banner (white section, one full-width blue card #2563eb, radius 32, cyan ring, KooKoo bottom-right hidden < 900px):
+    "Sắp thi rồi? Đặt buổi đầu ngay hôm nay." / "Đăng nhập bằng Gmail, chọn mentor, chọn giờ. Xong." / white pill "Tìm mentor ngay".
 
 8. FAQ (#faq, bg #f0f6fc)
 - Left: "Hỏi nhanh" + bubble "Còn thắc mắc? Hỏi KooKoo AI ở góc màn hình, mình trả lời liền." + kookoo.png.

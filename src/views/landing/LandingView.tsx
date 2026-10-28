@@ -4,12 +4,13 @@
  */
 
 import { KouKouChatWidget } from '@/components/domain/ai-chat/KouKouChatWidget';
+import { BecomeMentorSection } from '@/components/domain/landing/BecomeMentorSection';
 import { ComparisonSection } from '@/components/domain/landing/ComparisonSection';
-import { FinalCtaCards } from '@/components/domain/landing/FinalCtaCards';
 import { HowItWorksSection } from '@/components/domain/landing/HowItWorksSection';
 import { KooKooDemoSection } from '@/components/domain/landing/KooKooDemoSection';
 import { LandingHeader } from '@/components/domain/landing/LandingHeader';
 import { LandingHero } from '@/components/domain/landing/LandingHero';
+import { MenteeCtaBanner } from '@/components/domain/landing/MenteeCtaBanner';
 import { MentorShowcase } from '@/components/domain/landing/MentorShowcase';
 import { MobileStickyCta } from '@/components/domain/landing/MobileStickyCta';
 import { QuickFaq } from '@/components/domain/landing/QuickFaq';
@@ -52,7 +53,8 @@ export function LandingView({ locale, mentors }: LandingViewProps) {
         <MentorShowcase mentors={mentors} locale={locale} />
         <KooKooDemoSection />
         <ComparisonSection />
-        <FinalCtaCards locale={locale} />
+        <BecomeMentorSection locale={locale} />
+        <MenteeCtaBanner locale={locale} />
         <QuickFaq />
       </main>
       <SiteFooter locale={locale} topColor="var(--site-tint)" isLanding />
