@@ -5,10 +5,11 @@
 
 /** Hero chips under the search box. `query: null` opens the find-mentor page without a keyword. */
 export const HERO_QUICK_SEARCHES = [
+  { label: 'DBI201', query: 'DBI201' },
+  { label: 'ACC203', query: 'ACC203' },
   { label: 'PRF192', query: 'PRF192' },
   { label: 'MAE101', query: 'MAE101' },
   { label: 'OJT', query: 'OJT' },
-  { label: 'EXE101', query: 'EXE101' },
   // The find-mentor page has a specialization filter but no keyword for it: open the page as is.
   { label: 'Chọn chuyên ngành', query: null },
 ] as const;
@@ -44,27 +45,29 @@ export const HOW_IT_WORKS_SAMPLE_MATCHES = [
  */
 export const MENTOR_FILTERS = [
   { id: 'all', label: 'Tất cả', terms: [], query: '' },
-  { id: 'prn', label: 'PRN211', terms: ['prn211', '.net', 'c#'], query: 'PRN211' },
-  { id: 'swp', label: 'SWP391', terms: ['swp391', 'swp'], query: 'SWP391' },
+  {
+    id: 'dbi',
+    label: 'DBI201',
+    terms: ['dbi201', 'sql', 'database', 'cơ sở dữ liệu'],
+    query: 'DBI201',
+  },
+  { id: 'acc', label: 'ACC203', terms: ['acc203', 'kế toán', 'accounting'], query: 'ACC203' },
+  { id: 'prf', label: 'PRF192', terms: ['prf192', 'lập trình c'], query: 'PRF192' },
   { id: 'mae', label: 'MAE101', terms: ['mae101', 'toán'], query: 'MAE101' },
+  { id: 'swp', label: 'SWP391', terms: ['swp391', 'swp'], query: 'SWP391' },
   {
     id: 'ojt',
     label: 'CV & phỏng vấn OJT',
     terms: ['ojt', 'cv', 'phỏng vấn', 'thực tập'],
     query: 'OJT',
   },
-  {
-    id: 'data',
-    label: 'Phân tích dữ liệu',
-    terms: ['dữ liệu', 'data', 'power bi', 'excel'],
-    query: 'dữ liệu',
-  },
   { id: 'uiux', label: 'UI/UX', terms: ['ui/ux', 'ux', 'figma', 'thiết kế'], query: 'UI/UX' },
 ] as const;
 
 export type MentorFilterId = (typeof MENTOR_FILTERS)[number]['id'];
 
-export const LANDING_MENTOR_LIMIT = 5;
+/** 8 mentors + the "Chưa thấy người hợp?" card fill a 3×3 grid on desktop. */
+export const LANDING_MENTOR_LIMIT = 8;
 
 // TODO(copy): replace with KooKoo's real S-coin explanation once the wording is approved.
 export const KOUKOU_DEMO_SCOIN_ANSWER =

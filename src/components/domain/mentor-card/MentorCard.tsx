@@ -27,6 +27,15 @@ export function formatMentorRating(rating: number) {
   return rating.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
+/** Price and length of one service, e.g. the mentor's cheapest active service. */
+export interface MentorPriceSummary {
+  /** 0 for a free service. */
+  priceScoin: number;
+  durationMinutes: number;
+}
+
+const formatScoin = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
+
 export function MentorAvatar({ mentor, size }: { mentor: Mentor; size: 48 | 56 }) {
   const sizeClass = size === 48 ? 'h-12 w-12 text-sm' : 'h-14 w-14 text-base';
   return (
@@ -62,10 +71,18 @@ interface MentorCardProps {
   matchReason?: string;
   /** Opens the mentor's schedule; defaults to `onSelect`. */
   onViewSchedule?: (mentor: Mentor) => void;
+  /** Shown as "{price} / {duration}" instead of the list's `startingPrice` when provided. */
+  priceSummary?: MentorPriceSummary;
 }
 
 /** Thẻ thông tin tóm tắt dùng trong danh sách khám phá Mentor. */
-export function MentorCard({ mentor, onSelect, matchReason, onViewSchedule }: MentorCardProps) {
+export function MentorCard({
+  mentor,
+  onSelect,
+  matchReason,
+  onViewSchedule,
+  priceSummary,
+}: MentorCardProps) {
   const headline = mentor.headline?.trim() || mentor.organization?.trim();
   const skills = [...new Set(mentor.expertise.map((skill) => skill.trim()).filter(Boolean))]
     .filter((skill) => !sameText(skill, headline))
@@ -127,17 +144,23 @@ export function MentorCard({ mentor, onSelect, matchReason, onViewSchedule }: Me
               Mentor mới
             </span>
           )}
-          {mentor.startingPrice === 0 ? (
+          {priceSummary ? (
+            <span className="whitespace-nowrap">
+              <b className="text-text-main">
+                {priceSummary.priceScoin === 0
+                  ? 'Miễn phí'
+                  : `${formatScoin(priceSummary.priceScoin)} S-coins`}
+              </b>{' '}
+              / {priceSummary.durationMinutes} phút
+            </span>
+          ) : mentor.startingPrice === 0 ? (
             <span>
               Buổi đầu <b className="text-text-main">miễn phí</b>
             </span>
           ) : mentor.startingPrice !== undefined ? (
             <span>
-              Từ{' '}
-              <b className="text-text-main">
-                {new Intl.NumberFormat('vi-VN').format(mentor.startingPrice)} S-coins
-              </b>{' '}
-              / buổi
+              Từ <b className="text-text-main">{formatScoin(mentor.startingPrice)} S-coins</b> /
+              buổi
             </span>
           ) : null}
         </div>
@@ -146,7 +169,7 @@ export function MentorCard({ mentor, onSelect, matchReason, onViewSchedule }: Me
           <Button
             type="button"
             variant="outline"
-            className="h-11"
+            className="h-11 whitespace-nowrap"
             onClick={() => onSelect(mentor)}
             aria-label={`Xem hồ sơ của ${mentor.name}`}
           >
@@ -154,7 +177,7 @@ export function MentorCard({ mentor, onSelect, matchReason, onViewSchedule }: Me
           </Button>
           <Button
             type="button"
-            className="h-11"
+            className="h-11 whitespace-nowrap"
             onClick={() => (onViewSchedule ?? onSelect)(mentor)}
             aria-label={`Xem lịch trống của ${mentor.name}`}
           >

@@ -17,6 +17,25 @@ export const SITE_HEADLINE =
 export const SITE_PILL_PRIMARY =
   'inline-flex min-h-14 items-center justify-center rounded-full bg-site-blue px-8 font-site-ui text-[17px] font-bold whitespace-nowrap text-white no-underline shadow-site-cta transition-colors hover:bg-site-blue-hover';
 
+/**
+ * Roving-focus target for a tablist key press (arrows wrap, Home/End jump), or `undefined` for
+ * other keys. Vertical lists use Up/Down, horizontal ones Left/Right.
+ */
+export function nextTabIndex(
+  key: string,
+  index: number,
+  count: number,
+  orientation: 'horizontal' | 'vertical' = 'horizontal',
+): number | undefined {
+  const [prevKey, nextKey] =
+    orientation === 'vertical' ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
+  if (key === nextKey) return (index + 1) % count;
+  if (key === prevKey) return (index - 1 + count) % count;
+  if (key === 'Home') return 0;
+  if (key === 'End') return count - 1;
+  return undefined;
+}
+
 /** The single highlighted phrase of a headline. */
 export function Highlight({ children }: { children: ReactNode }) {
   return <span className="text-site-blue">{children}</span>;
