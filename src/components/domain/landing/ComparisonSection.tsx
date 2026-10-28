@@ -16,8 +16,8 @@ const CELL = 'px-5 py-[18px] text-left align-top sm:px-6';
 
 export function ComparisonSection() {
   return (
-    <section className="bg-white">
-      <div className={`${SITE_CONTAINER} flex flex-col gap-8 pt-20 pb-4 sm:pt-[88px]`}>
+    <section className="bg-site-tint">
+      <div className={`${SITE_CONTAINER} flex flex-col gap-8 pt-4 pb-20 sm:pb-24`}>
         <h2 className={SITE_HEADLINE}>
           Vẫn hỏi trong group <Highlight>được mà?</Highlight>
         </h2>
