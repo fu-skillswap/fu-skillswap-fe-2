@@ -546,7 +546,7 @@ export function MentorBookingsView() {
         <div
           role="tablist"
           aria-label="Lọc lịch đặt"
-          className="flex min-w-0 flex-1 flex-wrap items-center gap-1"
+          className="flex min-w-0 flex-1 flex-wrap items-center gap-1 md:flex-none md:flex-nowrap"
         >
           {INBOX_TABS.map((tab) => {
             const selected = activeTab === tab.value;
@@ -624,8 +624,6 @@ export function MentorBookingsView() {
           </button>
         </div>
       </div>
-
-      <p className="m-0 -mt-3 text-[13px] text-slate-500">{sortCopy.helper[sort]}</p>
 
       {showFilters && (
         <div
