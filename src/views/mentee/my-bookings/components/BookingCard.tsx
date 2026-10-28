@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -12,19 +13,28 @@ import {
   LogIn,
   MessageCircle,
   Monitor,
+  RotateCcw,
+  Star,
   Video,
   Wallet,
 } from 'lucide-react';
+import { StarDisplay } from '@/components/ui/StarDisplay';
 import type { MentorBookingResponse } from '@/models/auth';
+import type { SessionFeedbackResponse } from '@/models/review';
+import { bookingFeedbackQueryKey, reviewRepo } from '@/repositories/reviewRepo';
+import { REVIEW_MAX_STARS, starAriaLabel } from '@/views/mentee/booking-review/review.constants';
 import type { MenteeBookingMutation } from '../useMyBookings';
 import {
   BOOKING_TONES,
+  bookingReviewHref,
+  canReviewBooking,
   formatDayMonth,
   formatTime,
   formatTimeRange,
   formatWeekday,
   getBookingActions,
   getBookingPrice,
+  getBookingStateKey,
   getBookingStatusConfig,
   getMentorName,
   getPlatformLabel,
@@ -80,6 +90,45 @@ function MentorAvatar({ booking }: { booking: MentorBookingResponse }) {
 }
 
 const bookingAnchorId = (bookingId: string) => `booking-${bookingId}`;
+
+/** "Chờ đánh giá": tap a star to open the review page with that rating prefilled. */
+function ReviewPromptBox({ mentor, reviewHref }: { mentor: string; reviewHref: string }) {
+  return (
+    <div className={styles.reviewBox}>
+      <p className={styles.reviewBoxText}>
+        <strong>Buổi học với {mentor} thế nào?</strong>
+        Chạm vào số sao để bắt đầu. Mất khoảng 1 phút, giúp bạn khác chọn đúng mentor.
+      </p>
+      <div className={styles.quickStars} role="group" aria-label="Chọn nhanh số sao">
+        {Array.from({ length: REVIEW_MAX_STARS }, (_, index) => index + 1).map((rating) => (
+          <Link
+            key={rating}
+            className={styles.quickStar}
+            href={`${reviewHref}?rating=${rating}`}
+            aria-label={starAriaLabel(rating)}
+          >
+            <Star aria-hidden="true" strokeWidth={1.75} />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The mentee's saved review on a finished booking. */
+function MyReviewBox({ review }: { review: SessionFeedbackResponse }) {
+  const created = toDate(review.createdAt);
+  const comment = review.comment?.trim();
+  return (
+    <div className={styles.myReview}>
+      <div className={styles.myReviewHead}>
+        <StarDisplay rating={review.rating} label={`Bạn đã chấm ${review.rating} trên 5 sao`} />
+        <span>Đánh giá của bạn{created ? ` · ${formatDayMonth(created)}` : ''}</span>
+      </div>
+      {comment && <p className={styles.myReviewComment}>{comment}</p>}
+    </div>
+  );
+}
 
 /** Date tile, title + status pill, mentor link and time / price / platform chips. */
 function CardTop({ booking, locale }: { booking: MentorBookingResponse; locale: string }) {
@@ -258,6 +307,16 @@ export function BookingCard({
   onMessage,
 }: BookingCardProps) {
   const config = getBookingStatusConfig(booking);
+  const isDone = getBookingStateKey(booking) === 'DONE';
+  // TODO(api): include the mentee's review (or a hasFeedback flag) in the booking list so finished
+  // cards don't need one request each.
+  const { data: myReview } = useQuery({
+    queryKey: bookingFeedbackQueryKey(booking.bookingId),
+    queryFn: () => reviewRepo.getByBooking(booking.bookingId),
+    enabled: isDone,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
   if (isActionableExpiry) {
     return <ExpiredBookingCard booking={booking} locale={locale} onDismiss={onDismissExpiry} />;
   }
@@ -270,6 +329,12 @@ export function BookingCard({
     (config.tone === 'pending' || config.tone === 'payment' || config.tone === 'action') &&
     config.nextText;
   const next = showNext ? config.nextText?.(mentor) : undefined;
+  const reviewHref = canReviewBooking(booking)
+    ? bookingReviewHref(locale, booking.bookingId)
+    : undefined;
+  const rebookHref = myReview ? mentorProfileHref(locale, booking) : undefined;
+  // Reviewing (or rebooking after a review) replaces any other primary action on this card.
+  const showPrimary = Boolean(actions.primary) && !reviewHref && !rebookHref;
 
   const runPrimary = () => {
     const primary = actions.primary;
@@ -292,19 +357,25 @@ export function BookingCard({
     <article className={styles.card} id={bookingAnchorId(booking.bookingId)}>
       <CardTop booking={booking} locale={locale} />
 
-      <BookingProgress booking={booking} />
+      <BookingProgress booking={booking} reviewHref={reviewHref} />
 
-      {next && (
-        <div
-          className={styles.nextBox}
-          style={{ background: tone.bg, borderColor: tone.border ?? tone.bg, color: tone.text }}
-        >
-          <Info aria-hidden="true" />
-          <p style={{ margin: 0 }}>
-            <strong>{next.title}</strong> {next.detail}
-          </p>
-        </div>
+      {reviewHref ? (
+        <ReviewPromptBox mentor={mentor} reviewHref={reviewHref} />
+      ) : (
+        next && (
+          <div
+            className={styles.nextBox}
+            style={{ background: tone.bg, borderColor: tone.border ?? tone.bg, color: tone.text }}
+          >
+            <Info aria-hidden="true" />
+            <p style={{ margin: 0 }}>
+              <strong>{next.title}</strong> {next.detail}
+            </p>
+          </div>
+        )
       )}
+
+      {myReview && <MyReviewBox review={myReview} />}
 
       <footer className={styles.footer}>
         {/* No booking detail route/modal exists yet, so "Xem chi tiết" is intentionally omitted. */}
@@ -357,7 +428,19 @@ export function BookingCard({
               Nhắn mentor
             </button>
           )}
-          {actions.primary && (
+          {reviewHref && (
+            <Link className={`${styles.btn} ${styles.btnPrimary}`} href={reviewHref}>
+              <Star aria-hidden="true" />
+              Đánh giá buổi học
+            </Link>
+          )}
+          {rebookHref && (
+            <Link className={`${styles.btn} ${styles.btnPrimary}`} href={rebookHref}>
+              <RotateCcw aria-hidden="true" />
+              Đặt lại với {mentor}
+            </Link>
+          )}
+          {showPrimary && actions.primary && (
             <button
               type="button"
               className={`${styles.btn} ${styles.btnPrimary}`}

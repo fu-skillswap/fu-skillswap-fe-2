@@ -29,6 +29,12 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import {
+  bookingSortCopy,
+  compareBookings,
+  useBookingSort,
+  type BookingSortMode,
+} from '@/components/domain/booking-sort/useBookingSort';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import {
   ConfirmEndBookingDialog,
@@ -48,7 +54,6 @@ import {
   type InboxGroup,
   type InboxTab,
   acceptedPatch,
-  byStartAsc,
   dayHeader,
   dayKey,
   durationMinutes,
@@ -170,6 +175,10 @@ export function MentorBookingsView() {
     setServiceFilter,
   } = useMentorBookings();
   const [activeTab, setActiveTab] = useState<InboxTab>('ALL');
+  // "Sắp tới" only holds future sessions, so the next one comes first there.
+  const isUpcomingTab = activeTab === 'UPCOMING';
+  const { sort, setSort } = useBookingSort(isUpcomingTab ? 'old' : 'new');
+  const sortCopy = bookingSortCopy(isUpcomingTab);
   const [showFilters, setShowFilters] = useState(false);
   const [detail, setDetail] = useState<MentorBookingResponse>();
   const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -205,13 +214,10 @@ export function MentorBookingsView() {
     };
     bookings.forEach((booking) => result[inboxGroupOf(booking)].push(booking));
     // TODO(api): responseDeadline — sort requests by it (soonest first) once exposed.
-    result.PENDING.sort(byStartAsc);
-    result.UPCOMING.sort(byStartAsc);
-    result.CONFIRM.sort(byStartAsc);
-    result.ENDED.sort((a, b) => byStartAsc(b, a));
-    result.CANCELED.sort((a, b) => byStartAsc(b, a));
+    const compare = compareBookings(sort);
+    Object.values(result).forEach((items) => items.sort(compare));
     return result;
-  }, [bookings]);
+  }, [bookings, sort]);
 
   const counts: Record<InboxTab, number> = {
     ALL: bookings.length,
@@ -222,8 +228,8 @@ export function MentorBookingsView() {
     CANCELED: grouped.CANCELED.length,
   };
   const recent = useMemo(
-    () => [...grouped.ENDED, ...grouped.CANCELED].sort((a, b) => byStartAsc(b, a)),
-    [grouped],
+    () => [...grouped.ENDED, ...grouped.CANCELED].sort(compareBookings(sort)),
+    [grouped, sort],
   );
   const hasExpired = bookings.some(isExpired);
 
@@ -536,11 +542,11 @@ export function MentorBookingsView() {
         </Link>
       </header>
 
-      <div className="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-xs">
+      <div className="flex flex-wrap items-center gap-1 rounded-2xl bg-white p-1.5 shadow-xs">
         <div
           role="tablist"
           aria-label="Lọc lịch đặt"
-          className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 flex-wrap items-center gap-1"
         >
           {INBOX_TABS.map((tab) => {
             const selected = activeTab === tab.value;
@@ -569,6 +575,15 @@ export function MentorBookingsView() {
           })}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 border-l border-solid border-border-light pl-2.5">
+          <div className="w-44">
+            <SelectField
+              placeholder="Sắp xếp lịch đặt"
+              triggerClassName="h-10 text-sm"
+              value={sort}
+              onValueChange={(value) => setSort(value as BookingSortMode)}
+              options={sortCopy.options}
+            />
+          </div>
           <label
             className={`${toolButton} relative focus-within:ring-4 focus-within:ring-primary/20 ${selectedDate ? 'border-primary-border text-primary' : 'border-border-color'}`}
           >
@@ -609,6 +624,8 @@ export function MentorBookingsView() {
           </button>
         </div>
       </div>
+
+      <p className="m-0 -mt-3 text-[13px] text-slate-500">{sortCopy.helper[sort]}</p>
 
       {showFilters && (
         <div
