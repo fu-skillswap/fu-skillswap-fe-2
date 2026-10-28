@@ -14,6 +14,12 @@ import {
   composeEndReason,
   isBookingAlreadyEnded,
 } from '@/components/domain/booking-end/ConfirmEndBookingDialog';
+import {
+  bookingSortCopy,
+  sortBookings,
+  useBookingSort,
+  type BookingSortMode,
+} from '@/components/domain/booking-sort/useBookingSort';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { SelectField } from '@/components/ui/SelectField';
 import type { MentorBookingResponse } from '@/models/auth';
@@ -25,7 +31,6 @@ import {
   getBookingTabGroup,
   getMentorName,
   isActionableExpiry,
-  toDate,
 } from './bookingStatusConfig';
 import { ActionModal, type NoteActionType } from './components/ActionModal';
 import { BookingCard, type BookingFormAction } from './components/BookingCard';
@@ -33,14 +38,6 @@ import styles from './MyBookingsView.module.css';
 import { useDismissedExpiries } from './useDismissedExpiries';
 import { type MenteeBookingMutation, useMyBookings } from './useMyBookings';
 
-type BookingSortMode = 'UPCOMING' | 'RECENT';
-
-const SORT_OPTIONS: Array<{ value: BookingSortMode; label: string }> = [
-  { value: 'UPCOMING', label: 'Sắp diễn ra trước' },
-  { value: 'RECENT', label: 'Mới đặt gần đây' },
-];
-
-const timeOf = (value?: string | null) => toDate(value)?.getTime() ?? 0;
 const isCancelRequest = (booking: MentorBookingResponse) =>
   getBookingStateKey(booking) === 'PENDING';
 
@@ -51,8 +48,11 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   const { setHeaderTitle } = useMenteeShell();
   // The hook's own status filter stays on 'ALL'; user-facing tab groups are derived here.
   const { bookings, error, isLoading, isSaving, mutate, refresh } = useMyBookings();
-  const [sortMode, setSortMode] = useState<BookingSortMode>('UPCOMING');
   const [activeGroup, setActiveGroup] = useState<BookingTabGroup>('ALL');
+  // "Sắp tới" only holds future sessions, so the next one comes first there.
+  const isUpcomingTab = activeGroup === 'UPCOMING';
+  const { sort: sortMode, setSort: setSortMode } = useBookingSort(isUpcomingTab ? 'old' : 'new');
+  const sortCopy = bookingSortCopy(isUpcomingTab);
   const { dismissedIds, dismiss, now } = useDismissedExpiries();
   const [noteAction, setNoteAction] = useState<{
     type: NoteActionType;
@@ -106,19 +106,7 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
         ? [...bookings]
         : bookings.filter((booking) => groupOf(booking) === activeGroup);
 
-    if (sortMode === 'RECENT') {
-      return filtered.sort((left, right) => timeOf(right.createdAt) - timeOf(left.createdAt));
-    }
-    // UPCOMING: bookings that still matter come first, soonest session first; ended and
-    // canceled ones follow, most recent session first.
-    const isClosed = (booking: MentorBookingResponse) =>
-      ['ENDED', 'CANCELED'].includes(groupOf(booking));
-    return filtered.sort((left, right) => {
-      const leftClosed = isClosed(left);
-      if (leftClosed !== isClosed(right)) return leftClosed ? 1 : -1;
-      const diff = timeOf(left.selectedStartTime) - timeOf(right.selectedStartTime);
-      return leftClosed ? -diff : diff;
-    });
+    return sortBookings(filtered, sortMode);
   }, [actionableExpiryIds, activeGroup, bookings, sortMode]);
 
   const openChat = (booking: MentorBookingResponse) =>
@@ -228,7 +216,7 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
               triggerClassName="h-11 text-sm"
               value={sortMode}
               onValueChange={(val) => setSortMode(val as BookingSortMode)}
-              options={SORT_OPTIONS}
+              options={sortCopy.options}
             />
           </div>
           <button
@@ -243,6 +231,7 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
           </button>
         </div>
       </div>
+      <p className={styles.sortHelper}>{sortCopy.helper[sortMode]}</p>
 
       <div
         id="booking-tab-panel"

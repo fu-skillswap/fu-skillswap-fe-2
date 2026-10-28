@@ -219,6 +219,28 @@ export function getBookingTabGroup(
   return 'WAITING';
 }
 
+/* --------------------------------- Review --------------------------------- */
+
+/**
+ * The mentee may review this booking now: the backend allows it (COMPLETED, not yet reviewed —
+ * it enforces one review per booking) and the session has ended. Everything else hides the
+ * review entry points.
+ */
+export function canReviewBooking(booking: MentorBookingResponse, now = Date.now()) {
+  const end = toDate(booking.selectedEndTime);
+  return (
+    Boolean(booking.canSubmitFeedback) &&
+    getBookingStateKey(booking) === 'FEEDBACK' &&
+    Boolean(end && end.getTime() <= now)
+  );
+}
+
+/** Review page, optionally with a star count picked on the card. */
+export function bookingReviewHref(locale: string, bookingId: string, rating?: number) {
+  const base = `/${locale}/my-bookings/${encodeURIComponent(bookingId)}/review`;
+  return rating ? `${base}?rating=${rating}` : base;
+}
+
 /* --------------------------------- Expiry --------------------------------- */
 
 const MENTOR_EXPIRY_STATUSES = ['REQUEST_EXPIRED', 'EXPIRED_PENDING_MENTOR'];

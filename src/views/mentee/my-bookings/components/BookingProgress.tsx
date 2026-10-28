@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Check, X } from 'lucide-react';
 import type { MentorBookingResponse } from '@/models/auth';
 import {
@@ -70,7 +71,14 @@ function getSubLine(
 }
 
 /** Horizontal progress tracker for an active (non-ended) booking. */
-export function BookingProgress({ booking }: { booking: MentorBookingResponse }) {
+export function BookingProgress({
+  booking,
+  reviewHref,
+}: {
+  booking: MentorBookingResponse;
+  /** When set, the current "Đánh giá" step links to the review page. */
+  reviewHref?: string;
+}) {
   const config = getBookingStatusConfig(booking);
   const tone = BOOKING_TONES[config.tone];
   const steps = getSteps(booking);
@@ -112,7 +120,15 @@ export function BookingProgress({ booking }: { booking: MentorBookingResponse })
               className={`${styles.stepLabel} ${state === 'future' ? styles.stepLabelFuture : ''}`}
               style={state === 'current' ? { color: tone.text } : undefined}
             >
-              {state === 'done' && step.doneLabel ? step.doneLabel : step.label}
+              {step.id === 'review' && state === 'current' && reviewHref ? (
+                <Link className={styles.stepLink} href={reviewHref}>
+                  {step.label}
+                </Link>
+              ) : state === 'done' && step.doneLabel ? (
+                step.doneLabel
+              ) : (
+                step.label
+              )}
               <span className={styles.srOnly}>
                 {state === 'done' ? ' (đã xong)' : state === 'current' ? ' (bước hiện tại)' : ''}
               </span>

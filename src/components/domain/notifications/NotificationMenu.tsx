@@ -6,6 +6,7 @@
 'use client';
 
 import type { Notification } from '@/models/notification';
+import { bookingReviewHref } from '@/views/mentee/my-bookings/bookingStatusConfig';
 import { notificationRepo } from '@/repositories/notificationRepo';
 import { getUserFriendlyErrorMessage, showInfo } from '@/utils/toast';
 import { AlertTriangle, Bell, CheckCheck, Clock, type LucideIcon } from 'lucide-react';
@@ -22,6 +23,18 @@ const NOTIFICATION_LIMIT = 20;
  * build the "Còn {X} trước khi yêu cầu tự hủy" copy and to show an inline "Tìm mentor khác"
  * button on BOOKING_EXPIRED only while the session is still in the future.
  */
+/**
+ * "Hãy đánh giá buổi học với {mentor}" opens the review page. The backend does not document the
+ * notification type names, so match its LEAVE_FEEDBACK action or a *FEEDBACK* type.
+ * TODO(api): confirm the exact review-reminder notification type and match only that.
+ */
+function isReviewReminder(notification: Notification) {
+  return (
+    notification.actionType?.toUpperCase() === 'LEAVE_FEEDBACK' ||
+    notification.type.toUpperCase().includes('FEEDBACK')
+  );
+}
+
 const BOOKING_DEADLINE_TYPES: Partial<Record<string, { icon: LucideIcon; className: string }>> = {
   BOOKING_EXPIRING: { icon: AlertTriangle, className: 'bg-warning-soft text-warning' },
   BOOKING_EXPIRED: { icon: Clock, className: 'bg-surface-subtle text-text-muted' },
@@ -121,11 +134,16 @@ export function NotificationMenu() {
 
   const openItem = (notification: Notification) => {
     void markRead(notification);
-    if (!BOOKING_DEADLINE_TYPES[notification.type]) return;
     const bookingId =
       notification.relatedEntityType?.toUpperCase() === 'BOOKING'
         ? notification.relatedEntityId
         : null;
+    if (bookingId && isReviewReminder(notification)) {
+      setIsOpen(false);
+      router.push(bookingReviewHref(locale, bookingId));
+      return;
+    }
+    if (!BOOKING_DEADLINE_TYPES[notification.type]) return;
     setIsOpen(false);
     router.push(
       `/${locale}/my-bookings${bookingId ? `#booking-${encodeURIComponent(bookingId)}` : ''}`,
