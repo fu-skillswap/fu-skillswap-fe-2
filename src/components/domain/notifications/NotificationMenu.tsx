@@ -1,106 +1,126 @@
 /**
  * @file NotificationMenu.tsx
- * @description Chuông thông báo cá nhân, tự làm mới định kỳ và hiển thị toast cho thông báo mới.
+ * @description Header bell: unread count, the latest notifications and a toast for new ones.
+ * Each row is a link to the exact page and item (see notificationTargets); opening it marks the
+ * notification read first.
  */
 
 'use client';
 
-import type { Notification } from '@/models/notification';
-import { bookingReviewHref } from '@/views/mentee/my-bookings/bookingStatusConfig';
-import { notificationRepo } from '@/repositories/notificationRepo';
-import { getUserFriendlyErrorMessage, showInfo } from '@/utils/toast';
-import { AlertTriangle, Bell, CheckCheck, Clock, type LucideIcon } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import {
+  BadgeCheck,
+  Bell,
+  CalendarDays,
+  LayoutGrid,
+  MessageCircle,
+  MessagesSquare,
+  Newspaper,
+  Settings,
+  Star,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { showInfo } from '@/utils/toast';
+import { BadgeCount } from './NavBadge';
+import type { NavSection } from './notificationTargets';
+import { useNotificationCenter, type NotificationEntry } from './useNotificationCenter';
 
-const POLLING_INTERVAL_MS = 30_000;
-const NOTIFICATION_LIMIT = 20;
-
-/**
- * Booking-deadline notifications get an icon and open the booking card; other types keep the
- * generic rendering. Title/message come from the backend as-is.
- * TODO(api): structured fields (mentorName, serviceTitle, responseDeadline, sessionStartAt) to
- * build the "Còn {X} trước khi yêu cầu tự hủy" copy and to show an inline "Tìm mentor khác"
- * button on BOOKING_EXPIRED only while the session is still in the future.
- */
-/**
- * "Hãy đánh giá buổi học với {mentor}" opens the review page. The backend does not document the
- * notification type names, so match its LEAVE_FEEDBACK action or a *FEEDBACK* type.
- * TODO(api): confirm the exact review-reminder notification type and match only that.
- */
-function isReviewReminder(notification: Notification) {
-  return (
-    notification.actionType?.toUpperCase() === 'LEAVE_FEEDBACK' ||
-    notification.type.toUpperCase().includes('FEEDBACK')
-  );
-}
-
-const BOOKING_DEADLINE_TYPES: Partial<Record<string, { icon: LucideIcon; className: string }>> = {
-  BOOKING_EXPIRING: { icon: AlertTriangle, className: 'bg-warning-soft text-warning' },
-  BOOKING_EXPIRED: { icon: Clock, className: 'bg-surface-subtle text-text-muted' },
+const SECTION_ICONS: Record<NavSection, LucideIcon> = {
+  home: MessagesSquare,
+  findMentor: LayoutGrid,
+  blog: Newspaper,
+  booking: CalendarDays,
+  mentorBookings: CalendarDays,
+  schedule: Settings,
+  courses: LayoutGrid,
+  wallet: Wallet,
+  profile: BadgeCheck,
+  messages: MessageCircle,
 };
+
+type Filter = 'all' | 'unread';
 
 function formatDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    ? ''
+    : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+}
+
+function NotificationRow({ entry, onOpen }: { entry: NotificationEntry; onOpen: () => void }) {
+  const { notification, target } = entry;
+  const Icon = target.destination === 'Đánh giá buổi học' ? Star : SECTION_ICONS[target.section];
+  const unread = !notification.read;
+  return (
+    <li>
+      <Link
+        href={target.href}
+        onClick={onOpen}
+        className={`flex w-full min-w-0 items-start gap-2.5 rounded-lg p-2.5 text-left no-underline transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          unread ? 'bg-primary-light/60 hover:bg-primary-light' : 'hover:bg-surface-subtle'
+        }`}
+      >
+        <span
+          aria-hidden="true"
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+            target.kind === 'action' ? 'bg-primary text-white' : 'bg-surface-subtle text-text-muted'
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span
+            className={`break-words text-xs leading-tight text-text-main ${unread ? 'font-semibold' : 'font-normal'}`}
+          >
+            {notification.title}
+            {unread && <span className="sr-only"> (chưa đọc)</span>}
+          </span>
+          <span className="line-clamp-2 break-words text-[11px] leading-snug text-text-secondary">
+            {notification.message}
+          </span>
+          <span className="text-[10px] text-text-muted">
+            {formatDate(notification.createdAt)} · Mở {target.destination}
+          </span>
+        </span>
+        {unread && (
+          <span
+            aria-hidden="true"
+            className="mt-1 h-[9px] w-[9px] shrink-0 rounded-full bg-primary"
+          />
+        )}
+      </Link>
+    </li>
+  );
 }
 
 export function NotificationMenu() {
-  const router = useRouter();
-  const params = useParams<{ locale?: string }>();
-  const locale = params?.locale || 'vi';
+  const { entries, unreadCount, isLoading, isError, refetch, markRead, markAllRead } =
+    useNotificationCenter();
   const [isOpen, setIsOpen] = useState(false);
-  const [items, setItems] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>();
-  const initializedRef = useRef(false);
-  const knownNotificationIdsRef = useRef(new Set<string>());
+  const [filter, setFilter] = useState<Filter>('all');
   const menuRef = useRef<HTMLDivElement>(null);
+  const knownIdsRef = useRef<Set<string> | null>(null);
+  const unreadEntries = entries.filter(({ notification }) => !notification.read);
+  const visible = filter === 'unread' ? unreadEntries : entries;
 
-  const loadNotifications = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const result = await notificationRepo.getNotifications({ limit: NOTIFICATION_LIMIT });
-
-      if (initializedRef.current) {
-        result.items
-          .filter((item) => !knownNotificationIdsRef.current.has(item.notificationId))
-          .forEach((item) => {
-            showInfo({ title: item.title, description: item.message });
-          });
-      }
-
-      result.items.forEach((item) => knownNotificationIdsRef.current.add(item.notificationId));
-      initializedRef.current = true;
-      setItems(result.items);
-      setUnreadCount(result.items.filter((item) => !item.read).length);
-    } catch (reason) {
-      setError(getUserFriendlyErrorMessage(reason, 'Không thể tải thông báo.'));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadUnreadCount = useCallback(async () => {
-    try {
-      const result = await notificationRepo.getUnreadCount();
-      setUnreadCount(result.unreadCount);
-    } catch {
-      // Lỗi polling không nên làm gián đoạn trải nghiệm chính của người dùng.
-    }
-  }, []);
-
+  // Toast for notifications that arrive after the first load.
   useEffect(() => {
-    void loadNotifications();
-    const interval = window.setInterval(() => {
-      void loadNotifications();
-    }, POLLING_INTERVAL_MS);
-    return () => window.clearInterval(interval);
-  }, [loadNotifications]);
+    if (isLoading) return;
+    const ids = new Set(entries.map(({ notification }) => notification.notificationId));
+    if (knownIdsRef.current) {
+      entries
+        .filter(
+          ({ notification }) =>
+            !notification.read && !knownIdsRef.current?.has(notification.notificationId),
+        )
+        .forEach(({ notification }) =>
+          showInfo({ title: notification.title, description: notification.message }),
+        );
+    }
+    knownIdsRef.current = new Set([...(knownIdsRef.current ?? []), ...ids]);
+  }, [entries, isLoading]);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -117,158 +137,85 @@ export function NotificationMenu() {
     };
   }, []);
 
-  const markRead = async (notification: Notification) => {
-    if (notification.read) return;
-    try {
-      await notificationRepo.markAsRead(notification.notificationId);
-      setItems((current) =>
-        current.map((item) =>
-          item.notificationId === notification.notificationId ? { ...item, read: true } : item,
-        ),
-      );
-      setUnreadCount((current) => Math.max(0, current - 1));
-    } catch (reason) {
-      setError(getUserFriendlyErrorMessage(reason, 'Không thể cập nhật thông báo.'));
-    }
-  };
-
-  const openItem = (notification: Notification) => {
-    void markRead(notification);
-    const bookingId =
-      notification.relatedEntityType?.toUpperCase() === 'BOOKING'
-        ? notification.relatedEntityId
-        : null;
-    if (bookingId && isReviewReminder(notification)) {
-      setIsOpen(false);
-      router.push(bookingReviewHref(locale, bookingId));
-      return;
-    }
-    if (!BOOKING_DEADLINE_TYPES[notification.type]) return;
+  const open = (entry: NotificationEntry) => {
+    if (!entry.notification.read) markRead([entry.notification.notificationId]);
     setIsOpen(false);
-    router.push(
-      `/${locale}/my-bookings${bookingId ? `#booking-${encodeURIComponent(bookingId)}` : ''}`,
-    );
-  };
-
-  const markAllRead = async () => {
-    try {
-      await notificationRepo.markAllAsRead();
-      setItems((current) => current.map((item) => ({ ...item, read: true })));
-      setUnreadCount(0);
-    } catch (reason) {
-      setError(getUserFriendlyErrorMessage(reason, 'Không thể cập nhật thông báo.'));
-    }
   };
 
   return (
     <div className="relative" ref={menuRef}>
       <button
         type="button"
-        className="w-9.5 h-9.5 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer relative"
-        aria-label="Thông báo"
+        className="relative flex h-9.5 w-9.5 cursor-pointer items-center justify-center rounded-xl border border-solid border-border-color bg-white text-text-secondary transition-all hover:border-border-strong hover:text-text-main"
+        aria-label={unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : 'Thông báo'}
         aria-expanded={isOpen}
+        aria-controls="notification-panel"
         onClick={() => {
           setIsOpen((current) => !current);
-          if (!isOpen) {
-            void loadNotifications();
-            void loadUnreadCount();
-          }
+          if (!isOpen) refetch();
         }}
       >
-        <Bell className="w-4.5 h-4.5" aria-hidden="true" />
-        {unreadCount > 0 && (
-          <span
-            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger ring-2 ring-white"
-            aria-hidden="true"
-          />
-        )}
+        <Bell className="h-4.5 w-4.5" aria-hidden="true" />
+        {unreadCount > 0 && <BadgeCount count={unreadCount} className="absolute -top-2 -right-2" />}
       </button>
 
       {isOpen && (
         <section
-          className="fixed inset-x-2 top-[4.25rem] z-50 flex max-h-[calc(100dvh-4.75rem)] w-auto flex-col gap-2 overflow-hidden rounded-xl border border-solid border-border-light/80 bg-white p-3 shadow-2xl backdrop-blur-md duration-150 animate-in fade-in-0 zoom-in-95 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[420px] sm:w-80 sm:bg-white/95"
-          aria-label="Danh sách thông báo"
+          id="notification-panel"
+          className="fixed inset-x-2 top-[4.25rem] z-50 flex max-h-[calc(100dvh-4.75rem)] w-auto flex-col gap-2 overflow-hidden rounded-xl border border-solid border-border-light/80 bg-white p-3 shadow-2xl sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:max-h-[480px] sm:w-96"
+          aria-label="Thông báo"
         >
-          <header className="flex shrink-0 items-center justify-between border-b border-solid border-border-light pb-2">
-            <div className="flex items-center gap-2">
-              <strong className="text-xs font-bold text-text-main">Thông báo</strong>
-              {unreadCount > 0 && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary-light text-primary">
-                  {unreadCount} chưa đọc
-                </span>
-              )}
-            </div>
+          <header className="flex shrink-0 items-center justify-between gap-2">
+            <h2 className="m-0 text-sm font-bold text-text-main">Thông báo</h2>
             <button
               type="button"
-              onClick={() => void markAllRead()}
-              disabled={!unreadCount}
-              aria-label="Đánh dấu tất cả đã đọc"
-              className="p-1 rounded-lg text-text-muted hover:text-primary hover:bg-primary-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors border-none bg-transparent cursor-pointer"
-              title="Đánh dấu tất cả đã đọc"
+              onClick={markAllRead}
+              disabled={unreadEntries.length === 0 && unreadCount === 0}
+              className="min-h-9 cursor-pointer rounded-lg border-0 bg-transparent px-2 text-xs font-semibold text-primary hover:bg-primary-light disabled:cursor-not-allowed disabled:text-text-disabled disabled:hover:bg-transparent"
             >
-              <CheckCheck className="w-4 h-4" aria-hidden="true" />
+              Đánh dấu đã đọc hết
             </button>
           </header>
-          <div className="min-h-0 overflow-y-auto overscroll-contain">
-            {loading ? (
+
+          <div className="flex shrink-0 gap-1.5" role="group" aria-label="Lọc thông báo">
+            {(['all', 'unread'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+                className={`min-h-9 cursor-pointer rounded-full border border-solid px-3 text-xs font-semibold transition-colors ${
+                  filter === value
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-border-color bg-white text-text-secondary hover:border-primary hover:text-primary'
+                }`}
+              >
+                {value === 'all' ? 'Tất cả' : `Chưa đọc (${unreadEntries.length})`}
+              </button>
+            ))}
+          </div>
+
+          <div className="min-h-0 overflow-y-auto overscroll-contain border-0 border-t border-solid border-border-light pt-2">
+            {isLoading ? (
               <p className="m-0 py-4 text-center text-xs text-text-muted">Đang tải thông báo...</p>
-            ) : error ? (
-              <p className="m-0 py-4 text-center text-xs text-danger">{error}</p>
-            ) : items.length ? (
-              <div className="flex flex-col gap-1">
-                {items.map((item) => {
-                  const deadline = BOOKING_DEADLINE_TYPES[item.type];
-                  const DeadlineIcon = deadline?.icon;
-                  const body = (
-                    <>
-                      <div className="flex w-full min-w-0 items-start justify-between gap-2">
-                        <strong className="min-w-0 break-words text-xs font-bold leading-tight">
-                          {item.title}
-                        </strong>
-                        {!item.read && (
-                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                        )}
-                      </div>
-                      <span className="line-clamp-2 break-words text-[11px] leading-snug text-text-secondary">
-                        {item.message}
-                      </span>
-                      <small className="text-[10px] text-text-muted">
-                        {formatDate(item.createdAt)}
-                      </small>
-                    </>
-                  );
-                  return (
-                    <button
-                      key={item.notificationId}
-                      type="button"
-                      className={`flex w-full min-w-0 cursor-pointer gap-1 rounded-lg border-none p-2.5 text-left transition-all ${
-                        DeadlineIcon ? 'flex-row items-start gap-2.5' : 'flex-col'
-                      } ${
-                        item.read
-                          ? 'bg-transparent text-text-secondary hover:bg-surface-subtle'
-                          : 'bg-primary-light/50 font-semibold text-text-main hover:bg-primary-light'
-                      }`}
-                      onClick={() => openItem(item)}
-                    >
-                      {DeadlineIcon ? (
-                        <>
-                          <span
-                            className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${deadline.className}`}
-                            aria-hidden="true"
-                          >
-                            <DeadlineIcon className="h-3.5 w-3.5" />
-                          </span>
-                          <div className="flex min-w-0 flex-1 flex-col gap-1">{body}</div>
-                        </>
-                      ) : (
-                        body
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+            ) : isError ? (
+              <p className="m-0 py-4 text-center text-xs text-text-muted">
+                Không thể tải thông báo.
+              </p>
+            ) : visible.length === 0 ? (
+              <p className="m-0 py-6 text-center text-xs text-text-muted">
+                Bạn đã xem hết thông báo.
+              </p>
             ) : (
-              <p className="m-0 py-6 text-center text-xs text-text-muted">Chưa có thông báo nào.</p>
+              <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                {visible.map((entry) => (
+                  <NotificationRow
+                    key={entry.notification.notificationId}
+                    entry={entry}
+                    onOpen={() => open(entry)}
+                  />
+                ))}
+              </ul>
             )}
           </div>
         </section>

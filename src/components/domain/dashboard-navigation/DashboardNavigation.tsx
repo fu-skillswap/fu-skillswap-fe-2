@@ -9,6 +9,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Calendar, Home, Newspaper, Search, X } from 'lucide-react';
+import {
+  NavCountMark,
+  NavIconMark,
+  navBadgeLabel,
+} from '@/components/domain/notifications/NavBadge';
+import { useNavBadges } from '@/components/domain/notifications/useNavBadges';
 
 type NavIcon = 'home' | 'search' | 'calendar' | 'blog';
 
@@ -41,6 +47,7 @@ interface DashboardNavigationProps {
  */
 export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNavigationProps) {
   const pathname = usePathname();
+  const { badgeFor } = useNavBadges();
 
   const dashboardHref = `/${locale}/dashboard`;
   const mentorHref = `/${locale}/mentor-booking`;
@@ -83,50 +90,66 @@ export function DashboardNavigation({ locale, isOpen, onClose }: DashboardNaviga
         <Link
           href={dashboardHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Bảng tin', badgeFor('home'))}
           className={
             dashboardActive
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Icon name="home" />
+          <NavIconMark badge={badgeFor('home')}>
+            <Icon name="home" />
+          </NavIconMark>
           <span>Bảng tin</span>
+          <NavCountMark badge={badgeFor('home')} />
         </Link>
         <Link
           href={mentorHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Tìm Mentor', badgeFor('findMentor'))}
           className={
             mentorActive
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Icon name="search" />
+          <NavIconMark badge={badgeFor('findMentor')}>
+            <Icon name="search" />
+          </NavIconMark>
           <span>Tìm Mentor</span>
+          <NavCountMark badge={badgeFor('findMentor')} />
         </Link>
         <Link
           href={blogHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Blog', badgeFor('blog'))}
           className={
             blogActive
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Icon name="blog" />
+          <NavIconMark badge={badgeFor('blog')}>
+            <Icon name="blog" />
+          </NavIconMark>
           <span>Blog</span>
+          <NavCountMark badge={badgeFor('blog')} />
         </Link>
         <Link
           href={bookingsHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Booking của tôi', badgeFor('booking'))}
           className={
             bookingsActive
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Icon name="calendar" />
+          <NavIconMark badge={badgeFor('booking')}>
+            <Icon name="calendar" />
+          </NavIconMark>
           <span>Booking của tôi</span>
+          <NavCountMark badge={badgeFor('booking')} />
         </Link>
       </nav>
     </aside>

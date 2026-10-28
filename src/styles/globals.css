@@ -24,6 +24,7 @@
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
+  --color-badge: var(--badge);
   --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
@@ -90,6 +91,8 @@
   --success: #10b981;
   --success-soft: #ecfdf5;
   --warning: #f59e0b;
+  /* Nav/notification badges only — never use for anything else. */
+  --badge: #ef4444;
   --warning-soft: #fffbeb;
   --danger: #ef4444;
   --danger-soft: #fef2f2;
@@ -566,4 +569,28 @@ body {
   .mentor-service-detail-panel {
     transition: none;
   }
+}
+
+/* Item opened from a notification (set by useNotificationFocus for ~2 s). */
+[data-notification-focus] {
+  position: relative;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  scroll-margin: 96px;
+}
+
+[data-notification-focus]::after {
+  content: 'Mở từ thông báo';
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  z-index: 2;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  pointer-events: none;
 }

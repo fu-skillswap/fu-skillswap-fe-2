@@ -5,6 +5,10 @@
 
 'use client';
 
+import {
+  useFocusParam,
+  useHighlightElement,
+} from '@/components/domain/notifications/useNotificationFocus';
 import { CommentSection } from '@/components/domain/post-comments/CommentSection';
 import { KouKouAnswerCard } from '@/components/domain/post-comments/KouKouAnswerCard';
 import { ForumPostEditModal } from '@/components/domain/post-card/ForumPostEditModal';
@@ -49,6 +53,9 @@ export function PostDetailView({
 }: PostDetailViewProps) {
   const router = useRouter();
   const { user, isAuthenticated, showAuthRequiredModal } = useAuth();
+  // Forum notifications only know the post, so they point at the comments section.
+  const { focusId, clearFocus } = useFocusParam();
+  useHighlightElement(focusId === 'post-comments' ? 'post-comments' : undefined, true, clearFocus);
   const [currentPost, setCurrentPost] = useState(post);
   const [commentCount, setCommentCount] = useState(post.commentCount ?? initialComments.length);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

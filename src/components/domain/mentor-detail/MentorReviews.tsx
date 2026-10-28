@@ -163,7 +163,11 @@ export function MentorReviews({ mentorUserId, mentorName, reputation }: MentorRe
   const completed = reputation?.completedSessions;
 
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="mentor-reviews-title">
+    <section
+      id="mentor-reviews"
+      className="flex flex-col gap-4 rounded-2xl"
+      aria-labelledby="mentor-reviews-title"
+    >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2
           id="mentor-reviews-title"

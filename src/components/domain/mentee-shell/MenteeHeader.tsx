@@ -12,7 +12,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import { authRepo } from '@/repositories/authRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
+import { BadgeDot } from '@/components/domain/notifications/NavBadge';
 import { NotificationMenu } from '@/components/domain/notifications/NotificationMenu';
+import type { NavSection } from '@/components/domain/notifications/notificationTargets';
+import { useMarkSectionSeen, useNavBadges } from '@/components/domain/notifications/useNavBadges';
 import {
   CalendarDays,
   ChevronDown,
@@ -72,8 +75,26 @@ interface MenteeHeaderProps {
 /**
  * Component thanh tiêu đề trên cùng (Topbar) dành cho giao diện Mentee.
  */
+/** Sidebar sections; a mark on any of them also shows on the mobile menu button. */
+const SIDEBAR_SECTIONS: NavSection[] = [
+  'home',
+  'findMentor',
+  'blog',
+  'booking',
+  'mentorBookings',
+  'schedule',
+  'courses',
+  'wallet',
+];
+
 export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHeaderProps) {
   const router = useRouter();
+  const { badgeFor, hasUnreadMessages } = useNavBadges();
+  useMarkSectionSeen();
+  const sidebarHasMarks = SIDEBAR_SECTIONS.some((section) => {
+    const badge = badgeFor(section);
+    return badge.count > 0 || badge.dot;
+  });
   const { logout, user: authUser, isAuthenticated } = useAuth();
   const [fetchedUser, setFetchedUser] = useState<UserMeResponse | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileResponse | null>(null);
@@ -178,11 +199,16 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
-          className="lg:hidden p-1.5 rounded-lg text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer"
+          className="relative lg:hidden p-1.5 rounded-lg text-text-secondary hover:text-text-main hover:bg-surface-subtle transition-colors border-none bg-transparent cursor-pointer"
           onClick={onToggleSidebar}
-          aria-label="Bật/Tắt thanh điều hướng"
+          aria-label={
+            sidebarHasMarks
+              ? 'Bật/Tắt thanh điều hướng, có cập nhật mới'
+              : 'Bật/Tắt thanh điều hướng'
+          }
         >
           <Menu className="w-5 h-5" aria-hidden="true" />
+          {sidebarHasMarks && <BadgeDot className="absolute top-0.5 right-0.5" />}
         </button>
         <h1 className="m-0 text-base md:text-lg font-extrabold text-text-main truncate tracking-tight">
           {title}
@@ -194,11 +220,12 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
             <NotificationMenu />
             <button
               type="button"
-              className="w-9.5 h-9.5 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer"
-              aria-label="Tin nhắn"
+              className="relative w-9.5 h-9.5 rounded-xl border border-solid border-border-color hover:border-border-strong bg-white text-text-secondary hover:text-text-main flex items-center justify-center transition-all cursor-pointer"
+              aria-label={hasUnreadMessages ? 'Tin nhắn, có tin nhắn mới' : 'Tin nhắn'}
               onClick={() => router.push(`/${locale}/messages`)}
             >
               <MessageSquare className="w-4.5 h-4.5" aria-hidden="true" />
+              {hasUnreadMessages && <BadgeDot className="absolute -top-1 -right-1" />}
             </button>
           </>
         )}
