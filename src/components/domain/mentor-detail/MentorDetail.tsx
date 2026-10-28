@@ -6,15 +6,13 @@
 
 import type { Mentor, MentorService } from '@/models/entities';
 import { Button } from '@/components/ui/Button';
+import { StarDisplay } from '@/components/ui/StarDisplay';
 import { Modal } from '@/components/ui/Modal';
-import type {
-  MentorAchievementResponse,
-  MentorProjectResponse,
-  MentorReviewResponse,
-} from '@/models/auth';
+import type { MentorAchievementResponse, MentorProjectResponse } from '@/models/auth';
 import type { BlogPostReaderCardResponse } from '@/models/blog';
 import { MentorBlogPostGrid } from '@/components/domain/blog/MentorBlogPostGrid';
 import { useMentorArticles } from '@/components/domain/blog/useMentorArticles';
+import { MentorReviews, type MentorReputation } from './MentorReviews';
 import { MentorServiceCard } from './MentorServiceCard';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
@@ -31,7 +29,6 @@ import {
   GitBranch,
   Globe,
   Heart,
-  Star,
   Trophy,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -50,13 +47,6 @@ function initials(name: string) {
 function priceLabel(price?: number) {
   if (price === 0) return '0';
   return price ? new Intl.NumberFormat('en-US').format(price) : '—';
-}
-
-function formatReviewDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? ''
-    : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(date);
 }
 
 /** Props của MentorDetail Component */
@@ -84,13 +74,12 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const [achievements, setAchievements] = useState<MentorAchievementResponse[]>([]);
   const [githubUrl, setGithubUrl] = useState<string>();
   const [portfolioUrl, setPortfolioUrl] = useState<string>();
-  const [reviews, setReviews] = useState<MentorReviewResponse[]>([]);
-  const [reviewsError, setReviewsError] = useState(false);
-  const [isReviewsLoading, setIsReviewsLoading] = useState(true);
+  const [reputation, setReputation] = useState<MentorReputation>();
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'services' | 'blog'>('services');
+  const [activeTab, setActiveTab] = useState<'services' | 'blog' | 'reviews'>('services');
+  const tabsRef = useRef<HTMLElement>(null);
   const [articles, setArticles] = useState<BlogPostReaderCardResponse[]>([]);
   const [articleCount, setArticleCount] = useState<number>();
   const servicesRef = useRef<HTMLElement>(null);
@@ -128,6 +117,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
               reviewCount: mappedMentor.reviewCount ?? prev.reviewCount,
             }));
           }
+          setReputation(detail.reputation);
           setProjects(detail.evidence?.featuredProjects ?? []);
           setAchievements(detail.evidence?.achievements ?? []);
           setGithubUrl(detail.evidence?.githubUrl || undefined);
@@ -169,20 +159,6 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         if (isMounted) setIsLoading(false);
       });
 
-    setIsReviewsLoading(true);
-    setReviewsError(false);
-    void mentorDiscoveryRepo
-      .getReviews(targetUserId)
-      .then((page) => {
-        if (isMounted) setReviews(page.content ?? []);
-      })
-      .catch(() => {
-        if (isMounted) setReviewsError(true);
-      })
-      .finally(() => {
-        if (isMounted) setIsReviewsLoading(false);
-      });
-
     return () => {
       isMounted = false;
     };
@@ -217,6 +193,13 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
     }
     onBook(service);
   };
+
+  const openReviews = () => {
+    setActiveTab('reviews');
+    tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const reviewCount = reputation?.reviewCount ?? currentMentor.reviewCount ?? 0;
+  const completedSessions = reputation?.completedSessions ?? 0;
 
   const handleProtectedTabClick = (featureName: string) => {
     if (!isAuthenticated) {
@@ -301,34 +284,31 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                   </p>
                 )}
 
-                <div className="flex items-center gap-2 text-xs sm:text-sm">
-                  {currentMentor.rating !== null && currentMentor.rating !== undefined ? (
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center gap-0.5 text-amber-400">
-                        {Array.from({ length: 5 }, (_, index) => (
-                          <Star
-                            key={index}
-                            className={`w-4 h-4 ${
-                              index < Math.round(currentMentor.rating ?? 0)
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-slate-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
+                  {currentMentor.rating !== null &&
+                  currentMentor.rating !== undefined &&
+                  reviewCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={openReviews}
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-transparent p-0 text-left"
+                      aria-label={`${currentMentor.rating.toFixed(1)} trên 5 sao, ${reviewCount} đánh giá. Xem đánh giá`}
+                    >
+                      <StarDisplay rating={Math.round(currentMentor.rating)} size={16} />
                       <strong className="font-bold text-slate-800">
                         {currentMentor.rating.toFixed(1)}
                       </strong>
-                      {currentMentor.reviewCount !== undefined && (
-                        <span className="text-slate-400">
-                          ({currentMentor.reviewCount} đánh giá)
-                        </span>
-                      )}
-                    </div>
+                      <span className="text-slate-500 underline-offset-2 hover:underline">
+                        ({reviewCount} đánh giá)
+                      </span>
+                    </button>
                   ) : (
-                    <span className="text-sky-500 font-medium text-xs sm:text-sm">
+                    <span className="text-sky-600 font-medium text-xs sm:text-sm">
                       Chưa có đánh giá
                     </span>
+                  )}
+                  {completedSessions > 0 && (
+                    <span className="text-slate-500">· {completedSessions} buổi đã hoàn thành</span>
                   )}
                 </div>
 
@@ -431,7 +411,10 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         </article>
 
         {/* TABS NAVIGATION */}
-        <nav className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-1.5 flex items-center justify-around sm:justify-start sm:gap-6 px-6">
+        <nav
+          ref={tabsRef}
+          className="scroll-mt-24 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-1.5 flex items-center justify-around sm:justify-start sm:gap-6 px-6"
+        >
           <button
             type="button"
             aria-pressed={activeTab === 'services'}
@@ -455,6 +438,18 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
             }
           >
             Blog{blogCount ? ` (${blogCount})` : ''}
+          </button>
+          <button
+            type="button"
+            aria-pressed={activeTab === 'reviews'}
+            onClick={() => setActiveTab('reviews')}
+            className={
+              activeTab === 'reviews'
+                ? 'py-3 px-3 text-xs sm:text-sm font-bold text-sky-600 border-b-2 border-sky-500 transition-all cursor-pointer bg-transparent border-t-0 border-x-0'
+                : 'py-3 px-3 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all cursor-pointer bg-transparent border-0'
+            }
+          >
+            Đánh giá{reviewCount ? ` (${reviewCount})` : ''}
           </button>
           <button
             type="button"
@@ -532,78 +527,13 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         </section>
 
         {/* SECTION ĐÁNH GIÁ TỪ MENTEE */}
-        <section className={`space-y-4 ${activeTab === 'services' ? '' : 'hidden'}`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight m-0">
-              Đánh giá từ mentee
-            </h3>
-            {!isReviewsLoading && !reviewsError && currentMentor.reviewCount !== undefined && (
-              <span className="text-xs text-slate-400 font-medium">
-                {currentMentor.reviewCount} đánh giá
-              </span>
-            )}
-          </div>
-
-          {isReviewsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="h-28 bg-white rounded-2xl border border-slate-200/80 p-6 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : reviewsError ? (
-            <p className="m-0 text-xs leading-5 font-medium text-primary">
-              Chưa thể tải được, vui lòng thử lại sau.
-            </p>
-          ) : reviews.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm text-slate-500 text-xs sm:text-sm">
-              Mentor chưa có đánh giá từ mentee.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {reviews.map((review) => (
-                <article
-                  key={review.reviewId}
-                  className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      {review.reviewerAvatarUrl ? (
-                        <img
-                          src={review.reviewerAvatarUrl}
-                          alt=""
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="w-10 h-10 rounded-full bg-sky-100 text-sky-600 font-bold text-xs flex items-center justify-center">
-                          {initials(review.reviewerDisplayName)}
-                        </span>
-                      )}
-                      <div>
-                        <strong className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">
-                          {review.reviewerDisplayName}
-                        </strong>
-                        <small className="text-[11px] text-slate-400">
-                          {formatReviewDate(review.createdAt)}
-                        </small>
-                      </div>
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/50">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {review.rating}
-                    </span>
-                  </div>
-                  {review.comment && (
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed m-0">
-                      {review.comment}
-                    </p>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
+        {activeTab === 'reviews' && (
+          <MentorReviews
+            mentorUserId={targetUserId}
+            mentorName={currentMentor.name}
+            reputation={reputation}
+          />
+        )}
 
         {/* MODAL CÁC DỰ ÁN & GIẢI THƯỞNG */}
         <Modal

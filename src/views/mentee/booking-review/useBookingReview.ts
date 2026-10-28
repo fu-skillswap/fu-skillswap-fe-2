@@ -7,6 +7,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { mentorReviewsQueryKey } from '@/components/domain/mentor-detail/useMentorReviews';
 import { ApiClientError } from '@/models/apiClient';
 import type { SessionFeedbackResponse } from '@/models/review';
 import { useAuth } from '@/providers/AuthProvider';
@@ -68,6 +69,10 @@ export function useBookingReview(bookingId: string) {
       // The booking moves to "Đã học"; mentor rating and review lists change too.
       void queryClient.invalidateQueries({ queryKey: bookingDetailQueryKey(bookingId) });
       void queryClient.invalidateQueries({ queryKey: ['mentor-recommendations'] });
+      const mentorUserId = booking.data?.mentorUserId;
+      if (mentorUserId) {
+        void queryClient.invalidateQueries({ queryKey: mentorReviewsQueryKey(mentorUserId) });
+      }
     },
   });
 
