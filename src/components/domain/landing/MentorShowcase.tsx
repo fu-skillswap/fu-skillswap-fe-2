@@ -1,7 +1,8 @@
 /**
  * @file MentorShowcase.tsx
  * @description Landing "#mentor" section: real mentors (public GET /api/mentors) rendered with the
- * shared MentorCard, filter chips and a "Chưa thấy người hợp?" card.
+ * shared MentorCard, filter chips and a "Chưa thấy người hợp?" card. Each visible card's price row
+ * comes from that mentor's public profile (cheapest active service).
  */
 
 'use client';
@@ -9,10 +10,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { MentorCard } from '@/components/domain/mentor-card/MentorCard';
+import { useQueries } from '@tanstack/react-query';
+import { MentorCard, type MentorPriceSummary } from '@/components/domain/mentor-card/MentorCard';
 import {
   Highlight,
   Mascot,
+  nextTabIndex,
   SITE_CONTAINER,
   SITE_HEADLINE,
 } from '@/components/domain/landing/LandingPrimitives';
@@ -22,7 +25,9 @@ import {
   type MentorFilterId,
 } from '@/components/domain/landing/landing.constants';
 import { findMentorHref, publicHref } from '@/constants/publicSite';
+import type { MentorServiceResponse } from '@/models/auth';
 import type { Mentor } from '@/models/entities';
+import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 
 const PANEL_ID = 'landing-mentor-panel';
 
@@ -32,6 +37,22 @@ function mentorSearchText(mentor: Mentor) {
     .join(' ')
     .toLowerCase();
 }
+
+/** Lowest-priced active service, or `undefined` when the mentor has none with a price. */
+function cheapestService(services: MentorServiceResponse[]): MentorPriceSummary | undefined {
+  let cheapest: MentorPriceSummary | undefined;
+  for (const service of services) {
+    if (!service.isActive) continue;
+    const priceScoin = service.isFree ? 0 : service.priceScoin;
+    if (priceScoin === null || priceScoin === undefined) continue;
+    if (!cheapest || priceScoin < cheapest.priceScoin) {
+      cheapest = { priceScoin, durationMinutes: service.durationMinutes };
+    }
+  }
+  return cheapest;
+}
+
+const mentorKey = (mentor: Mentor) => mentor.mentorUserId || mentor.id;
 
 function NoMatchCard({ locale }: { locale: string }) {
   const boardHref = publicHref(locale, 'communityBoard');
@@ -78,24 +99,24 @@ export function MentorShowcase({ mentors, locale }: { mentors: Mentor[]; locale:
     return matches.slice(0, LANDING_MENTOR_LIMIT);
   }, [activeFilter, mentors]);
 
+  // Public endpoint; a failed profile just hides that card's price row.
+  const priceQueries = useQueries({
+    queries: visibleMentors.map((mentor) => ({
+      queryKey: ['landing', 'mentor-price', mentorKey(mentor)],
+      queryFn: async () =>
+        cheapestService((await mentorDiscoveryRepo.getDetail(mentorKey(mentor))).services ?? []) ??
+        null,
+      staleTime: 5 * 60 * 1000,
+      retry: false,
+    })),
+  });
+
   // Profile and schedule both live behind the find-mentor page's `?mentorId=` deep link.
   const openMentor = (mentor: Mentor) =>
-    router.push(
-      `${findMentorHref(locale)}?mentorId=${encodeURIComponent(mentor.mentorUserId || mentor.id)}`,
-    );
+    router.push(`${findMentorHref(locale)}?mentorId=${encodeURIComponent(mentorKey(mentor))}`);
 
   const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    const last = MENTOR_FILTERS.length - 1;
-    const next =
-      event.key === 'ArrowRight'
-        ? (index + 1) % MENTOR_FILTERS.length
-        : event.key === 'ArrowLeft'
-          ? (index - 1 + MENTOR_FILTERS.length) % MENTOR_FILTERS.length
-          : event.key === 'Home'
-            ? 0
-            : event.key === 'End'
-              ? last
-              : undefined;
+    const next = nextTabIndex(event.key, index, MENTOR_FILTERS.length);
     if (next === undefined) return;
     event.preventDefault();
     setFilterId(MENTOR_FILTERS[next].id);
@@ -165,12 +186,13 @@ export function MentorShowcase({ mentors, locale }: { mentors: Mentor[]; locale:
             </p>
           )}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-5">
-            {visibleMentors.map((mentor) => (
+            {visibleMentors.map((mentor, index) => (
               <MentorCard
                 key={mentor.id}
                 mentor={mentor}
                 onSelect={openMentor}
                 onViewSchedule={openMentor}
+                priceSummary={priceQueries[index]?.data ?? undefined}
               />
             ))}
             <NoMatchCard locale={locale} />
