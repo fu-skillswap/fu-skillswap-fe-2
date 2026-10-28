@@ -21,6 +21,10 @@ import {
   type BookingSortMode,
 } from '@/components/domain/booking-sort/useBookingSort';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
+import { FocusMissingNotice } from '@/components/domain/notifications/FocusMissingNotice';
+import { BadgeDot } from '@/components/domain/notifications/NavBadge';
+import { useSectionSeenIds } from '@/components/domain/notifications/useNavBadges';
+import { useFocusedBooking } from '@/components/domain/notifications/useFocusedBooking';
 import { SelectField } from '@/components/ui/SelectField';
 import type { MentorBookingResponse } from '@/models/auth';
 import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
@@ -49,6 +53,15 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   // The hook's own status filter stays on 'ALL'; user-facing tab groups are derived here.
   const { bookings, error, isLoading, isSaving, mutate, refresh } = useMyBookings();
   const [activeGroup, setActiveGroup] = useState<BookingTabGroup>('ALL');
+  // Tabs opened on this visit no longer show the "new" dot.
+  const [visitedGroups, setVisitedGroups] = useState<ReadonlySet<BookingTabGroup>>(
+    () => new Set(['ALL']),
+  );
+  const selectGroup = (group: BookingTabGroup) => {
+    setActiveGroup(group);
+    setVisitedGroups((previous) => new Set(previous).add(group));
+  };
+  const seenBookingIds = useSectionSeenIds('booking');
   // "Sắp tới" only holds future sessions, so the next one comes first there.
   const isUpcomingTab = activeGroup === 'UPCOMING';
   const { sort: sortMode, setSort: setSortMode } = useBookingSort(isUpcomingTab ? 'old' : 'new');
@@ -108,6 +121,34 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
 
     return sortBookings(filtered, sortMode);
   }, [actionableExpiryIds, activeGroup, bookings, sortMode]);
+
+  // `?focus=` from a notification: open the tab that holds the booking and highlight it.
+  const { extraBooking, isMissing } = useFocusedBooking({
+    side: 'mentee',
+    locale,
+    bookings,
+    isLoading,
+    onLocate: (booking) =>
+      selectGroup(
+        bookings.some((item) => item.bookingId === booking.bookingId)
+          ? getBookingTabGroup(booking, actionableExpiryIds.has(booking.bookingId))
+          : 'ALL',
+      ),
+  });
+  // A focused booking outside the loaded list window is shown on top of "Tất cả".
+  const listedBookings =
+    extraBooking && activeGroup === 'ALL' ? [extraBooking, ...visibleBookings] : visibleBookings;
+
+  /** Tabs holding a booking whose news was unseen when this page was opened. */
+  const groupsWithNews = useMemo(() => {
+    const groups = new Set<BookingTabGroup>();
+    bookings.forEach((booking) => {
+      if (seenBookingIds.has(booking.bookingId)) {
+        groups.add(getBookingTabGroup(booking, actionableExpiryIds.has(booking.bookingId)));
+      }
+    });
+    return groups;
+  }, [actionableExpiryIds, bookings, seenBookingIds]);
 
   const openChat = (booking: MentorBookingResponse) =>
     router.push(
@@ -183,11 +224,14 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
         </Link>
       </header>
 
+      {isMissing && <FocusMissingNotice />}
+
       <div className={styles.toolbar}>
         <div className={styles.tabs} role="tablist" aria-label="Lọc lịch đặt">
           {BOOKING_TAB_GROUPS.map((tab) => {
             const selected = activeGroup === tab.value;
             const count = counts[tab.value];
+            const hasNews = groupsWithNews.has(tab.value) && !visitedGroups.has(tab.value);
             return (
               <button
                 type="button"
@@ -197,8 +241,14 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
                 aria-controls="booking-tab-panel"
                 className={`${styles.tab} ${selected ? styles.tabActive : ''} ${count === 0 ? styles.tabEmpty : ''}`}
                 key={tab.value}
-                onClick={() => setActiveGroup(tab.value)}
+                onClick={() => selectGroup(tab.value)}
               >
+                {hasNews && (
+                  <>
+                    <BadgeDot />
+                    <span className={styles.srOnly}>Có cập nhật mới: </span>
+                  </>
+                )}
                 {tab.label}
                 <span
                   className={`${styles.tabCount} ${tab.value === 'NEEDS_ACTION' && count > 0 ? styles.tabCountAlert : ''}`}
@@ -252,7 +302,7 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
               <div className="h-40 animate-pulse rounded-[20px] bg-slate-100" key={item} />
             ))}
           </div>
-        ) : visibleBookings.length === 0 ? (
+        ) : listedBookings.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-[20px] bg-white p-12 text-center shadow-xs">
             <CalendarDays className="h-10 w-10 text-text-disabled" aria-hidden="true" />
             <strong className="text-text-main">Không có lịch đặt phù hợp.</strong>
@@ -261,7 +311,7 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
             </span>
           </div>
         ) : (
-          visibleBookings.map((booking) => (
+          listedBookings.map((booking) => (
             <BookingCard
               booking={booking}
               key={booking.bookingId}

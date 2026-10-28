@@ -36,6 +36,10 @@ import {
   type BookingSortMode,
 } from '@/components/domain/booking-sort/useBookingSort';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
+import { FocusMissingNotice } from '@/components/domain/notifications/FocusMissingNotice';
+import { BadgeDot } from '@/components/domain/notifications/NavBadge';
+import { useSectionSeenIds } from '@/components/domain/notifications/useNavBadges';
+import { useFocusedBooking } from '@/components/domain/notifications/useFocusedBooking';
 import {
   ConfirmEndBookingDialog,
   composeEndReason,
@@ -204,6 +208,28 @@ export function MentorBookingsView() {
 
   useEffect(() => setListLimit(LIST_STEP), [activeTab, selectedDate, serviceFilter]);
 
+  // Tabs opened on this visit no longer show the "new" dot.
+  const [visitedTabs, setVisitedTabs] = useState<ReadonlySet<InboxTab>>(() => new Set(['ALL']));
+  const selectTab = (tab: InboxTab) => {
+    setActiveTab(tab);
+    setVisitedTabs((previous) => new Set(previous).add(tab));
+  };
+  const seenBookingIds = useSectionSeenIds('mentorBookings');
+  const [focusedBookingId, setFocusedBookingId] = useState<string>();
+
+  // `?focus=` from a notification: open the tab that holds the booking and highlight it.
+  const { extraBooking, isMissing } = useFocusedBooking({
+    side: 'mentor',
+    locale,
+    bookings,
+    isLoading,
+    onLocate: (booking) => {
+      const listed = bookings.some((item) => item.bookingId === booking.bookingId);
+      selectTab(listed ? inboxGroupOf(booking) : 'ALL');
+      setFocusedBookingId(listed ? booking.bookingId : undefined);
+    },
+  });
+
   const grouped = useMemo(() => {
     const result: Record<InboxGroup, MentorBookingResponse[]> = {
       PENDING: [],
@@ -227,6 +253,23 @@ export function MentorBookingsView() {
     ENDED: grouped.ENDED.length,
     CANCELED: grouped.CANCELED.length,
   };
+  // A focused booking further down a paged list ("Đã kết thúc", "Đã hủy") must be rendered.
+  useEffect(() => {
+    if (!focusedBookingId || activeTab === 'ALL') return;
+    const index = grouped[activeTab].findIndex((booking) => booking.bookingId === focusedBookingId);
+    if (index >= listLimit) setListLimit(index + 1);
+  }, [activeTab, focusedBookingId, grouped, listLimit]);
+
+  const groupsWithNews = useMemo(
+    () =>
+      new Set(
+        bookings
+          .filter((booking) => seenBookingIds.has(booking.bookingId))
+          .map((booking) => inboxGroupOf(booking)),
+      ),
+    [bookings, seenBookingIds],
+  );
+
   const recent = useMemo(
     () => [...grouped.ENDED, ...grouped.CANCELED].sort(compareBookings(sort)),
     [grouped, sort],
@@ -476,6 +519,14 @@ export function MentorBookingsView() {
     </h2>
   );
 
+  /** A focused booking outside the loaded list, drawn with the renderer of its group. */
+  const renderFocusedExtra = (booking: MentorBookingResponse) => {
+    const group = inboxGroupOf(booking);
+    if (group === 'PENDING') return renderRequests([booking]);
+    if (group === 'ENDED' || group === 'CANCELED') return renderEnded([booking], '', 1);
+    return renderSessions([booking], '');
+  };
+
   const content = (() => {
     if (activeTab === 'PENDING') return renderRequests(grouped.PENDING);
     if (activeTab === 'UPCOMING') {
@@ -560,9 +611,17 @@ export function MentorBookingsView() {
                 id={`mentor-booking-tab-${tab.value}`}
                 aria-selected={selected}
                 aria-controls="mentor-booking-panel"
-                onClick={() => setActiveTab(tab.value)}
+                onClick={() => selectTab(tab.value)}
                 className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border-none px-3 text-sm font-semibold transition-colors ${FOCUS_RING} ${selected ? 'bg-primary text-white' : `bg-transparent hover:bg-primary-light hover:text-primary ${count === 0 ? 'text-text-muted' : 'text-text-main'}`}`}
               >
+                {tab.value !== 'ALL' &&
+                  groupsWithNews.has(tab.value) &&
+                  !visitedTabs.has(tab.value) && (
+                    <>
+                      <BadgeDot />
+                      <span className="sr-only">Có cập nhật mới: </span>
+                    </>
+                  )}
                 {tab.label}
                 <span
                   className={`min-w-5 rounded-full px-1.5 text-center text-xs font-bold leading-5 ${urgent ? 'text-white' : selected ? 'bg-white/25 text-white' : count === 0 ? 'bg-surface-subtle text-text-muted' : 'bg-primary-light text-primary'}`}
@@ -685,7 +744,11 @@ export function MentorBookingsView() {
             ))}
           </div>
         ) : (
-          content
+          <div className="grid gap-5">
+            {isMissing && <FocusMissingNotice />}
+            {extraBooking && renderFocusedExtra(extraBooking)}
+            {content}
+          </div>
         )}
       </div>
 

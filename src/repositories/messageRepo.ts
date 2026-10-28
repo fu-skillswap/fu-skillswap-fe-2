@@ -23,6 +23,16 @@ function queryString(query: Record<string, string | number | undefined>) {
 }
 
 export const messageRepo = {
+  /** Unread messages across active conversations (a `{ key: count }` map; values are summed). */
+  getUnreadCount: async () => {
+    const counts = await apiClient<Record<string, number> | null>(
+      '/api/me/conversations/unread-count',
+    );
+    return Object.values(counts ?? {}).reduce(
+      (total, value) => total + (Number.isFinite(value) ? value : 0),
+      0,
+    );
+  },
   getConversations: (query: { cursor?: string; limit?: number } = {}) =>
     apiClient<ConversationCursorPageResponse>(`/api/me/conversations${queryString(query)}`),
 

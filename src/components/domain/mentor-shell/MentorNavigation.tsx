@@ -20,6 +20,12 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
+import {
+  NavCountMark,
+  NavIconMark,
+  navBadgeLabel,
+} from '@/components/domain/notifications/NavBadge';
+import { useNavBadges } from '@/components/domain/notifications/useNavBadges';
 
 interface MentorNavigationProps {
   locale: string;
@@ -29,6 +35,7 @@ interface MentorNavigationProps {
 
 export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationProps) {
   const pathname = usePathname();
+  const { badgeFor } = useNavBadges();
   const feedHref = `/${locale}/dashboard`;
   const bookingHref = `/${locale}/mentor-booking`;
   const dashboardHref = `/${locale}/mentor/dashboard`;
@@ -85,53 +92,69 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         <Link
           href={feedHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Bảng tin', badgeFor('home'))}
           className={
             pathname === feedHref
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Home className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('home')}>
+            <Home className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Bảng tin</span>
+          <NavCountMark badge={badgeFor('home')} />
         </Link>
 
         <Link
           href={bookingHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Tìm Mentor', badgeFor('findMentor'))}
           className={
             pathname.includes('/mentor-booking')
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Search className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('findMentor')}>
+            <Search className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Tìm Mentor</span>
+          <NavCountMark badge={badgeFor('findMentor')} />
         </Link>
 
         <Link
           href={blogHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Blog', badgeFor('blog'))}
           className={
             pathname.startsWith(blogHref)
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Newspaper className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('blog')}>
+            <Newspaper className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Blog</span>
+          <NavCountMark badge={badgeFor('blog')} />
         </Link>
 
         <Link
           href={mentorBookingsHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Lịch đặt', badgeFor('mentorBookings'))}
           className={
             pathname.startsWith(mentorBookingsHref)
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <BookOpen className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('mentorBookings')}>
+            <BookOpen className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Lịch đặt</span>
+          <NavCountMark badge={badgeFor('mentorBookings')} />
         </Link>
 
         {/* Phần dành riêng cho Mentor */}
@@ -139,14 +162,18 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         <Link
           href={scheduleHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Dịch vụ & Lịch dạy', badgeFor('schedule'))}
           className={
             pathname.includes('/mentor/schedule-manage')
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Settings className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('schedule')}>
+            <Settings className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Dịch vụ & Lịch dạy</span>
+          <NavCountMark badge={badgeFor('schedule')} />
         </Link>
 
         <Link
@@ -165,27 +192,35 @@ export function MentorNavigation({ locale, isOpen, onClose }: MentorNavigationPr
         <Link
           href={coursesHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Khóa học của tôi', badgeFor('courses'))}
           className={
             pathname.includes('/mentor/my-courses')
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <GraduationCap className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('courses')}>
+            <GraduationCap className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Khóa học của tôi</span>
+          <NavCountMark badge={badgeFor('courses')} />
         </Link>
 
         <Link
           href={walletHref}
           onClick={onClose}
+          aria-label={navBadgeLabel('Ví S-coins', badgeFor('wallet'))}
           className={
             pathname.startsWith(walletHref)
               ? 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-primary-light text-primary border border-solid border-primary-border/40 transition-all'
               : 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-main hover:bg-surface-subtle border border-solid border-transparent transition-all'
           }
         >
-          <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <NavIconMark badge={badgeFor('wallet')}>
+            <Wallet className="w-5 h-5 shrink-0" aria-hidden="true" />
+          </NavIconMark>
           <span>Ví S-coins</span>
+          <NavCountMark badge={badgeFor('wallet')} />
         </Link>
       </nav>
 

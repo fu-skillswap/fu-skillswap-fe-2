@@ -31,7 +31,11 @@ import {
   Heart,
   Trophy,
 } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import {
+  useFocusParam,
+  useHighlightElement,
+} from '@/components/domain/notifications/useNotificationFocus';
 import { useEffect, useRef, useState } from 'react';
 
 /** Tạo chữ cái đầu tên cho avatar */
@@ -78,7 +82,17 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'services' | 'blog' | 'reviews'>('services');
+  const searchParams = useSearchParams();
+  // `?tab=reviews` opens the reviews (e.g. from a "Bạn vừa nhận được đánh giá mới" notification).
+  const [activeTab, setActiveTab] = useState<'services' | 'blog' | 'reviews'>(() =>
+    searchParams.get('tab') === 'reviews' ? 'reviews' : 'services',
+  );
+  const { focusId, clearFocus } = useFocusParam();
+  useHighlightElement(
+    focusId === 'mentor-reviews' ? 'mentor-reviews' : undefined,
+    activeTab === 'reviews',
+    clearFocus,
+  );
   const tabsRef = useRef<HTMLElement>(null);
   const [articles, setArticles] = useState<BlogPostReaderCardResponse[]>([]);
   const [articleCount, setArticleCount] = useState<number>();
