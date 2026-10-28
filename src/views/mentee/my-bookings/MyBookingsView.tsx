@@ -231,7 +231,6 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
           </button>
         </div>
       </div>
-      <p className={styles.sortHelper}>{sortCopy.helper[sortMode]}</p>
 
       <div
         id="booking-tab-panel"

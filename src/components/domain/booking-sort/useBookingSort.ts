@@ -51,19 +51,13 @@ export function sortBookings(bookings: MentorBookingResponse[], mode: BookingSor
   return [...bookings].sort(compareBookings(mode));
 }
 
-/** Select options and the helper line under the toolbar. */
+/** Sort select options; "Sắp tới" calls the earliest-first order "Gần nhất trước". */
 export function bookingSortCopy(isUpcomingTab: boolean) {
   return {
     options: [
       { value: 'new' as const, label: 'Mới nhất trước' },
       { value: 'old' as const, label: isUpcomingTab ? 'Gần nhất trước' : 'Cũ nhất trước' },
     ],
-    helper: {
-      new: 'Buổi có giờ học gần đây nhất ở trên cùng.',
-      old: isUpcomingTab
-        ? 'Buổi sắp diễn ra sớm nhất ở trên cùng.'
-        : 'Buổi có giờ học cũ nhất ở trên cùng.',
-    } satisfies Record<BookingSortMode, string>,
   };
 }
 
