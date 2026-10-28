@@ -470,6 +470,8 @@ export interface MentorBookingResponse {
   canJoin: boolean;
   canPay?: boolean;
   canReportIssue?: boolean;
+  /** True while the current user may still review this session (backend-enforced). */
+  canSubmitFeedback?: boolean;
   canRespondIssue?: boolean;
   conversationId?: string | null;
   attendance?: {

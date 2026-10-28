@@ -8,6 +8,9 @@
   --mb-danger-text: #b42318;
   --mb-danger: #c4320a;
   --mb-shadow: 0 8px 24px rgba(30, 58, 138, 0.08);
+  --mb-tint-border: #cfe5fb;
+  --mb-review-bg: #eef2ff;
+  --mb-review-border: #dfe3fb;
 
   display: grid;
   gap: 16px;
@@ -145,13 +148,18 @@
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
   padding: 4px;
   margin: -4px;
-  scrollbar-width: thin;
+}
+
+.sortHelper {
+  margin: -8px 0 0;
+  font-size: 13px;
+  color: var(--mb-slate);
 }
 
 .tab {
@@ -497,6 +505,118 @@
   height: 18px;
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+/* --------------------------------- Review --------------------------------- */
+
+.reviewBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--mb-review-border);
+  background: var(--mb-review-bg);
+}
+
+.reviewBoxText {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 260px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mb-slate);
+}
+
+.reviewBoxText strong {
+  display: block;
+  color: var(--text-main);
+}
+
+.quickStars {
+  display: flex;
+  gap: 2px;
+}
+
+.quickStar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.quickStar svg {
+  width: 26px;
+  height: 26px;
+  fill: #fff;
+  stroke: currentColor;
+}
+
+.quickStar:hover,
+.quickStar:focus-visible {
+  background: #fff;
+}
+
+/* Hovering star n lights up stars 1..n. */
+.quickStars:hover .quickStar,
+.quickStars:focus-within .quickStar {
+  color: #d97706;
+}
+
+.quickStars:hover .quickStar svg,
+.quickStars:focus-within .quickStar svg {
+  fill: #f59e0b;
+}
+
+.quickStars .quickStar:hover ~ .quickStar,
+.quickStars .quickStar:focus-visible ~ .quickStar {
+  color: #cbd5e1;
+}
+
+.quickStars .quickStar:hover ~ .quickStar svg,
+.quickStars .quickStar:focus-visible ~ .quickStar svg {
+  fill: #fff;
+}
+
+.myReview {
+  display: grid;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-subtle);
+  font-size: 14px;
+  color: var(--mb-slate);
+}
+
+.myReviewHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 13px;
+}
+
+.myReviewComment {
+  margin: 0;
+  color: var(--text-main);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stepLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* --------------------------------- Footer --------------------------------- */
