@@ -114,11 +114,13 @@ function AcceptBookingDialog({
   const [location, setLocation] = useState(booking.location ?? '');
   const [note, setNote] = useState('');
   const [platformError, setPlatformError] = useState(false);
-  const [linkError, setLinkError] = useState(false);
+  const [linkError, setLinkError] = useState<'format' | 'required'>();
+  const [locationError, setLocationError] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const chipRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const linkRef = useRef<HTMLInputElement>(null);
+  const locationRef = useRef<HTMLInputElement>(null);
 
   const menteeName = booking.menteeDisplayName?.trim() || 'mentee';
   const firstName = menteeFirstName(booking.menteeDisplayName);
@@ -135,6 +137,12 @@ function AcceptBookingDialog({
     platform === 'GOOGLE_MEET' &&
     Boolean(googleCalendarStatus?.connected && !googleCalendarStatus.needsReconnect);
   const showPlaceField = Boolean(platform) && !autoMeet;
+  // Without a working Google Calendar link the backend needs the room link, or a place for
+  // in-person sessions, to accept the booking.
+  const isCalendarConnected = Boolean(
+    googleCalendarStatus?.connected && !googleCalendarStatus.needsReconnect,
+  );
+  const isPlaceRequired = showPlaceField && !isCalendarConnected;
   const selectedIndex = PLATFORMS.findIndex((option) => option.value === platform);
 
   const close = () => {
@@ -164,9 +172,19 @@ function AcceptBookingDialog({
       return;
     }
     const link = meetingLink.trim();
-    if (showPlaceField && !isOffline && link && !isHttpUrl(link)) {
-      setLinkError(true);
+    if (showPlaceField && !isOffline && !link && isPlaceRequired) {
+      setLinkError('required');
       linkRef.current?.focus();
+      return;
+    }
+    if (showPlaceField && !isOffline && link && !isHttpUrl(link)) {
+      setLinkError('format');
+      linkRef.current?.focus();
+      return;
+    }
+    if (isOffline && isPlaceRequired && !location.trim()) {
+      setLocationError(true);
+      locationRef.current?.focus();
       return;
     }
     setSubmitError(undefined);
@@ -369,20 +387,34 @@ function AcceptBookingDialog({
           </p>
         )}
 
-        {/* Link / place: optional, sent with the accept request */}
+        {/* Link / place: required until Google Calendar is connected, sent with the accept */}
         {showPlaceField && selected && (
           <div className="grid gap-1.5">
             <label htmlFor={placeId} className="text-sm font-semibold text-text-main">
-              {isOffline ? 'Địa điểm gặp' : `Link phòng ${selected.label}`}{' '}
-              <span className="font-normal text-text-secondary">(không bắt buộc)</span>
+              {isOffline ? 'Địa điểm gặp' : `Link phòng ${selected.label}`}
+              {isPlaceRequired ? (
+                <span className="text-danger" aria-hidden="true">
+                  {' '}
+                  *
+                </span>
+              ) : (
+                <span className="font-normal text-text-secondary"> (không bắt buộc)</span>
+              )}
             </label>
             {isOffline ? (
               <input
                 id={placeId}
-                className={INPUT_CLASS}
+                ref={locationRef}
+                className={`${INPUT_CLASS} ${locationError ? 'border-danger! focus:ring-danger/15!' : ''}`}
                 value={location}
                 maxLength={255}
-                onChange={(event) => setLocation(event.target.value)}
+                aria-required={isPlaceRequired || undefined}
+                aria-invalid={locationError || undefined}
+                aria-describedby={locationError ? placeErrorId : `${placeId}-help`}
+                onChange={(event) => {
+                  setLocation(event.target.value);
+                  setLocationError(false);
+                }}
                 placeholder={selected.placeholder}
               />
             ) : (
@@ -393,18 +425,29 @@ function AcceptBookingDialog({
                 inputMode="url"
                 className={`${INPUT_CLASS} ${linkError ? 'border-danger! focus:ring-danger/15!' : ''}`}
                 value={meetingLink}
-                aria-invalid={linkError || undefined}
+                aria-required={isPlaceRequired || undefined}
+                aria-invalid={Boolean(linkError) || undefined}
                 aria-describedby={linkError ? placeErrorId : `${placeId}-help`}
                 onChange={(event) => {
                   setMeetingLink(event.target.value);
-                  setLinkError(false);
+                  setLinkError(undefined);
                 }}
                 placeholder={selected.placeholder}
               />
             )}
-            {linkError ? (
+            {linkError || locationError ? (
               <p id={placeErrorId} role="alert" className="m-0 text-[13px] text-danger">
-                Link chưa đúng định dạng. Dán đủ link bắt đầu bằng https://
+                {linkError === 'format'
+                  ? 'Link chưa đúng định dạng. Dán đủ link bắt đầu bằng https://'
+                  : linkError === 'required'
+                    ? 'Dán link phòng học để nhận lịch. Bạn chưa kết nối Google Calendar nên hệ thống chưa tự tạo link được.'
+                    : 'Nhập địa điểm gặp để nhận lịch.'}
+              </p>
+            ) : isPlaceRequired ? (
+              <p id={`${placeId}-help`} className="m-0 text-[13px] text-text-secondary">
+                {isOffline
+                  ? `${firstName} sẽ thấy địa điểm này khi bạn nhận lịch.`
+                  : 'Bạn chưa kết nối Google Calendar nên cần dán link phòng học để nhận lịch.'}
               </p>
             ) : (
               <p id={`${placeId}-help`} className="m-0 text-[13px] text-text-secondary">

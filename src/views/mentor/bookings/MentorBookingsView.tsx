@@ -131,8 +131,14 @@ function actionErrorMessage(reason: unknown, type: MentorBookingMutation['type']
       .filter(Boolean)
       .join(' ');
     if (validation) return validation;
-    if (reason.code === 'SYS_0002' || reason.message === 'IDEMPOTENCY_KEY_REQUIRED') {
-      return 'Yêu cầu chưa có mã xác nhận an toàn. Vui lòng thử lại; hệ thống đã tự bổ sung mã cho thao tác này.';
+    // SYS_0002 is the backend's generic "bad request"; only this message means a missing key.
+    if (reason.message === 'IDEMPOTENCY_KEY_REQUIRED') {
+      return 'Chưa gửi được yêu cầu. Vui lòng thử lại sau giây lát.';
+    }
+    // Other 400s carry a readable Vietnamese reason (e.g. "Link phòng học là bắt buộc…"); show it
+    // as is rather than letting the generic mapper rewrite it.
+    if (reason.status === 400 && reason.message && !/^[A-Z0-9_]+$/.test(reason.message.trim())) {
+      return reason.message.trim();
     }
     if (
       type === 'complete' &&
