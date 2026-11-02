@@ -69,24 +69,18 @@ export const studentProfileRepo = {
   },
 
   /**
-   * Lưu hoặc cập nhật hồ sơ học thuật của tôi (PUT hoặc POST `/api/me/student-profile`).
+   * Lưu hoặc cập nhật hồ sơ học thuật của tôi (PUT `/api/me/student-profile` — upsert).
    * Cập nhật ngay bộ nhớ tạm sau khi lưu thành công.
    * @param profile - Đối tượng dữ liệu hồ sơ sinh viên (`StudentProfileRequest`)
    * @returns Promise chứa dữ liệu Hồ sơ sinh viên đã cập nhật (`StudentProfileResponse`)
    */
   save: async (profile: StudentProfileRequest): Promise<StudentProfileResponse> => {
-    let updated: StudentProfileResponse;
-    try {
-      updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
-        method: 'PUT',
-        data: profile,
-      });
-    } catch {
-      updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
-        method: 'POST',
-        data: profile,
-      });
-    }
+    // The backend only exposes GET/PUT here; PUT both creates and updates. Do not fall back to
+    // POST: it returns 405 and would hide the real validation error (400) from the user.
+    const updated = await apiClient<StudentProfileResponse>('/api/me/student-profile', {
+      method: 'PUT',
+      data: profile,
+    });
     cachedProfile = updated;
     return updated;
   },
