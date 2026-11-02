@@ -193,17 +193,27 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
     },
   });
 
-  const [studentCode, displayName, campusId, programId, semester, intakeYear, isAlumni, bio] =
-    watch([
-      'studentCode',
-      'displayName',
-      'campusId',
-      'programId',
-      'semester',
-      'intakeYear',
-      'isAlumni',
-      'bio',
-    ]);
+  const [
+    studentCode,
+    displayName,
+    campusId,
+    programId,
+    specializationId,
+    semester,
+    intakeYear,
+    isAlumni,
+    bio,
+  ] = watch([
+    'studentCode',
+    'displayName',
+    'campusId',
+    'programId',
+    'specializationId',
+    'semester',
+    'intakeYear',
+    'isAlumni',
+    'bio',
+  ]);
   const graduationYear = watch('graduationYear');
 
   const requiredValues: unknown[] = [
@@ -211,6 +221,7 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
     displayName,
     campusId,
     programId,
+    specializationId,
     semester,
     intakeYear,
   ];
@@ -234,9 +245,9 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
       },
       {
         id: 'academic-information',
-        label: 'Thông tin học tập (Cơ sở, Ngành học)',
+        label: 'Thông tin học tập (Cơ sở, Ngành học, Chuyên ngành)',
         targetId: 'academic-section',
-        completed: isFilled(campusId) && isFilled(programId),
+        completed: isFilled(campusId) && isFilled(programId) && isFilled(specializationId),
       },
       {
         id: 'semester',
@@ -271,6 +282,7 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
       isAlumni,
       programId,
       semester,
+      specializationId,
       studentCode,
       touchedFields.isAlumni,
     ],
@@ -603,7 +615,7 @@ export function StudentOnboardingView({ locale }: { locale: string }) {
                         helperText={
                           !campusId || !programId
                             ? 'Vui lòng chọn cơ sở và ngành học trước.'
-                            : 'Không bắt buộc.'
+                            : 'Chọn chuyên ngành thuộc ngành học đã chọn.'
                         }
                         disabled={!campusId || !programId || isLoadingSpecializations}
                         error={errors.specializationId?.message}

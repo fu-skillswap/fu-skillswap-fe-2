@@ -457,17 +457,13 @@ export const mentorRepo = {
   },
 
   /**
-   * Lấy danh sách booking của mentee hiện tại từ API GET /api/bookings hoặc GET /api/me/bookings.
+   * Lấy danh sách booking của mentee hiện tại từ API GET /api/me/bookings.
    * Hoàn toàn lấy dữ liệu thực từ backend API, không dùng fake/mock data.
    */
   async getMyBookings(): Promise<UserBookingItem[]> {
     try {
-      let res: any;
-      try {
-        res = await apiClient<any>('/api/bookings');
-      } catch {
-        res = await apiClient<any>('/api/me/bookings');
-      }
+      // `/api/bookings` is POST-only (create); the caller's bookings live at GET `/api/me/bookings`.
+      const res: any = await apiClient<any>('/api/me/bookings');
 
       let list: any[] = [];
       if (Array.isArray(res)) {
