@@ -3,8 +3,10 @@
  * @description Cấu hình kênh liên hệ và mạng xã hội công khai của SkillSwap.
  */
 
-// TODO: Điền email liên hệ thật qua NEXT_PUBLIC_CONTACT_EMAIL.
-export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || '';
+/** Official SkillSwap contact mailbox (single source of truth for UI copy). */
+export const SKILLSWAP_CONTACT_EMAIL = 'skillswapvn.contact@gmail.com';
+
+export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || SKILLSWAP_CONTACT_EMAIL;
 
 // TODO: Điền URL mạng xã hội thật qua các biến môi trường tương ứng.
 const configuredSocialLinks = [

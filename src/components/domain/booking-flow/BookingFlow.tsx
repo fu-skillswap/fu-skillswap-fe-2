@@ -174,12 +174,19 @@ export function BookingFlow({
     loadSlotsAndCandidates(getCurrentWeekRange());
   }, [loadSlotsAndCandidates]);
 
+  // A server validation error about the session title belongs next to that field in the goal
+  // modal, not in the generic box (which would also show the raw field name).
+  const isTitleError = Boolean(error && /learningGoalTitle/i.test(error));
+
   // Tự động refresh tải lại danh sách slot khi có lỗi (ví dụ slot bị trùng/người khác chọn mất)
   useEffect(() => {
-    if (error) {
-      void loadSlotsAndCandidates();
-      onSlotChange('', null);
+    if (!error) return;
+    if (/learningGoalTitle/i.test(error)) {
+      setIsConfirmModalOpen(true);
+      return;
     }
+    void loadSlotsAndCandidates();
+    onSlotChange('', null);
   }, [error, loadSlotsAndCandidates, onSlotChange]);
 
   // Click nút Đặt lịch trên lịch -> Bật pop-up modal
@@ -328,7 +335,7 @@ export function BookingFlow({
         </dl>
       </section>
 
-      {error && (
+      {error && !isTitleError && (
         <p
           className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-medium m-0"
           role="alert"
@@ -358,6 +365,7 @@ export function BookingFlow({
         onDescriptionChange={setLearningGoalDescription}
         isSubmitting={isSubmitting}
         onConfirm={handleConfirmBookingSubmit}
+        titleServerError={isTitleError ? 'Vui lòng nhập tiêu đề buổi học.' : undefined}
       />
     </div>
   );

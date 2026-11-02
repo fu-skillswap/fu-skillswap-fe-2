@@ -59,6 +59,8 @@ export interface MentorService {
   mentorId: string;
   name: string;
   description: string;
+  /** Kết quả mentee nhận được sau buổi tư vấn. */
+  expectedOutcome?: string;
   durationMinutes: number;
   priceScoins?: number;
   completedCount?: number;

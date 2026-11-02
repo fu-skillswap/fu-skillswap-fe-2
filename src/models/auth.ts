@@ -54,6 +54,25 @@ export interface GoogleLoginRequest {
   nonce: string;
 }
 
+/** Email/password sign-in request (`POST /api/auth/login`) */
+export interface EmailLoginRequest {
+  email: string;
+  password: string;
+}
+
+/** Email/password sign-up request (`POST /api/auth/register`) — backend emails a 6-digit OTP */
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
+/** OTP verification request (`POST /api/auth/verify-email`) — activates and signs the user in */
+export interface VerifyEmailRequest {
+  email: string;
+  otpCode: string;
+}
+
 /** Thông tin cơ sở / Campus đại học */
 export interface CampusResponse {
   id: string;
@@ -470,6 +489,8 @@ export interface MentorBookingResponse {
   canJoin: boolean;
   canPay?: boolean;
   canReportIssue?: boolean;
+  /** True while the current user may still review this session (backend-enforced). */
+  canSubmitFeedback?: boolean;
   canRespondIssue?: boolean;
   conversationId?: string | null;
   attendance?: {

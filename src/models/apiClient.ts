@@ -83,7 +83,12 @@ function canRefresh(path: string) {
   return (
     !path.startsWith('/api/auth/refresh') &&
     !path.startsWith('/api/auth/logout') &&
-    !path.startsWith('/api/auth/google')
+    !path.startsWith('/api/auth/google') &&
+    // Credential/OTP endpoints answer 4xx for bad input, not for an expired session.
+    !path.startsWith('/api/auth/login') &&
+    !path.startsWith('/api/auth/register') &&
+    !path.startsWith('/api/auth/verify-email') &&
+    !path.startsWith('/api/auth/resend-otp')
   );
 }
 

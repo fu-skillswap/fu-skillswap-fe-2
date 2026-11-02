@@ -5,7 +5,6 @@
  */
 
 import type { Metadata, Viewport } from 'next';
-import 'aos/dist/aos.css';
 import '@/styles/globals.css';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 

@@ -4,14 +4,30 @@
  * Giao tiếp với Backend API qua apiClient cho Google Login, Google Nonce, User Profile, Session, Logout.
  */
 
-import { apiClient, setAccessToken } from '@/models/apiClient';
+import { ApiClientError, apiClient, setAccessToken } from '@/models/apiClient';
 import type {
+  EmailLoginRequest,
   GoogleLoginNonceResponse,
   GoogleLoginRequest,
   OnboardingStatusResponse,
+  RegisterRequest,
   TokenResponse,
   UserMeResponse,
+  VerifyEmailRequest,
 } from '@/models/auth';
+
+/**
+ * The api client rejects a 2xx envelope whose `data` is null. Register and resend-OTP may answer
+ * that way on success, so treat any 2xx as done.
+ */
+async function allowEmptySuccess(request: Promise<unknown>) {
+  try {
+    await request;
+  } catch (reason) {
+    if (reason instanceof ApiClientError && reason.status >= 200 && reason.status < 300) return;
+    throw reason;
+  }
+}
 
 export const authRepo = {
   /**
@@ -35,6 +51,44 @@ export const authRepo = {
     });
     setAccessToken(token.accessToken);
     return token;
+  },
+
+  /**
+   * Signs in with email + password. Same token response as Google: access token in the body,
+   * refresh token in an HttpOnly cookie.
+   */
+  async loginWithEmail(input: EmailLoginRequest) {
+    const token = await apiClient<TokenResponse>('/api/auth/login', {
+      method: 'POST',
+      data: input,
+    });
+    setAccessToken(token.accessToken);
+    return token;
+  },
+
+  /**
+   * Creates an email/password account (or links a password to an existing Google account).
+   * The backend emails a 6-digit OTP; the account stays inactive until `verifyEmail`.
+   */
+  register(input: RegisterRequest) {
+    return allowEmptySuccess(apiClient('/api/auth/register', { method: 'POST', data: input }));
+  },
+
+  /** Verifies the emailed OTP. On success the backend activates the account and issues a JWT. */
+  async verifyEmail(input: VerifyEmailRequest) {
+    const token = await apiClient<TokenResponse>('/api/auth/verify-email', {
+      method: 'POST',
+      data: input,
+    });
+    setAccessToken(token.accessToken);
+    return token;
+  },
+
+  /** Asks the backend to email a new OTP. */
+  resendOtp(email: string) {
+    return allowEmptySuccess(
+      apiClient('/api/auth/resend-otp', { method: 'POST', data: { email } }),
+    );
   },
 
   /**

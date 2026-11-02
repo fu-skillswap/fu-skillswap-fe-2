@@ -1,86 +1,40 @@
 /**
  * @file useLoginLogic.ts
  * @description Custom React Hook quản lý logic Đăng nhập (Authentication Hook) sử dụng React Hook Form & Yup.
- * Tự động tải động Google Identity Services SDK, tạo và quản lý mã Nonce dùng 1 lần,
- * render nút Google Sign-In native và điều hướng sau khi xác thực thành công.
+ * Google sign-in comes from `useGoogleSignIn`; this hook adds the email/password form.
  */
 
 'use client';
 
-import { onboardingDestination } from '@/lib/auth/google';
-import { ApiClientError } from '@/models/apiClient';
 import { loginSchema, type LoginFormValues } from '@/models/schemas/authSchema';
-import { useAuth } from '@/providers/AuthProvider';
 import { authRepo } from '@/repositories/authRepo';
-import { showSuccess } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-/** URL thư viện SDK chính thức của Google Identity Services */
-const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
-let googleIdentityServicesPromise: Promise<void> | null = null;
-
-/**
- * Tải script Google Identity Services SDK vào DOM nếu chưa có.
- * Gom các yêu cầu tải trùng lặp thành một Promise duy nhất.
- * @returns Promise hoàn thành khi script GIS đã sẵn sàng
- */
-function loadGoogleIdentityServices() {
-  if (window.google?.accounts.id) return Promise.resolve();
-  if (!googleIdentityServicesPromise) {
-    googleIdentityServicesPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = GIS_SCRIPT_URL;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Unable to load Google Identity Services.'));
-      document.head.appendChild(script);
-    });
-  }
-  return googleIdentityServicesPromise;
-}
-
-/**
- * Chuyển đổi các đối tượng lỗi từ API/Network thành thông điệp thân thiện với người dùng bằng tiếng Việt.
- * @param reason - Lỗi thu được từ khối catch
- * @returns Lỗi gốc để mapper dùng chung xử lý, hoặc business message đã được xác định an toàn
- */
-function userFacingGoogleError(reason: unknown): unknown {
-  if (reason instanceof ApiClientError) {
-    if (reason.code === 'SYS_0010')
-      return reason.retryAfterSeconds
-        ? `Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau ${reason.retryAfterSeconds} giây.`
-        : 'Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau.';
-    if (reason.code === 'AUTH_1004') return 'Tài khoản của bạn đã bị khóa.';
-    if (/nonce/i.test(reason.message))
-      return 'Phiên đăng nhập Google đã hết hạn hoặc không còn hợp lệ. Vui lòng bấm “Đăng nhập bằng Google” và thử lại.';
-    return reason;
-  }
-  return reason;
-}
+import {
+  classifyAuthError,
+  genericAuthErrorMessage,
+  useFinishSignIn,
+  useGoogleSignIn,
+  useRedirectSignedIn,
+  verifyEmailHref,
+} from './useAuthFlow';
 
 /**
  * Custom Hook điều khiển toàn bộ logic trang Đăng nhập.
  *
  * @param locale - Mã ngôn ngữ hiện tại (ví dụ: "vi", "en")
- * @returns Đối tượng chứa form state, trạng thái lỗi, cờ loading, hàm submit form và `googleButtonRef`
+ * @param adminOnly - Admin portal login: only admin roles may continue
  */
 export function useLoginLogic(locale: string, adminOnly = false) {
   const router = useRouter();
-  const { completeGoogleLogin } = useAuth();
-  const completeGoogleLoginRef = useRef(completeGoogleLogin);
-  const googleButtonRef = useRef<HTMLDivElement>(null);
-  const nonceRef = useRef<string | null>(null);
-  const configureGoogleButtonRef = useRef<() => Promise<void>>(async () => {});
-  const [error, setError] = useState<unknown>();
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(true);
-  const clearError = useCallback(() => setError(undefined), []);
-
-  completeGoogleLoginRef.current = completeGoogleLogin;
+  const google = useGoogleSignIn({ locale, adminOnly, text: 'continue_with' });
+  const finishSignIn = useFinishSignIn(locale, adminOnly);
+  const [formError, setFormError] = useState<string>();
+  // Keeps the button disabled between a successful sign-in and the route change.
+  const [redirecting, setRedirecting] = useState(false);
+  useRedirectSignedIn(locale, adminOnly);
 
   /** Khởi tạo React Hook Form với Yup Resolver */
   const form = useForm<LoginFormValues>({
@@ -91,122 +45,43 @@ export function useLoginLogic(locale: string, adminOnly = false) {
     },
   });
 
-  /** Xử lý khi người dùng submit form đăng nhập bằng Email/Password truyền thống */
-  const submit = async () => {
-    setLoading(true);
-    setError('Đăng nhập bằng email và mật khẩu hiện chưa được hỗ trợ.');
-    setLoading(false);
-  };
-
-  /**
-   * Khởi tạo nút Google Sign-In:
-   * 1. Lấy mã Nonce dùng một lần từ Backend
-   * 2. Tải Google Identity Services SDK
-   * 3. Gọi `google.accounts.id.initialize` với callback gửi ID Token về Backend
-   * 4. Render nút Google chuẩn vào DOM container
-   */
-  const configureGoogleButton = useCallback(async () => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const button = googleButtonRef.current;
-    if (!clientId) {
-      setError('Đăng nhập Google chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
-      setGoogleLoading(false);
+  const submit = form.handleSubmit(async ({ email, password }) => {
+    setFormError(undefined);
+    try {
+      await authRepo.loginWithEmail({ email, password });
+    } catch (reason) {
+      const kind = classifyAuthError(reason);
+      if (kind === 'unverified') {
+        // Send a fresh code, then continue on the OTP screen with the email prefilled.
+        try {
+          await authRepo.resendOtp(email);
+        } catch {
+          /* A recent code may still be valid; the verify screen offers "Gửi lại mã". */
+        }
+        router.push(verifyEmailHref(locale, email));
+        return;
+      }
+      setFormError(
+        kind === 'invalid-credentials'
+          ? 'Email hoặc mật khẩu chưa đúng.'
+          : genericAuthErrorMessage(reason),
+      );
       return;
     }
-    if (!button) return;
-
-    setGoogleLoading(true);
     try {
-      const { nonce } = await authRepo.getGoogleNonce();
-      nonceRef.current = nonce;
-      await loadGoogleIdentityServices();
-      if (!window.google?.accounts.id) throw new Error('Google Identity Services is unavailable.');
-
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        nonce,
-        callback: async ({ credential }) => {
-          const loginNonce = nonceRef.current;
-          nonceRef.current = null;
-          if (!credential || !loginNonce) return;
-          setGoogleLoading(true);
-          setError(undefined);
-          try {
-            await authRepo.loginWithGoogle({
-              credential,
-              nonce: loginNonce,
-            });
-            const { user, onboarding } = await completeGoogleLoginRef.current();
-            showSuccess({
-              title: 'Đăng nhập thành công',
-              description: `Chào mừng ${user.fullName || 'bạn'} quay lại SkillSwap.`,
-            });
-            const canAccessAdmin = user.roles.some(
-              (role) => role === 'ADMIN' || role === 'SYSTEM_ADMIN',
-            );
-            if (adminOnly && !canAccessAdmin) {
-              setError('Tài khoản này không có quyền truy cập cổng quản trị.');
-              return;
-            }
-            if (adminOnly) {
-              router.replace(`/${locale}/admin/dashboard`);
-              return;
-            }
-            // Always check MENTOR role first from GET /api/auth/me response
-            if (user.roles.includes('MENTOR')) {
-              router.replace(`/${locale}/mentor/dashboard`);
-              return;
-            }
-            router.replace(onboardingDestination(locale, onboarding.nextRecommendedAction));
-          } catch (reason) {
-            console.error('[Login Error]', reason);
-            setError(userFacingGoogleError(reason));
-            void configureGoogleButtonRef.current();
-          } finally {
-            setGoogleLoading(false);
-          }
-        },
-      });
-      button.replaceChildren();
-      window.google.accounts.id.renderButton(button, {
-        theme: 'outline',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular',
-        width: Math.floor(button.getBoundingClientRect().width) || 380,
-      });
+      const denied = await finishSignIn();
+      if (denied) setFormError(denied);
+      else setRedirecting(true);
     } catch (reason) {
-      nonceRef.current = null;
-      console.error('[Login Setup Error]', reason);
-      setError(userFacingGoogleError(reason));
-    } finally {
-      setGoogleLoading(false);
+      setFormError(genericAuthErrorMessage(reason));
     }
-  }, [locale, router, adminOnly]);
-
-  configureGoogleButtonRef.current = configureGoogleButton;
-
-  const { isAuthenticated, user: authUser } = useAuth();
-  useEffect(() => {
-    if (isAuthenticated && authUser?.roles?.includes('MENTOR') && !adminOnly) {
-      router.replace(`/${locale}/mentor/dashboard`);
-    }
-  }, [isAuthenticated, authUser, locale, router, adminOnly]);
-
-  useEffect(() => {
-    void configureGoogleButton();
-    return () => {
-      nonceRef.current = null;
-    };
-  }, [configureGoogleButton]);
+  });
 
   return {
+    ...google,
     form,
-    error,
-    clearError,
-    loading,
-    googleLoading,
-    submit: form.handleSubmit(submit),
-    googleButtonRef,
+    formError,
+    loading: form.formState.isSubmitting || redirecting,
+    submit,
   };
 }

@@ -12,7 +12,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
 import { getGoogleCalendarClientId, getGoogleCalendarRedirectUri } from '@/lib/auth/google';
-import { formatDateVi, formatLocalTime } from './mentorTemplateHelpers';
+import { formatDateVi } from './mentorTemplateHelpers';
 import { ApiClientError } from '@/models/apiClient';
 import type {
   AvailabilityTemplateResponse,
@@ -66,7 +66,8 @@ import {
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { ServiceDescriptionFields } from '@/components/domain/mentor-service/ServiceDescriptionFields';
 import { MentorScheduleCalendar } from './MentorScheduleCalendar';
 import {
   mergeBookingsIntoCalendar,
@@ -526,7 +527,6 @@ export function ScheduleManageView() {
     useState<AvailabilityTemplateResponse | null>(null);
   const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false);
   const [isSubmittingTemplate, setIsSubmittingTemplate] = useState(false);
-  const isCreatingTemplateRef = useRef(false);
   const [templateStaleNotice, setTemplateStaleNotice] = useState<string | null>(null);
 
   const [pendingTemplateActionConfirm, setPendingTemplateActionConfirm] = useState<{
@@ -577,9 +577,9 @@ export function ScheduleManageView() {
   const form = useForm<MentorServiceFormValues>({
     resolver: yupResolver(mentorServiceSchema),
     defaultValues: {
-      title: 'Review CV & Career Path',
-      description: 'Tư vấn chỉnh sửa CV chuẩn ATS và định hướng phát triển sự nghiệp 1-1',
-      expectedOutcome: 'Sở hữu bản CV ấn tượng và rõ định hướng nghề nghiệp',
+      title: '',
+      description: '',
+      expectedOutcome: '',
       durationMinutes: 60,
       isFree: false,
       priceScoin: 150000,
@@ -741,51 +741,22 @@ export function ScheduleManageView() {
     setIsTemplateFormOpen(true);
   };
 
-  const onSubmitCreateTemplate = async (data: CreateAvailabilityTemplateRequest) => {
-    if (isCreatingTemplateRef.current) return;
-
-    const normalizedWeekdays = [...data.weekdays].sort().join(',');
-    const duplicateTemplate = templates.find(
-      (template) =>
-        template.configuredStatus !== 'ARCHIVED' &&
-        template.effectiveStatus !== 'ARCHIVED' &&
-        [...template.weekdays].sort().join(',') === normalizedWeekdays &&
-        formatLocalTime(template.startTime) === data.startTime.slice(0, 5) &&
-        formatLocalTime(template.endTime) === data.endTime.slice(0, 5) &&
-        template.effectiveFrom === data.effectiveFrom &&
-        (template.effectiveTo ?? '') === (data.effectiveTo ?? ''),
-    );
-    if (duplicateTemplate) {
-      showInfo({
-        title: 'Lịch lặp đã tồn tại',
-        description: 'Hãy chỉnh sửa lịch hiện có thay vì tạo thêm một lịch trùng cấu hình.',
-      });
-      return;
-    }
-
-    isCreatingTemplateRef.current = true;
-    setIsSubmittingTemplate(true);
+  // The form creates one template per time range and reports failures inline, so this only
+  // forwards the request and lets errors propagate to the modal.
+  const createTemplate = async (data: CreateAvailabilityTemplateRequest) => {
     setTemplateStaleNotice(null);
-    try {
-      await mentorSchedulingRepo.createAvailabilityTemplate(data);
-      showSuccess({
-        title: 'Đã tạo lịch lặp',
-        description: 'Lịch sẽ tự động mở theo thời gian bạn đã thiết lập.',
-      });
-      setIsTemplateFormOpen(false);
-      await reloadTemplates();
-      await reloadScheduling();
-    } catch (reason) {
-      if (reason instanceof ApiClientError) {
-        showError(reason, { title: 'Không thể tạo lịch lặp' });
-        console.error('Create template error:', reason);
-      } else {
-        showError('Không thể tạo mẫu lịch lặp. Vui lòng thử lại.');
-      }
-    } finally {
-      isCreatingTemplateRef.current = false;
-      setIsSubmittingTemplate(false);
-    }
+    await mentorSchedulingRepo.createAvailabilityTemplate(data);
+  };
+
+  const refreshAfterTemplateCreate = async () => {
+    await reloadTemplates();
+    await reloadScheduling();
+  };
+
+  const onTemplatesCreated = async (summary: string) => {
+    showSuccess(`Đã tạo lịch hàng tuần: ${summary}`);
+    setIsTemplateFormOpen(false);
+    await refreshAfterTemplateCreate();
   };
 
   const onSubmitUpdateTemplate = async (
@@ -3154,24 +3125,41 @@ export function ScheduleManageView() {
                 )}
               </div>
 
+              <Controller
+                control={form.control}
+                name="description"
+                render={({ field, fieldState }) => (
+                  <ServiceDescriptionFields
+                    idPrefix="new-service"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+
               <div>
                 <label
                   className="mb-1.5 block text-sm font-semibold text-slate-700"
-                  htmlFor="new-service-desc"
+                  htmlFor="new-service-outcome"
                 >
-                  Mô tả dịch vụ <span className="text-red-500">*</span>
+                  Kết quả sau buổi tư vấn <span className="text-red-500">*</span>
                 </label>
                 <textarea
-                  id="new-service-desc"
-                  className="min-h-20 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
-                  rows={3}
-                  placeholder="Mô tả nội dung mentor sẽ hỗ trợ trong buổi tư vấn..."
-                  aria-invalid={Boolean(form.formState.errors.description)}
-                  {...form.register('description')}
+                  id="new-service-outcome"
+                  className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                  rows={2}
+                  placeholder="VD: Bạn nhận góp ý cụ thể để sửa CV và tăng cơ hội vượt vòng sàng lọc"
+                  aria-invalid={Boolean(form.formState.errors.expectedOutcome)}
+                  {...form.register('expectedOutcome')}
                 />
-                {form.formState.errors.description && (
+                {form.formState.errors.expectedOutcome ? (
                   <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                    {form.formState.errors.description.message}
+                    {form.formState.errors.expectedOutcome.message}
+                  </span>
+                ) : (
+                  <span className="mt-1 block text-xs text-slate-500">
+                    Hiển thị trong khung “Kết quả sau buổi tư vấn” trên hồ sơ của bạn.
                   </span>
                 )}
               </div>
@@ -3757,13 +3745,16 @@ export function ScheduleManageView() {
         open={isTemplateFormOpen}
         template={selectedTemplateForEdit}
         activeServices={activeOneToOneServices}
+        existingTemplates={templates}
         isSubmitting={isSubmittingTemplate}
         staleNotice={templateStaleNotice}
         onClose={() => {
           setIsTemplateFormOpen(false);
           setSelectedTemplateForEdit(null);
         }}
-        onSubmitCreate={onSubmitCreateTemplate}
+        onCreate={createTemplate}
+        onCreated={onTemplatesCreated}
+        onPartialCreate={() => void refreshAfterTemplateCreate()}
         onSubmitUpdate={onSubmitUpdateTemplate}
       />
 

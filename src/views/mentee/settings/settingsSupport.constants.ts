@@ -3,10 +3,12 @@
  * @description Nội dung FAQ và cấu hình liên hệ tập trung cho trang Cài đặt & hỗ trợ.
  */
 
+import { SKILLSWAP_CONTACT_EMAIL } from '@/constants/contact';
+
 export const SUPPORT_CONFIG = {
   responseTime: 'trong 24 giờ',
   workingHours: '08:00–17:30, Thứ Hai–Thứ Sáu',
-  email: 'support@skillswap.asia',
+  email: SKILLSWAP_CONTACT_EMAIL,
   cancellationRefundHours: 24,
 } as const;
 

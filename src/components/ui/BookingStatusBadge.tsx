@@ -114,6 +114,7 @@ export function getBookingStatusConfig(status?: string): BookingStatusConfig {
   if (upper === 'CANCELED_BY_MENTEE') upper = 'CANCELLED_BY_MENTEE';
   if (upper === 'CANCELED_BY_MENTOR') upper = 'CANCELLED_BY_MENTOR';
   if (upper === 'REJECTED_BY_MENTOR') upper = 'REJECTED';
+  if (upper === 'REQUESTED') upper = 'PENDING';
   if (BOOKING_STATUS_MAP[upper]) {
     return BOOKING_STATUS_MAP[upper];
   }

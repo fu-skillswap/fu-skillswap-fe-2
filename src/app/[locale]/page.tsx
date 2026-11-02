@@ -1,14 +1,20 @@
 /**
  * @file page.tsx
- * @description Route landing page public mặc định (`/[locale]`).
+ * @description Default public landing route (`/[locale]`).
  */
 
+import { mentorRepo } from '@/repositories/mentorRepo';
+import type { Mentor } from '@/models/entities';
 import { LandingView } from '@/views/landing/LandingView';
 
-/**
- * Server Component chuyển locale vào landing view.
- */
+/** Enough mentors for the landing filter chips to have something to match against. */
+const LANDING_MENTOR_FETCH_SIZE = 24;
+
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  return <LandingView locale={locale} />;
+  const [{ locale }, mentors] = await Promise.all([
+    params,
+    // Public endpoint; never let it break the landing render.
+    mentorRepo.list({ page: 0, size: LANDING_MENTOR_FETCH_SIZE }).catch((): Mentor[] => []),
+  ]);
+  return <LandingView locale={locale} mentors={mentors} />;
 }

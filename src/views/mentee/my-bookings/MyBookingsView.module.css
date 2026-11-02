@@ -1,0 +1,868 @@
+/* Screen-specific palette (navy/ice values come from the booking redesign spec). */
+.page {
+  --mb-navy: #001c64;
+  --mb-ice: #f0f6fc;
+  --mb-line: #d0e0ee;
+  --mb-muted: #6b7896;
+  --mb-slate: #475569;
+  --mb-danger-text: #b42318;
+  --mb-danger: #c4320a;
+  --mb-shadow: 0 8px 24px rgba(30, 58, 138, 0.08);
+  --mb-tint-border: #cfe5fb;
+  --mb-review-bg: #eef2ff;
+  --mb-review-border: #dfe3fb;
+
+  display: grid;
+  gap: 16px;
+  max-width: 880px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+/* ------------------------------ Shared controls ------------------------------ */
+
+.focusable:focus-visible,
+.btn:focus-visible,
+.tab:focus-visible,
+.iconBtn:focus-visible,
+.link:focus-visible,
+.mentorLink:focus-visible {
+  outline: 3px solid var(--mb-navy);
+  outline-offset: 3px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.btnPrimary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btnPrimary:disabled {
+  background: #dbe7f3;
+  color: #4b6584;
+}
+
+.btnOutline {
+  background: #fff;
+  border-color: var(--mb-line);
+  color: var(--mb-navy);
+}
+
+.btnOutline:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btnGhostDanger {
+  background: transparent;
+  color: var(--mb-danger-text);
+  padding: 0 12px;
+}
+
+.btnGhostDanger:hover {
+  background: #fef3f2;
+}
+
+.link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------- Header ---------------------------------- */
+
+.headerCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 24px 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--mb-shadow);
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--mb-navy);
+}
+
+.headerSubtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--mb-muted);
+}
+
+/* ----------------------------------- Tabs ----------------------------------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* All statuses stay on one row; the sort controls move to the next line when they don't fit. */
+.tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 4px;
+  margin: -4px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--mb-line);
+  background: #fff;
+  color: var(--mb-navy);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab:hover {
+  border-color: var(--primary);
+}
+
+.tabEmpty {
+  color: var(--mb-muted);
+}
+
+.tabActive,
+.tabActive:hover {
+  background: var(--mb-navy);
+  border-color: var(--mb-navy);
+  color: #fff;
+}
+
+.tabCount {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--mb-ice);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tabActive .tabCount {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Orange count on "Cần bạn xử lý" while something there still needs the mentee. */
+.tabCountAlert,
+.tabActive .tabCountAlert {
+  background: #ea580c;
+  color: #fff;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.sortSelect {
+  width: 180px;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--mb-line);
+  background: #fff;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.iconBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.iconBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ----------------------------------- Pill ----------------------------------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pillDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.pillIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------- Card ----------------------------------- */
+
+.card {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--mb-shadow);
+  min-width: 0;
+}
+
+.cardTop {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dateTile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  width: 76px;
+  padding: 10px 4px;
+  border-radius: 16px;
+  background: var(--mb-ice);
+  color: var(--mb-navy);
+  text-align: center;
+}
+
+.dateWeekday,
+.dateMonth {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mb-slate);
+}
+
+.dateDay {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.dateTileMuted {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.cardHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--mb-navy);
+  overflow-wrap: anywhere;
+}
+
+.mentorLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--mb-navy);
+  text-decoration: none;
+}
+
+.mentorLink:hover .mentorName {
+  text-decoration: underline;
+}
+
+.mentorName {
+  font-weight: 600;
+}
+
+.mentorRole {
+  color: var(--mb-muted);
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.avatarInitial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e11d48;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--mb-ice);
+  color: var(--mb-navy);
+  font-size: 13px;
+}
+
+.chip svg {
+  width: 14px;
+  height: 14px;
+  color: var(--mb-slate);
+}
+
+/* --------------------------------- Tracker --------------------------------- */
+
+.tracker {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding-right: 8px;
+  min-width: 0;
+}
+
+.stepConnector {
+  position: absolute;
+  top: 11px;
+  left: 30px;
+  right: 6px;
+  height: 2px;
+  background: var(--mb-line);
+}
+
+.stepConnectorDone {
+  background: var(--primary);
+}
+
+.stepMarker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2px solid var(--mb-line);
+  background: #fff;
+  margin-bottom: 6px;
+}
+
+.stepMarkerDone {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.stepMarkerDone svg {
+  width: 14px;
+  height: 14px;
+}
+
+.stepMarkerCurrent {
+  border-width: 2px;
+}
+
+.stepMarkerDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.stepLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mb-navy);
+  overflow-wrap: anywhere;
+}
+
+.stepLabelFuture {
+  font-weight: 600;
+  color: var(--mb-slate);
+}
+
+.stepSub {
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+
+/* -------------------------------- Next step -------------------------------- */
+
+.nextBox {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.nextBox svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* --------------------------------- Review --------------------------------- */
+
+.reviewBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--mb-review-border);
+  background: var(--mb-review-bg);
+}
+
+.reviewBoxText {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 260px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mb-slate);
+}
+
+.reviewBoxText strong {
+  display: block;
+  color: var(--text-main);
+}
+
+.quickStars {
+  display: flex;
+  gap: 2px;
+}
+
+.quickStar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.quickStar svg {
+  width: 26px;
+  height: 26px;
+  fill: #fff;
+  stroke: currentColor;
+}
+
+.quickStar:hover,
+.quickStar:focus-visible {
+  background: #fff;
+}
+
+/* Hovering star n lights up stars 1..n. */
+.quickStars:hover .quickStar,
+.quickStars:focus-within .quickStar {
+  color: #d97706;
+}
+
+.quickStars:hover .quickStar svg,
+.quickStars:focus-within .quickStar svg {
+  fill: #f59e0b;
+}
+
+.quickStars .quickStar:hover ~ .quickStar,
+.quickStars .quickStar:focus-visible ~ .quickStar {
+  color: #cbd5e1;
+}
+
+.quickStars .quickStar:hover ~ .quickStar svg,
+.quickStars .quickStar:focus-visible ~ .quickStar svg {
+  fill: #fff;
+}
+
+.myReview {
+  display: grid;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-subtle);
+  font-size: 14px;
+  color: var(--mb-slate);
+}
+
+.myReviewHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 13px;
+}
+
+.myReviewComment {
+  margin: 0;
+  color: var(--text-main);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stepLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* --------------------------------- Footer --------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e8eef5;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ------------------------------- Compact card ------------------------------ */
+
+.compact {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 24px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--mb-shadow);
+}
+
+.compact .dateTile {
+  width: 60px;
+  padding: 6px 4px;
+}
+
+.compact .dateDay {
+  font-size: 22px;
+}
+
+.compactTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mb-slate);
+  overflow-wrap: anywhere;
+}
+
+.compactWith {
+  font-weight: 400;
+}
+
+.compactMeta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--mb-muted);
+}
+
+.compactLock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+
+.compactLock svg {
+  width: 12px;
+  height: 12px;
+}
+
+.compactRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ------------------------------- Expired card ------------------------------ */
+
+.stepConnectorDashed {
+  height: 0;
+  background: none;
+  border-top: 2px dashed var(--mb-line);
+}
+
+.stepMarkerMuted {
+  background: #94a3b8;
+  border-color: #94a3b8;
+  color: #fff;
+}
+
+.stepMarkerMuted svg,
+.stepMarkerExpired svg {
+  width: 14px;
+  height: 14px;
+}
+
+.stepMarkerExpired {
+  border-color: #94a3b8;
+  color: var(--mb-slate);
+}
+
+.stepMarkerHollow {
+  border-style: dashed;
+}
+
+.stepLabelExpired {
+  color: var(--mb-slate);
+}
+
+.expiredBox {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.expiredBox svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--mb-slate);
+}
+
+.footerNote {
+  flex: 1 1 240px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mb-muted);
+}
+
+.btnGhostSlate {
+  background: transparent;
+  color: var(--mb-slate);
+  padding: 0 12px;
+}
+
+.btnGhostSlate:hover {
+  background: #f1f5f9;
+}
+
+/* -------------------------------- Utilities -------------------------------- */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -------------------------------- Responsive ------------------------------- */
+
+@media (max-width: 767px) {
+  .headerCard {
+    padding: 20px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Six statuses can't fit one row on a phone. */
+  .tabs {
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+  }
+
+  .toolbarRight {
+    justify-content: flex-end;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .cardTop {
+    grid-template-columns: 60px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .dateTile {
+    width: 60px;
+  }
+
+  .dateDay {
+    font-size: 24px;
+  }
+
+  .cardHeading {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cardTitle {
+    font-size: 17px;
+  }
+
+  .stepSub {
+    display: none;
+  }
+
+  .stepCurrent .stepSub {
+    display: block;
+  }
+
+  .stepLabel {
+    font-size: 12px;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footerActions {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .footerActions .btnPrimary {
+    order: -1;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .compact {
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .compactRight {
+    grid-column: 2;
+    flex-wrap: wrap;
+  }
+}

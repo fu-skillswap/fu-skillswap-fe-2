@@ -80,19 +80,24 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
     }
   }
 
+  // Behind post rows and blog cards the watermark reads as a broken image.
+  const hidesMascot = pathname.includes('/mentor/posts') || pathname.includes('/blog');
+
   return (
     <MenteeShellContext.Provider value={contextValue}>
       <div className="min-h-screen bg-bg text-text-main flex relative overflow-x-clip">
-        <div
-          className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
-          aria-hidden="true"
-        >
-          <img
-            src="/images/Koko.png"
-            alt=""
-            className="w-full h-full object-contain p-4 md:p-8 scale-105"
-          />
-        </div>
+        {!hidesMascot && (
+          <div
+            className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.08] select-none overflow-hidden"
+            aria-hidden="true"
+          >
+            <img
+              src="/images/Koko.png"
+              alt=""
+              className="w-full h-full object-contain p-4 md:p-8 scale-105"
+            />
+          </div>
+        )}
 
         {/* Backdrop overlay for mobile sidebar */}
         <div
