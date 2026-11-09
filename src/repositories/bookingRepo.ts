@@ -12,11 +12,23 @@ import type {
   RespondBookingIssueRequest,
   SubmitBookingIssueRequest,
 } from '@/models/auth';
+import type { CheckoutPreviewResponse } from '@/models/coupon';
 
-function idempotencyKey() {
+/**
+ * New `Idempotency-Key` value. Callers that retry the SAME attempt (e.g. after a timeout) must
+ * reuse the key they got the first time; a new attempt gets a new key.
+ */
+export function newIdempotencyKey() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : `idem_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+const idempotencyKey = newIdempotencyKey;
+
+function normalizeCouponCode(couponCode: string | null | undefined) {
+  const trimmed = couponCode?.trim();
+  return trimmed ? trimmed.toUpperCase() : null;
 }
 
 export const bookingRepo = {
@@ -47,10 +59,20 @@ export const bookingRepo = {
     apiClient(`/api/me/bookings/${bookingId}/issue`, { method: 'POST', data }),
   respondIssue: (bookingId: string, data: RespondBookingIssueRequest) =>
     apiClient(`/api/me/bookings/${bookingId}/issue/respond`, { method: 'POST', data }),
-  checkout: (bookingId: string) =>
+  /** Read-only estimate: does not create a payment order or reserve the coupon/credit. */
+  previewCheckout: (bookingId: string, couponCode: string | null = null) =>
+    apiClient<CheckoutPreviewResponse>(`/api/me/bookings/${bookingId}/checkout-preview`, {
+      method: 'POST',
+      data: { couponCode: normalizeCouponCode(couponCode) },
+    }),
+  /**
+   * Creates the payment order. Pass the same `key` when retrying the same attempt after a
+   * timeout/network error; omit it (or pass a fresh `newIdempotencyKey()`) for a new attempt.
+   */
+  checkout: (bookingId: string, couponCode: string | null = null, key: string = idempotencyKey()) =>
     apiClient<PaymentCheckoutResponse>('/api/me/payment-orders/checkout', {
       method: 'POST',
-      data: { bookingId },
-      headers: { 'Idempotency-Key': idempotencyKey() },
+      data: { bookingId, couponCode: normalizeCouponCode(couponCode) },
+      headers: { 'Idempotency-Key': key },
     }),
 };
