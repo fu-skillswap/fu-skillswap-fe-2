@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { formatCouponPeriod } from '../coupons/adminCoupons.constants';
 import styles from './AdminCouponDetailView.module.css';
 import { describeTimeLeft, formatDateTime, getRedemptionStatusUi } from './couponDetail.constants';
@@ -116,6 +116,7 @@ export function AdminCouponDetailView({ couponId }: { couponId: string }) {
   const detail = useAdminCouponDetail(couponId);
   const { coupon, now } = detail;
   const [confirm, setConfirm] = useState<ConfirmKind>();
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   const shell = (crumb: ReactNode, content: ReactNode) => (
     <main className="admin-coupons-page">
@@ -177,9 +178,19 @@ export function AdminCouponDetailView({ couponId }: { couponId: string }) {
         ? styles.isWarning
         : '';
 
+  // The button that triggered a status change is replaced by another one, so focus moves to the
+  // new status toggle instead of being lost when the dialog closes.
+  const focusStatusToggle = () =>
+    window.requestAnimationFrame(() =>
+      actionsRef.current?.querySelector<HTMLElement>('[data-status-toggle]')?.focus(),
+    );
+
   const runConfirmed = async (kind: ConfirmKind) => {
     const ok = await detail.changeStatus(kind === 'suspend' ? 'SUSPENDED' : 'INACTIVE');
-    if (ok) setConfirm(undefined);
+    if (ok) {
+      setConfirm(undefined);
+      focusStatusToggle();
+    }
   };
 
   const history = detail.redemptions?.content ?? [];
@@ -232,7 +243,7 @@ export function AdminCouponDetailView({ couponId }: { couponId: string }) {
             {coupon.title} · {describeDiscount(coupon)}
           </p>
         </div>
-        <div>
+        <div ref={actionsRef}>
           <Link className="admin-button" href={`${couponsRoot}/${coupon.id}/edit`}>
             <Pencil aria-hidden="true" />
             Sửa mã
@@ -242,6 +253,7 @@ export function AdminCouponDetailView({ couponId }: { couponId: string }) {
               type="button"
               className="admin-button"
               disabled={busy}
+              data-status-toggle
               onClick={() => setConfirm('pause')}
             >
               <PauseCircle aria-hidden="true" />
@@ -254,7 +266,12 @@ export function AdminCouponDetailView({ couponId }: { couponId: string }) {
               className="admin-button"
               disabled={busy}
               aria-busy={detail.statusPending === 'ACTIVE' || undefined}
-              onClick={() => void detail.changeStatus('ACTIVE')}
+              data-status-toggle
+              onClick={() => {
+                void detail.changeStatus('ACTIVE').then((ok) => {
+                  if (ok) focusStatusToggle();
+                });
+              }}
             >
               {detail.statusPending === 'ACTIVE' ? (
                 <LoaderCircle aria-hidden="true" className="is-spinning" />
