@@ -246,3 +246,14 @@ export function capReachedAtScoin(
   }
   return Math.ceil((coupon.maxDiscountScoin * 100) / Math.min(coupon.discountValue, 100));
 }
+
+/**
+ * Mentee platform surcharge applied on top of the service price.
+ * TODO: read PAYMENT_MENTEE_SURCHARGE_BPS from BE (no FE constant or config endpoint yet).
+ */
+export const MENTEE_SURCHARGE_RATE = 0.1;
+
+/** Price the mentee sees for a service price (platform surcharge included). */
+export function withMenteeSurcharge(priceScoin: number): number {
+  return Math.round(priceScoin * (1 + MENTEE_SURCHARGE_RATE));
+}

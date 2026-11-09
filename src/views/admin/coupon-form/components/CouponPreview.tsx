@@ -8,14 +8,10 @@ import {
   computeCouponDiscount,
   couponBadgeText,
   formatScoin,
+  withMenteeSurcharge,
 } from '@/lib/coupon';
 import type { CreateCouponCommand } from '@/models/coupon';
-import {
-  EXAMPLE_PRICE_SCOIN,
-  MENTEE_SURCHARGE_RATE,
-  vnInputToTime,
-  type CouponFormValues,
-} from '../couponForm';
+import { EXAMPLE_PRICE_SCOIN, vnInputToTime, type CouponFormValues } from '../couponForm';
 import styles from '../AdminCouponFormView.module.css';
 
 const dayFormatter = new Intl.DateTimeFormat('vi-VN', {
@@ -55,7 +51,7 @@ export function CouponPreview({
   const perUser = command.quotaPerUser && command.quotaPerUser > 0 ? command.quotaPerUser : 1;
 
   // Worked example: same helper as checkout preview.
-  const payable = Math.round(EXAMPLE_PRICE_SCOIN * (1 + MENTEE_SURCHARGE_RATE));
+  const payable = withMenteeSurcharge(EXAMPLE_PRICE_SCOIN);
   const discount = computeCouponDiscount(command, payable);
   const remaining = payable - discount;
   const capAt = capReachedAtScoin(command);

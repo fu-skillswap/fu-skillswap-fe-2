@@ -11,11 +11,6 @@ export const TITLE_MAX = 80;
 export const DESCRIPTION_MAX = 300;
 /** Example session price used by the preview card. */
 export const EXAMPLE_PRICE_SCOIN = 16500;
-/**
- * Mentee platform surcharge applied on top of the service price.
- * TODO: read PAYMENT_MENTEE_SURCHARGE_BPS from BE (no FE constant or config endpoint yet).
- */
-export const MENTEE_SURCHARGE_RATE = 0.1;
 
 export type CouponTargetKind = 'mentor' | 'service';
 export type CouponTarget = { kind: CouponTargetKind; id: string; label: string };
