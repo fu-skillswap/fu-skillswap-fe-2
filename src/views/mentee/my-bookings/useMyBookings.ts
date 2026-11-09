@@ -30,8 +30,8 @@ export type MenteeBookingMutation =
   | { type: 'checkIn' }
   | { type: 'confirm'; data?: ConfirmBookingRequest }
   | { type: 'reportIssue'; data: SubmitBookingIssueRequest }
-  | { type: 'respondIssue'; responseNote: string }
-  | { type: 'pay' };
+  | { type: 'respondIssue'; responseNote: string };
+// Payment is not a list mutation: "Thanh toán" opens /my-bookings/[bookingId]/checkout.
 
 function tabOf(booking: MentorBookingResponse): MenteeBookingTab {
   const status = String(booking.bookingStatus || booking.displayState || 'PENDING').toUpperCase();
@@ -163,11 +163,6 @@ export function useMyBookings() {
       if (mutation.type === 'reportIssue') await bookingRepo.reportIssue(bookingId, mutation.data);
       if (mutation.type === 'respondIssue') {
         await bookingRepo.respondIssue(bookingId, { responseNote: mutation.responseNote });
-      }
-      if (mutation.type === 'pay') {
-        const payment = await bookingRepo.checkout(bookingId);
-        const target = payment.checkoutUrl || payment.paymentLink;
-        if (target) window.location.assign(target);
       }
       await refresh();
     } finally {

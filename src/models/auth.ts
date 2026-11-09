@@ -500,7 +500,20 @@ export interface MentorBookingResponse {
     checkInClosesAt?: string | null;
   } | null;
   joinAvailableAt?: string | null;
+  servicePriceWithSurchargeScoin?: number | null;
+  actionDeadlineAt?: string | null;
+  reviewDeadlineAt?: string | null;
+  cancellationRefundPolicy?: BookingCancellationRefundPolicy | null;
   createdAt: string;
+}
+
+/** Platform cancellation/refund policy returned with each booking. */
+export interface BookingCancellationRefundPolicy {
+  earlyMenteeCancellationDeadlineMinutes: number;
+  earlyMenteeRefundPercent: number;
+  lateMenteeRefundPercent: number;
+  mentorCancellationRefundPercent: number;
+  mentorNoShowRefundPercent: number;
 }
 
 export interface MentorBookingPageResponse {
@@ -551,11 +564,35 @@ export interface RespondBookingIssueRequest {
   evidenceIds?: string[];
 }
 
+/** Known payment-order statuses (Swagger enum). Unknown values must still render. */
+export type PaymentOrderStatus =
+  | 'PENDING'
+  | 'PARTIALLY_COVERED_BY_CREDIT'
+  | 'AWAITING_PROVIDER_PAYMENT'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'EXPIRED';
+
+/** POST /api/me/payment-orders/checkout. Internal provider* fields are intentionally omitted. */
 export interface PaymentCheckoutResponse {
+  paymentOrderId?: string;
+  orderCode?: string;
   bookingId: string;
-  status: string;
+  attemptNo?: number;
+  priceScoin?: number;
+  couponDiscountScoin?: number;
+  campaignCreditAppliedScoin?: number;
+  userCreditAppliedScoin?: number;
+  remainingPayableScoin?: number;
+  remainingPayableVnd?: number;
+  status: PaymentOrderStatus | (string & {});
   checkoutUrl?: string | null;
+  /** Compatibility field only — prefer `checkoutUrl`. */
   paymentLink?: string | null;
+  expiresAt?: string | null;
+  userActionMessage?: string | null;
+  retryable?: boolean;
 }
 
 export interface CancelMentorBookingRequest {

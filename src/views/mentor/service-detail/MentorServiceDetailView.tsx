@@ -32,6 +32,13 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ServiceDescriptionFields } from '@/components/domain/mentor-service/ServiceDescriptionFields';
+import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
+import { ServiceCouponPriceNote } from '@/components/domain/mentor-service/coupons/ServiceCouponPriceNote';
+import { ServiceCouponsCard } from '@/components/domain/mentor-service/coupons/ServiceCouponsCard';
+import {
+  couponsForService,
+  useMyMentorCoupons,
+} from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
 
 const formatScoin = (value: number | null) =>
   value === null ? '—' : `${new Intl.NumberFormat('vi-VN').format(value)} S-coins`;
@@ -69,6 +76,13 @@ export function MentorServiceDetailView({
     resolver: yupResolver(mentorServiceUpdateSchema),
   });
   const isFree = form.watch('isFree');
+  // Coupons (MENTOR_COUPONS_ENABLED): empty while the flag is off or the API is unavailable.
+  const mentorCoupons = useMyMentorCoupons();
+  const [couponNow] = useState(() => Date.now());
+  const serviceCoupons =
+    service && !service.isFree
+      ? couponsForService(mentorCoupons, service.serviceId, couponNow)
+      : [];
 
   const resetForm = useCallback(
     (detail: MentorServiceManagementResponse) => {
@@ -196,6 +210,7 @@ export function MentorServiceDetailView({
                         />
                         {service.isActive ? 'Đang hoạt động' : 'Đang tạm dừng'}
                       </span>
+                      <ServiceCouponPill count={serviceCoupons.length} />
                     </div>
                     <h1 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl">
                       {service.title}
@@ -218,6 +233,13 @@ export function MentorServiceDetailView({
               </div>
             </div>
           </article>
+
+          <ServiceCouponsCard
+            coupons={serviceCoupons}
+            serviceId={service.serviceId}
+            priceScoin={service.publicPriceScoin ?? 0}
+            now={couponNow}
+          />
 
           {isEditing ? (
             <form
@@ -311,6 +333,7 @@ export function MentorServiceDetailView({
                         {form.formState.errors.priceScoin.message}
                       </span>
                     )}
+                    <ServiceCouponPriceNote count={serviceCoupons.length} />
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
                     <span className="text-xs font-medium text-slate-500">Thời lượng cố định</span>
