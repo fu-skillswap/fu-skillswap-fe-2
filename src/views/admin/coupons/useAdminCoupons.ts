@@ -107,6 +107,9 @@ export function useAdminCoupons() {
         discountType: filters.discountType || undefined,
         page: filters.page,
         size: COUPON_PAGE_SIZE,
+        // Newest first, so new coupons show on page 1.
+        sortBy: 'createdAt',
+        direction: 'DESC',
       })
       .then((result) => {
         if (cancelled) return;
@@ -131,7 +134,13 @@ export function useAdminCoupons() {
     let cancelled = false;
     void Promise.allSettled([
       adminRepo.getOverview(),
-      couponRepo.listCoupons({ page: 0, size: COUPON_SUMMARY_SIZE }),
+      // Sorted so the "100 mã mới nhất" note on the stat cards is accurate.
+      couponRepo.listCoupons({
+        page: 0,
+        size: COUPON_SUMMARY_SIZE,
+        sortBy: 'createdAt',
+        direction: 'DESC',
+      }),
     ]).then(([overviewResult, listResult]) => {
       if (cancelled) return;
       const campaigns =
