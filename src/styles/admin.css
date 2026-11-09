@@ -186,6 +186,7 @@
 .admin-users-page,
 .admin-bookings-page,
 .admin-reports-page,
+.admin-coupons-page,
 .admin-user-detail-page,
 .admin-mentor-detail-page,
 .admin-report-detail-page,
@@ -366,6 +367,7 @@
 .admin-users-content,
 .admin-bookings-content,
 .admin-reports-content,
+.admin-coupons-content,
 .admin-user-detail-content,
 .admin-mentor-detail-content,
 .admin-report-detail-content,
@@ -2674,12 +2676,12 @@
   box-shadow: 0 8px 18px rgba(17, 156, 247, 0.16);
 }
 
-.admin-dashboard .admin-metric-grid {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid {
   gap: 16px;
   margin-bottom: 20px;
 }
 
-.admin-dashboard .admin-metric-grid > article {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article {
   position: relative;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
@@ -2692,7 +2694,7 @@
   box-shadow: 0 6px 24px rgba(24, 70, 120, 0.05);
 }
 
-.admin-dashboard .admin-metric-grid > article > i {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article > i {
   grid-column: 1;
   grid-row: 1;
   display: inline-flex;
@@ -2705,29 +2707,29 @@
   background: #e7f3ff;
 }
 
-.admin-dashboard .admin-metric-grid > article.is-green > i {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article.is-green > i {
   color: #148265;
   background: #e4f7ef;
 }
 
-.admin-dashboard .admin-metric-grid > article.is-red > i {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article.is-red > i {
   color: #db3f61;
   background: #fdebef;
 }
 
-.admin-dashboard .admin-metric-grid > article > i svg {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article > i svg {
   width: 24px;
   height: 24px;
   stroke-width: 2;
 }
 
-.admin-dashboard .admin-metric-grid > article > div {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article > div {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
 }
 
-.admin-dashboard .admin-metric-grid > article > div > span {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article > div > span {
   display: block;
   overflow: hidden;
   color: #405a7c;
@@ -2738,7 +2740,7 @@
   white-space: nowrap;
 }
 
-.admin-dashboard .admin-metric-grid > article > div > strong {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article > div > strong {
   display: block;
   margin-top: 7px;
   color: var(--admin-navy);
@@ -2746,7 +2748,7 @@
   line-height: 1;
 }
 
-.admin-dashboard .admin-metric-grid > article > p {
+:is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article > p {
   grid-column: 1 / -1;
   align-self: end;
   margin: 22px 0 0;
@@ -2785,12 +2787,31 @@
   height: 20px;
 }
 
-.admin-dashboard .is-green .admin-metric-decoration b {
+:is(.admin-dashboard, .admin-coupons-page) .is-green .admin-metric-decoration b {
   background: #39b88d;
 }
 
-.admin-dashboard .is-red .admin-metric-decoration b {
+:is(.admin-dashboard, .admin-coupons-page) .is-red .admin-metric-decoration b {
   background: #ed7089;
+}
+
+/* Coupon list stat tiles: amber = nearly exhausted, purple = scheduled. */
+.admin-coupons-page .admin-metric-grid > article.is-amber > i {
+  color: #b45309;
+  background: var(--warning-soft, #fffbeb);
+}
+
+.admin-coupons-page .admin-metric-grid > article.is-purple > i {
+  color: #7c3aed;
+  background: #f3effe;
+}
+
+.admin-coupons-page .is-amber .admin-metric-decoration b {
+  background: var(--warning, #f59e0b);
+}
+
+.admin-coupons-page .is-purple .admin-metric-decoration b {
+  background: #a78bfa;
 }
 
 .admin-dashboard .admin-dashboard-columns {
@@ -3336,7 +3357,7 @@
     flex: 1 1 150px;
   }
 
-  .admin-dashboard .admin-metric-grid > article {
+  :is(.admin-dashboard, .admin-coupons-page) .admin-metric-grid > article {
     min-height: 146px;
   }
 
