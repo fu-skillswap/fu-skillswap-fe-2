@@ -80,8 +80,11 @@ export function MentorShell({ children, locale }: { children: React.ReactNode; l
     }
   }
 
-  // Behind post rows and blog cards the watermark reads as a broken image.
-  const hidesMascot = pathname.includes('/mentor/posts') || pathname.includes('/blog');
+  // Behind post rows, blog cards and booking rows the watermark reads as a broken image.
+  const hidesMascot =
+    pathname.includes('/mentor/posts') ||
+    pathname.includes('/blog') ||
+    pathname.includes('/mentor/bookings');
 
   return (
     <MenteeShellContext.Provider value={contextValue}>

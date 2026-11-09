@@ -109,9 +109,12 @@ const withReason = (text: string, reason?: string | null) =>
 export function endedExplanation(booking: MentorBookingResponse) {
   const mentee = booking.menteeDisplayName || 'Mentee';
   switch (getBookingStateKey(booking)) {
-    case 'EXPIRED':
-      // TODO(api): responseDeadline / expiredAt — say "trước HH:mm, dd/MM".
-      return 'Bạn chưa phản hồi kịp nên yêu cầu đã tự hủy. Mentee đã được gợi ý tìm mentor khác.';
+    case 'EXPIRED': {
+      // Only the real auto-close time is shown; without it the sentence drops the time part.
+      const closedAt = toDate(booking.autoClosedAt ?? booking.cancelledAt);
+      const when = closedAt ? ` lúc ${vnTime(closedAt)}, ${vnDayMonth(closedAt)}` : '';
+      return `Tự hủy${when} vì bạn chưa nhận lịch trước hạn. ${mentee} đã được gợi ý mentor khác.`;
+    }
     case 'REJECTED':
       return withReason('Bạn đã từ chối', booking.rejectReason);
     case 'CANCELED_BY_ME':
@@ -129,6 +132,69 @@ export function endedExplanation(booking: MentorBookingResponse) {
 
 export const isExpired = (booking: MentorBookingResponse) =>
   getBookingStateKey(booking) === 'EXPIRED';
+
+/* ------------------------- Vietnam-time formatting ------------------------- */
+
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+const vnParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: VN_TZ,
+  weekday: 'short',
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+const SHORT_WEEKDAY: Record<string, string> = {
+  Sun: 'CN',
+  Mon: 'T2',
+  Tue: 'T3',
+  Wed: 'T4',
+  Thu: 'T5',
+  Fri: 'T6',
+  Sat: 'T7',
+};
+const FULL_WEEKDAY: Record<string, string> = {
+  Sun: 'Chủ nhật',
+  Mon: 'Thứ Hai',
+  Tue: 'Thứ Ba',
+  Wed: 'Thứ Tư',
+  Thu: 'Thứ Năm',
+  Fri: 'Thứ Sáu',
+  Sat: 'Thứ Bảy',
+};
+
+function vnPartsOf(date: Date) {
+  const parts = Object.fromEntries(vnParts.formatToParts(date).map((p) => [p.type, p.value]));
+  return parts as Record<'weekday' | 'day' | 'month' | 'hour' | 'minute', string>;
+}
+
+/** "14:30" in Vietnam time. */
+export const vnTime = (date: Date) => {
+  const p = vnPartsOf(date);
+  return `${p.hour}:${p.minute}`;
+};
+
+/** "21/10" in Vietnam time. */
+export const vnDayMonth = (date: Date) => {
+  const p = vnPartsOf(date);
+  return `${p.day}/${p.month}`;
+};
+
+/** "T4, 21/10" (short) or "Thứ Tư, 21/10" (full, for aria labels) in Vietnam time. */
+export function vnDay(date: Date, form: 'short' | 'full' = 'short') {
+  const p = vnPartsOf(date);
+  const names = form === 'short' ? SHORT_WEEKDAY : FULL_WEEKDAY;
+  return `${names[p.weekday] ?? p.weekday}, ${p.day}/${p.month}`;
+}
+
+/** "20:00 – 21:00" in Vietnam time; start only when the end is unknown. */
+export function vnTimeRange(booking: MentorBookingResponse) {
+  const start = toDate(booking.selectedStartTime);
+  const end = toDate(booking.selectedEndTime);
+  if (!start) return '';
+  return end ? `${vnTime(start)} – ${vnTime(end)}` : vnTime(start);
+}
 
 /* -------------------------------- Formatting ------------------------------- */
 

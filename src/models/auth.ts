@@ -500,6 +500,10 @@ export interface MentorBookingResponse {
     checkInClosesAt?: string | null;
   } | null;
   joinAvailableAt?: string | null;
+  /** When the request auto-closed because the mentor did not respond in time (Swagger). */
+  autoClosedAt?: string | null;
+  cancelledAt?: string | null;
+  rejectedAt?: string | null;
   servicePriceWithSurchargeScoin?: number | null;
   actionDeadlineAt?: string | null;
   reviewDeadlineAt?: string | null;
