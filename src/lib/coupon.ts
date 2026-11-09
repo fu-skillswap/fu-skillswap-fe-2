@@ -208,3 +208,41 @@ export function mapCouponError(
   }
   return message?.trim() || 'Không áp dụng được mã này.';
 }
+
+/**
+ * Discount a coupon gives on an order of `orderScoin` (the price the mentee pays, surcharge
+ * included). 0 when the minimum order is not met or the value is not usable.
+ * TODO(api): confirm rounding with BE (FE floors percentage discounts).
+ */
+export function computeCouponDiscount(
+  coupon: Pick<
+    CouponView,
+    'discountType' | 'discountValue' | 'maxDiscountScoin' | 'minOrderValueScoin'
+  >,
+  orderScoin: number,
+): number {
+  if (!Number.isFinite(orderScoin) || orderScoin <= 0) return 0;
+  if (!Number.isFinite(coupon.discountValue) || coupon.discountValue <= 0) return 0;
+  if (coupon.minOrderValueScoin != null && orderScoin < coupon.minOrderValueScoin) return 0;
+  let discount: number;
+  if (coupon.discountType === 'PERCENTAGE') {
+    discount = Math.floor((orderScoin * Math.min(coupon.discountValue, 100)) / 100);
+    if (coupon.maxDiscountScoin != null && coupon.maxDiscountScoin > 0) {
+      discount = Math.min(discount, coupon.maxDiscountScoin);
+    }
+  } else {
+    discount = coupon.discountValue;
+  }
+  return Math.max(0, Math.min(discount, orderScoin));
+}
+
+/** Order price from which a percentage coupon hits its cap; null when there is no cap. */
+export function capReachedAtScoin(
+  coupon: Pick<CouponView, 'discountType' | 'discountValue' | 'maxDiscountScoin'>,
+): number | null {
+  if (coupon.discountType !== 'PERCENTAGE') return null;
+  if (!coupon.maxDiscountScoin || coupon.maxDiscountScoin <= 0 || coupon.discountValue <= 0) {
+    return null;
+  }
+  return Math.ceil((coupon.maxDiscountScoin * 100) / Math.min(coupon.discountValue, 100));
+}
