@@ -64,6 +64,8 @@ export interface MentorService {
   durationMinutes: number;
   priceScoins?: number;
   completedCount?: number;
+  coverImageUrl?: string | null;
+  maintainPostSessionChat?: boolean;
 }
 
 /** Thực thể Lịch hẹn Mentoring giữa Mentee và Mentor */

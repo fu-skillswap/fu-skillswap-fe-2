@@ -5,15 +5,25 @@
 
 'use client';
 
-import { Button } from '@/components/ui/Button';
-import type { MentorServiceManagementResponse } from '@/models/auth';
+import { ServiceDescriptionDetail } from '@/components/domain/mentor-service/ServiceDescriptionDetail';
+import { ServiceEditor } from '@/components/domain/mentor-service/ServiceEditor';
+import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
+import { ServiceCouponPriceNote } from '@/components/domain/mentor-service/coupons/ServiceCouponPriceNote';
+import { ServiceCouponsCard } from '@/components/domain/mentor-service/coupons/ServiceCouponsCard';
 import {
-  mentorServiceUpdateSchema,
-  type MentorServiceUpdateFormValues,
-} from '@/models/schemas/mentorServiceUpdateSchema';
+  couponsForService,
+  useMyMentorCoupons,
+} from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
+import { parseServiceDescription } from '@/components/domain/mentor-service/serviceDescription';
+import {
+  serviceToEditorDefaults,
+  type ServiceEditorPayload,
+} from '@/components/domain/mentor-service/useServiceEditor';
+import { Button } from '@/components/ui/Button';
+import { ApiClientError } from '@/models/apiClient';
+import type { MentorServiceManagementResponse } from '@/models/auth';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
 import { showError, showSuccess } from '@/utils/toast';
-import { yupResolver } from '@hookform/resolvers/yup';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -22,29 +32,16 @@ import {
   FileText,
   MessageCircle,
   Pencil,
-  Save,
   Target,
   UserRound,
   WalletCards,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { ServiceDescriptionFields } from '@/components/domain/mentor-service/ServiceDescriptionFields';
-import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
-import { ServiceCouponPriceNote } from '@/components/domain/mentor-service/coupons/ServiceCouponPriceNote';
-import { ServiceCouponsCard } from '@/components/domain/mentor-service/coupons/ServiceCouponsCard';
-import {
-  couponsForService,
-  useMyMentorCoupons,
-} from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 const formatScoin = (value: number | null) =>
   value === null ? '—' : `${new Intl.NumberFormat('vi-VN').format(value)} S-coins`;
-
-const fieldClassName =
-  'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500';
 
 function ServiceFact({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
@@ -72,10 +69,6 @@ export function MentorServiceDetailView({
   const [hasError, setHasError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const form = useForm<MentorServiceUpdateFormValues>({
-    resolver: yupResolver(mentorServiceUpdateSchema),
-  });
-  const isFree = form.watch('isFree');
   // Coupons (MENTOR_COUPONS_ENABLED): empty while the flag is off or the API is unavailable.
   const mentorCoupons = useMyMentorCoupons();
   const [couponNow] = useState(() => Date.now());
@@ -83,20 +76,17 @@ export function MentorServiceDetailView({
     service && !service.isFree
       ? couponsForService(mentorCoupons, service.serviceId, couponNow)
       : [];
-
-  const resetForm = useCallback(
-    (detail: MentorServiceManagementResponse) => {
-      form.reset({
-        title: detail.title,
-        description: detail.description,
-        expectedOutcome: detail.expectedOutcome,
-        isFree: detail.isFree,
-        priceScoin: detail.publicPriceScoin ?? 0,
-        maintainPostSessionChat: detail.maintainPostSessionChat,
-      });
-    },
-    [form],
+  /** Bumped to remount the editor with fresh data (after a reload or a cancel). */
+  const [editorKey, setEditorKey] = useState(0);
+  const editorDefaults = useMemo(
+    () => (service ? serviceToEditorDefaults(service) : undefined),
+    [service],
   );
+  const parsedDescription = useMemo(
+    () => parseServiceDescription(service?.description),
+    [service?.description],
+  );
+  const displayedOutcome = service?.expectedOutcome?.trim() || parsedDescription.legacyOutcome;
 
   const loadService = useCallback(async () => {
     setIsLoading(true);
@@ -104,42 +94,53 @@ export function MentorServiceDetailView({
     try {
       const detail = await mentorServiceRepo.getById(serviceId);
       setService(detail);
-      resetForm(detail);
+      setEditorKey((key) => key + 1);
     } catch (reason) {
       setHasError(true);
       showError(reason, { title: 'Không thể tải chi tiết dịch vụ' });
     } finally {
       setIsLoading(false);
     }
-  }, [resetForm, serviceId]);
+  }, [serviceId]);
 
   useEffect(() => {
     void loadService();
   }, [loadService]);
 
   const cancelEdit = () => {
-    if (service) resetForm(service);
+    setEditorKey((key) => key + 1);
     setIsEditing(false);
   };
 
-  const saveService = async (values: MentorServiceUpdateFormValues) => {
+  const saveService = async (payload: ServiceEditorPayload) => {
     if (!service) return;
     setIsSaving(true);
     try {
       const updated = await mentorServiceRepo.update(service.serviceId, {
-        ...values,
-        priceScoin: values.isFree ? 0 : values.priceScoin,
+        title: payload.title,
+        description: payload.description,
+        expectedOutcome: payload.expectedOutcome,
+        isFree: payload.isFree,
+        priceScoin: payload.priceScoin,
+        maintainPostSessionChat: payload.maintainPostSessionChat,
         expectedVersion: service.version,
+        ...(payload.coverAssetId ? { coverAssetId: payload.coverAssetId } : {}),
+        ...(payload.removeCoverImage ? { removeCoverImage: true } : {}),
       });
       setService(updated);
-      resetForm(updated);
+      setEditorKey((key) => key + 1);
       setIsEditing(false);
       showSuccess({
         title: 'Đã cập nhật dịch vụ',
         description: 'Thông tin dịch vụ đã được lưu.',
       });
     } catch (reason) {
-      showError(reason, { title: 'Không thể cập nhật dịch vụ' });
+      if (reason instanceof ApiClientError && reason.status === 409) {
+        await loadService();
+        showError('Dịch vụ đã thay đổi. Dữ liệu đã được tải lại, vui lòng thử lại.');
+      } else {
+        showError(reason, { title: 'Không thể cập nhật dịch vụ' });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -241,152 +242,41 @@ export function MentorServiceDetailView({
             now={couponNow}
           />
 
-          {isEditing ? (
-            <form
+          {isEditing && editorDefaults ? (
+            <section
               className="mentor-service-detail-form-enter rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
-              onSubmit={form.handleSubmit(saveService)}
-              noValidate
+              aria-labelledby="service-edit-heading"
             >
-              <div className="mb-3 flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Chỉnh sửa dịch vụ</h2>
+                  <h2 id="service-edit-heading" className="text-lg font-bold text-slate-900">
+                    Chỉnh sửa dịch vụ
+                  </h2>
                   <p className="mt-0.5 text-xs text-slate-500">
                     Cập nhật nội dung mentee sẽ nhìn thấy khi xem dịch vụ.
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-4 focus-visible:ring-primary/20"
                   aria-label="Hủy chỉnh sửa"
                   onClick={cancelEdit}
+                  disabled={isSaving}
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-semibold text-slate-700" htmlFor="service-title">
-                    Tên dịch vụ <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="service-title"
-                    className={fieldClassName}
-                    {...form.register('title')}
-                  />
-                  {form.formState.errors.title && (
-                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                      {form.formState.errors.title.message}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <Controller
-                    control={form.control}
-                    name="description"
-                    render={({ field, fieldState }) => (
-                      <ServiceDescriptionFields
-                        idPrefix="service"
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                  <div>
-                    <label
-                      className="text-sm font-semibold text-slate-700"
-                      htmlFor="service-outcome"
-                    >
-                      Kết quả sau buổi tư vấn <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="service-outcome"
-                      className={fieldClassName}
-                      rows={3}
-                      {...form.register('expectedOutcome')}
-                    />
-                    {form.formState.errors.expectedOutcome && (
-                      <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                        {form.formState.errors.expectedOutcome.message}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700" htmlFor="service-price">
-                      Giá công khai (S-coins)
-                    </label>
-                    <input
-                      id="service-price"
-                      type="number"
-                      min="0"
-                      disabled={isFree}
-                      className={fieldClassName}
-                      {...form.register('priceScoin')}
-                    />
-                    {form.formState.errors.priceScoin && (
-                      <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                        {form.formState.errors.priceScoin.message}
-                      </span>
-                    )}
-                    <ServiceCouponPriceNote count={serviceCoupons.length} />
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
-                    <span className="text-xs font-medium text-slate-500">Thời lượng cố định</span>
-                    <strong className="mt-0.5 block text-sm text-slate-900">
-                      {service.durationMinutes} phút
-                    </strong>
-                    <small className="mt-0.5 block text-xs leading-4 text-slate-500">
-                      Thời lượng không thể đổi theo chính sách dịch vụ.
-                    </small>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 p-3 transition hover:border-primary-border hover:bg-primary-light/30">
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-4 w-4 accent-primary"
-                      {...form.register('isFree')}
-                    />
-                    <span>
-                      <strong className="block text-sm text-slate-800">Dịch vụ miễn phí</strong>
-                      <small className="mt-0.5 block text-xs text-slate-500">
-                        Mentee không bị trừ S-coins.
-                      </small>
-                    </span>
-                  </label>
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 p-3 transition hover:border-primary-border hover:bg-primary-light/30">
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-4 w-4 accent-primary"
-                      {...form.register('maintainPostSessionChat')}
-                    />
-                    <span>
-                      <strong className="block text-sm text-slate-800">
-                        Duy trì chat sau buổi học
-                      </strong>
-                      <small className="mt-0.5 block text-xs text-slate-500">
-                        Cho phép tiếp tục trao đổi sau phiên.
-                      </small>
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
-                <Button type="button" variant="outline" disabled={isSaving} onClick={cancelEdit}>
-                  Hủy
-                </Button>
-                <Button type="submit" loading={isSaving} leftIcon={<Save className="h-4 w-4" />}>
-                  Lưu thay đổi
-                </Button>
-              </div>
-            </form>
+              <ServiceEditor
+                key={editorKey}
+                mode="edit"
+                defaults={editorDefaults}
+                priceNote={<ServiceCouponPriceNote count={serviceCoupons.length} />}
+                isSaving={isSaving}
+                submitLabel="Lưu thay đổi"
+                onSubmit={(payload) => void saveService(payload)}
+                onCancel={cancelEdit}
+              />
+            </section>
           ) : (
             <div className="mentor-service-detail-layout grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_400px]">
               <div className="space-y-3">
@@ -405,9 +295,11 @@ export function MentorServiceDetailView({
                       Mô tả dịch vụ
                     </h2>
                   </div>
-                  <p className="whitespace-pre-line text-sm leading-6 text-slate-600">
-                    {service.description || '—'}
-                  </p>
+                  <ServiceDescriptionDetail
+                    title={service.title}
+                    coverImageUrl={service.coverImageUrl}
+                    parsed={parsedDescription}
+                  />
                 </section>
 
                 <section
@@ -428,7 +320,7 @@ export function MentorServiceDetailView({
                       aria-hidden="true"
                     />
                     <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
-                      {service.expectedOutcome || '—'}
+                      {displayedOutcome || '—'}
                     </p>
                   </div>
                 </section>

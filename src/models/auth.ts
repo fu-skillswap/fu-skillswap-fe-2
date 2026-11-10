@@ -837,6 +837,8 @@ export interface CreateMentorServiceRequest {
   priceScoin: number;
   maintainPostSessionChat?: boolean;
   deliveryMode?: 'ONE_TO_ONE';
+  /** Asset id returned by the cover-image confirm endpoint. */
+  coverAssetId?: string;
 }
 
 /** Dịch vụ do mentor sở hữu, dùng trong trang quản lý. */
@@ -854,6 +856,8 @@ export interface MentorServiceManagementResponse {
   isActive: boolean;
   maintainPostSessionChat: boolean;
   deliveryMode: 'ONE_TO_ONE';
+  /** Public URL of the service cover image, null when the mentor has not uploaded one. */
+  coverImageUrl?: string | null;
   version: number;
   createdAt: string;
   updatedAt: string;
@@ -876,6 +880,30 @@ export interface UpdateMentorServiceRequest {
   priceScoin: number;
   maintainPostSessionChat?: boolean;
   expectedVersion: number;
+  /** New cover asset id (from the confirm endpoint) to attach on save. */
+  coverAssetId?: string;
+  /** True removes the current cover image on save. */
+  removeCoverImage?: boolean;
+}
+
+/** Request for POST /api/me/mentor-services/cover-image/upload-intents. */
+export interface MentorServiceCoverUploadIntentRequest {
+  filename: string;
+  contentType: string;
+}
+
+/** Signed upload target for a mentor service cover image. */
+export interface MentorServiceCoverUploadIntentResponse {
+  uploadIntentId: string;
+  uploadUrl: string;
+  expiresAt: string;
+  requiredHeaders?: Record<string, string>;
+}
+
+/** Response of POST /api/me/mentor-services/cover-image/{uploadIntentId}/confirm. */
+export interface MentorServiceCoverAssetResponse {
+  assetId: string;
+  publicUrl: string;
 }
 
 /** Dịch vụ công khai trong hồ sơ mentor, dùng để mentee chọn trước khi đặt lịch. */
@@ -889,6 +917,9 @@ export interface MentorServiceResponse {
   isFree: boolean;
   priceScoin: number | null;
   isActive: boolean;
+  maintainPostSessionChat?: boolean;
+  deliveryMode?: 'ONE_TO_ONE';
+  coverImageUrl?: string | null;
 }
 
 /** Phần dữ liệu phản hồi hồ sơ mentor công khai (`GET /api/mentors/{mentorUserId}`). */
