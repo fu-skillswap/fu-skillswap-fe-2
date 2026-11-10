@@ -20,6 +20,7 @@ import {
   useRedirectSignedIn,
   verifyEmailHref,
 } from './useAuthFlow';
+import { track } from '@/lib/analytics';
 
 /**
  * Custom Hook điều khiển toàn bộ logic trang Đăng nhập.
@@ -49,6 +50,7 @@ export function useLoginLogic(locale: string, adminOnly = false) {
     setFormError(undefined);
     try {
       await authRepo.loginWithEmail({ email, password });
+      track('login', { method: 'email' });
     } catch (reason) {
       const kind = classifyAuthError(reason);
       if (kind === 'unverified') {

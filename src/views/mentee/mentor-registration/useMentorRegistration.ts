@@ -25,6 +25,7 @@ import {
 
 import { DocumentUploadError, useDocumentUpload } from './hooks/useDocumentUpload';
 import { useMentorProfileHydration } from './hooks/useMentorProfileHydration';
+import { track } from '@/lib/analytics';
 
 const defaultValues: MentorProfileFormValues = {
   headline: '',
@@ -218,6 +219,7 @@ export function useMentorRegistration() {
         submitNote: 'Nộp hồ sơ xác thực Mentor',
         termsAccepted: Boolean(values.agreeTerms),
       });
+      track('mentor_apply');
 
       const successMsg = 'Nộp hồ sơ Mentor thành công! Hồ sơ của bạn đã được gửi cho Admin duyệt.';
       setIsExistingProfile(true);
