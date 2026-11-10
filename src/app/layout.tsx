@@ -7,6 +7,7 @@
 import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import { ToastProvider } from '@/components/ui/ToastProvider';
+import { GoogleTag } from '@/components/analytics/GoogleTag';
 
 /** Metadata mặc định của trang web */
 export const metadata: Metadata = {
@@ -44,6 +45,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   // Browser extensions can add attributes to <html> before React hydrates.
   return (
     <html lang="vi" suppressHydrationWarning>
+      <head>
+        <GoogleTag />
+      </head>
       <body>
         <ToastProvider>{children}</ToastProvider>
       </body>

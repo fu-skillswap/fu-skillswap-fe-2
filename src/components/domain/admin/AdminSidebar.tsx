@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CalendarDays,
+  ChartLine,
   ChartNoAxesCombined,
   CircleUserRound,
   LayoutDashboard,
@@ -86,6 +87,7 @@ export function AdminSidebar({ locale }: { locale: string }) {
     { href: `${adminRoot}/bookings`, label: 'Lịch hẹn', icon: CalendarDays },
     { href: `${adminRoot}/reports`, label: 'Báo cáo & đánh giá', icon: ChartNoAxesCombined },
     { href: `${adminRoot}/coupons`, label: 'Mã giảm giá', icon: Ticket },
+    { href: `${adminRoot}/analytics`, label: 'Thống kê', icon: ChartLine },
   ];
   const aiNavigation: NavigationItem[] = [
     { href: `${adminRoot}/ai`, label: 'Tổng quan AI', icon: Sparkles },

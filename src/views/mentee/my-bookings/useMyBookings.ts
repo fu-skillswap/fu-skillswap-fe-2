@@ -13,6 +13,7 @@ import type {
 } from '@/models/auth';
 import { useAuth } from '@/providers/AuthProvider';
 import { bookingRepo } from '@/repositories/bookingRepo';
+import { track } from '@/lib/analytics';
 
 export type MenteeBookingTab =
   | 'ALL'
@@ -157,7 +158,10 @@ export function useMyBookings() {
   const mutate = async (bookingId: string, mutation: MenteeBookingMutation) => {
     setIsSaving(true);
     try {
-      if (mutation.type === 'cancel') await bookingRepo.cancel(bookingId, mutation.reason);
+      if (mutation.type === 'cancel') {
+        await bookingRepo.cancel(bookingId, mutation.reason);
+        track('booking_cancelled', { by: 'mentee' });
+      }
       if (mutation.type === 'checkIn') await bookingRepo.checkIn(bookingId);
       if (mutation.type === 'confirm') await bookingRepo.confirm(bookingId, mutation.data);
       if (mutation.type === 'reportIssue') await bookingRepo.reportIssue(bookingId, mutation.data);

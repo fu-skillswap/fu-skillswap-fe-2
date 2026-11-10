@@ -14,6 +14,7 @@ import { authRepo } from '@/repositories/authRepo';
 import { getUserFriendlyError, showSuccess } from '@/utils/toast';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { track } from '@/lib/analytics';
 
 export const SUPPORT_EMAIL = 'skillswapvn.contact@gmail.com';
 
@@ -281,6 +282,7 @@ export function useGoogleSignIn({
               credential,
               nonce: loginNonce,
             });
+            track('login', { method: 'google' });
             const denied = await finishSignInRef.current();
             if (denied) setError(denied);
           } catch (reason) {

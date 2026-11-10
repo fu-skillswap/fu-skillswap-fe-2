@@ -9,6 +9,7 @@ import type { CreateBookingRequest } from '@/models/auth';
 import { mentorRepo } from '@/repositories/mentorRepo';
 import { getUserFriendlyErrorMessage } from '@/utils/toast';
 import { useState } from 'react';
+import { track } from '@/lib/analytics';
 
 /**
  * Hook quản lý việc gửi request tạo lịch hẹn tới Mentor và lưu trữ trạng thái loading/thành công/lỗi.
@@ -23,7 +24,8 @@ export function useMentorBooking() {
    * Tạo lịch hẹn mới với Mentor theo mốc thời gian đã chọn (POST /api/bookings).
    * Giữ nguyên Idempotency-Key trong Header nếu thực hiện Retry cùng một yêu cầu đặt lịch.
    */
-  const book = async (payload: CreateBookingRequest) => {
+  /** @param subject Service title, sent to analytics (never the mentee's own goal text). */
+  const book = async (payload: CreateBookingRequest, subject?: string) => {
     setIsSubmitting(true);
     setError(undefined);
 
@@ -39,6 +41,7 @@ export function useMentorBooking() {
 
     try {
       await mentorRepo.createBookingRequest(payload, currentKey);
+      track('booking_created', { subject: subject ?? '' });
 
       // Đặt lịch thành công -> Reset Idempotency-Key cho lần đặt lịch sau
       setIdempotencyKey(null);

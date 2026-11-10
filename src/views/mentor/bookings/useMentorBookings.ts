@@ -19,6 +19,7 @@ import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
 import { bookingRepo } from '@/repositories/bookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { getUserFriendlyErrorMessage } from '@/utils/toast';
+import { track } from '@/lib/analytics';
 
 export type MentorBookingFilter =
   | 'ALL'
@@ -189,9 +190,15 @@ export function useMentorBookings() {
     if (optimistic) patchLocal(optimistic);
     try {
       if (mutation.type === 'accept') await mentorBookingRepo.accept(bookingId, mutation.data);
-      if (mutation.type === 'reject') await mentorBookingRepo.reject(bookingId, mutation.data);
+      if (mutation.type === 'reject') {
+        await mentorBookingRepo.reject(bookingId, mutation.data);
+        track('booking_rejected');
+      }
       if (mutation.type === 'complete') await mentorBookingRepo.complete(bookingId, mutation.data);
-      if (mutation.type === 'cancel') await mentorBookingRepo.cancel(bookingId, mutation.data);
+      if (mutation.type === 'cancel') {
+        await mentorBookingRepo.cancel(bookingId, mutation.data);
+        track('booking_cancelled', { by: 'mentor' });
+      }
       if (mutation.type === 'checkIn') await bookingRepo.checkIn(bookingId);
       void refresh(true);
       return true;

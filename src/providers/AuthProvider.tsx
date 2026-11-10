@@ -13,6 +13,7 @@ import { AuthRequiredModal } from '@/components/domain/auth/AuthRequiredModal';
 import { authRepo } from '@/repositories/authRepo';
 import { studentProfileRepo } from '@/repositories/studentProfileRepo';
 import { mentorProfileRepo } from '@/repositories/mentorProfileRepo';
+import { markInternalTraffic } from '@/lib/analytics';
 import {
   createContext,
   useCallback,
@@ -172,6 +173,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void restoreSession();
     return () => setUnauthenticatedHandler(undefined);
   }, [showAuthRequiredModal]);
+
+  // Admin traffic is tagged as internal as soon as the role is known, so GA can filter it out.
+  const isAdminUser =
+    user?.roles?.some((role) => role === 'ADMIN' || role === 'SYSTEM_ADMIN') ?? false;
+  useEffect(() => {
+    if (isAdminUser) markInternalTraffic();
+  }, [isAdminUser]);
 
   const value = useMemo(
     () => ({

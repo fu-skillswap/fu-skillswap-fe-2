@@ -20,6 +20,7 @@ import {
   useFinishSignIn,
   useRedirectSignedIn,
 } from '../useAuthFlow';
+import { track } from '@/lib/analytics';
 
 const RESEND_COOLDOWN_SECONDS = 60;
 const emptyCode = () => Array<string>(OTP_LENGTH).fill('');
@@ -59,6 +60,8 @@ export function useVerifyEmailLogic(locale: string, email: string) {
       setError(undefined);
       try {
         await authRepo.verifyEmail({ email, otpCode: code });
+        // The account is created and activated by this call (register only sends the OTP).
+        track('sign_up', { method: 'email' });
       } catch (reason) {
         const kind = classifyAuthError(reason);
         setError(

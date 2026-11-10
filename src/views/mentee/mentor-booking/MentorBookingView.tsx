@@ -219,7 +219,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
       serviceId: bookingService.id,
       startAt: slot.includes('T') ? slot : new Date().toISOString().replace(/Z$/, ''),
     };
-    if (await book(payload)) setBookingSuccess(true);
+    if (await book(payload, bookingService.name)) setBookingSuccess(true);
   };
 
   // TODO: deep-link to schedule — MentorDetail's services section has no id/anchor yet; its
@@ -333,7 +333,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
               void confirmBooking();
             }}
             onConfirmWithPayload={async (payload) => {
-              if (await book(payload)) setBookingSuccess(true);
+              if (await book(payload, bookingService.name)) setBookingSuccess(true);
             }}
             isSubmitting={isSubmitting}
             error={error}
