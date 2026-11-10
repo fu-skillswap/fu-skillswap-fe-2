@@ -14,6 +14,8 @@ import { MentorBlogPostGrid } from '@/components/domain/blog/MentorBlogPostGrid'
 import { useMentorArticles } from '@/components/domain/blog/useMentorArticles';
 import { MentorReviews, type MentorReputation } from './MentorReviews';
 import { MentorServiceCard } from './MentorServiceCard';
+import { ServiceDescriptionDetail } from '@/components/domain/mentor-service/ServiceDescriptionDetail';
+import { parseServiceDescription } from '@/components/domain/mentor-service/serviceDescription';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
 import { useAuth } from '@/providers/AuthProvider';
@@ -24,6 +26,7 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ExternalLink,
   GitBranch,
@@ -47,12 +50,6 @@ function initials(name: string) {
     .join('');
 }
 
-/** Định dạng hiển thị mức giá S-Coins */
-function priceLabel(price?: number) {
-  if (price === 0) return '0';
-  return price ? new Intl.NumberFormat('en-US').format(price) : '—';
-}
-
 /** Props của MentorDetail Component */
 interface MentorDetailProps {
   /** Chi tiết đối tượng Mentor ban đầu */
@@ -72,6 +69,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const targetUserId = mentorUserId || mentor.mentorUserId || mentor.id;
   const [currentMentor, setCurrentMentor] = useState<Mentor>(mentor);
   const [services, setServices] = useState<MentorService[]>([]);
+  const [detailService, setDetailService] = useState<MentorService>();
   const [servicesError, setServicesError] = useState<string>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [projects, setProjects] = useState<MentorProjectResponse[]>([]);
@@ -163,6 +161,8 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
               expectedOutcome: service.expectedOutcome,
               durationMinutes: service.durationMinutes,
               priceScoins: service.isFree ? 0 : (service.priceScoin ?? undefined),
+              coverImageUrl: service.coverImageUrl ?? null,
+              maintainPostSessionChat: service.maintainPostSessionChat,
             })),
         );
       })
@@ -531,9 +531,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                 <MentorServiceCard
                   key={service.id}
                   service={service}
-                  priceText={priceLabel(service.priceScoins)}
                   onBook={handleServiceClick}
                   onViewSchedule={handleServiceClick}
+                  onShowMore={setDetailService}
                 />
               ))}
             </div>
@@ -548,6 +548,25 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
             reputation={reputation}
           />
         )}
+
+        {/* MODAL CHI TIẾT DỊCH VỤ ("Xem thêm" trên thẻ dịch vụ) */}
+        <Modal
+          open={Boolean(detailService)}
+          onClose={() => setDetailService(undefined)}
+          title={detailService?.name ?? 'Chi tiết dịch vụ'}
+          className="max-w-2xl"
+        >
+          {detailService && (
+            <ServiceDetailDialogBody
+              service={detailService}
+              onBook={() => {
+                const service = detailService;
+                setDetailService(undefined);
+                handleServiceClick(service);
+              }}
+            />
+          )}
+        </Modal>
 
         {/* MODAL CÁC DỰ ÁN & GIẢI THƯỞNG */}
         <Modal
@@ -676,5 +695,41 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         </Modal>
       </div>
     </main>
+  );
+}
+
+/** Full description of one service, shown when a mentee clicks "Xem thêm" on the card. */
+function ServiceDetailDialogBody({
+  service,
+  onBook,
+}: {
+  service: MentorService;
+  onBook: () => void;
+}) {
+  const parsed = parseServiceDescription(service.description);
+  const outcome = service.expectedOutcome?.trim() || parsed.legacyOutcome;
+  return (
+    <div className="space-y-4">
+      <ServiceDescriptionDetail
+        title={service.name}
+        coverImageUrl={service.coverImageUrl}
+        parsed={parsed}
+      />
+      {outcome && (
+        <div className="flex items-start gap-2.5 rounded-xl bg-emerald-50/60 p-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+          <p className="m-0 text-sm leading-6 text-slate-700">
+            <b>Kết quả mong đợi:</b> {outcome}
+          </p>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onBook}
+        className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-sky-700 px-4 text-sm font-bold text-white outline-none transition hover:bg-sky-800 focus-visible:ring-4 focus-visible:ring-primary/30"
+      >
+        Đặt lịch tư vấn
+      </button>
+    </div>
   );
 }

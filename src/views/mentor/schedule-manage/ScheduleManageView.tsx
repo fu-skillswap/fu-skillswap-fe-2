@@ -34,10 +34,6 @@ import {
   availabilitySlotSchema,
   type AvailabilitySlotFormValues,
 } from '@/models/schemas/availabilitySlotSchema';
-import {
-  mentorServiceSchema,
-  type MentorServiceFormValues,
-} from '@/models/schemas/mentorServiceSchema';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
 import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
@@ -67,7 +63,11 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ServiceDescriptionFields } from '@/components/domain/mentor-service/ServiceDescriptionFields';
+import { ServiceEditor } from '@/components/domain/mentor-service/ServiceEditor';
+import type {
+  ServiceEditorDefaults,
+  ServiceEditorPayload,
+} from '@/components/domain/mentor-service/useServiceEditor';
 import { MentorScheduleCalendar } from './MentorScheduleCalendar';
 import {
   mergeBookingsIntoCalendar,
@@ -573,21 +573,17 @@ export function ScheduleManageView() {
     !selectedSlot?.deactivation?.mode || selectedSlot.deactivation.mode === 'ALLOWED';
   const deactivationReason = selectedSlot?.deactivation?.restrictionCode;
 
-  // Form tạo dịch vụ mới
-  const form = useForm<MentorServiceFormValues>({
-    resolver: yupResolver(mentorServiceSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      expectedOutcome: '',
+  // Defaults of the "create service" editor (text fields start empty).
+  const [createEditorKey, setCreateEditorKey] = useState(0);
+  const createServiceDefaults = useMemo<ServiceEditorDefaults>(
+    () => ({
       durationMinutes: 60,
       isFree: false,
       priceScoin: 150000,
       maintainPostSessionChat: true,
-    },
-  });
-
-  const isFreeWatched = form.watch('isFree');
+    }),
+    [],
+  );
 
   // Form tạo lịch rảnh
   const availabilityForm = useForm<AvailabilitySlotFormValues>({
@@ -1123,16 +1119,23 @@ export function ScheduleManageView() {
   };
 
   // Xử lý Submit Tạo mới Dịch vụ qua API
-  const onSubmitCreateService = async (values: MentorServiceFormValues) => {
+  const onSubmitCreateService = async (payload: ServiceEditorPayload) => {
+    if (!payload.durationMinutes) return;
     setIsSaving(true);
     try {
       await mentorServiceRepo.create({
-        ...values,
-        priceScoin: values.isFree ? 0 : values.priceScoin,
+        title: payload.title,
+        description: payload.description,
+        expectedOutcome: payload.expectedOutcome,
+        durationMinutes: payload.durationMinutes,
+        isFree: payload.isFree,
+        priceScoin: payload.priceScoin,
+        maintainPostSessionChat: payload.maintainPostSessionChat,
         deliveryMode: 'ONE_TO_ONE',
+        ...(payload.coverAssetId ? { coverAssetId: payload.coverAssetId } : {}),
       });
       await loadServices();
-      form.reset();
+      setCreateEditorKey((key) => key + 1);
       setOpenModal(false);
       showSuccess({
         title: 'Đã tạo dịch vụ',
@@ -3099,178 +3102,18 @@ export function ScheduleManageView() {
         open={openModal}
         title="Tạo mới Khóa học / Dịch vụ tư vấn"
         onClose={() => !isSaving && setOpenModal(false)}
-        className="max-w-xl"
+        className="max-w-6xl"
       >
-        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmitCreateService)} noValidate>
-          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-3.5 shadow-sm sm:p-4">
-            <div className="space-y-3.5">
-              <div>
-                <label
-                  className="mb-1.5 block text-sm font-semibold text-slate-700"
-                  htmlFor="new-service-title"
-                >
-                  Tên dịch vụ / Khóa học <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="new-service-title"
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
-                  placeholder="VD: Review CV & định hướng nghề nghiệp"
-                  aria-invalid={Boolean(form.formState.errors.title)}
-                  {...form.register('title')}
-                />
-                {form.formState.errors.title && (
-                  <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                    {form.formState.errors.title.message}
-                  </span>
-                )}
-              </div>
-
-              <Controller
-                control={form.control}
-                name="description"
-                render={({ field, fieldState }) => (
-                  <ServiceDescriptionFields
-                    idPrefix="new-service"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={fieldState.error?.message}
-                  />
-                )}
-              />
-
-              <div>
-                <label
-                  className="mb-1.5 block text-sm font-semibold text-slate-700"
-                  htmlFor="new-service-outcome"
-                >
-                  Kết quả sau buổi tư vấn <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="new-service-outcome"
-                  className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
-                  rows={2}
-                  placeholder="VD: Bạn nhận góp ý cụ thể để sửa CV và tăng cơ hội vượt vòng sàng lọc"
-                  aria-invalid={Boolean(form.formState.errors.expectedOutcome)}
-                  {...form.register('expectedOutcome')}
-                />
-                {form.formState.errors.expectedOutcome ? (
-                  <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                    {form.formState.errors.expectedOutcome.message}
-                  </span>
-                ) : (
-                  <span className="mt-1 block text-xs text-slate-500">
-                    Hiển thị trong khung “Kết quả sau buổi tư vấn” trên hồ sơ của bạn.
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label
-                    className="mb-1.5 block text-sm font-semibold text-slate-700"
-                    htmlFor="new-service-duration"
-                  >
-                    Thời lượng tư vấn <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Clock
-                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
-                      aria-hidden="true"
-                    />
-                    <select
-                      id="new-service-duration"
-                      className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-900 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
-                      aria-invalid={Boolean(form.formState.errors.durationMinutes)}
-                      {...form.register('durationMinutes')}
-                    >
-                      <option value="">Chọn thời lượng</option>
-                      {(constraints?.allowedDurationMinutes ?? []).map((mins) => (
-                        <option key={mins} value={mins}>
-                          {mins} phút
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  {form.formState.errors.durationMinutes && (
-                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                      {form.formState.errors.durationMinutes.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    className="mb-1.5 block text-sm font-semibold text-slate-700"
-                    htmlFor="new-service-price"
-                  >
-                    Học phí (S-coins)
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="new-service-price"
-                      type="number"
-                      min={0}
-                      disabled={isFreeWatched}
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-20 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                      placeholder="150000"
-                      aria-invalid={Boolean(form.formState.errors.priceScoin)}
-                      {...form.register('priceScoin')}
-                    />
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
-                      S-coins
-                    </span>
-                  </div>
-                  {form.formState.errors.priceScoin && (
-                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
-                      {form.formState.errors.priceScoin.message}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-sky-300 hover:bg-sky-50/40 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#119CF7]/15">
-                <input type="checkbox" className="peer sr-only" {...form.register('isFree')} />
-                <span
-                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white transition peer-checked:border-[#119CF7] peer-checked:bg-[#119CF7] peer-checked:[&_svg]:opacity-100"
-                  aria-hidden="true"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-white opacity-0 transition-opacity" />
-                </span>
-                <span>
-                  <strong className="block text-sm font-semibold text-slate-800">
-                    Cung cấp dịch vụ miễn phí
-                  </strong>
-                  <small className="mt-0.5 block text-xs leading-4 text-slate-500">
-                    Mentee sẽ không bị trừ S-coins khi đặt dịch vụ này.
-                  </small>
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
-              disabled={isSaving}
-              onClick={() => setOpenModal(false)}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              loading={isSaving}
-              className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-40"
-            >
-              Tạo dịch vụ
-            </Button>
-          </div>
-        </form>
+        <ServiceEditor
+          key={createEditorKey}
+          mode="create"
+          defaults={createServiceDefaults}
+          allowedDurationMinutes={constraints?.allowedDurationMinutes ?? []}
+          isSaving={isSaving}
+          submitLabel="Tạo dịch vụ"
+          onSubmit={(payload) => void onSubmitCreateService(payload)}
+          onCancel={() => setOpenModal(false)}
+        />
       </Modal>
 
       {/* Modal Chi tiết Lịch rảnh / Lịch hẹn */}

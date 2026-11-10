@@ -1,26 +1,26 @@
 /**
  * @file serviceDescription.ts
- * @description Converts between a mentor service's free-text `description` and its display
- * parts (intro, numbered items, outcome, audience).
- * The API stores one string, so the service form composes the parts into the format
- * that `parseServiceDescription` reads back. Parsing never drops content.
+ * @description The API only stores `title`, `description` and `expectedOutcome`, so the intro,
+ * session items and audience are kept inside `description` using ONE fixed format:
+ *
+ *   "{intro}\n\n1. {item1}\n2. {item2}\n...\n\nPhù hợp cho: {a}, {b}, {c}"
+ *
+ * The outcome lives only in `expectedOutcome`; it is never written into `description` again.
+ * Parsing also reads older descriptions (inline "1. … 2. …" lists and a "Sau buổi …" outcome
+ * sentence) and never drops content.
  */
 
 // TODO(api): store audience and checklist items as separate service fields instead of text.
-
-export interface ParsedServiceDescription {
-  intro: string;
-  items: string[];
-  outcome: string | null;
-  audience: string[];
-}
 
 export interface ServiceDescriptionParts {
   intro: string;
   items: string[];
   audience: string[];
-  /** Outcome sentence kept inside the description (older services wrote it there). */
-  outcome?: string;
+}
+
+export interface ParsedServiceDescription extends ServiceDescriptionParts {
+  /** A "Sau buổi …" sentence found in old free-text descriptions (pre-structured data). */
+  legacyOutcome: string | null;
 }
 
 const AUDIENCE_LABEL = 'Phù hợp cho';
@@ -36,16 +36,29 @@ function trimPunctuation(value: string) {
     .trim();
 }
 
-export function parseServiceDescription(text: string): ParsedServiceDescription {
-  const fallback: ParsedServiceDescription = {
-    intro: text ?? '',
-    items: [],
-    outcome: null,
-    audience: [],
-  };
-  if (!text?.trim()) return fallback;
+const singleLine = (value: string) => value.replace(/\s*\n\s*/g, ' ').trim();
 
-  let body = text;
+/** Finds a consecutive 1., 2., 3. … sequence (numbers inside sentences are ignored). */
+function findItemMarkers(body: string) {
+  const markers: { start: number; end: number }[] = [];
+  for (const match of body.matchAll(ITEM_MARKER)) {
+    if (Number(match[1]) !== markers.length + 1) continue;
+    markers.push({ start: match.index ?? 0, end: (match.index ?? 0) + match[0].length });
+  }
+  return markers;
+}
+
+export function parseServiceDescription(text: string | null | undefined): ParsedServiceDescription {
+  const source = (text ?? '').replace(/\r\n?/g, '\n').trim();
+  const fallback: ParsedServiceDescription = {
+    intro: source,
+    items: [],
+    audience: [],
+    legacyOutcome: null,
+  };
+  if (!source) return fallback;
+
+  let body = source;
   let audience: string[] = [];
   const audienceMatch = AUDIENCE_MARKER.exec(body);
   if (audienceMatch) {
@@ -57,73 +70,48 @@ export function parseServiceDescription(text: string): ParsedServiceDescription 
     body = body.slice(0, audienceMatch.index);
   }
 
-  let outcome: string | null = null;
-  const outcomeMatch = OUTCOME_MARKER.exec(body);
+  const markers = findItemMarkers(body);
+  if (markers.length < 2) return fallback;
+
+  // Old descriptions put the outcome sentence after the list; only look there so a
+  // "Sau buổi …" sentence in the intro can never swallow the items.
+  let legacyOutcome: string | null = null;
+  const lastMarker = markers[markers.length - 1];
+  const tail = body.slice(lastMarker.end);
+  const outcomeMatch = OUTCOME_MARKER.exec(tail);
   if (outcomeMatch) {
-    const start = outcomeMatch.index + outcomeMatch[0].length - outcomeMatch[1].length;
-    outcome = trimPunctuation(body.slice(start)) || null;
+    const start =
+      lastMarker.end + outcomeMatch.index + outcomeMatch[0].length - outcomeMatch[1].length;
+    legacyOutcome = trimPunctuation(body.slice(start)) || null;
     body = body.slice(0, start);
   }
 
-  // Only accept a consecutive 1., 2., 3. … sequence so numbers inside sentences
-  // (e.g. "top 3. Sau đó") are not mistaken for list markers.
-  const markers: { start: number; end: number }[] = [];
-  for (const match of body.matchAll(ITEM_MARKER)) {
-    if (Number(match[1]) !== markers.length + 1) continue;
-    markers.push({ start: match.index ?? 0, end: (match.index ?? 0) + match[0].length });
-  }
-  const items =
-    markers.length >= 2
-      ? markers
-          .map((marker, index) =>
-            trimPunctuation(body.slice(marker.end, markers[index + 1]?.start)),
-          )
-          .filter(Boolean)
-      : [];
+  const items = markers
+    .map((marker, index) => trimPunctuation(body.slice(marker.end, markers[index + 1]?.start)))
+    .filter(Boolean);
+  if (items.length < 2) return fallback;
 
-  if (items.length < 2) {
-    if (!audience.length && !outcome) return fallback;
-    return { intro: body.trim(), items: [], outcome, audience };
-  }
-
-  const intro = trimPunctuation(body.slice(0, markers[0].start));
-  return { intro, items, outcome, audience };
+  return {
+    intro: body.slice(0, markers[0].start).trim().replace(/\s*:$/, ''),
+    items,
+    audience,
+    legacyOutcome,
+  };
 }
 
-/** Builds the description string that `parseServiceDescription` reads back into the same parts. */
-export function composeServiceDescription({
+/** Builds the stored `description`. Omits the audience line when there is none. */
+export function serializeServiceDescription({
   intro,
   items,
   audience,
-  outcome,
-}: ServiceDescriptionParts) {
-  const cleanItems = items.map(trimPunctuation).filter(Boolean);
-  const cleanAudience = audience.map(trimPunctuation).filter(Boolean);
-  const lines: string[] = [];
-  const introText = intro.trim();
-
-  if (cleanItems.length >= 2) {
-    if (introText) lines.push(`${trimPunctuation(introText)}:`);
-    cleanItems.forEach((item, index) => lines.push(`${index + 1}. ${item}.`));
-  } else {
-    if (introText) lines.push(introText);
-    if (cleanItems[0]) lines.push(`${cleanItems[0]}.`);
-  }
-  const outcomeText = trimPunctuation(outcome ?? '');
-  if (outcomeText) {
-    lines.push(
-      /^Sau buổi/.test(outcomeText) ? `${outcomeText}.` : `Sau buổi tư vấn, ${outcomeText}.`,
-    );
-  }
-  if (cleanAudience.length) lines.push(`${AUDIENCE_LABEL}: ${cleanAudience.join(', ')}.`);
-
-  return lines.join('\n');
-}
-
-/** Splits "Sau buổi review, bạn nhận…" into a bold lead ("Sau buổi review") and the rest. */
-export function splitOutcome(outcome: string): { lead: string; rest: string } {
-  const withStop = /[.!?]$/.test(outcome) ? outcome : `${outcome}.`;
-  const match = /^(Sau buổi[^,:]{0,40})[,:]\s*([\s\S]+)$/i.exec(withStop);
-  if (!match) return { lead: '', rest: withStop };
-  return { lead: match[1].trim(), rest: match[2].trim() };
+}: ServiceDescriptionParts): string {
+  const cleanItems = items.map(singleLine).filter(Boolean);
+  const cleanAudience = audience.map(singleLine).filter(Boolean);
+  return [
+    singleLine(intro),
+    cleanItems.map((item, index) => `${index + 1}. ${item}`).join('\n'),
+    cleanAudience.length ? `${AUDIENCE_LABEL}: ${cleanAudience.join(', ')}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 }
