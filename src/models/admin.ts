@@ -23,6 +23,17 @@ export interface AdminDashboardOverviewResponse {
   pendingPayoutRequests: number;
   pendingPayoutAmountScoin: number;
   failedPaymentOrders: number;
+  /** Nested campaign/coupon summary (Swagger `AdminDashboardCampaignOverview`); may be absent. */
+  campaigns?: AdminDashboardCampaignOverview | null;
+}
+
+export interface AdminDashboardCampaignOverview {
+  activeCampaignCount?: number | null;
+  scheduledCampaignCount?: number | null;
+  totalBudgetScoin?: number | null;
+  totalBudgetUsedScoin?: number | null;
+  activeCouponCount?: number | null;
+  totalCouponRedemptions?: number | null;
 }
 
 export interface AdminQueueCardResponse {
@@ -121,6 +132,8 @@ export interface AdminMentorsResponse {
 }
 
 export interface AdminMentorsQuery {
+  /** Name/email search (Swagger: GET /api/admin/mentors?keyword=). */
+  keyword?: string;
   page?: number;
   size?: number;
 }

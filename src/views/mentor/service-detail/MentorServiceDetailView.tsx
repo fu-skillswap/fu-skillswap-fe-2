@@ -7,6 +7,13 @@
 
 import { ServiceDescriptionDetail } from '@/components/domain/mentor-service/ServiceDescriptionDetail';
 import { ServiceEditor } from '@/components/domain/mentor-service/ServiceEditor';
+import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
+import { ServiceCouponPriceNote } from '@/components/domain/mentor-service/coupons/ServiceCouponPriceNote';
+import { ServiceCouponsCard } from '@/components/domain/mentor-service/coupons/ServiceCouponsCard';
+import {
+  couponsForService,
+  useMyMentorCoupons,
+} from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
 import { parseServiceDescription } from '@/components/domain/mentor-service/serviceDescription';
 import {
   serviceToEditorDefaults,
@@ -62,6 +69,13 @@ export function MentorServiceDetailView({
   const [hasError, setHasError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // Coupons (MENTOR_COUPONS_ENABLED): empty while the flag is off or the API is unavailable.
+  const mentorCoupons = useMyMentorCoupons();
+  const [couponNow] = useState(() => Date.now());
+  const serviceCoupons =
+    service && !service.isFree
+      ? couponsForService(mentorCoupons, service.serviceId, couponNow)
+      : [];
   /** Bumped to remount the editor with fresh data (after a reload or a cancel). */
   const [editorKey, setEditorKey] = useState(0);
   const editorDefaults = useMemo(
@@ -197,6 +211,7 @@ export function MentorServiceDetailView({
                         />
                         {service.isActive ? 'Đang hoạt động' : 'Đang tạm dừng'}
                       </span>
+                      <ServiceCouponPill count={serviceCoupons.length} />
                     </div>
                     <h1 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl">
                       {service.title}
@@ -219,6 +234,13 @@ export function MentorServiceDetailView({
               </div>
             </div>
           </article>
+
+          <ServiceCouponsCard
+            coupons={serviceCoupons}
+            serviceId={service.serviceId}
+            priceScoin={service.publicPriceScoin ?? 0}
+            now={couponNow}
+          />
 
           {isEditing && editorDefaults ? (
             <section
@@ -248,6 +270,7 @@ export function MentorServiceDetailView({
                 key={editorKey}
                 mode="edit"
                 defaults={editorDefaults}
+                priceNote={<ServiceCouponPriceNote count={serviceCoupons.length} />}
                 isSaving={isSaving}
                 submitLabel="Lưu thay đổi"
                 onSubmit={(payload) => void saveService(payload)}

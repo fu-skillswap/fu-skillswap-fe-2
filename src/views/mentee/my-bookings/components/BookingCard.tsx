@@ -19,6 +19,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { StarDisplay } from '@/components/ui/StarDisplay';
+import { formatScoin } from '@/lib/coupon';
 import type { MentorBookingResponse } from '@/models/auth';
 import type { SessionFeedbackResponse } from '@/models/review';
 import { bookingFeedbackQueryKey, reviewRepo } from '@/repositories/reviewRepo';
@@ -130,8 +131,24 @@ function MyReviewBox({ review }: { review: SessionFeedbackResponse }) {
   );
 }
 
-/** Date tile, title + status pill, mentor link and time / price / platform chips. */
-function CardTop({ booking, locale }: { booking: MentorBookingResponse; locale: string }) {
+/** Checkout confirmation page for a booking (reviews terms + coupon before PayOS). */
+export const bookingCheckoutHref = (locale: string, bookingId: string) =>
+  `/${locale}/my-bookings/${bookingId}/checkout`;
+
+/**
+ * Date tile, title + status pill, mentor link and time / price / platform chips.
+ * Also used as the session summary on the checkout page.
+ */
+export function BookingCardTop({
+  booking,
+  locale,
+  headingLevel = 'h3',
+}: {
+  booking: MentorBookingResponse;
+  locale: string;
+  headingLevel?: 'h2' | 'h3';
+}) {
+  const Heading = headingLevel;
   const mentor = getMentorName(booking);
   const profileHref = mentorProfileHref(locale, booking);
   const price = getBookingPrice(booking);
@@ -150,7 +167,7 @@ function CardTop({ booking, locale }: { booking: MentorBookingResponse; locale: 
       <DateTile value={booking.selectedStartTime} />
       <div style={{ minWidth: 0 }}>
         <div className={styles.cardHeading}>
-          <h3 className={styles.cardTitle}>{booking.serviceTitle || 'Buổi mentoring'}</h3>
+          <Heading className={styles.cardTitle}>{booking.serviceTitle || 'Buổi mentoring'}</Heading>
           <BookingStatusPill booking={booking} />
         </div>
         {profileHref ? (
@@ -173,9 +190,12 @@ function CardTop({ booking, locale }: { booking: MentorBookingResponse; locale: 
           )}
           <span className={styles.chip}>
             <Wallet aria-hidden="true" />
-            {price > 0 ? `${price} S-coins` : 'Miễn phí'}
+            {price > 0 ? `${formatScoin(price)} S-coins` : 'Miễn phí'}
             {isBookingPaid(booking) ? ' · đã thanh toán' : ''}
           </span>
+          {/* TODO(api): booking/payment responses do not return the redeemed coupon yet. Once they
+              do (e.g. couponCode + couponDiscountScoin), show a chip
+              "Đã dùng mã {CODE} · −{n} S-coins" here so the order stays viewable after purchase. */}
           {platform && (
             <span className={styles.chip}>
               <Monitor aria-hidden="true" />
@@ -211,7 +231,7 @@ function ExpiredBookingCard({
 
   return (
     <article className={styles.card} id={bookingAnchorId(booking.bookingId)}>
-      <CardTop booking={booking} locale={locale} />
+      <BookingCardTop booking={booking} locale={locale} />
       <ExpiredBookingProgress booking={booking} />
 
       <div className={styles.expiredBox}>
@@ -339,7 +359,6 @@ export function BookingCard({
   const runPrimary = () => {
     const primary = actions.primary;
     if (!primary || ('disabled' in primary && primary.disabled)) return;
-    if (primary.kind === 'pay') onImmediate({ type: 'pay' });
     if (primary.kind === 'checkIn') onImmediate({ type: 'checkIn' });
     if (primary.kind === 'confirm') onAction('confirm');
     if (primary.kind === 'join') {
@@ -355,7 +374,7 @@ export function BookingCard({
 
   return (
     <article className={styles.card} id={bookingAnchorId(booking.bookingId)}>
-      <CardTop booking={booking} locale={locale} />
+      <BookingCardTop booking={booking} locale={locale} />
 
       <BookingProgress booking={booking} reviewHref={reviewHref} />
 
@@ -440,7 +459,17 @@ export function BookingCard({
               Đặt lại với {mentor}
             </Link>
           )}
-          {showPrimary && actions.primary && (
+          {showPrimary && actions.primary?.kind === 'pay' && (
+            // Payment goes through the confirmation page (terms, coupon, consent) before PayOS.
+            <Link
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              href={bookingCheckoutHref(locale, booking.bookingId)}
+            >
+              <CreditCard aria-hidden="true" />
+              {actions.primary.label}
+            </Link>
+          )}
+          {showPrimary && actions.primary && actions.primary.kind !== 'pay' && (
             <button
               type="button"
               className={`${styles.btn} ${styles.btnPrimary}`}

@@ -36,6 +36,11 @@ import {
 } from '@/models/schemas/availabilitySlotSchema';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
+import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
+import {
+  couponsForService,
+  useMyMentorCoupons,
+} from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
 import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -380,6 +385,8 @@ interface MentorServiceCardProps {
   service: MentorServiceManagementResponse;
   isToggling: boolean;
   compact?: boolean;
+  /** Running/scheduled coupons for this service (MENTOR_COUPONS_ENABLED); hidden when 0. */
+  couponCount?: number;
   onOpen: (serviceId: string) => void;
   onRequestStatusChange: (service: MentorServiceManagementResponse) => void;
 }
@@ -388,6 +395,7 @@ function MentorServiceCard({
   service,
   isToggling,
   compact = false,
+  couponCount = 0,
   onOpen,
   onRequestStatusChange,
 }: MentorServiceCardProps) {
@@ -430,6 +438,11 @@ function MentorServiceCard({
             {formatDuration(service.durationMinutes)} ·{' '}
             {service.deliveryMode === 'ONE_TO_ONE' ? '1 kèm 1' : service.deliveryMode}
           </p>
+          {couponCount > 0 && !service.isFree && (
+            <div className="mt-1.5">
+              <ServiceCouponPill count={couponCount} compact />
+            </div>
+          )}
         </div>
         <button
           type="button"
@@ -467,6 +480,11 @@ export function ScheduleManageView() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const [services, setServices] = useState<MentorServiceManagementResponse[]>([]);
+  // Coupon pills (MENTOR_COUPONS_ENABLED): no request and no pill while the flag is off.
+  const mentorCoupons = useMyMentorCoupons();
+  const [couponNow] = useState(() => Date.now());
+  const couponCountFor = (service: MentorServiceManagementResponse) =>
+    service.isFree ? 0 : couponsForService(mentorCoupons, service.serviceId, couponNow).length;
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [pendingStatusChange, setPendingStatusChange] =
@@ -1729,6 +1747,7 @@ export function ScheduleManageView() {
                   key={service.serviceId}
                   service={service}
                   compact
+                  couponCount={couponCountFor(service)}
                   isToggling={togglingId === service.serviceId}
                   onOpen={(serviceId) => router.push(`/${locale}/mentor/services/${serviceId}`)}
                   onRequestStatusChange={setPendingStatusChange}
@@ -1920,6 +1939,7 @@ export function ScheduleManageView() {
                       key={service.serviceId}
                       service={service}
                       compact
+                      couponCount={couponCountFor(service)}
                       isToggling={togglingId === service.serviceId}
                       onOpen={(serviceId) => router.push(`/${locale}/mentor/services/${serviceId}`)}
                       onRequestStatusChange={setPendingStatusChange}

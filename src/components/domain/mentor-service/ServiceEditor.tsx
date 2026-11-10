@@ -130,6 +130,8 @@ interface ServiceEditorProps {
   defaults: ServiceEditorDefaults;
   /** Create only: durations allowed by the platform. */
   allowedDurationMinutes?: number[];
+  /** Extra note under the price field (e.g. active coupons on this service). */
+  priceNote?: ReactNode;
   isSaving: boolean;
   submitLabel: string;
   onSubmit: (payload: ServiceEditorPayload) => void;
@@ -140,6 +142,7 @@ export function ServiceEditor({
   mode,
   defaults,
   allowedDurationMinutes = [],
+  priceNote,
   isSaving,
   submitLabel,
   onSubmit,
@@ -524,6 +527,7 @@ export function ServiceEditor({
               onChange={(event) => editor.setPriceInput(event.target.value)}
             />
             <FieldError id={`${ids.price}-error`} message={errors.price} />
+            {priceNote}
           </div>
           {mode === 'create' ? (
             <div>

@@ -20,6 +20,7 @@ import {
   Menu,
   ShieldCheck,
   Sparkles,
+  Ticket,
   TriangleAlert,
   Users,
   X,
@@ -84,6 +85,7 @@ export function AdminSidebar({ locale }: { locale: string }) {
     { href: `${adminRoot}/users`, label: 'Người dùng', icon: Users },
     { href: `${adminRoot}/bookings`, label: 'Lịch hẹn', icon: CalendarDays },
     { href: `${adminRoot}/reports`, label: 'Báo cáo & đánh giá', icon: ChartNoAxesCombined },
+    { href: `${adminRoot}/coupons`, label: 'Mã giảm giá', icon: Ticket },
   ];
   const aiNavigation: NavigationItem[] = [
     { href: `${adminRoot}/ai`, label: 'Tổng quan AI', icon: Sparkles },

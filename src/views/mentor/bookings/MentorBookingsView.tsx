@@ -10,7 +10,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Bell,
   CalendarDays,
   CalendarRange,
   CheckCircle2,
@@ -73,15 +72,19 @@ import {
   priceLabel,
   sentLabel,
   sessionLabel,
-  shortStamp,
   timeRange,
   toDate,
+  vnDay,
+  vnTimeRange,
 } from './mentorInbox';
 import { AcceptBookingModal, menteeFirstName } from './AcceptBookingModal';
 import { type MentorBookingMutation, useMentorBookings } from './useMentorBookings';
 
 type EndVariant = 'mentor-reject' | 'mentor-cancel';
 const FOCUS_RING = 'outline-none focus-visible:ring-4 focus-visible:ring-primary/20';
+/** Card surface for booking rows and the tab bar, so they separate from the #F5F7FA page. */
+const CARD_SURFACE =
+  'border border-solid border-[#dce5ef] bg-white shadow-[0_1px_2px_rgba(15,60,110,0.05),0_6px_16px_rgba(15,60,110,0.07)]';
 const RECENT_LIMIT = 5;
 const LIST_STEP = 10;
 function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']) {
@@ -280,7 +283,6 @@ export function MentorBookingsView() {
     () => [...grouped.ENDED, ...grouped.CANCELED].sort(compareBookings(sort)),
     [grouped, sort],
   );
-  const hasExpired = bookings.some(isExpired);
 
   const messageHref = (booking: MentorBookingResponse) =>
     `/${locale}/messages?participantId=${encodeURIComponent(booking.menteeUserId)}`;
@@ -498,19 +500,6 @@ export function MentorBookingsView() {
     );
   };
 
-  const expiryTip = hasExpired && (
-    <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
-      <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
-      Để không lỡ yêu cầu, hãy bật email nhắc khi có mentee đặt lịch.
-      <Link
-        href={`/${locale}/settings?section=settings&tab=notifications`}
-        className={`rounded font-semibold text-primary hover:underline ${FOCUS_RING}`}
-      >
-        Cài đặt thông báo
-      </Link>
-    </p>
-  );
-
   const sectionHeading = (title: string, count?: number, urgent = false) => (
     <h2 className="m-0 flex items-center gap-2 text-base font-semibold text-text-main">
       {title}
@@ -546,7 +535,6 @@ export function MentorBookingsView() {
       return (
         <div className="grid gap-3">
           {renderEnded(grouped.CANCELED, 'Không có lịch nào bị hủy hoặc quá hạn.')}
-          {expiryTip}
         </div>
       );
     }
@@ -571,7 +559,6 @@ export function MentorBookingsView() {
           <section className="grid gap-3" aria-label="Gần đây">
             {sectionHeading('Gần đây')}
             {renderEnded(recent, '', RECENT_LIMIT)}
-            {expiryTip}
           </section>
         )}
       </div>
@@ -599,7 +586,7 @@ export function MentorBookingsView() {
         </Link>
       </header>
 
-      <div className="flex flex-wrap items-center gap-1 rounded-2xl bg-white p-1.5 shadow-xs">
+      <div className={`flex flex-wrap items-center gap-1 rounded-2xl p-1.5 ${CARD_SURFACE}`}>
         <div
           role="tablist"
           aria-label="Lọc lịch đặt"
@@ -852,7 +839,7 @@ function RequestCard({
   return (
     <article
       id={`booking-${booking.bookingId}`}
-      className="grid gap-4 rounded-[20px] border border-solid border-border-color/70 bg-white p-5 shadow-sm sm:p-6"
+      className={`grid gap-4 rounded-2xl p-5 sm:p-6 ${CARD_SURFACE}`}
     >
       <div className="flex items-start gap-3">
         <MenteeAvatar booking={booking} />
@@ -976,7 +963,7 @@ function SessionRow({
   return (
     <article
       id={`booking-${booking.bookingId}`}
-      className="grid gap-3 rounded-2xl border border-solid border-border-color/70 bg-white px-5 py-4 shadow-xs md:grid-cols-[110px_minmax(0,1fr)_auto] md:items-center"
+      className={`grid gap-3 rounded-2xl px-5 py-4 md:grid-cols-[110px_minmax(0,1fr)_auto] md:items-center ${CARD_SURFACE}`}
     >
       <strong className="text-base font-bold text-text-main">{timeRange(booking)}</strong>
       <div className="min-w-0">
@@ -1008,16 +995,7 @@ function SessionRow({
         <p className="m-0 mt-0.5 truncate text-xs text-text-muted">{details}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2 md:justify-end">
-        {canMessage(booking) && (
-          <Button
-            variant="outline"
-            className="h-11 text-sm"
-            leftIcon={<MessageSquare className="h-4 w-4" />}
-            onClick={onMessage}
-          >
-            Nhắn
-          </Button>
-        )}
+        {canMessage(booking) && <MessageButton booking={booking} onClick={onMessage} />}
         {canCheckIn && (
           <Button
             variant="outline"
@@ -1060,24 +1038,49 @@ function EndedRow({
 }) {
   const pill = mentorStatusPill(booking);
   const mentee = booking.menteeDisplayName || 'Mentee';
+  const start = toDate(booking.selectedStartTime);
+  const reason = endedExplanation(booking);
   return (
     <article
       id={`booking-${booking.bookingId}`}
-      className="grid gap-2 rounded-2xl bg-white px-5 py-3.5 shadow-xs md:grid-cols-[90px_minmax(0,1fr)_auto] md:items-center"
+      className={`grid grid-cols-[116px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-2xl px-4 py-4 sm:grid-cols-[116px_minmax(0,1fr)_auto] sm:px-5 ${CARD_SURFACE}`}
     >
-      <span className="text-xs text-text-muted">{shortStamp(booking)}</span>
+      {/* Session time: never invented — no start, no block content; no end, start only. */}
+      <div className="self-stretch border-0 border-r border-solid border-[#e5eaf0] pr-3">
+        <span className="block text-xs text-text-muted">Giờ học</span>
+        {start && (
+          <>
+            <strong className="mt-0.5 block text-sm font-bold text-text-main">
+              {vnDay(start)}
+            </strong>
+            <span className="block text-sm text-text-secondary tabular-nums">
+              {vnTimeRange(booking)}
+            </span>
+          </>
+        )}
+      </div>
+
       <div className="min-w-0">
         <button
           type="button"
           onClick={onDetail}
-          className={`cursor-pointer rounded border-none bg-transparent p-0 text-left text-sm font-semibold text-text-secondary hover:text-primary ${FOCUS_RING}`}
+          className={`max-w-full cursor-pointer truncate rounded border-none bg-transparent p-0 text-left text-[15px] font-semibold text-text-main hover:text-primary ${FOCUS_RING}`}
         >
-          {booking.serviceTitle || 'Buổi mentoring'} · {mentee}
+          {booking.serviceTitle || 'Buổi mentoring'}
         </button>
-        <p className="m-0 mt-0.5 text-xs text-text-muted">{endedExplanation(booking)}</p>
-        {isFinalized(booking) && <LockedLine />}
+        <div className="mt-1.5 flex min-w-0 items-center gap-2 text-sm">
+          <SmallMenteeAvatar booking={booking} />
+          <span className="truncate font-medium text-text-main">{mentee}</span>
+          <span className="shrink-0 text-text-muted">Mentee</span>
+        </div>
+        {reason && (
+          <p className="m-0 mt-1.5 truncate text-sm text-text-secondary" title={reason}>
+            {reason}
+          </p>
+        )}
       </div>
-      <div className="flex flex-wrap items-center gap-3 md:justify-end">
+
+      <div className="col-start-2 flex flex-wrap items-center gap-2 sm:col-start-auto sm:justify-end">
         {pill && (
           <span
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
@@ -1087,26 +1090,66 @@ function EndedRow({
             {pill.label}
           </span>
         )}
-        {booking.menteeUserId && (
-          <Link
-            href={messageHref}
-            className={`inline-flex min-h-11 items-center rounded text-sm font-semibold text-primary hover:underline ${FOCUS_RING}`}
-          >
-            Nhắn {mentee}
-          </Link>
-        )}
+        {/* Same rule as upcoming rows: only bookings that were confirmed allow chat. Expired,
+            rejected and never-confirmed cancellations get no message action at all. */}
+        {canMessage(booking) && <MessageButton booking={booking} href={messageHref} />}
       </div>
     </article>
   );
 }
 
-/** Shown on every rejected / canceled / expired booking: it cannot be reopened. */
-function LockedLine() {
-  return (
-    <p className="m-0 mt-1 inline-flex items-center gap-1 text-xs text-text-muted">
-      <Lock className="h-3 w-3" aria-hidden="true" />
-      Đã chốt, không khôi phục được
-    </p>
+/** 26px mentee avatar: photo, else initials on a light-blue tint. */
+function SmallMenteeAvatar({ booking }: { booking: MentorBookingResponse }) {
+  const name = booking.menteeDisplayName || 'Mentee';
+  return booking.menteeAvatarUrl ? (
+    <img
+      className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
+      src={booking.menteeAvatarUrl}
+      alt=""
+    />
+  ) : (
+    <span
+      className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full bg-[#eaf5fe] text-[11px] font-bold text-[#0077c8]"
+      aria-hidden="true"
+    >
+      {initials(name)}
+    </span>
+  );
+}
+
+/**
+ * "Nhắn tin" action: a real button (or link) so it reads as an action, not a bare text link.
+ * Pass `href` to navigate, or `onClick` to keep an existing handler.
+ */
+function MessageButton({
+  booking,
+  href,
+  onClick,
+}: {
+  booking: MentorBookingResponse;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const mentee = booking.menteeDisplayName || 'Mentee';
+  const start = toDate(booking.selectedStartTime);
+  const label = start
+    ? `Nhắn tin cho ${mentee} về lịch ${vnDay(start, 'full')}`
+    : `Nhắn tin cho ${mentee}`;
+  const className = `inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border-[1.5px] border-solid border-primary bg-white px-4 text-sm font-semibold text-[#0077c8] no-underline transition-colors hover:bg-[#eaf5fe] ${FOCUS_RING}`;
+  const content = (
+    <>
+      <MessageSquare className="h-4 w-4" aria-hidden="true" />
+      Nhắn tin
+    </>
+  );
+  return href ? (
+    <Link href={href} className={className} aria-label={label}>
+      {content}
+    </Link>
+  ) : (
+    <button type="button" className={className} aria-label={label} onClick={onClick}>
+      {content}
+    </button>
   );
 }
 

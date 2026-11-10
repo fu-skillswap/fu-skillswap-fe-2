@@ -1,0 +1,260 @@
+/* Admin coupon detail. Stat cards reuse `.admin-metric-grid` (admin.css, Tổng quan style);
+   history table reuses AdminList.module.css. */
+
+.crumb {
+  color: inherit;
+  text-decoration: none;
+}
+
+.crumb:hover {
+  color: var(--admin-blue-dark);
+}
+
+.heading > div + div :global(.admin-button) svg {
+  width: 16px;
+  height: 16px;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The code is the page title: same voucher chip as the list, scaled up. */
+.titleRow .codeTitle {
+  max-width: 100%;
+  margin: 0;
+  padding: 6px 16px;
+  overflow: hidden;
+  border: 1.5px dashed var(--primary-border, #93c5fd);
+  border-radius: 12px;
+  color: var(--admin-navy);
+  background: var(--primary-light, #eff6ff);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tone-paid {
+  color: #047857;
+  background: var(--success-soft, #ecfdf5);
+}
+
+.tone-pending {
+  color: #b45309;
+  background: var(--warning-soft, #fffbeb);
+}
+
+.tone-released,
+.tone-unknown {
+  color: var(--text-secondary, #475569);
+  background: var(--border-light, #f1f5f9);
+}
+
+.heading > div + div .dangerOutline {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.heading > div + div .dangerOutline:hover {
+  border-color: #fca5a5;
+  color: #991b1b;
+  background: var(--danger-soft, #fef2f2);
+}
+
+.heading :global(.admin-button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Stat card values that are text, not a single number */
+.ratio small {
+  color: var(--admin-copy);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.timeValue {
+  font-size: 26px;
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border-light, #f1f5f9);
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary, #0095f6);
+}
+
+.bar.isWarning > span {
+  background: var(--warning, #f59e0b);
+}
+
+.bar.isDimmed > span {
+  background: var(--text-disabled, #94a3b8);
+}
+
+/* History + conditions */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1180px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+.cardTitle {
+  margin: 0;
+  padding: 18px 20px 14px;
+  color: var(--admin-navy);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.historyTable {
+  min-width: 620px;
+}
+
+.historyTable th:nth-child(1) {
+  width: 34%;
+}
+
+.historyTable th:nth-child(2) {
+  width: 22%;
+}
+
+.historyTable th:nth-child(3) {
+  width: 20%;
+}
+
+.menteeLink {
+  color: var(--admin-navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.menteeLink:hover {
+  color: var(--admin-blue-dark);
+  text-decoration: underline;
+}
+
+.discount {
+  color: #047857;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.conditions {
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.conditions dl {
+  display: grid;
+  margin: 0;
+  padding: 0 20px 8px;
+}
+
+.conditions dl > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px 0;
+  border-top: 1px solid #edf2f8;
+}
+
+.conditions dt {
+  color: var(--admin-copy);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.conditions dd {
+  margin: 0;
+  color: var(--admin-navy);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Load error / not found */
+.stateCard {
+  display: grid;
+  max-width: 520px;
+  justify-items: center;
+  gap: 8px;
+  margin: 48px auto;
+  padding: 32px;
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  background: #fff;
+  text-align: center;
+}
+
+.stateCard > svg {
+  width: 28px;
+  height: 28px;
+  color: #d97706;
+}
+
+.stateCard h1 {
+  margin: 0;
+  color: var(--admin-navy);
+  font-size: 18px;
+}
+
+.stateCard p {
+  margin: 0;
+  color: var(--admin-copy);
+  font-size: 14px;
+}
+
+.stateCard > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 680px) {
+  .titleRow .codeTitle {
+    font-size: 22px;
+  }
+}
