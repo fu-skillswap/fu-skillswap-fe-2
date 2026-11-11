@@ -28,8 +28,14 @@ function queryString(query: object) {
 
 export const couponRepo = {
   // --- Admin (Swagger 05-admin, tag "Quản trị - Mã giảm giá") ---
+  /**
+   * Unlike the other admin lists, Swagger declares no default for sortBy/direction here, so always
+   * send them (newest first unless the caller overrides).
+   */
   listCoupons: (query: AdminCouponsQuery) =>
-    apiClient<PageResponse<CouponView>>(`/api/admin/coupons${queryString(query)}`),
+    apiClient<PageResponse<CouponView>>(
+      `/api/admin/coupons${queryString({ sortBy: 'createdAt', direction: 'DESC', ...query })}`,
+    ),
 
   getCoupon: (couponId: string) => apiClient<CouponView>(`/api/admin/coupons/${couponId}`),
 
@@ -47,7 +53,7 @@ export const couponRepo = {
 
   listRedemptions: (couponId: string, query: CouponRedemptionsQuery) =>
     apiClient<PageResponse<CouponRedemptionView>>(
-      `/api/admin/coupons/${couponId}/redemptions${queryString(query)}`,
+      `/api/admin/coupons/${couponId}/redemptions${queryString({ sortBy: 'createdAt', direction: 'DESC', ...query })}`,
     ),
 
   // --- Signed-in user, mentor or mentee (tag "Mã giảm giá của tôi") ---
