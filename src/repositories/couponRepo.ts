@@ -1,10 +1,10 @@
 /**
  * @file couponRepo.ts
- * @description Coupon repository: admin coupon management plus the (not yet available) mentor and
- * mentee coupon lookups. Mentee checkout/preview live in `bookingRepo`.
+ * @description Coupon repository: admin coupon management plus the signed-in user's coupons
+ * (shared by mentor and mentee). Mentee checkout/preview live in `bookingRepo`.
  */
 
-import { ApiClientError, apiClient } from '@/models/apiClient';
+import { apiClient } from '@/models/apiClient';
 import type {
   AdminCouponsQuery,
   CouponRedemptionView,
@@ -12,10 +12,9 @@ import type {
   CouponView,
   CreateCouponCommand,
   KnownCouponStatus,
-  MentorCouponView,
   PageResponse,
   UpdateCouponCommand,
-  UsableCouponView,
+  UserCouponView,
 } from '@/models/coupon';
 
 function queryString(query: object) {
@@ -25,16 +24,6 @@ function queryString(query: object) {
   });
   const serialized = params.toString();
   return serialized ? `?${serialized}` : '';
-}
-
-/** Resolves to null when the endpoint is not deployed yet (404); other errors still throw. */
-async function nullOn404<T>(request: Promise<T>): Promise<T | null> {
-  try {
-    return await request;
-  } catch (error) {
-    if (error instanceof ApiClientError && error.status === 404) return null;
-    throw error;
-  }
 }
 
 export const couponRepo = {
@@ -61,20 +50,12 @@ export const couponRepo = {
       `/api/admin/coupons/${couponId}/redemptions${queryString(query)}`,
     ),
 
-  // --- Not available yet: return null on 404, never mock data ---
+  // --- Signed-in user, mentor or mentee (tag "Mã giảm giá của tôi") ---
 
   /**
-   * Coupons that apply to the current mentor's services.
-   * TODO(api): GET /api/me/mentor/coupons — expected `MentorCouponView[]` (CouponView filtered to
-   * my services + `usedCountForService` per serviceId). Gate UI with MENTOR_COUPONS_ENABLED.
+   * Still-valid coupons for the current account.
+   * TODO(api): the response has no applicableServiceIds/applicableMentorIds/startAt/endAt, so the
+   * mentor side cannot tell which of its services a coupon targets — ask BE to add them.
    */
-  getMyMentorCoupons: () => nullOn404(apiClient<MentorCouponView[]>('/api/me/mentor/coupons')),
-
-  /**
-   * Coupons the current mentee could apply to a booking.
-   * TODO(api): GET /api/me/coupons?bookingId= — expected `UsableCouponView[]` (CouponView +
-   * `usable` + `reasonIfNotUsable`). Gate UI with MENTEE_COUPON_SUGGESTIONS_ENABLED.
-   */
-  getUsableCoupons: (bookingId: string) =>
-    nullOn404(apiClient<UsableCouponView[]>(`/api/me/coupons${queryString({ bookingId })}`)),
+  getMyCoupons: () => apiClient<UserCouponView[]>('/api/me/coupons'),
 };

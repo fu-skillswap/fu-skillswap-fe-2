@@ -6,66 +6,31 @@
 import {
   computeCouponDiscount,
   couponBadgeText,
-  deriveCouponState,
   formatScoin,
-  isNearlyExhausted,
+  isPercentDiscount,
   withMenteeSurcharge,
 } from '@/lib/coupon';
-import type { MentorCouponView } from '@/models/coupon';
+import type { UserCouponView } from '@/models/coupon';
 
-const TIME_ZONE = 'Asia/Ho_Chi_Minh';
-const dayMonth = new Intl.DateTimeFormat('vi-VN', {
-  timeZone: TIME_ZONE,
-  day: '2-digit',
-  month: '2-digit',
-});
-const dayMonthYear = new Intl.DateTimeFormat('vi-VN', {
-  timeZone: TIME_ZONE,
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-});
-
-function safeDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+/** Same 80%-used threshold as `isNearlyExhausted`, computed from the remaining quota. */
+function isRunningLow(coupon: UserCouponView) {
+  if (coupon.quotaTotal == null || coupon.remainingQuota == null || coupon.quotaTotal <= 0) {
+    return false;
+  }
+  return coupon.remainingQuota / coupon.quotaTotal <= 0.2;
 }
 
-function scopeLine(coupon: MentorCouponView, serviceId: string) {
-  const mentors = coupon.applicableMentorIds?.length ?? 0;
-  const services = coupon.applicableServiceIds ?? [];
-  if (!mentors && !services.length) return 'Áp cho mọi mentor';
-  if (!mentors && services.includes(serviceId)) return 'Riêng dịch vụ này';
-  return `Áp cho ${mentors} mentor`;
-}
-
-function CouponTicket({
-  coupon,
-  serviceId,
-  priceWithFee,
-  now,
-}: {
-  coupon: MentorCouponView;
-  serviceId: string;
-  priceWithFee: number;
-  now: number;
-}) {
-  const scheduled = deriveCouponState(coupon, now) === 'scheduled';
-  const start = safeDate(coupon.startAt);
-  const end = safeDate(coupon.endAt);
-  const period = scheduled
-    ? `${start ? dayMonth.format(start) : '—'} – ${end ? dayMonthYear.format(end) : '—'}`
-    : `đến ${end ? dayMonthYear.format(end) : '—'}`;
-  const capLine =
-    coupon.discountType === 'PERCENTAGE'
-      ? coupon.maxDiscountScoin
-        ? `tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`
-        : 'không giới hạn mức giảm'
-      : 'S-coins';
+function CouponTicket({ coupon, priceWithFee }: { coupon: UserCouponView; priceWithFee: number }) {
+  const capLine = isPercentDiscount(coupon.discountType)
+    ? coupon.maxDiscountScoin
+      ? `tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`
+      : 'không giới hạn mức giảm'
+    : 'S-coins';
   const after = priceWithFee - computeCouponDiscount(coupon, priceWithFee);
-  const used = coupon.usedCountForService?.[serviceId] ?? 0;
-  const remaining =
-    coupon.quotaTotal != null ? Math.max(0, coupon.quotaTotal - coupon.totalRedemptions) : null;
+  const quota =
+    coupon.quotaTotal != null
+      ? `${formatScoin(coupon.remainingQuota)}/${formatScoin(coupon.quotaTotal)}`
+      : formatScoin(coupon.remainingQuota);
 
   return (
     <li className="grid min-h-36 grid-cols-[128px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border-color bg-white">
@@ -85,30 +50,24 @@ function CouponTicket({
             {coupon.code}
           </code>
         </div>
-        <p className="text-sm text-text-secondary">
-          {scopeLine(coupon, serviceId)} · {period}
-        </p>
+        {coupon.description?.trim() && (
+          <p className="text-sm text-text-secondary">{coupon.description.trim()}</p>
+        )}
         <p className="text-sm text-text-main">
           Mentee trả <strong className="font-bold">{formatScoin(after)} S-coins</strong> thay vì{' '}
           {formatScoin(priceWithFee)}
         </p>
-        <p className="text-sm font-semibold text-emerald-700">
-          {used > 0
-            ? `${formatScoin(used)} mentee đã dùng cho dịch vụ này`
-            : 'Chưa có mentee dùng mã'}
-        </p>
-        {(scheduled || (remaining !== null && isNearlyExhausted(coupon))) && (
+        {coupon.remainingQuota != null && (
           <div className="mt-0.5 flex flex-wrap gap-2">
-            {scheduled && start && (
-              <span className="rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-bold text-[#1d4ed8]">
-                Bắt đầu từ {dayMonth.format(start)}
-              </span>
-            )}
-            {remaining !== null && isNearlyExhausted(coupon) && (
-              <span className="rounded-full bg-[#fff7ed] px-2.5 py-0.5 text-xs font-bold text-[#c2410c]">
-                Còn {formatScoin(remaining)} lượt trên toàn hệ thống
-              </span>
-            )}
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                isRunningLow(coupon)
+                  ? 'bg-[#fff7ed] text-[#c2410c]'
+                  : 'bg-surface-subtle text-text-secondary'
+              }`}
+            >
+              Còn {quota} lượt trên toàn hệ thống
+            </span>
           </div>
         )}
       </div>
@@ -118,14 +77,10 @@ function CouponTicket({
 
 export function ServiceCouponsCard({
   coupons,
-  serviceId,
   priceScoin,
-  now,
 }: {
-  coupons: MentorCouponView[];
-  serviceId: string;
+  coupons: UserCouponView[];
   priceScoin: number;
-  now: number;
 }) {
   if (!coupons.length) return null;
   const priceWithFee = withMenteeSurcharge(priceScoin);
@@ -136,7 +91,7 @@ export function ServiceCouponsCard({
     >
       <div className="mb-3 border-b border-slate-100 pb-3">
         <h2 id="service-coupons-heading" className="text-lg font-bold text-text-main">
-          Mã giảm giá đang áp cho dịch vụ này
+          Mã giảm giá mentee có thể dùng
         </h2>
         <p className="mt-0.5 text-sm text-text-muted">
           SkillSwap tạo các mã này. Mentee nhập mã khi thanh toán, bạn không cần thao tác gì thêm.
@@ -144,13 +99,7 @@ export function ServiceCouponsCard({
       </div>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(380px,1fr))]">
         {coupons.map((coupon) => (
-          <CouponTicket
-            key={coupon.id}
-            coupon={coupon}
-            serviceId={serviceId}
-            priceWithFee={priceWithFee}
-            now={now}
-          />
+          <CouponTicket key={coupon.id} coupon={coupon} priceWithFee={priceWithFee} />
         ))}
       </ul>
       <p className="mt-3 text-sm text-text-muted">

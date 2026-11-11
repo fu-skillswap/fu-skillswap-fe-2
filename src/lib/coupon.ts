@@ -13,6 +13,16 @@ export function formatScoin(value: number | null | undefined): string {
   return scoinFormatter.format(Number.isFinite(value) ? (value as number) : 0);
 }
 
+/** True for percentage coupons: `PERCENTAGE` (admin endpoints) or `PERCENT` (/api/me/coupons). */
+export function isPercentDiscount(discountType: string | null | undefined): boolean {
+  return discountType === 'PERCENTAGE' || discountType === 'PERCENT';
+}
+
+/** True for fixed-amount coupons: `FIXED_SCOIN` (admin endpoints) or `FIXED` (/api/me/coupons). */
+export function isFixedDiscount(discountType: string | null | undefined): boolean {
+  return discountType === 'FIXED_SCOIN' || discountType === 'FIXED';
+}
+
 type DiscountFields = Pick<
   CouponView,
   'discountType' | 'discountValue' | 'maxDiscountScoin' | 'minOrderValueScoin'
@@ -24,18 +34,15 @@ type DiscountFields = Pick<
  */
 export function describeDiscount(coupon: DiscountFields): string {
   let text: string;
-  switch (coupon.discountType) {
-    case 'PERCENTAGE':
-      text = `Giảm ${coupon.discountValue}%`;
-      if (coupon.maxDiscountScoin != null && coupon.maxDiscountScoin > 0) {
-        text += `, tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`;
-      }
-      break;
-    case 'FIXED_SCOIN':
-      text = `Giảm ${formatScoin(coupon.discountValue)} S-coins`;
-      break;
-    default:
-      text = `Giảm ${formatScoin(coupon.discountValue)} (${coupon.discountType || 'không rõ'})`;
+  if (isPercentDiscount(coupon.discountType)) {
+    text = `Giảm ${coupon.discountValue}%`;
+    if (coupon.maxDiscountScoin != null && coupon.maxDiscountScoin > 0) {
+      text += `, tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`;
+    }
+  } else if (isFixedDiscount(coupon.discountType)) {
+    text = `Giảm ${formatScoin(coupon.discountValue)} S-coins`;
+  } else {
+    text = `Giảm ${formatScoin(coupon.discountValue)} (${coupon.discountType || 'không rõ'})`;
   }
   if (coupon.minOrderValueScoin != null && coupon.minOrderValueScoin > 0) {
     text += `, đơn từ ${formatScoin(coupon.minOrderValueScoin)}`;
@@ -45,7 +52,7 @@ export function describeDiscount(coupon: DiscountFields): string {
 
 /** "-20%" | "-2.000". Unknown types show the plain value. */
 export function couponBadgeText(coupon: Pick<CouponView, 'discountType' | 'discountValue'>) {
-  if (coupon.discountType === 'PERCENTAGE') return `-${coupon.discountValue}%`;
+  if (isPercentDiscount(coupon.discountType)) return `-${coupon.discountValue}%`;
   return `-${formatScoin(coupon.discountValue)}`;
 }
 
@@ -225,7 +232,7 @@ export function computeCouponDiscount(
   if (!Number.isFinite(coupon.discountValue) || coupon.discountValue <= 0) return 0;
   if (coupon.minOrderValueScoin != null && orderScoin < coupon.minOrderValueScoin) return 0;
   let discount: number;
-  if (coupon.discountType === 'PERCENTAGE') {
+  if (isPercentDiscount(coupon.discountType)) {
     discount = Math.floor((orderScoin * Math.min(coupon.discountValue, 100)) / 100);
     if (coupon.maxDiscountScoin != null && coupon.maxDiscountScoin > 0) {
       discount = Math.min(discount, coupon.maxDiscountScoin);
@@ -240,7 +247,7 @@ export function computeCouponDiscount(
 export function capReachedAtScoin(
   coupon: Pick<CouponView, 'discountType' | 'discountValue' | 'maxDiscountScoin'>,
 ): number | null {
-  if (coupon.discountType !== 'PERCENTAGE') return null;
+  if (!isPercentDiscount(coupon.discountType)) return null;
   if (!coupon.maxDiscountScoin || coupon.maxDiscountScoin <= 0 || coupon.discountValue <= 0) {
     return null;
   }

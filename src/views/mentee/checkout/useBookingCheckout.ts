@@ -6,11 +6,10 @@
 
 'use client';
 
-import { MENTEE_COUPON_SUGGESTIONS_ENABLED } from '@/constants/featureFlags';
 import { formatScoin, mapCouponError } from '@/lib/coupon';
 import { ApiClientError } from '@/models/apiClient';
 import type { MentorBookingResponse, PaymentCheckoutResponse } from '@/models/auth';
-import type { CheckoutPreviewResponse, UsableCouponView } from '@/models/coupon';
+import type { CheckoutPreviewResponse, UserCouponView } from '@/models/coupon';
 import { bookingRepo, newIdempotencyKey } from '@/repositories/bookingRepo';
 import { couponRepo } from '@/repositories/couponRepo';
 import { getUserFriendlyErrorMessage, showSuccess } from '@/utils/toast';
@@ -39,7 +38,7 @@ export function useBookingCheckout(locale: string, bookingId: string) {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [couponError, setCouponError] = useState<string>();
-  const [suggestions, setSuggestions] = useState<UsableCouponView[] | null>(null);
+  const [suggestions, setSuggestions] = useState<UserCouponView[] | null>(null);
 
   const [consent, setConsent] = useState(false);
   const [payState, setPayState] = useState<PayState>('idle');
@@ -87,16 +86,22 @@ export function useBookingCheckout(locale: string, bookingId: string) {
             );
           }
         }
-        if (MENTEE_COUPON_SUGGESTIONS_ENABLED) {
-          couponRepo
-            .getUsableCoupons(bookingId)
-            .then((list) => {
-              if (!cancelled) setSuggestions(Array.isArray(list) && list.length ? list : null);
-            })
-            .catch(() => {
-              // Suggestions are optional; manual entry still works.
-            });
-        }
+        // GET /api/me/coupons is account-wide (no bookingId filter): checkout-preview still decides
+        // whether a code really applies to this booking.
+        couponRepo
+          .getMyCoupons()
+          .then((list) => {
+            if (cancelled) return;
+            const visible = Array.isArray(list)
+              ? list
+                  .filter((coupon) => coupon.remainingQuota == null || coupon.remainingQuota > 0)
+                  .sort((a, b) => Number(b.isUsable) - Number(a.isUsable))
+              : [];
+            setSuggestions(visible.length ? visible : null);
+          })
+          .catch(() => {
+            // Suggestions are optional; manual entry still works.
+          });
       })
       .catch((reason) => {
         if (cancelled) return;

@@ -8,7 +8,7 @@
 'use client';
 
 import { PLATFORM_OPERATOR, SCOIN_TO_VND } from '@/constants/legal';
-import { describeDiscount, formatScoin, couponBadgeText } from '@/lib/coupon';
+import { couponBadgeText, describeDiscount, formatScoin, isPercentDiscount } from '@/lib/coupon';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -32,7 +32,6 @@ import {
   getBookingStatusConfig,
   getMentorName,
   getPlatformLabel,
-  formatDayMonth,
   toDate,
 } from '../my-bookings/bookingStatusConfig';
 import styles from './BookingCheckoutView.module.css';
@@ -327,17 +326,20 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
             {checkout.suggestions && !checkout.appliedCode && (
               <ul className={styles.suggestions} aria-label="Mã bạn có thể dùng">
                 {checkout.suggestions.map((coupon) => {
-                  const end = toDate(coupon.endAt);
                   const cap =
-                    coupon.discountType === 'PERCENTAGE' && coupon.maxDiscountScoin
+                    isPercentDiscount(coupon.discountType) && coupon.maxDiscountScoin
                       ? `Tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`
                       : describeDiscount(coupon);
+                  const remaining =
+                    coupon.remainingQuota != null
+                      ? ` · còn ${formatScoin(coupon.remainingQuota)} lượt`
+                      : '';
                   return (
                     <li key={coupon.id}>
                       <button
                         type="button"
                         className={styles.suggestion}
-                        disabled={!coupon.usable || checkout.previewLoading || paying}
+                        disabled={!coupon.isUsable || checkout.previewLoading || paying}
                         onClick={() => void checkout.applyCoupon(coupon.code)}
                       >
                         <span className={styles.suggestionBadge}>{couponBadgeText(coupon)}</span>
@@ -346,12 +348,14 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
                             {coupon.title} · {coupon.code}
                           </strong>
                           <small>
-                            {coupon.usable
-                              ? `${cap}${end ? ` · hết hạn ${formatDayMonth(end)}` : ''}`
-                              : coupon.reasonIfNotUsable || 'Không dùng được cho buổi này'}
+                            {coupon.isUsable
+                              ? `${cap}${remaining}`
+                              : coupon.unusableReason || 'Bạn chưa dùng được mã này'}
                           </small>
                         </span>
-                        {coupon.usable && <span className={styles.suggestionAction}>Dùng mã</span>}
+                        {coupon.isUsable && (
+                          <span className={styles.suggestionAction}>Dùng mã</span>
+                        )}
                       </button>
                     </li>
                   );
