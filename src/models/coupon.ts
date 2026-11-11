@@ -131,20 +131,26 @@ export interface CheckoutPreviewResponse {
   disclaimer: string | null;
 }
 
-/**
- * Coupon fields of a mentor's own coupons.
- * TODO(api): GET /api/me/mentor/coupons does not exist yet — shape is the FE expectation.
- */
-export interface MentorCouponView extends CouponView {
-  /** Redemption count per serviceId of the current mentor. */
-  usedCountForService: Record<string, number>;
-}
+/** Discount types returned by GET /api/me/coupons (differs from the admin values). */
+export type UserCouponDiscountType = 'FIXED' | 'PERCENT' | (string & {});
 
 /**
- * Coupon the mentee can pick at checkout.
- * TODO(api): GET /api/me/coupons?bookingId= does not exist yet — shape is the FE expectation.
+ * GET /api/me/coupons (`UserCouponResponse`, tag "Mã giảm giá của tôi") — still-valid coupons
+ * for the signed-in account, used by both mentee checkout and the mentor service pages.
+ * Unlike `CouponView` it has no dates, status or target lists.
  */
-export interface UsableCouponView extends CouponView {
-  usable: boolean;
-  reasonIfNotUsable: string | null;
+export interface UserCouponView {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  discountType: UserCouponDiscountType;
+  discountValue: number;
+  maxDiscountScoin: number | null;
+  minOrderValueScoin: number | null;
+  quotaTotal: number | null;
+  remainingQuota: number | null;
+  /** Whether THIS account can still use it (per-user quota…); not tied to a specific booking. */
+  isUsable: boolean;
+  unusableReason: string | null;
 }

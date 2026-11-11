@@ -1,26 +1,24 @@
 /**
  * @file useMentorServiceCoupons.ts
- * @description Coupons that apply to the current mentor's services (read-only, mentor side).
- * Does nothing while MENTOR_COUPONS_ENABLED is false, so the pages render exactly as before.
+ * @description Coupons shown on the mentor service pages (read-only), from GET /api/me/coupons —
+ * the same endpoint mentee checkout uses.
  */
 
 'use client';
 
-import { MENTOR_COUPONS_ENABLED } from '@/constants/featureFlags';
-import { deriveCouponState } from '@/lib/coupon';
-import type { MentorCouponView } from '@/models/coupon';
+import { withMenteeSurcharge } from '@/lib/coupon';
+import type { UserCouponView } from '@/models/coupon';
 import { couponRepo } from '@/repositories/couponRepo';
 import { useEffect, useState } from 'react';
 
-/** All coupons for my services; null while disabled, loading, unavailable (404) or failed. */
-export function useMyMentorCoupons(): MentorCouponView[] | null {
-  const [coupons, setCoupons] = useState<MentorCouponView[] | null>(null);
+/** Coupons from GET /api/me/coupons; null while loading or when the request fails. */
+export function useMyMentorCoupons(): UserCouponView[] | null {
+  const [coupons, setCoupons] = useState<UserCouponView[] | null>(null);
 
   useEffect(() => {
-    if (!MENTOR_COUPONS_ENABLED) return;
     let cancelled = false;
     couponRepo
-      .getMyMentorCoupons()
+      .getMyCoupons()
       .then((result) => {
         if (!cancelled) setCoupons(Array.isArray(result) ? result : null);
       })
@@ -37,26 +35,21 @@ export function useMyMentorCoupons(): MentorCouponView[] | null {
 }
 
 /**
- * Running or scheduled coupons that apply to one service.
- * The endpoint already filters to my services, so a coupon applies when it targets everyone,
- * targets mentors (that list includes me), or lists this service.
- * TODO(api): confirm GET /api/me/mentor/coupons filtering semantics.
+ * Coupons a mentee could use on a service with this price: quota left and the minimum order met
+ * (on the price the mentee pays, surcharge included). `isUsable` is ignored on purpose — it
+ * describes the mentor's own account, not the mentees.
+ * TODO(api): GET /api/me/coupons has no applicableServiceIds/applicableMentorIds, so coupons that
+ * target other services cannot be filtered out yet.
  */
 export function couponsForService(
-  coupons: MentorCouponView[] | null,
-  serviceId: string,
-  now: number,
-): MentorCouponView[] {
-  if (!coupons?.length) return [];
-  return coupons.filter((coupon) => {
-    const mentorIds = coupon.applicableMentorIds ?? [];
-    const serviceIds = coupon.applicableServiceIds ?? [];
-    const applies =
-      (!mentorIds.length && !serviceIds.length) ||
-      mentorIds.length > 0 ||
-      serviceIds.includes(serviceId);
-    if (!applies) return false;
-    const state = deriveCouponState(coupon, now);
-    return state === 'running' || state === 'scheduled';
-  });
+  coupons: UserCouponView[] | null,
+  priceScoin: number,
+): UserCouponView[] {
+  if (!coupons?.length || !(priceScoin > 0)) return [];
+  const menteePrice = withMenteeSurcharge(priceScoin);
+  return coupons.filter(
+    (coupon) =>
+      (coupon.remainingQuota == null || coupon.remainingQuota > 0) &&
+      (coupon.minOrderValueScoin == null || menteePrice >= coupon.minOrderValueScoin),
+  );
 }

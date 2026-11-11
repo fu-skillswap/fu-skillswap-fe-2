@@ -385,7 +385,7 @@ interface MentorServiceCardProps {
   service: MentorServiceManagementResponse;
   isToggling: boolean;
   compact?: boolean;
-  /** Running/scheduled coupons for this service (MENTOR_COUPONS_ENABLED); hidden when 0. */
+  /** Coupons a mentee could use on this service (GET /api/me/coupons); hidden when 0. */
   couponCount?: number;
   onOpen: (serviceId: string) => void;
   onRequestStatusChange: (service: MentorServiceManagementResponse) => void;
@@ -480,11 +480,10 @@ export function ScheduleManageView() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const [services, setServices] = useState<MentorServiceManagementResponse[]>([]);
-  // Coupon pills (MENTOR_COUPONS_ENABLED): no request and no pill while the flag is off.
+  // Coupon pills from GET /api/me/coupons; hidden when there are none.
   const mentorCoupons = useMyMentorCoupons();
-  const [couponNow] = useState(() => Date.now());
   const couponCountFor = (service: MentorServiceManagementResponse) =>
-    service.isFree ? 0 : couponsForService(mentorCoupons, service.serviceId, couponNow).length;
+    service.isFree ? 0 : couponsForService(mentorCoupons, service.publicPriceScoin ?? 0).length;
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [pendingStatusChange, setPendingStatusChange] =

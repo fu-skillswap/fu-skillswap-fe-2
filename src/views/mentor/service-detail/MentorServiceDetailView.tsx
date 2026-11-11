@@ -69,12 +69,11 @@ export function MentorServiceDetailView({
   const [hasError, setHasError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  // Coupons (MENTOR_COUPONS_ENABLED): empty while the flag is off or the API is unavailable.
+  // Coupons from GET /api/me/coupons: empty while loading or when the request fails.
   const mentorCoupons = useMyMentorCoupons();
-  const [couponNow] = useState(() => Date.now());
   const serviceCoupons =
     service && !service.isFree
-      ? couponsForService(mentorCoupons, service.serviceId, couponNow)
+      ? couponsForService(mentorCoupons, service.publicPriceScoin ?? 0)
       : [];
   /** Bumped to remount the editor with fresh data (after a reload or a cancel). */
   const [editorKey, setEditorKey] = useState(0);
@@ -235,12 +234,7 @@ export function MentorServiceDetailView({
             </div>
           </article>
 
-          <ServiceCouponsCard
-            coupons={serviceCoupons}
-            serviceId={service.serviceId}
-            priceScoin={service.publicPriceScoin ?? 0}
-            now={couponNow}
-          />
+          <ServiceCouponsCard coupons={serviceCoupons} priceScoin={service.publicPriceScoin ?? 0} />
 
           {isEditing && editorDefaults ? (
             <section
