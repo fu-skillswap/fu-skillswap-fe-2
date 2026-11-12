@@ -4,7 +4,8 @@
  * network — safe to unit test and to use from both Server and Client Components.
  */
 
-import type { CouponView } from '@/models/coupon';
+import type { MentorServiceManagementResponse } from '@/models/auth';
+import type { CouponView, MentorCouponOffer } from '@/models/coupon';
 
 const scoinFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
 
@@ -259,8 +260,248 @@ export function capReachedAtScoin(
  * TODO: read PAYMENT_MENTEE_SURCHARGE_BPS from BE (no FE constant or config endpoint yet).
  */
 export const MENTEE_SURCHARGE_RATE = 0.1;
+/** Same surcharge in basis points (10% = 1000), for integer money maths. */
+export const MENTEE_SURCHARGE_BPS = Math.round(MENTEE_SURCHARGE_RATE * 10_000);
 
 /** Price the mentee sees for a service price (platform surcharge included). */
 export function withMenteeSurcharge(priceScoin: number): number {
   return Math.round(priceScoin * (1 + MENTEE_SURCHARGE_RATE));
+}
+
+// --- Mentor coupon opt-in (GET /api/me/mentor/coupon-offers) ---
+
+type OfferDiscount = Pick<MentorCouponOffer, 'discountType' | 'discountValue' | 'maxDiscountScoin'>;
+type ServicePricing = Pick<MentorServiceManagementResponse, 'isFree' | 'publicPriceScoin'>;
+
+/** Price the mentee sees for a mentor service (surcharge included); 0 for free services. */
+export function menteePriceOf(service: ServicePricing): number {
+  if (service.isFree) return 0;
+  return withMenteeSurcharge(service.publicPriceScoin ?? 0);
+}
+
+/**
+ * What the mentee pays after the offer. `menteePrice` is the price the mentee sees (platform
+ * surcharge included). PERCENT: price − min(floor(price × v / 100), cap); FIXED: max(0, price − v).
+ * Unknown discount types leave the price unchanged.
+ */
+export function menteePriceAfter(offer: OfferDiscount, menteePrice: number): number {
+  if (!Number.isFinite(menteePrice) || menteePrice <= 0) return 0;
+  const value = Number.isFinite(offer.discountValue) ? Math.max(0, offer.discountValue) : 0;
+  if (isPercentDiscount(offer.discountType)) {
+    const cap =
+      offer.maxDiscountScoin != null && offer.maxDiscountScoin > 0
+        ? offer.maxDiscountScoin
+        : Infinity;
+    const discount = Math.min(Math.floor((menteePrice * Math.min(value, 100)) / 100), cap);
+    return Math.max(0, menteePrice - discount);
+  }
+  if (isFixedDiscount(offer.discountType)) return Math.max(0, menteePrice - value);
+  return menteePrice;
+}
+
+export type OfferState = 'scheduled' | 'running' | 'ended';
+
+export function offerState(
+  offer: Pick<MentorCouponOffer, 'startAt' | 'endAt' | 'remainingQuota'>,
+  now: Date | number = Date.now(),
+): OfferState {
+  const nowTime = typeof now === 'number' ? now : now.getTime();
+  const end = toTime(offer.endAt);
+  if ((end !== null && nowTime > end) || offer.remainingQuota === 0) return 'ended';
+  const start = toTime(offer.startAt);
+  if (start !== null && nowTime < start) return 'scheduled';
+  return 'running';
+}
+
+/** "-20%" | "-100%" | "-2.000". */
+export function offerBadge(offer: Pick<MentorCouponOffer, 'discountType' | 'discountValue'>) {
+  return couponBadgeText(offer);
+}
+
+/** Second line of the ticket stub: "tối đa 3.000" | "không giới hạn" | "S-coins". */
+export function offerCap(offer: OfferDiscount): string {
+  if (isPercentDiscount(offer.discountType)) {
+    return offer.maxDiscountScoin != null && offer.maxDiscountScoin > 0
+      ? `tối đa ${formatScoin(offer.maxDiscountScoin)}`
+      : 'không giới hạn';
+  }
+  return 'S-coins';
+}
+
+export interface OfferEligibility {
+  eligible: boolean;
+  /** Vietnamese reason shown on disabled rows; null when eligible. */
+  reason: string | null;
+}
+
+/** Free services never take a coupon; paid ones must reach the minimum (on the mentee price). */
+export function canApplyTo(
+  offer: Pick<MentorCouponOffer, 'minOrderValueScoin'>,
+  service: ServicePricing,
+): OfferEligibility {
+  if (service.isFree || !((service.publicPriceScoin ?? 0) > 0)) {
+    return { eligible: false, reason: 'Miễn phí, không cần mã' };
+  }
+  const min = offer.minOrderValueScoin;
+  if (min != null && min > 0 && menteePriceOf(service) < min) {
+    return { eligible: false, reason: `Cần giá từ ${formatScoin(min)} S-coins` };
+  }
+  return { eligible: true, reason: null };
+}
+
+/** The offer applied to this service (a service carries at most one), or null. */
+export function appliedOfferFor<T extends Pick<MentorCouponOffer, 'appliedServiceIds'>>(
+  serviceId: string,
+  offers: readonly T[] | null | undefined,
+): T | null {
+  return offers?.find((offer) => offer.appliedServiceIds?.includes(serviceId)) ?? null;
+}
+
+/** Offers shown to the mentor: ended ones hidden; new first, then running, then scheduled. */
+export function visibleOffers(
+  offers: readonly MentorCouponOffer[] | null | undefined,
+  now: Date | number = Date.now(),
+): MentorCouponOffer[] {
+  if (!offers) return [];
+  const rank = (offer: MentorCouponOffer) =>
+    (offer.isNew ? 0 : 2) + (offerState(offer, now) === 'running' ? 0 : 1);
+  return offers
+    .filter((offer) => offerState(offer, now) !== 'ended')
+    .map((offer, index) => ({ offer, index }))
+    .sort((a, b) => rank(a.offer) - rank(b.offer) || a.index - b.index)
+    .map(({ offer }) => offer);
+}
+
+const VN_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const offerDayMonth = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: VN_TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+});
+const offerDayMonthYear = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: VN_TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+/** ISO → "dd/MM" (Vietnam time); "" when invalid. */
+export function formatOfferDay(value: string | null | undefined): string {
+  const time = toTime(value);
+  return time === null ? '' : offerDayMonth.format(time);
+}
+
+/** ISO → "dd/MM/yyyy" (Vietnam time); "" when invalid. */
+export function formatOfferDate(value: string | null | undefined): string {
+  const time = toTime(value);
+  return time === null ? '' : offerDayMonthYear.format(time);
+}
+
+export interface CouponMoneyFlow {
+  /** What the session costs the mentee before the coupon (service price + platform surcharge). */
+  priceWithSurcharge: number;
+  /** Part SkillSwap pays for the mentee. */
+  discount: number;
+  menteePays: number;
+  /** Always the full service price: the coupon never reduces the mentor's share. */
+  mentorGets: number;
+  /** priceWithSurcharge − service price. */
+  platformFee: number;
+}
+
+/**
+ * Where the money of one coupon-discounted session goes. `surchargeBps` is the mentee platform
+ * surcharge in basis points (1000 = 10%); a missing offer means no discount.
+ * Example: 16.500 S-coins, 10%, 20% capped at 3.000 → 18.150 / 3.000 / 15.150 / 16.500 / 1.650.
+ */
+export function couponMoneyFlow(
+  servicePrice: number,
+  surchargeBps: number,
+  offer: OfferDiscount | null,
+): CouponMoneyFlow {
+  const price = Number.isFinite(servicePrice) ? Math.max(0, Math.round(servicePrice)) : 0;
+  const bps = Number.isFinite(surchargeBps) ? Math.max(0, surchargeBps) : 0;
+  const priceWithSurcharge = Math.round((price * (10_000 + bps)) / 10_000);
+  const menteePays = offer ? menteePriceAfter(offer, priceWithSurcharge) : priceWithSurcharge;
+  return {
+    priceWithSurcharge,
+    discount: priceWithSurcharge - menteePays,
+    menteePays,
+    mentorGets: price,
+    platformFee: priceWithSurcharge - price,
+  };
+}
+
+/** "20%, tối đa 3.000 S-coins" | "20%" | "2.000 S-coins". */
+export function offerRule(offer: OfferDiscount): string {
+  if (isPercentDiscount(offer.discountType)) {
+    return offer.maxDiscountScoin != null && offer.maxDiscountScoin > 0
+      ? `${offer.discountValue}%, tối đa ${formatScoin(offer.maxDiscountScoin)} S-coins`
+      : `${offer.discountValue}%`;
+  }
+  return `${formatScoin(offer.discountValue)} S-coins`;
+}
+
+/**
+ * Service + offer for the "Tiền đi như thế nào" example, from the mentor's own data: the first
+ * paid service that has an applied offer, else the first paid service with the running offer that
+ * gives it the largest discount (any visible eligible offer when none is running). null when the
+ * mentor has no paid service or no offer fits.
+ */
+export function pickMoneyFlowExample<S extends ServicePricing & { serviceId: string }>(
+  services: readonly S[],
+  offers: readonly MentorCouponOffer[],
+  now: Date | number = Date.now(),
+): { service: S; offer: MentorCouponOffer } | null {
+  const paid = services.filter((service) => !service.isFree && (service.publicPriceScoin ?? 0) > 0);
+  for (const service of paid) {
+    const offer = appliedOfferFor(service.serviceId, offers);
+    if (offer) return { service, offer };
+  }
+  const service = paid[0];
+  if (!service) return null;
+  const eligible = offers.filter((offer) => canApplyTo(offer, service).eligible);
+  const running = eligible.filter((offer) => offerState(offer, now) === 'running');
+  const pool = running.length ? running : eligible;
+  if (!pool.length) return null;
+  const price = menteePriceOf(service);
+  const best = pool.reduce((top, offer) =>
+    menteePriceAfter(offer, price) < menteePriceAfter(top, price) ? offer : top,
+  );
+  return { service, offer: best };
+}
+
+// --- Wallet history ---
+
+interface WalletCouponFields {
+  originType?: string | null;
+  sourceType?: string | null;
+  couponCode?: string | null;
+  memo?: string | null;
+}
+
+/** True for wallet entries paid by SkillSwap for a coupon discount. */
+export function isCouponSponsorEntry(entry: WalletCouponFields): boolean {
+  return entry.originType === 'COUPON_BONUS' || entry.sourceType === 'COUPON';
+}
+
+const MEMO_CODE_PATTERN = /(?:mã|coupon|code)\s*[:#]?\s*([A-Za-z0-9]{4,20})(?![A-Za-z0-9])/i;
+
+/** Coupon code of a wallet entry: `couponCode`, else an upper-case code named in the memo. */
+export function walletEntryCouponCode(entry: WalletCouponFields): string | null {
+  const direct = entry.couponCode?.trim();
+  if (direct) return direct.toUpperCase();
+  const match = entry.memo?.match(MEMO_CODE_PATTERN)?.[1];
+  return match && /^[A-Z0-9]+$/.test(match) && /[A-Z]/.test(match) ? match : null;
+}
+
+/**
+ * Label of a coupon wallet entry: "SkillSwap tài trợ mã {CODE}", or the memo as is when the code is
+ * unknown. null for non-coupon entries.
+ */
+export function walletCouponLabel(entry: WalletCouponFields): string | null {
+  if (!isCouponSponsorEntry(entry)) return null;
+  const code = walletEntryCouponCode(entry);
+  if (code) return `SkillSwap tài trợ mã ${code}`;
+  return entry.memo?.trim() || 'SkillSwap tài trợ mã giảm giá';
 }

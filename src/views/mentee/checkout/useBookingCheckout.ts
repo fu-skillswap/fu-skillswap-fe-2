@@ -22,6 +22,16 @@ type PayState = 'idle' | 'pending' | 'redirecting';
 
 export const COUPON_CARD_ID = 'checkout-coupon';
 
+/**
+ * GET /api/me/coupons is account-wide. When a coupon lists `applicableServiceIds` and the booking's
+ * service is known, keep it only for that service; otherwise checkout-preview decides.
+ */
+function couponMatchesService(coupon: UserCouponView, serviceId: string | null) {
+  const ids = coupon.applicableServiceIds;
+  if (!serviceId || !ids?.length) return true;
+  return ids.includes(serviceId);
+}
+
 export function useBookingCheckout(locale: string, bookingId: string) {
   const router = useRouter();
   const bookingsHref = `/${locale}/my-bookings`;
@@ -46,6 +56,8 @@ export function useBookingCheckout(locale: string, bookingId: string) {
   /** Live-region text for screen readers (coupon applied / errors). */
   const [announcement, setAnnouncement] = useState('');
   const payingRef = useRef(false);
+  /** Coupon the mentor applied to this booking's service; pre-applied once per load. */
+  const [autoApplyCode, setAutoApplyCode] = useState<string | null>(null);
   /** Guards against an older preview response overwriting a newer one. */
   const previewSeq = useRef(0);
 
@@ -92,12 +104,21 @@ export function useBookingCheckout(locale: string, bookingId: string) {
           .getMyCoupons()
           .then((list) => {
             if (cancelled) return;
+            const serviceId = detail.serviceId ?? null;
             const visible = Array.isArray(list)
               ? list
                   .filter((coupon) => coupon.remainingQuota == null || coupon.remainingQuota > 0)
+                  .filter((coupon) => couponMatchesService(coupon, serviceId))
                   .sort((a, b) => Number(b.isUsable) - Number(a.isUsable))
               : [];
             setSuggestions(visible.length ? visible : null);
+            // A coupon limited to this exact service was applied by the mentor: pre-apply it.
+            const mentorApplied = serviceId
+              ? visible.find(
+                  (coupon) => coupon.isUsable && coupon.applicableServiceIds?.includes(serviceId),
+                )
+              : undefined;
+            setAutoApplyCode(mentorApplied?.code.toUpperCase() ?? null);
           })
           .catch(() => {
             // Suggestions are optional; manual entry still works.
@@ -149,6 +170,16 @@ export function useBookingCheckout(locale: string, bookingId: string) {
       setAnnouncement(message);
     }
   };
+
+  const autoAppliedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!autoApplyCode || !preview || previewLoading || appliedCode) return;
+    if (autoAppliedRef.current === autoApplyCode) return;
+    autoAppliedRef.current = autoApplyCode;
+    void applyCoupon(autoApplyCode);
+    // applyCoupon is recreated every render; the ref guard keeps this to one attempt per code.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoApplyCode, preview, previewLoading, appliedCode]);
 
   const removeCoupon = async () => {
     if (previewLoading) return;

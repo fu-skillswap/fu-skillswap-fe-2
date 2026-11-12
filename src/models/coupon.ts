@@ -46,6 +46,11 @@ export interface CouponView {
   minOrderValueScoin: number | null;
   applicableServiceIds: string[];
   applicableMentorIds: string[];
+  /**
+   * Mentors pick which of their services the coupon applies to.
+   * TODO(api): mentorOptIn field — absent until BE adds it; the admin option stays hidden then.
+   */
+  mentorOptIn?: boolean;
   totalRedemptions: number;
   activeRedemptions: number;
   createdAt: string;
@@ -67,6 +72,8 @@ export interface CreateCouponCommand {
   minOrderValueScoin: number | null;
   applicableServiceIds: string[];
   applicableMentorIds: string[];
+  /** Only sent when the admin form offers the option. TODO(api): mentorOptIn field. */
+  mentorOptIn?: boolean;
 }
 
 export type UpdateCouponCommand = CreateCouponCommand;
@@ -153,4 +160,52 @@ export interface UserCouponView {
   /** Whether THIS account can still use it (per-user quota…); not tied to a specific booking. */
   isUsable: boolean;
   unusableReason: string | null;
+  /**
+   * Services this coupon is limited to (admin-targeted or applied by the mentor). Missing or empty
+   * means the API did not say, so the coupon is not filtered by service.
+   */
+  applicableServiceIds?: string[] | null;
+}
+
+/**
+ * GET /api/me/mentor/coupon-offers — SkillSwap-funded coupons a mentor can apply to their own
+ * services (at most one coupon per service).
+ * TODO(api): confirm the exact field names with BE once the endpoint is deployed.
+ */
+export interface MentorCouponOffer {
+  couponId: string;
+  code: string;
+  title: string;
+  description: string | null;
+  discountType: UserCouponDiscountType;
+  discountValue: number;
+  maxDiscountScoin: number | null;
+  minOrderValueScoin: number | null;
+  startAt: string;
+  endAt: string;
+  quotaTotal: number | null;
+  remainingQuota: number | null;
+  quotaPerUser: number | null;
+  /** The mentor has not seen this offer yet. */
+  isNew: boolean;
+  /** The mentor's services this coupon is applied to. */
+  appliedServiceIds: string[];
+}
+
+/**
+ * GET /api/me/mentor/coupon-stats — one row per (coupon, service): distinct mentees who booked the
+ * service with that coupon this month.
+ * TODO(api): endpoint and field names not confirmed with BE yet.
+ */
+export interface MentorCouponStat {
+  couponId: string;
+  code: string;
+  serviceId: string;
+  serviceTitle: string;
+  menteeCount: number;
+}
+
+/** PUT /api/me/mentor/coupon-offers/{couponId}/services */
+export interface SetCouponServicesCommand {
+  serviceIds: string[];
 }

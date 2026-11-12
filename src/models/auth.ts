@@ -456,6 +456,11 @@ export interface MentorBookingResponse {
   menteeUserId: string;
   menteeDisplayName: string;
   menteeAvatarUrl?: string | null;
+  /**
+   * Booked service. TODO(api): confirm BE returns it on booking detail; checkout uses it to match
+   * GET /api/me/coupons applicableServiceIds and skips the match when it is missing.
+   */
+  serviceId?: string | null;
   serviceTitle?: string | null;
   serviceDescriptionSnapshot?: string | null;
   serviceDurationSnapshot?: number | null;
@@ -1341,6 +1346,11 @@ export interface WalletTransactionResponse {
   amountScoin: number;
   balanceEffectScoin: number;
   memo?: string | null;
+  /**
+   * Coupon behind a COUPON_BONUS / COUPON entry.
+   * TODO(api): not in the wallet response yet; the code is read from the memo until BE adds it.
+   */
+  couponCode?: string | null;
   createdAt: string;
 }
 

@@ -16,8 +16,10 @@ import {
   ReceiptText,
   RefreshCw,
   ShieldCheck,
+  Ticket,
   WalletCards,
 } from 'lucide-react';
+import { walletCouponLabel } from '@/lib/coupon';
 import { useEffect, useMemo, useState } from 'react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
 import { Badge } from '@/components/ui/Badge';
@@ -336,22 +338,31 @@ function SummaryCard({
 }
 
 function TransactionRow({ transaction }: { transaction: WalletTransactionResponse }) {
+  // SkillSwap-funded coupon share (COUPON_BONUS / COUPON): own label, ticket icon, green amount.
+  const couponLabel = walletCouponLabel(transaction);
   const positive = transaction.balanceEffectScoin > 0;
+  const green = couponLabel !== null || positive;
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-subtle/60 sm:px-5">
       <span
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${positive ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-primary'}`}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${green ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-primary'}`}
       >
-        {positive ? <ArrowDownToLine className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+        {couponLabel !== null ? (
+          <Ticket className="h-4 w-4" aria-hidden="true" />
+        ) : positive ? (
+          <ArrowDownToLine className="h-4 w-4" />
+        ) : (
+          <ArrowUpRight className="h-4 w-4" />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <strong className="block truncate text-xs">
-          {transaction.memo?.trim() || ENTRY_LABELS[transaction.entryType]}
+          {couponLabel ?? (transaction.memo?.trim() || ENTRY_LABELS[transaction.entryType])}
         </strong>
         <span className="text-[10px] text-text-muted">{formatDateTime(transaction.createdAt)}</span>
       </div>
       <strong
-        className={`whitespace-nowrap text-xs ${positive ? 'text-emerald-600' : 'text-text-main'}`}
+        className={`whitespace-nowrap text-xs ${green ? 'text-emerald-600' : 'text-text-main'}`}
       >
         {positive ? '+' : ''}
         {formatScoin(transaction.balanceEffectScoin)}
