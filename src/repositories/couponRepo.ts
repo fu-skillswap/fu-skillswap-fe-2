@@ -4,7 +4,7 @@
  * (shared by mentor and mentee). Mentee checkout/preview live in `bookingRepo`.
  */
 
-import { apiClient } from '@/models/apiClient';
+import { ApiClientError, apiClient } from '@/models/apiClient';
 import type {
   AdminCouponsQuery,
   CouponRedemptionView,
@@ -12,10 +12,22 @@ import type {
   CouponView,
   CreateCouponCommand,
   KnownCouponStatus,
+  MentorCouponOffer,
+  MentorCouponStat,
   PageResponse,
   UpdateCouponCommand,
   UserCouponView,
 } from '@/models/coupon';
+
+/** Resolves to null when the endpoint answers 404 (not deployed yet); other errors are rethrown. */
+async function nullOn404<T>(request: Promise<T>): Promise<T | null> {
+  try {
+    return await request;
+  } catch (reason) {
+    if (reason instanceof ApiClientError && reason.status === 404) return null;
+    throw reason;
+  }
+}
 
 function queryString(query: object) {
   const params = new URLSearchParams();
@@ -64,4 +76,32 @@ export const couponRepo = {
    * mentor side cannot tell which of its services a coupon targets — ask BE to add them.
    */
   getMyCoupons: () => apiClient<UserCouponView[]>('/api/me/coupons'),
+
+  // --- Mentor coupon opt-in ---
+
+  /**
+   * SkillSwap-funded coupons the mentor can apply to their services. null on 404.
+   * TODO(api): endpoint not deployed yet.
+   */
+  getMentorCouponOffers: () =>
+    nullOn404(apiClient<MentorCouponOffer[]>('/api/me/mentor/coupon-offers')),
+
+  /**
+   * This month's coupon usage on the mentor's services. null on 404.
+   * TODO(api): GET /api/me/mentor/coupon-stats not deployed yet.
+   */
+  getMentorCouponStats: () =>
+    nullOn404(apiClient<MentorCouponStat[]>('/api/me/mentor/coupon-stats')),
+
+  /**
+   * Replaces the services a coupon is applied to (empty list = stop applying). null on 404.
+   * TODO(api): endpoint not deployed yet.
+   */
+  setCouponServices: (couponId: string, serviceIds: string[]) =>
+    nullOn404(
+      apiClient<MentorCouponOffer>(`/api/me/mentor/coupon-offers/${couponId}/services`, {
+        method: 'PUT',
+        data: { serviceIds },
+      }),
+    ),
 };

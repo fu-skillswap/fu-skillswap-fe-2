@@ -33,10 +33,11 @@ export function parseOption<T extends string>(
   return (options.find((option) => option.value === value)?.value ?? '') as T | '';
 }
 
-/** "Tất cả mentor" | "3 mentor" | "2 dịch vụ" | "3 mentor · 2 dịch vụ". */
+/** "Mentor tự chọn" | "Tất cả mentor" | "3 mentor" | "2 dịch vụ" | "3 mentor · 2 dịch vụ". */
 export function describeScope(
-  coupon: Pick<CouponView, 'applicableMentorIds' | 'applicableServiceIds'>,
+  coupon: Pick<CouponView, 'applicableMentorIds' | 'applicableServiceIds' | 'mentorOptIn'>,
 ) {
+  if (coupon.mentorOptIn) return 'Mentor tự chọn';
   const mentors = coupon.applicableMentorIds?.length ?? 0;
   const services = coupon.applicableServiceIds?.length ?? 0;
   if (!mentors && !services) return 'Tất cả mentor';

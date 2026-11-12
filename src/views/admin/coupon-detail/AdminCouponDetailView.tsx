@@ -49,6 +49,7 @@ const HISTORY_COLUMNS = 4;
 type ConfirmKind = 'suspend' | 'pause';
 
 function scopeText(coupon: CouponView, mentorNames: string[] | undefined) {
+  if (coupon.mentorOptIn) return 'Mentor tự chọn dịch vụ áp mã';
   const mentors = coupon.applicableMentorIds?.length ?? 0;
   const services = coupon.applicableServiceIds?.length ?? 0;
   if (!mentors && !services) return 'Tất cả mentor và dịch vụ';
