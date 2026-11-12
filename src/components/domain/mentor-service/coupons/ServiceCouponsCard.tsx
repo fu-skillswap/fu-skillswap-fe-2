@@ -10,43 +10,18 @@ import {
   isPercentDiscount,
   withMenteeSurcharge,
 } from '@/lib/coupon';
-import type { MentorCouponOffer, UserCouponView } from '@/models/coupon';
+import type { UserCouponView } from '@/models/coupon';
 import type { ReactNode } from 'react';
 
-/** Fields a ticket needs; filled from GET /api/me/coupons or from a mentor coupon offer. */
-export type ServiceCouponTicketData = Pick<
-  UserCouponView,
-  | 'id'
-  | 'code'
-  | 'title'
-  | 'description'
-  | 'discountType'
-  | 'discountValue'
-  | 'maxDiscountScoin'
-  | 'minOrderValueScoin'
-  | 'quotaTotal'
-  | 'remainingQuota'
->;
-
-export function offerToTicketData(offer: MentorCouponOffer): ServiceCouponTicketData {
-  return { ...offer, id: offer.couponId };
-}
-
 /** Same 80%-used threshold as `isNearlyExhausted`, computed from the remaining quota. */
-function isRunningLow(coupon: ServiceCouponTicketData) {
+function isRunningLow(coupon: UserCouponView) {
   if (coupon.quotaTotal == null || coupon.remainingQuota == null || coupon.quotaTotal <= 0) {
     return false;
   }
   return coupon.remainingQuota / coupon.quotaTotal <= 0.2;
 }
 
-function CouponTicket({
-  coupon,
-  priceWithFee,
-}: {
-  coupon: ServiceCouponTicketData;
-  priceWithFee: number;
-}) {
+function CouponTicket({ coupon, priceWithFee }: { coupon: UserCouponView; priceWithFee: number }) {
   const capLine = isPercentDiscount(coupon.discountType)
     ? coupon.maxDiscountScoin
       ? `tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`
@@ -104,23 +79,17 @@ function CouponTicket({
 export function ServiceCouponsCard({
   coupons,
   priceScoin,
-  subtitle,
   incomeNote,
-  emptyText,
   footer,
 }: {
-  coupons: ServiceCouponTicketData[];
+  coupons: UserCouponView[];
   priceScoin: number;
-  /** Replaces the default subtitle (coupon opt-in mode). */
-  subtitle?: ReactNode;
-  /** Line shown before the surcharge note (coupon opt-in mode). */
+  /** Mentor income line, shown before the surcharge note. */
   incomeNote?: ReactNode;
-  /** When set, the card stays visible without coupons and shows this text instead. */
-  emptyText?: string;
-  /** Extra links at the bottom of the card (coupon opt-in mode). */
+  /** Extra links at the bottom of the card. */
   footer?: ReactNode;
 }) {
-  if (!coupons.length && !emptyText) return null;
+  if (!coupons.length) return null;
   const priceWithFee = withMenteeSurcharge(priceScoin);
   return (
     <section
@@ -132,19 +101,14 @@ export function ServiceCouponsCard({
           Mã giảm giá mentee có thể dùng
         </h2>
         <p className="mt-0.5 text-sm text-text-muted">
-          {subtitle ??
-            'SkillSwap tạo các mã này. Mentee nhập mã khi thanh toán, bạn không cần thao tác gì thêm.'}
+          SkillSwap tạo các mã này. Mentee nhập mã khi thanh toán, bạn không cần thao tác gì thêm.
         </p>
       </div>
-      {coupons.length > 0 ? (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(380px,1fr))]">
-          {coupons.map((coupon) => (
-            <CouponTicket key={coupon.id} coupon={coupon} priceWithFee={priceWithFee} />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-text-secondary">{emptyText}</p>
-      )}
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(380px,1fr))]">
+        {coupons.map((coupon) => (
+          <CouponTicket key={coupon.id} coupon={coupon} priceWithFee={priceWithFee} />
+        ))}
+      </ul>
       {incomeNote && <p className="mt-3 text-sm font-semibold text-[#047857]">{incomeNote}</p>}
       <p className={`${incomeNote ? 'mt-1' : 'mt-3'} text-sm text-text-muted`}>
         Giá mentee thấy đã gồm phí nền tảng ({formatScoin(priceScoin)} → {formatScoin(priceWithFee)}{' '}

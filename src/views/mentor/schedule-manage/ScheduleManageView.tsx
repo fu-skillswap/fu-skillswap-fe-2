@@ -36,12 +36,7 @@ import {
 } from '@/models/schemas/availabilitySlotSchema';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
-import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
-import {
-  couponsForService,
-  useMyMentorCoupons,
-} from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
-import { useMentorCouponOffers } from '@/components/domain/mentor-service/coupons/useMentorCouponOffers';
+import { useMyMentorCoupons } from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
 import {
   COUPON_STRIP_ACTION_ID,
   CouponPromoStrip,
@@ -51,7 +46,7 @@ import {
   CouponOffersDrawer,
   type CouponDrawerTab,
 } from '@/components/domain/mentor-service/coupons/CouponOffersDrawer';
-import { appliedOfferFor, menteePriceAfter, menteePriceOf } from '@/lib/coupon';
+import { bestCouponFor, couponFitsService, menteePriceOf } from '@/lib/coupon';
 import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -396,9 +391,7 @@ interface MentorServiceCardProps {
   service: MentorServiceManagementResponse;
   isToggling: boolean;
   compact?: boolean;
-  /** Coupons a mentee could use on this service (GET /api/me/coupons); hidden when 0. */
-  couponCount?: number;
-  /** Extra row at the bottom of the card (coupon opt-in); omitted → card unchanged. */
+  /** Coupon row at the bottom of the card (GET /api/me/coupons); omitted → card unchanged. */
   footer?: ReactNode;
   onOpen: (serviceId: string) => void;
   onRequestStatusChange: (service: MentorServiceManagementResponse) => void;
@@ -408,7 +401,6 @@ function MentorServiceCard({
   service,
   isToggling,
   compact = false,
-  couponCount = 0,
   footer,
   onOpen,
   onRequestStatusChange,
@@ -452,11 +444,6 @@ function MentorServiceCard({
             {formatDuration(service.durationMinutes)} ·{' '}
             {service.deliveryMode === 'ONE_TO_ONE' ? '1 kèm 1' : service.deliveryMode}
           </p>
-          {couponCount > 0 && !service.isFree && (
-            <div className="mt-1.5">
-              <ServiceCouponPill count={couponCount} compact />
-            </div>
-          )}
         </div>
         <button
           type="button"
@@ -495,21 +482,20 @@ export function ScheduleManageView() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const [services, setServices] = useState<MentorServiceManagementResponse[]>([]);
-  // Coupon pills from GET /api/me/coupons; hidden when there are none.
   const mentorCoupons = useMyMentorCoupons();
-  // SkillSwap-funded coupons the mentor opts in to (MENTOR_COUPON_OPTIN_ENABLED). null → the
-  // section renders exactly as before; once the API answers it replaces the pill count above.
-  const couponOffers = useMentorCouponOffers();
-  const hasCouponOffers = couponOffers !== null && couponOffers.length > 0;
+  // Coupons with quota left (GET /api/me/coupons): strip, card rows and the offers drawer.
+  const visibleCoupons = useMemo(
+    () =>
+      (mentorCoupons ?? []).filter(
+        (coupon) => coupon.remainingQuota == null || coupon.remainingQuota > 0,
+      ),
+    [mentorCoupons],
+  );
+  const hasCoupons = visibleCoupons.length > 0;
   const [couponDrawer, setCouponDrawer] = useState<{
     trigger: HTMLElement | null;
-    serviceId: string | null;
     tab?: CouponDrawerTab;
   } | null>(null);
-  const couponCountFor = (service: MentorServiceManagementResponse) =>
-    couponOffers !== null || service.isFree
-      ? 0
-      : couponsForService(mentorCoupons, service.publicPriceScoin ?? 0).length;
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [pendingStatusChange, setPendingStatusChange] =
@@ -1028,9 +1014,9 @@ export function ScheduleManageView() {
   };
 
   // Fetch danh sách dịch vụ từ API backend
-  const loadServices = async ({ silent = false }: { silent?: boolean } = {}) => {
+  const loadServices = async () => {
     try {
-      if (!silent) setLoading(true);
+      setLoading(true);
       const [list, cons] = await Promise.all([
         mentorServiceRepo.list(),
         mentorServiceRepo.getConstraints(),
@@ -1705,37 +1691,31 @@ export function ScheduleManageView() {
   // hoạt động". Handled once, then removed from the URL.
   const couponDeepLinkHandled = useRef(false);
   useEffect(() => {
-    if (couponDeepLinkHandled.current || !hasCouponOffers) return;
+    if (couponDeepLinkHandled.current || !hasCoupons) return;
     couponDeepLinkHandled.current = true;
     const url = new URL(window.location.href);
     const target = url.searchParams.get('coupons');
     if (target !== 'open' && target !== 'how') return;
     url.searchParams.delete('coupons');
     window.history.replaceState(window.history.state, '', url.toString());
-    setCouponDrawer({ trigger: null, serviceId: null, tab: target === 'how' ? 'how' : 'offers' });
-  }, [hasCouponOffers]);
+    setCouponDrawer({ trigger: null, tab: target === 'how' ? 'how' : 'offers' });
+  }, [hasCoupons]);
 
-  /** Offer with the largest discount on the mentor's highest mentee price (badge on the strip). */
-  const bestCouponOffer = useMemo(() => {
-    if (!couponOffers?.length) return null;
+  /** Coupon with the largest discount on the mentor's highest mentee price (badge on the strip). */
+  const bestStripCoupon = useMemo(() => {
     const topPrice = Math.max(0, ...services.map((service) => menteePriceOf(service)));
-    if (!topPrice) return couponOffers[0];
-    return couponOffers.reduce((best, offer) =>
-      topPrice - menteePriceAfter(offer, topPrice) > topPrice - menteePriceAfter(best, topPrice)
-        ? offer
-        : best,
-    );
-  }, [couponOffers, services]);
+    return topPrice ? bestCouponFor(visibleCoupons, topPrice) : (visibleCoupons[0] ?? null);
+  }, [visibleCoupons, services]);
 
   const couponRowFor = (service: MentorServiceManagementResponse, fromServicesDrawer = false) =>
-    hasCouponOffers ? (
+    hasCoupons ? (
       <ServiceCouponRow
         service={service}
-        appliedOffer={appliedOfferFor(service.serviceId, couponOffers)}
-        onOpen={(trigger, serviceId) => {
+        coupons={visibleCoupons.filter((coupon) => couponFitsService(coupon, service))}
+        onOpen={(trigger) => {
           // One dialog at a time: the "Tất cả dịch vụ" drawer closes first.
           if (fromServicesDrawer) setIsServicesDrawerOpen(false);
-          setCouponDrawer({ trigger: fromServicesDrawer ? null : trigger, serviceId });
+          setCouponDrawer({ trigger: fromServicesDrawer ? null : trigger, tab: 'offers' });
         }}
       />
     ) : undefined;
@@ -1772,11 +1752,11 @@ export function ScheduleManageView() {
           </Button>
         </div>
 
-        {hasCouponOffers && couponOffers && (
+        {hasCoupons && (
           <CouponPromoStrip
-            offers={couponOffers}
-            bestOffer={bestCouponOffer}
-            onOpen={(trigger, tab) => setCouponDrawer({ trigger, serviceId: null, tab })}
+            coupons={visibleCoupons}
+            bestCoupon={bestStripCoupon}
+            onOpen={(trigger, tab) => setCouponDrawer({ trigger, tab })}
           />
         )}
 
@@ -1819,7 +1799,6 @@ export function ScheduleManageView() {
                   key={service.serviceId}
                   service={service}
                   compact
-                  couponCount={couponCountFor(service)}
                   footer={couponRowFor(service)}
                   isToggling={togglingId === service.serviceId}
                   onOpen={(serviceId) => router.push(`/${locale}/mentor/services/${serviceId}`)}
@@ -2012,7 +1991,6 @@ export function ScheduleManageView() {
                       key={service.serviceId}
                       service={service}
                       compact
-                      couponCount={couponCountFor(service)}
                       footer={couponRowFor(service, true)}
                       isToggling={togglingId === service.serviceId}
                       onOpen={(serviceId) => router.push(`/${locale}/mentor/services/${serviceId}`)}
@@ -2048,12 +2026,11 @@ export function ScheduleManageView() {
         </div>
       )}
 
-      {hasCouponOffers && couponOffers && (
+      {hasCoupons && (
         <CouponOffersDrawer
           open={couponDrawer !== null}
-          offers={couponOffers}
+          coupons={visibleCoupons}
           services={services}
-          contextServiceId={couponDrawer?.serviceId ?? null}
           trigger={couponDrawer?.trigger ?? null}
           fallbackFocusId={COUPON_STRIP_ACTION_ID}
           initialTab={couponDrawer?.tab ?? 'offers'}
@@ -2064,7 +2041,6 @@ export function ScheduleManageView() {
           }
           walletHref={`/${locale}/mentor/wallet`}
           onClose={() => setCouponDrawer(null)}
-          onChanged={() => loadServices({ silent: true })}
         />
       )}
 

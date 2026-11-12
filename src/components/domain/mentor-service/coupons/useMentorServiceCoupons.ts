@@ -6,7 +6,8 @@
 
 'use client';
 
-import { withMenteeSurcharge } from '@/lib/coupon';
+import { couponFitsService } from '@/lib/coupon';
+import type { MentorServiceManagementResponse } from '@/models/auth';
 import type { UserCouponView } from '@/models/coupon';
 import { couponRepo } from '@/repositories/couponRepo';
 import { useEffect, useState } from 'react';
@@ -35,21 +36,14 @@ export function useMyMentorCoupons(): UserCouponView[] | null {
 }
 
 /**
- * Coupons a mentee could use on a service with this price: quota left and the minimum order met
- * (on the price the mentee pays, surcharge included). `isUsable` is ignored on purpose — it
- * describes the mentor's own account, not the mentees.
- * TODO(api): GET /api/me/coupons has no applicableServiceIds/applicableMentorIds, so coupons that
- * target other services cannot be filtered out yet.
+ * Coupons a mentee could use on this service (see `couponFitsService`).
+ * TODO(api): GET /api/me/coupons has no applicableServiceIds/applicableMentorIds in Swagger, so
+ * coupons that target other services are only filtered out once BE returns them.
  */
 export function couponsForService(
   coupons: UserCouponView[] | null,
-  priceScoin: number,
+  service: Pick<MentorServiceManagementResponse, 'serviceId' | 'isFree' | 'publicPriceScoin'>,
 ): UserCouponView[] {
-  if (!coupons?.length || !(priceScoin > 0)) return [];
-  const menteePrice = withMenteeSurcharge(priceScoin);
-  return coupons.filter(
-    (coupon) =>
-      (coupon.remainingQuota == null || coupon.remainingQuota > 0) &&
-      (coupon.minOrderValueScoin == null || menteePrice >= coupon.minOrderValueScoin),
-  );
+  if (!coupons?.length) return [];
+  return coupons.filter((coupon) => couponFitsService(coupon, service));
 }

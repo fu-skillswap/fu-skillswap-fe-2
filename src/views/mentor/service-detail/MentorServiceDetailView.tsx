@@ -9,12 +9,7 @@ import { ServiceDescriptionDetail } from '@/components/domain/mentor-service/Ser
 import { ServiceEditor } from '@/components/domain/mentor-service/ServiceEditor';
 import { ServiceCouponPill } from '@/components/domain/mentor-service/coupons/ServiceCouponPill';
 import { ServiceCouponPriceNote } from '@/components/domain/mentor-service/coupons/ServiceCouponPriceNote';
-import {
-  ServiceCouponsCard,
-  offerToTicketData,
-} from '@/components/domain/mentor-service/coupons/ServiceCouponsCard';
-import { useMentorCouponOffers } from '@/components/domain/mentor-service/coupons/useMentorCouponOffers';
-import { appliedOfferFor } from '@/lib/coupon';
+import { ServiceCouponsCard } from '@/components/domain/mentor-service/coupons/ServiceCouponsCard';
 import {
   couponsForService,
   useMyMentorCoupons,
@@ -76,19 +71,8 @@ export function MentorServiceDetailView({
   const [isSaving, setIsSaving] = useState(false);
   // Coupons from GET /api/me/coupons: empty while loading or when the request fails.
   const mentorCoupons = useMyMentorCoupons();
-  // Coupon opt-in (MENTOR_COUPON_OPTIN_ENABLED): once GET /api/me/mentor/coupon-offers answers,
-  // the coupon applied by the mentor is the source of truth; null keeps the legacy behaviour.
-  const couponOffers = useMentorCouponOffers();
-  const appliedOffer =
-    service && !service.isFree && couponOffers
-      ? appliedOfferFor(service.serviceId, couponOffers)
-      : null;
-  const legacyCoupons =
-    couponOffers === null && service && !service.isFree
-      ? couponsForService(mentorCoupons, service.publicPriceScoin ?? 0)
-      : [];
   const serviceCoupons =
-    couponOffers === null ? legacyCoupons : appliedOffer ? [offerToTicketData(appliedOffer)] : [];
+    service && !service.isFree ? couponsForService(mentorCoupons, service) : [];
   /** Bumped to remount the editor with fresh data (after a reload or a cancel). */
   const [editorKey, setEditorKey] = useState(0);
   const editorDefaults = useMemo(
@@ -248,42 +232,19 @@ export function MentorServiceDetailView({
             </div>
           </article>
 
-          {couponOffers === null ? (
-            <ServiceCouponsCard
-              coupons={serviceCoupons}
-              priceScoin={service.publicPriceScoin ?? 0}
-            />
-          ) : (
-            !service.isFree &&
-            (appliedOffer || couponOffers.length > 0) && (
-              <ServiceCouponsCard
-                coupons={serviceCoupons}
-                priceScoin={service.publicPriceScoin ?? 0}
-                emptyText="Dịch vụ này chưa áp mã nào."
-                subtitle={
-                  <>
-                    Bạn chọn mã ở mục{' '}
-                    <Link
-                      href={`/${locale}/mentor/schedule-manage?coupons=open`}
-                      className="font-semibold text-[#0077c8] underline-offset-2 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    >
-                      Ưu đãi SkillSwap tài trợ
-                    </Link>
-                    . Mã hiện trên thẻ dịch vụ và được áp sẵn khi mentee thanh toán.
-                  </>
-                }
-                incomeNote={`Bạn vẫn nhận đủ ${formatScoin(service.publicPriceScoin)} mỗi buổi. SkillSwap chi trả phần giảm.`}
-                footer={
-                  <Link
-                    href={`/${locale}/mentor/schedule-manage?coupons=how`}
-                    className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-[#0077c8] underline underline-offset-2 focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  >
-                    Cơ chế hoạt động
-                  </Link>
-                }
-              />
-            )
-          )}
+          <ServiceCouponsCard
+            coupons={serviceCoupons}
+            priceScoin={service.publicPriceScoin ?? 0}
+            incomeNote={`Bạn vẫn nhận đủ ${formatScoin(service.publicPriceScoin)} mỗi buổi. SkillSwap chi trả phần giảm.`}
+            footer={
+              <Link
+                href={`/${locale}/mentor/schedule-manage?coupons=how`}
+                className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-[#0077c8] underline underline-offset-2 focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Cơ chế hoạt động
+              </Link>
+            }
+          />
 
           {isEditing && editorDefaults ? (
             <section

@@ -1,15 +1,13 @@
 /*
- * Mentor coupon opt-in: promo strip, coupon row on service cards, "Ưu đãi SkillSwap tài trợ" drawer.
+ * Mentor coupons (GET /api/me/coupons): promo strip, coupon row on service cards, "Ưu đãi SkillSwap
+ * tài trợ" drawer and its "Cơ chế hoạt động" tab.
  * Colours are the existing brand values (primary #0095F6 / text #0077C8, tints #EAF5FE #F3FAFF
  * #8CCBFA, success #047857 #ECFDF5 #6EE7B7, warning #C2410C #FFF7ED, ink #0F172A).
  */
 
-.focusRing:focus-visible,
 .stripAction:focus-visible,
-.applyRowButton:focus-visible,
 .textButton:focus-visible,
-.btn:focus-visible,
-.backButton:focus-visible {
+.btn:focus-visible {
   outline: 2px solid var(--primary, #0095f6);
   outline-offset: 2px;
 }
@@ -87,19 +85,6 @@
   color: #e8f6ff;
   font-size: 14px;
   line-height: 1.45;
-}
-
-.newPill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  background: #fff7ed;
-  padding: 2px 10px;
-  color: #c2410c;
-  font-size: 12.5px;
-  font-weight: 800;
-  line-height: 1.5;
-  white-space: nowrap;
 }
 
 .stripAction {
@@ -209,28 +194,6 @@
   text-decoration: underline;
 }
 
-.applyRowButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 38px;
-  padding: 0 12px;
-  border: 1.5px dashed #8ccbfa;
-  border-radius: 10px;
-  background: #f3faff;
-  color: #0077c8;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.applyRowButton:hover {
-  background: #eaf5fe;
-}
-
 /* ---------- Drawer shell ---------- */
 
 .overlay {
@@ -313,8 +276,7 @@
   line-height: 1.5;
 }
 
-.closeOnGradient,
-.closeOnWhite {
+.closeOnGradient {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -336,21 +298,6 @@
 
 .closeOnGradient:focus-visible {
   outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
-.closeOnWhite {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.closeOnWhite:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.closeOnWhite:focus-visible {
-  outline: 2px solid var(--primary, #0095f6);
   outline-offset: 2px;
 }
 
@@ -419,10 +366,6 @@
   text-align: center;
 }
 
-.stubScheduled {
-  background: linear-gradient(160deg, #94a3b8 0%, #64748b 100%);
-}
-
 .stubBadge {
   font-size: 24px;
   font-weight: 800;
@@ -480,16 +423,6 @@
   color: #c2410c;
 }
 
-.pillApplied {
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.pillScheduled {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
 .meta {
   margin: 0;
   color: #64748b;
@@ -527,13 +460,6 @@
   font-size: 12.5px;
   font-weight: 800;
   letter-spacing: 0.06em;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
 }
 
 /* ---------- Buttons ---------- */
@@ -576,291 +502,6 @@
   background: var(--primary-hover, #0088e2);
 }
 
-.btnOutline {
-  border-color: #8ccbfa;
-  background: #fff;
-  color: #0077c8;
-}
-
-.btnOutline:not(:disabled):hover {
-  background: #f3faff;
-  border-color: var(--primary, #0095f6);
-}
-
-.btnDanger {
-  background: #b91c1c;
-  color: #fff;
-}
-
-.btnDanger:not(:disabled):hover {
-  background: #991b1b;
-}
-
-.btnDangerText {
-  padding: 0 8px;
-  background: transparent;
-  color: #b91c1c;
-}
-
-.btnDangerText:not(:disabled):hover {
-  background: #fef2f2;
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ---------- Inline stop confirm ---------- */
-
-.confirm {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-.confirmText {
-  margin: 0;
-  color: #0f172a;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.confirmActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-/* ---------- Apply view ---------- */
-
-.applyHeader {
-  padding: 14px 22px 18px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff;
-}
-
-.applyTopBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  min-height: 36px;
-  margin-left: -6px;
-  padding: 0 8px 0 2px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #0077c8;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.backButton:hover {
-  background: #f3faff;
-}
-
-.applyTitle {
-  margin: 8px 0 14px;
-  color: #0f172a;
-  font-size: 21px;
-  font-weight: 800;
-  line-height: 1.25;
-  outline: none;
-}
-
-.summary {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  overflow: hidden;
-  border: 1px solid #eaf5fe;
-  border-radius: 14px;
-  background: #f3faff;
-}
-
-.summary .stub {
-  border-right: 0;
-  border-radius: 0;
-}
-
-.summaryMain {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  min-width: 0;
-  padding: 12px 14px;
-}
-
-.fieldset {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.legend {
-  margin-bottom: 10px;
-  padding: 0;
-  color: #0f172a;
-  font-size: 14.5px;
-  font-weight: 700;
-}
-
-.serviceList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.serviceRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.serviceRow:hover {
-  border-color: #8ccbfa;
-}
-
-.serviceRow:focus-within {
-  outline: 2px solid var(--primary, #0095f6);
-  outline-offset: 2px;
-}
-
-.serviceRowChecked {
-  margin: -0.5px;
-  border: 1.5px solid var(--primary, #0095f6);
-  background: #f3faff;
-}
-
-.serviceRowDisabled {
-  border-color: #e2e8f0;
-  background: #f8fafc;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.serviceRowDisabled:hover {
-  border-color: #e2e8f0;
-}
-
-.checkbox {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  accent-color: var(--primary, #0095f6);
-  cursor: inherit;
-}
-
-.serviceInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.serviceTitle {
-  color: #0f172a;
-  font-size: 14.5px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.serviceRowDisabled .serviceTitle {
-  color: #94a3b8;
-}
-
-.servicePrice {
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.servicePrice strong {
-  color: #047857;
-  font-weight: 700;
-}
-
-.replaceNote {
-  color: #c2410c;
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.safeNote {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 0;
-  padding: 12px 14px;
-  border: 1px solid #6ee7b7;
-  border-radius: 12px;
-  background: #ecfdf5;
-  color: #047857;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.safeNote svg {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 1px;
-}
-
-.errorAlert {
-  margin: 0;
-  padding: 10px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid #e2e8f0;
-  background: #fff;
-}
-
 @media (max-width: 420px) {
   .body {
     padding: 14px 14px;
@@ -883,14 +524,6 @@
     border-right: 0;
     border-bottom: 2px dashed rgba(255, 255, 255, 0.9);
     border-radius: 13px 13px 0 0;
-  }
-
-  .footer {
-    padding-inline: 14px;
-  }
-
-  .footer .btn {
-    flex: 1 1 auto;
   }
 }
 
@@ -1111,16 +744,6 @@
 .benefitText strong {
   color: #0f172a;
   font-weight: 700;
-}
-
-.statBox {
-  margin: 14px 0 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f0fdf6;
-  color: #065f46;
-  font-size: 13.5px;
-  line-height: 1.5;
 }
 
 .barLabel {
