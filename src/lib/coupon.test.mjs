@@ -8,9 +8,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   MENTEE_SURCHARGE_BPS,
+  couponFitsService,
+  pickMoneyFlowExample,
   couponMoneyFlow,
   menteePriceAfter,
-  offerRule,
+  couponRule,
   walletCouponLabel,
 } from './coupon.ts';
 
@@ -67,10 +69,10 @@ test('menteePriceAfter never goes below 0', () => {
   );
 });
 
-test('offerRule', () => {
-  assert.equal(offerRule(CHAOK19), '20%, tối đa 3.000 S-coins');
+test('couponRule', () => {
+  assert.equal(couponRule(CHAOK19), '20%, tối đa 3.000 S-coins');
   assert.equal(
-    offerRule({ discountType: 'FIXED', discountValue: 2000, maxDiscountScoin: null }),
+    couponRule({ discountType: 'FIXED', discountValue: 2000, maxDiscountScoin: null }),
     '2.000 S-coins',
   );
 });
@@ -78,7 +80,7 @@ test('offerRule', () => {
 test('walletCouponLabel', () => {
   assert.equal(walletCouponLabel({ originType: 'RELEASE', memo: 'Buổi học' }), null);
   assert.equal(
-    walletCouponLabel({ originType: 'COUPON_BONUS', couponCode: 'chaok19', memo: 'x' }),
+    walletCouponLabel({ originType: 'COUPON_BONUS', memo: 'Coupon CHAOK19' }),
     'SkillSwap tài trợ mã CHAOK19',
   );
   assert.equal(
@@ -89,4 +91,26 @@ test('walletCouponLabel', () => {
     walletCouponLabel({ sourceType: 'COUPON', memo: 'Coupon discount share' }),
     'Coupon discount share',
   );
+});
+
+const SERVICE = { serviceId: 's1', isFree: false, publicPriceScoin: 16500 };
+
+test('couponFitsService', () => {
+  const coupon = { remainingQuota: 5, minOrderValueScoin: 18000 };
+  assert.equal(couponFitsService(coupon, SERVICE), true); // 18.150 with surcharge
+  assert.equal(couponFitsService({ ...coupon, minOrderValueScoin: 18200 }, SERVICE), false);
+  assert.equal(couponFitsService({ ...coupon, remainingQuota: 0 }, SERVICE), false);
+  assert.equal(couponFitsService(coupon, { ...SERVICE, isFree: true }), false);
+  assert.equal(couponFitsService({ ...coupon, applicableServiceIds: ['s2'] }, SERVICE), false);
+  assert.equal(couponFitsService({ ...coupon, applicableServiceIds: ['s1'] }, SERVICE), true);
+});
+
+test('pickMoneyFlowExample takes the largest discount on the first fitting service', () => {
+  const free = { serviceId: 'f', isFree: true, publicPriceScoin: 0 };
+  const a = { ...CHAOK19, code: 'A', remainingQuota: null, minOrderValueScoin: null };
+  const b = { ...ONTAPCK, code: 'B', remainingQuota: null, minOrderValueScoin: null };
+  const example = pickMoneyFlowExample([free, SERVICE], [a, b]);
+  assert.equal(example?.service.serviceId, 's1');
+  assert.equal(example?.coupon.code, 'B');
+  assert.equal(pickMoneyFlowExample([free], [a]), null);
 });

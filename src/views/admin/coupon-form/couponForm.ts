@@ -4,7 +4,6 @@
  * conversion to/from the API, Vietnam-time datetime helpers and the code generator.
  */
 
-import { MENTOR_COUPON_OPTIN_ENABLED } from '@/constants/featureFlags';
 import type { CouponView, CreateCouponCommand, KnownCouponDiscountType } from '@/models/coupon';
 
 export const CODE_PATTERN = /^[A-Z0-9]{4,20}$/;
@@ -29,23 +28,9 @@ export type CouponFormValues = {
   endAt: string;
   quotaTotal: string;
   quotaPerUser: string;
-  /** 'mentor-opt-in': every mentor sees the coupon and picks the services it applies to. */
-  scope: CouponScope;
+  scope: 'all' | 'selected';
   targets: CouponTarget[];
 };
-
-export type CouponScope = 'all' | 'selected' | 'mentor-opt-in';
-
-/**
- * Whether the "Để mentor tự chọn dịch vụ áp mã" option is offered. Behind the feature flag; when
- * editing it also needs `mentorOptIn` in the CouponView (or the coupon already uses it).
- * TODO(api): mentorOptIn field — drop the field-presence check once BE always returns it.
- */
-export function isMentorOptInSupported(mode: 'create' | 'edit', coupon?: CouponView): boolean {
-  if (coupon?.mentorOptIn === true) return true;
-  if (!MENTOR_COUPON_OPTIN_ENABLED) return false;
-  return mode === 'create' || typeof coupon?.mentorOptIn === 'boolean';
-}
 
 export type CouponFormField =
   | 'code'
@@ -159,11 +144,7 @@ export function couponToForm(coupon: CouponView): CouponFormValues {
     endAt: isoToVnInput(coupon.endAt),
     quotaTotal: toText(coupon.quotaTotal),
     quotaPerUser: toText(coupon.quotaPerUser),
-    scope: coupon.mentorOptIn
-      ? 'mentor-opt-in'
-      : mentorIds.length || serviceIds.length
-        ? 'selected'
-        : 'all',
+    scope: mentorIds.length || serviceIds.length ? 'selected' : 'all',
     // Labels are replaced with mentor names once they load.
     targets: [
       ...mentorIds.map((id) => ({ kind: 'mentor' as const, id, label: shortId(id) })),
@@ -180,17 +161,10 @@ function toInt(value: string): number | null {
   return Number.isFinite(number) ? Math.trunc(number) : null;
 }
 
-export function formToCommand(
-  values: CouponFormValues,
-  { mentorOptInSupported = false }: { mentorOptInSupported?: boolean } = {},
-): CreateCouponCommand {
+export function formToCommand(values: CouponFormValues): CreateCouponCommand {
   const isPercent = values.discountType === 'PERCENTAGE';
   const selected = values.scope === 'selected';
-  // TODO(api): mentorOptIn field — only sent while the option is offered, so older BE builds
-  // never receive an unknown property.
-  const optIn = mentorOptInSupported ? { mentorOptIn: values.scope === 'mentor-opt-in' } : {};
   return {
-    ...optIn,
     code: values.code.trim().toUpperCase(),
     title: values.title.trim(),
     description: values.description.trim() || null,

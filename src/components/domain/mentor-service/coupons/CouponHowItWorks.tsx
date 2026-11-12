@@ -1,7 +1,7 @@
 /**
  * @file CouponHowItWorks.tsx
  * @description "Cơ chế hoạt động" tab of the coupon drawer: why applying a coupon helps, a worked
- * money-flow example from the mentor's own service and offer, cancellation rules and where to
+ * money-flow example from the mentor's own service and coupon (GET /api/me/coupons), cancellation rules and where to
  * check the payout. Every number comes from `couponMoneyFlow`; nothing is invented.
  */
 
@@ -11,19 +11,18 @@ import {
   MENTEE_SURCHARGE_BPS,
   couponMoneyFlow,
   formatScoin,
-  offerRule,
+  couponRule,
   pickMoneyFlowExample,
 } from '@/lib/coupon';
 import type {
   BookingCancellationRefundPolicy,
   MentorServiceManagementResponse,
 } from '@/models/auth';
-import type { MentorCouponOffer } from '@/models/coupon';
+import type { UserCouponView } from '@/models/coupon';
 import { ArrowDown, FileText, Ticket, UserPlus, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import styles from './couponOffers.module.css';
-import { useTopMentorCouponStat } from './useMentorCouponOffers';
 
 function BenefitRow({
   icon,
@@ -79,24 +78,23 @@ function MoneyBar({ label, parts }: { label: string; parts: [BarPart, BarPart] }
 
 export function CouponHowItWorks({
   services,
-  offers,
+  coupons,
   refundPolicy,
   walletHref,
   onShowOffers,
 }: {
   services: MentorServiceManagementResponse[];
-  offers: MentorCouponOffer[];
+  coupons: UserCouponView[];
   /** From any of the mentor's bookings; null keeps the generic wording. */
   refundPolicy: BookingCancellationRefundPolicy | null;
   walletHref: string;
   onShowOffers: () => void;
 }) {
-  const topStat = useTopMentorCouponStat(true);
-  const example = pickMoneyFlowExample(services, offers);
+  const example = pickMoneyFlowExample(services, coupons);
   const surchargePercent = MENTEE_SURCHARGE_BPS / 100;
 
   const flow = example
-    ? couponMoneyFlow(example.service.publicPriceScoin ?? 0, MENTEE_SURCHARGE_BPS, example.offer)
+    ? couponMoneyFlow(example.service.publicPriceScoin ?? 0, MENTEE_SURCHARGE_BPS, example.coupon)
     : null;
   const s = (value: number) => `${formatScoin(value)} S-coins`;
 
@@ -144,12 +142,6 @@ export function CouponHowItWorks({
             Bạn nhận đủ giá dịch vụ như khi không có mã. SkillSwap trả phần giảm.
           </BenefitRow>
         </ul>
-        {topStat && (
-          <p className={styles.statBox}>
-            Với bạn: <strong>{formatScoin(topStat.menteeCount)} mentee</strong> đã đặt{' '}
-            {topStat.serviceTitle} bằng mã {topStat.code} trong tháng này.
-          </p>
-        )}
       </section>
 
       {example && flow && (
@@ -159,7 +151,7 @@ export function CouponHowItWorks({
           </h3>
           <p className={styles.howSub}>
             Ví dụ: {example.service.title} ({s(example.service.publicPriceScoin ?? 0)}), mã{' '}
-            {example.offer.code} giảm {offerRule(example.offer)}.
+            {example.coupon.code} giảm {couponRule(example.coupon)}.
           </p>
 
           <p className={styles.barLabel}>
@@ -210,7 +202,7 @@ export function CouponHowItWorks({
             </li>
             <li>
               <strong>{s(flow.mentorGets)} vào Ví S-coins của bạn.</strong> Lịch sử ví ghi rõ dòng
-              &quot;SkillSwap tài trợ mã {example.offer.code} · {s(flow.discount)}&quot;.
+              &quot;SkillSwap tài trợ mã {example.coupon.code} · {s(flow.discount)}&quot;.
             </li>
             <li>
               <strong>Bạn rút về tài khoản</strong> như các buổi học khác.
