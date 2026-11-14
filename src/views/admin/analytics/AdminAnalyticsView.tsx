@@ -9,6 +9,7 @@
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminDashboardOverviewResponse } from '@/models/admin';
+import { ACTIVE_BOOKING_STATUSES, sumStatuses } from '@/views/admin/dashboard.helpers';
 import { adminRepo } from '@/repositories/adminRepo';
 import {
   Activity,
@@ -43,28 +44,28 @@ const METRICS: Metric[] = [
   {
     label: 'Tổng người dùng',
     description: 'Tài khoản đã đăng ký trên SkillSwap',
-    value: (data) => data.totalUsers,
+    value: (data) => data.users?.total,
     icon: Users,
     tone: 'blue',
   },
   {
     label: 'Người dùng hoạt động',
-    description: 'Người dùng đăng nhập gần đây',
-    value: (data) => data.activeUsers,
+    description: 'Tài khoản đang hoạt động, chưa bị khóa',
+    value: (data) => data.users?.active,
     icon: Activity,
     tone: 'blue',
   },
   {
     label: 'Mentor đang chia sẻ',
     description: 'Mentor đang hoạt động trên nền tảng',
-    value: (data) => data.activeMentors,
+    value: (data) => data.users?.mentor,
     icon: GraduationCap,
     tone: 'green',
   },
   {
     label: 'Lịch hẹn đang hoạt động',
-    description: 'Các buổi chia sẻ sắp diễn ra',
-    value: (data) => data.activeBookings,
+    description: 'Lịch hẹn chưa kết thúc',
+    value: (data) => sumStatuses(data.bookings, ACTIVE_BOOKING_STATUSES),
     icon: CalendarDays,
     tone: 'green',
   },

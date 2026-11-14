@@ -56,10 +56,11 @@ export function AdminSidebar({ locale }: { locale: string }) {
     let cancelled = false;
     adminRepo
       .getQueues()
-      .then(({ queues }) => {
-        const queue = queues.find((item) => item.queueKey === 'MENTOR_VERIFICATION');
+      .then((response) => {
+        const items = Array.isArray(response?.items) ? response.items : [];
+        const queue = items.find((item) => item.key.startsWith('mentor_verification'));
         if (!cancelled && queue) {
-          setPendingVerification({ count: queue.pendingCount, overdue: queue.slaBreachCount > 0 });
+          setPendingVerification({ count: queue.count, overdue: queue.severity === 'high' });
         }
       })
       .catch(() => {
