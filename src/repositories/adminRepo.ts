@@ -5,6 +5,8 @@
 
 import { apiClient } from '@/models/apiClient';
 import type {
+  AdminAuditLogItem,
+  AdminAuditLogsQuery,
   AdminCaseActivityQuery,
   AdminCaseActivityResponse,
   AdminCaseOwnership,
@@ -53,6 +55,9 @@ export const adminRepo = {
     apiClient<AdminPageResponse<AdminQueueItem>>(
       `/api/admin/dashboard/queue-items${queryString(query)}`,
     ),
+
+  getAuditLogs: (query: AdminAuditLogsQuery) =>
+    apiClient<AdminPageResponse<AdminAuditLogItem>>(`/api/admin/audit-logs${queryString(query)}`),
 
   getUsers: (query: AdminUsersQuery) =>
     apiClient<AdminUsersResponse>(`/api/admin/users${queryString(query)}`),

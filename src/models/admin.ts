@@ -3,26 +3,68 @@
  * @description Kiểu dữ liệu cho cổng quản trị, dashboard vận hành và hàng đợi xử lý case.
  */
 
-export type AdminQueueKey =
-  | 'BOOKING_DISPUTE'
-  | 'MENTOR_VERIFICATION'
-  | 'FORUM_REPORT'
-  | 'PAYOUT_REQUEST'
-  | 'FAILED_PAYMENT_ORDER'
-  | 'EMAIL_OUTBOX_DEAD_LETTER';
+/**
+ * Queue key returned by `GET /api/admin/dashboard/queues` (lower snake case, e.g.
+ * `mentor_verification_pending_review`, `booking_under_review`). Kept open-ended because the
+ * backend may add queues without a FE release.
+ */
+export type AdminQueueKey = string;
 
+/** Raw status → count map (keys are backend enum names). */
+export type AdminStatusBreakdown = Record<string, number>;
+
+export interface AdminDashboardUsersOverview {
+  total?: number;
+  active?: number;
+  banned?: number;
+  deleted?: number;
+  menteeOnly?: number;
+  mentor?: number;
+}
+
+export interface AdminDashboardMentorVerificationOverview {
+  draft?: number;
+  pendingReview?: number;
+  needsRevision?: number;
+  approved?: number;
+  rejected?: number;
+  withdrawn?: number;
+}
+
+export interface AdminFinancialPeriodMetrics {
+  totalTransactions?: number;
+  gmvScoin?: number;
+  platformFeeScoin?: number;
+}
+
+export interface AdminDashboardFinancialOverview {
+  thisMonth?: AdminFinancialPeriodMetrics | null;
+  thisQuarter?: AdminFinancialPeriodMetrics | null;
+  thisYear?: AdminFinancialPeriodMetrics | null;
+  totalEscrowVnd?: number;
+  totalCreditLedgerScoin?: number;
+}
+
+export interface AdminDashboardRetentionOverview {
+  signupToMentorConversionRate?: number;
+  /** Daily active users (last 24h). */
+  dau?: number;
+  /** Monthly active users (last 30 days). */
+  mau?: number;
+}
+
+/** Swagger `AdminDashboardOverviewResponse` — nested snapshot, every block may be absent. */
 export interface AdminDashboardOverviewResponse {
-  totalUsers: number;
-  activeUsers: number;
-  bannedUsers: number;
-  pendingMentorVerifications: number;
-  activeMentors: number;
-  activeBookings: number;
-  disputedBookings: number;
-  pendingForumReports: number;
-  pendingPayoutRequests: number;
-  pendingPayoutAmountScoin: number;
-  failedPaymentOrders: number;
+  snapshotAt?: string;
+  users?: AdminDashboardUsersOverview | null;
+  mentorVerification?: AdminDashboardMentorVerificationOverview | null;
+  bookings?: AdminStatusBreakdown | null;
+  forumReports?: AdminStatusBreakdown | null;
+  payoutRequests?: AdminStatusBreakdown | null;
+  paymentOrders?: AdminStatusBreakdown | null;
+  emailOutbox?: AdminStatusBreakdown | null;
+  financial?: AdminDashboardFinancialOverview | null;
+  retention?: AdminDashboardRetentionOverview | null;
   /** Nested campaign/coupon summary (Swagger `AdminDashboardCampaignOverview`); may be absent. */
   campaigns?: AdminDashboardCampaignOverview | null;
 }
@@ -36,41 +78,82 @@ export interface AdminDashboardCampaignOverview {
   totalCouponRedemptions?: number | null;
 }
 
+/** Swagger `AdminDashboardQueueItemResponse` — one queue card on the dashboard. */
 export interface AdminQueueCardResponse {
-  queueKey: AdminQueueKey;
-  title: string;
-  description: string;
-  pendingCount: number;
-  oldestPendingAt: string | null;
-  slaBreachCount: number;
+  key: AdminQueueKey;
+  label: string;
+  count: number;
+  severity?: string | null;
+  /** Suggested API family / route for drill-down. */
+  targetPath?: string | null;
   priorityOrder: number;
 }
 
 export interface AdminDashboardQueuesResponse {
-  queues: AdminQueueCardResponse[];
+  snapshotAt?: string;
+  items: AdminQueueCardResponse[];
 }
 
+/** Swagger `AdminDashboardTimeseriesPointResponse`. */
 export interface AdminDailyMetric {
   date: string;
-  newUsersCount: number;
-  mentorVerificationSubmits: number;
-  newBookingsCount: number;
-  paidPaymentsCount: number;
-  forumReportsCount: number;
-  payoutRequestsCount: number;
+  usersCreated: number;
+  mentorVerificationSubmitted: number;
+  bookingsCreated: number;
+  paymentOrdersPaid: number;
+  forumReportsCreated: number;
+  payoutRequestsCreated: number;
 }
 
 export interface AdminDashboardTimeseriesResponse {
-  dailyMetrics: AdminDailyMetric[];
+  timezone?: string;
+  fromDate?: string;
+  toDate?: string;
+  points: AdminDailyMetric[];
 }
 
+/** Swagger `AdminQueueCaseItemResponse` — one case inside a queue drill-down. */
 export interface AdminQueueItem {
-  caseId: string;
+  queueKey: AdminQueueKey;
   caseType: string;
+  caseId: string;
   title: string;
-  submittedAt: string;
-  assignedAdminEmail: string | null;
-  slaRemainingMinutes: number;
+  subtitle?: string | null;
+  status?: string | null;
+  severity?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  ageMinutes?: number | null;
+  assignedAdminUserId?: string | null;
+  assignedAdminDisplayName?: string | null;
+  assignedAt?: string | null;
+  detailPath?: string | null;
+  availableActions?: string[] | null;
+  adminSlaOverdueAt?: string | null;
+}
+
+/** Swagger `AdminAuditLogItemResponse`. */
+export interface AdminAuditLogItem {
+  auditLogId: string;
+  createdAt: string;
+  actorUserId?: string | null;
+  actorDisplayName?: string | null;
+  entityType: string;
+  entityId?: string | null;
+  action: string;
+}
+
+export interface AdminAuditLogsQuery {
+  actorUserId?: string;
+  entityType?: string;
+  entityId?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  direction?: 'ASC' | 'DESC';
 }
 
 export interface AdminPageResponse<T> {
@@ -569,7 +652,7 @@ export interface MentorVerificationLock {
 
 export interface AdminQueueItemsQuery {
   queueKey: AdminQueueKey;
-  assignedToMeOnly?: boolean;
+  assignedToMe?: boolean;
   unassignedOnly?: boolean;
   page?: number;
   size?: number;

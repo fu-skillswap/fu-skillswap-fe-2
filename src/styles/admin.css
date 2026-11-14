@@ -5130,3 +5130,48 @@
     padding: 18px;
   }
 }
+
+/* Dashboard: whole metric card is a link to its list screen. */
+.admin-dashboard .admin-metric-grid > article.is-clickable {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-dashboard .admin-metric-grid > article.is-clickable:hover,
+.admin-dashboard .admin-metric-grid > article.is-clickable:focus-within {
+  border-color: #b9dbfa;
+  box-shadow: 0 8px 22px rgba(8, 127, 226, 0.1);
+}
+
+.admin-dashboard .admin-metric-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.admin-dashboard .admin-metric-link:focus-visible {
+  outline: 2px solid var(--admin-blue-dark);
+  outline-offset: 2px;
+}
+
+/* Dashboard: queue label selects the queue shown in "Chi tiết hàng đợi". */
+.admin-dashboard .admin-attention-list .admin-link-button {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-dashboard .admin-attention-list .admin-link-button:hover {
+  color: var(--admin-blue-dark);
+  background: none;
+  text-decoration: underline;
+}
