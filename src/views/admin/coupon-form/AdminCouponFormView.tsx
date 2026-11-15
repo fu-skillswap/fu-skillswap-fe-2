@@ -7,7 +7,8 @@
 
 import { AdminLoadingState } from '@/components/domain/admin/AdminLoadingState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { isKnownCouponDiscountType, type KnownCouponDiscountType } from '@/models/coupon';
+import { isFixedDiscount, isPercentDiscount } from '@/lib/coupon';
+import type { KnownCouponDiscountType } from '@/models/coupon';
 import { Shuffle, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useId, type ReactNode } from 'react';
@@ -303,12 +304,14 @@ export function AdminCouponFormView({
 
           <fieldset className={styles.card}>
             <legend>Mức giảm</legend>
-            {coupon && !isKnownCouponDiscountType(coupon.discountType) && (
-              <p className={styles.notice}>
-                Loại giảm hiện tại của mã là “{coupon.discountType}”. Chọn lại loại giảm trước khi
-                lưu.
-              </p>
-            )}
+            {coupon &&
+              !isPercentDiscount(coupon.discountType) &&
+              !isFixedDiscount(coupon.discountType) && (
+                <p className={styles.notice}>
+                  Loại giảm hiện tại của mã là “{coupon.discountType}”. Chọn lại loại giảm trước khi
+                  lưu.
+                </p>
+              )}
             <RadioCards
               name={`${radioName}-type`}
               legend="Loại giảm"
