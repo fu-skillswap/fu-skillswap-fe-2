@@ -33,7 +33,6 @@ import {
   GitBranch,
   Globe,
   Heart,
-  SearchX,
   Trophy,
 } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -74,7 +73,11 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const [detailService, setDetailService] = useState<MentorService>();
   const [servicesError, setServicesError] = useState<string>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  /** `GET /api/mentors/{id}` answered 404: the mentor is hidden from discovery. */
+  /**
+   * `GET /api/mentors/{id}` answered 404 (SYS_0003): the BE hides the mentor from discovery, so no
+   * profile/services data. The page still shows what is known and only booking is disabled.
+   * TODO(api): a public profile endpoint that does not depend on discovery visibility.
+   */
   const [isUnavailable, setIsUnavailable] = useState(false);
   const [projects, setProjects] = useState<MentorProjectResponse[]>([]);
   const [achievements, setAchievements] = useState<MentorAchievementResponse[]>([]);
@@ -104,6 +107,16 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const { isAuthenticated, showAuthRequiredModal } = useAuth();
   const mentorArticles = useMentorArticles(targetUserId, articles);
   const blogCount = Math.max(articleCount ?? 0, mentorArticles.articles.length);
+  // Hidden mentors have no profile payload; their blog posts still carry name and avatar.
+  const blogAuthor = mentorArticles.articles.find((article) => article.author?.displayName)?.author;
+  const displayMentor =
+    isUnavailable && currentMentor.name === 'Mentor' && blogAuthor
+      ? {
+          ...currentMentor,
+          name: blogAuthor.displayName,
+          avatarUrl: currentMentor.avatarUrl ?? blogAuthor.avatarUrl ?? undefined,
+        }
+      : currentMentor;
 
   useEffect(() => {
     let isMounted = true;
@@ -173,8 +186,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
       })
       .catch((reason) => {
         if (!isMounted) return;
-        // 404 (SYS_0003) = the mentor exists but is not discoverable (no active service,
-        // profile not ACTIVE…). Follow / booking would fail too, so show a dedicated state.
+        // 404 (SYS_0003) = the mentor is hidden from discovery: keep the profile, disable booking.
         if (reason instanceof ApiClientError && reason.status === 404) setIsUnavailable(true);
         else setServicesError('Không thể tải hồ sơ chi tiết của mentor.');
       })
@@ -188,7 +200,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   }, [targetUserId]);
 
   useEffect(() => {
-    if (!isAuthenticated || !targetUserId || isUnavailable) {
+    if (!isAuthenticated || !targetUserId) {
       setIsFollowing(false);
       return;
     }
@@ -205,7 +217,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, targetUserId, isUnavailable]);
+  }, [isAuthenticated, targetUserId]);
 
   const handleServiceClick = (service: MentorService) => {
     if (!isAuthenticated) {
@@ -249,41 +261,6 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
     }
   };
 
-  if (isUnavailable) {
-    return (
-      <main className="min-h-screen bg-slate-50/60 py-8 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Quay lại danh sách
-          </button>
-          <section
-            className="bg-white rounded-2xl p-8 sm:p-10 border border-slate-200/80 shadow-sm flex flex-col items-center text-center gap-3"
-            role="status"
-          >
-            <span className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <SearchX className="w-7 h-7" aria-hidden="true" />
-            </span>
-            <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 m-0">
-              Hồ sơ mentor hiện chưa hiển thị
-            </h1>
-            <p className="text-sm text-slate-500 m-0 max-w-md">
-              Mentor này tạm thời chưa nhận lịch hoặc đang cập nhật hồ sơ, nên bạn chưa thể xem chi
-              tiết, theo dõi hay đặt lịch. Hãy quay lại sau hoặc chọn một mentor khác nhé.
-            </p>
-            <Button variant="primary" onClick={onBack}>
-              Xem mentor khác
-            </Button>
-          </section>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-slate-50/60 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:16px_16px] py-8 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -305,15 +282,15 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
             {/* Left: Avatar + Identity */}
             <div className="flex flex-col sm:flex-row items-start gap-5 min-w-0 flex-1">
               <div className="relative shrink-0">
-                {currentMentor.avatarUrl ? (
+                {displayMentor.avatarUrl ? (
                   <img
-                    src={currentMentor.avatarUrl}
-                    alt={currentMentor.name}
+                    src={displayMentor.avatarUrl}
+                    alt={displayMentor.name}
                     className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-sky-400 p-0.5 object-cover"
                   />
                 ) : (
                   <span className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-sky-400 bg-sky-50 text-sky-600 font-extrabold text-2xl flex items-center justify-center">
-                    {initials(currentMentor.name)}
+                    {initials(displayMentor.name)}
                   </span>
                 )}
                 <span
@@ -325,7 +302,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
               <div className="space-y-2 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight m-0">
-                    {currentMentor.name}
+                    {displayMentor.name}
                   </h1>
                   {currentMentor.isVerified && (
                     <BadgeCheck
@@ -419,7 +396,9 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                 className="flex-1 lg:flex-initial inline-flex flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap cursor-pointer shrink-0 border-0"
               >
                 <CalendarDays className="w-4 h-4 shrink-0 text-white" />
-                <span className="whitespace-nowrap">Đặt lịch</span>
+                <span className="whitespace-nowrap">
+                  {isUnavailable ? 'Chưa mở lịch' : 'Đặt lịch'}
+                </span>
               </button>
             </div>
           </div>
@@ -560,6 +539,14 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
                 />
               ))}
             </div>
+          ) : isUnavailable ? (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 text-slate-600 text-sm space-y-1">
+              <p className="m-0 font-semibold text-slate-800">Mentor hiện chưa mở lịch nhận đặt.</p>
+              <p className="m-0">
+                Bạn có thể bấm “Theo dõi” để không bỏ lỡ khi mentor mở lịch trở lại, hoặc xem các
+                bài viết của mentor ở tab Blog.
+              </p>
+            </div>
           ) : servicesError ? (
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
@@ -588,7 +575,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
         {activeTab === 'reviews' && (
           <MentorReviews
             mentorUserId={targetUserId}
-            mentorName={currentMentor.name}
+            mentorName={displayMentor.name}
             reputation={reputation}
           />
         )}
