@@ -456,6 +456,11 @@ export interface MentorBookingResponse {
   menteeUserId: string;
   menteeDisplayName: string;
   menteeAvatarUrl?: string | null;
+  /**
+   * Booked service. TODO(api): not in Swagger yet; checkout uses it to match GET /api/me/coupons
+   * applicableServiceIds and skips the match when it is missing.
+   */
+  serviceId?: string | null;
   serviceTitle?: string | null;
   serviceDescriptionSnapshot?: string | null;
   serviceDurationSnapshot?: number | null;

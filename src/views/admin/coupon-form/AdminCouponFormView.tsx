@@ -21,6 +21,7 @@ import {
   formToCommand,
   generateCouponCode,
   type CouponFormField,
+  type CouponScope,
 } from './couponForm';
 import { useAdminCouponForm, type CouponFormMode } from './useAdminCouponForm';
 
@@ -29,10 +30,16 @@ const DISCOUNT_TYPE_OPTIONS: Array<{ value: KnownCouponDiscountType; label: stri
   { value: 'FIXED_SCOIN', label: 'Giảm số S-coins cố định' },
 ];
 
-const SCOPE_OPTIONS: Array<{ value: 'all' | 'selected'; label: string }> = [
+const SCOPE_OPTIONS: Array<{ value: CouponScope; label: string }> = [
   { value: 'all', label: 'Tất cả mentor' },
   { value: 'selected', label: 'Chọn mentor hoặc dịch vụ' },
 ];
+
+/** Third scope card, shown only while `mentorOptInSupported` (TODO(api): mentorOptIn field). */
+const MENTOR_OPT_IN_OPTION: { value: CouponScope; label: string } = {
+  value: 'mentor-opt-in',
+  label: 'Để mentor tự chọn dịch vụ áp mã',
+};
 
 /** Label + control + helper + inline error, wired with aria-describedby. */
 function Field({
@@ -119,7 +126,10 @@ export function AdminCouponFormView({
   const radioName = useId();
   const isCreate = mode === 'create';
   const isPercent = values.discountType === 'PERCENTAGE';
-  const command = formToCommand(values);
+  const command = formToCommand(values, { mentorOptInSupported: form.mentorOptInSupported });
+  const scopeOptions = form.mentorOptInSupported
+    ? [...SCOPE_OPTIONS, MENTOR_OPT_IN_OPTION]
+    : SCOPE_OPTIONS;
   const currentCode = coupon?.code ?? values.code;
 
   const breadcrumb = (
@@ -440,10 +450,16 @@ export function AdminCouponFormView({
             <RadioCards
               name={`${radioName}-scope`}
               legend="Phạm vi áp dụng"
-              options={SCOPE_OPTIONS}
+              options={scopeOptions}
               value={values.scope}
               onChange={(value) => setField('scope', value)}
             />
+            {values.scope === 'mentor-opt-in' && (
+              <p className={styles.helper}>
+                Mã hiện trong mục &quot;Ưu đãi SkillSwap tài trợ&quot; của mọi mentor, mentor tự
+                quyết áp cho dịch vụ nào.
+              </p>
+            )}
             {values.scope === 'selected' && (
               <Field
                 field="targets"

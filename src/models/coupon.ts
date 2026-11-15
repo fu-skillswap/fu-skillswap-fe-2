@@ -46,6 +46,11 @@ export interface CouponView {
   minOrderValueScoin: number | null;
   applicableServiceIds: string[];
   applicableMentorIds: string[];
+  /**
+   * Mentors pick the services this coupon applies to ("Ưu đãi SkillSwap tài trợ").
+   * TODO(api): mentorOptIn field — not in Swagger yet; absent on older BE builds.
+   */
+  mentorOptIn?: boolean;
   totalRedemptions: number;
   activeRedemptions: number;
   createdAt: string;
@@ -67,6 +72,8 @@ export interface CreateCouponCommand {
   minOrderValueScoin: number | null;
   applicableServiceIds: string[];
   applicableMentorIds: string[];
+  /** TODO(api): mentorOptIn field — only sent while the admin form offers the option. */
+  mentorOptIn?: boolean;
 }
 
 export type UpdateCouponCommand = CreateCouponCommand;
@@ -159,4 +166,35 @@ export interface UserCouponView {
    * TODO(api): not in the Swagger response yet.
    */
   applicableServiceIds?: string[] | null;
+}
+
+/**
+ * GET /api/me/mentor/coupon-offers — SkillSwap-funded coupons the signed-in mentor can apply to
+ * their own services (coupons created with `mentorOptIn`).
+ * TODO(api): endpoint not deployed yet; field names follow the BE proposal.
+ */
+export interface MentorCouponOffer {
+  couponId: string;
+  code: string;
+  title: string;
+  description: string | null;
+  /** 'FIXED' | 'PERCENT'; unknown values are tolerated (see `UserCouponDiscountType`). */
+  discountType: UserCouponDiscountType;
+  discountValue: number;
+  maxDiscountScoin: number | null;
+  minOrderValueScoin: number | null;
+  startAt: string;
+  endAt: string;
+  quotaTotal: number | null;
+  remainingQuota: number | null;
+  quotaPerUser: number | null;
+  /** The mentor has not seen this offer yet. */
+  isNew: boolean;
+  /** The mentor's services this coupon is applied to (a service carries at most one offer). */
+  appliedServiceIds: string[];
+}
+
+/** PUT /api/me/mentor/coupon-offers/{couponId}/services — full replacement, [] stops applying. */
+export interface SetCouponServicesCommand {
+  serviceIds: string[];
 }

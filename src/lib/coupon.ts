@@ -5,7 +5,7 @@
  */
 
 import type { MentorServiceManagementResponse } from '@/models/auth';
-import type { CouponView, UserCouponView } from '@/models/coupon';
+import type { CouponView, MentorCouponOffer, UserCouponView } from '@/models/coupon';
 
 const scoinFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
 
@@ -273,10 +273,15 @@ export function withMenteeSurcharge(priceScoin: number): number {
 type CouponDiscount = Pick<UserCouponView, 'discountType' | 'discountValue' | 'maxDiscountScoin'>;
 type ServicePricing = Pick<MentorServiceManagementResponse, 'isFree' | 'publicPriceScoin'>;
 
-/** Price the mentee sees for a mentor service (surcharge included); 0 for free services. */
+/**
+ * Price the mentee sees for a mentor service, before coupon/credit; 0 for free services.
+ * Swagger `MentorServiceManagementResponse.publicPriceScoin` is already the "final service price
+ * paid by mentee after the configured surcharge", so no surcharge is added here.
+ */
 export function menteePriceOf(service: ServicePricing): number {
   if (service.isFree) return 0;
-  return withMenteeSurcharge(service.publicPriceScoin ?? 0);
+  const price = service.publicPriceScoin ?? 0;
+  return Number.isFinite(price) ? Math.max(0, price) : 0;
 }
 
 /**
@@ -317,6 +322,178 @@ export function couponRule(coupon: CouponDiscount): string {
       : `${coupon.discountValue}%`;
   }
   return `${formatScoin(coupon.discountValue)} S-coins`;
+}
+
+// --- Mentor coupon opt-in (GET /api/me/mentor/coupon-offers) ---
+
+export type OfferState = 'scheduled' | 'running' | 'ended';
+
+/** 'ended' when past `endAt` or the global quota is used up; 'scheduled' before `startAt`. */
+export function offerState(
+  offer: Pick<MentorCouponOffer, 'startAt' | 'endAt' | 'remainingQuota'>,
+  now: Date | number = Date.now(),
+): OfferState {
+  const nowTime = typeof now === 'number' ? now : now.getTime();
+  const end = toTime(offer.endAt);
+  if ((end !== null && nowTime > end) || offer.remainingQuota === 0) return 'ended';
+  const start = toTime(offer.startAt);
+  if (start !== null && nowTime < start) return 'scheduled';
+  return 'running';
+}
+
+/** "-20%" | "-100%" | "-2.000". */
+export function offerBadge(offer: Pick<MentorCouponOffer, 'discountType' | 'discountValue'>) {
+  return couponBadgeText(offer);
+}
+
+/** Second line of the ticket stub: "tối đa 3.000" | "không giới hạn" | "S-coins". */
+export function offerCap(offer: CouponDiscount): string {
+  return couponCap(offer);
+}
+
+export interface OfferEligibility {
+  eligible: boolean;
+  /** Vietnamese reason shown on disabled rows; null when eligible. */
+  reason: string | null;
+}
+
+/** Free services never take a coupon; paid ones must reach the minimum on the mentee price. */
+export function canApplyTo(
+  offer: Pick<MentorCouponOffer, 'minOrderValueScoin'>,
+  service: ServicePricing,
+): OfferEligibility {
+  if (service.isFree || !((service.publicPriceScoin ?? 0) > 0)) {
+    return { eligible: false, reason: 'Miễn phí, không cần mã' };
+  }
+  const min = offer.minOrderValueScoin;
+  if (min != null && min > 0 && menteePriceOf(service) < min) {
+    return { eligible: false, reason: `Cần giá từ ${formatScoin(min)} S-coins` };
+  }
+  return { eligible: true, reason: null };
+}
+
+/** The offer applied to this service (a service carries at most one), or null. */
+export function appliedOfferFor<T extends Pick<MentorCouponOffer, 'appliedServiceIds'>>(
+  serviceId: string,
+  offers: readonly T[] | null | undefined,
+): T | null {
+  return offers?.find((offer) => offer.appliedServiceIds?.includes(serviceId)) ?? null;
+}
+
+/** Offers shown to the mentor: ended ones hidden; new first, then running, then scheduled. */
+export function visibleOffers(
+  offers: readonly MentorCouponOffer[] | null | undefined,
+  now: Date | number = Date.now(),
+): MentorCouponOffer[] {
+  if (!offers) return [];
+  const rank = (offer: MentorCouponOffer) =>
+    (offer.isNew ? 0 : 2) + (offerState(offer, now) === 'running' ? 0 : 1);
+  return offers
+    .filter((offer) => offerState(offer, now) !== 'ended')
+    .map((offer, index) => ({ offer, index }))
+    .sort((a, b) => rank(a.offer) - rank(b.offer) || a.index - b.index)
+    .map(({ offer }) => offer);
+}
+
+const VN_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const offerDayMonth = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: VN_TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+});
+const offerDayMonthYear = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: VN_TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+/** ISO → "dd/MM" (Vietnam time); "" when invalid. */
+export function formatOfferDay(value: string | null | undefined): string {
+  const time = toTime(value);
+  return time === null ? '' : offerDayMonth.format(time);
+}
+
+/** ISO → "dd/MM/yyyy" (Vietnam time); "" when invalid. */
+export function formatOfferDate(value: string | null | undefined): string {
+  const time = toTime(value);
+  return time === null ? '' : offerDayMonthYear.format(time);
+}
+
+/**
+ * Service + offer for the "Cơ chế hoạt động" example in opt-in mode: the first paid service with an
+ * applied offer, else the first paid service with the eligible offer giving it the largest discount
+ * (running offers preferred). null when nothing fits.
+ */
+export function pickOfferMoneyFlowExample<S extends ServicePricing & { serviceId: string }>(
+  services: readonly S[],
+  offers: readonly MentorCouponOffer[],
+  now: Date | number = Date.now(),
+): { service: S; coupon: MentorCouponOffer } | null {
+  const paid = services.filter((service) => !service.isFree && (service.publicPriceScoin ?? 0) > 0);
+  for (const service of paid) {
+    const offer = appliedOfferFor(service.serviceId, offers);
+    if (offer) return { service, coupon: offer };
+  }
+  const service = paid[0];
+  if (!service) return null;
+  const eligible = offers.filter((offer) => canApplyTo(offer, service).eligible);
+  const running = eligible.filter((offer) => offerState(offer, now) === 'running');
+  const coupon = bestCouponFor(running.length ? running : eligible, menteePriceOf(service));
+  return coupon ? { service, coupon } : null;
+}
+
+type ServiceMoneyFields = Pick<
+  MentorServiceManagementResponse,
+  'isFree' | 'publicPriceScoin' | 'basePriceScoin' | 'estimatedMentorPayoutScoin'
+>;
+
+export interface ServiceMoneyFlow {
+  /** Price the mentor set (`basePriceScoin`). */
+  basePrice: number;
+  /** Price the mentee sees before the coupon (`publicPriceScoin`, surcharge included). */
+  priceWithSurcharge: number;
+  /** Coupon discount on the mentee price. */
+  discount: number;
+  menteePays: number;
+  /** Mentor's estimated payout after commission (`estimatedMentorPayoutScoin`). */
+  mentorGets: number;
+  /** priceWithSurcharge − mentorGets (mentee surcharge + mentor commission). */
+  platformFee: number;
+}
+
+/**
+ * Money flow of one session of a real mentor service, from the API's own numbers — nothing is
+ * recomputed from a hard-coded surcharge. A missing coupon means no discount; a missing payout
+ * falls back to the base price.
+ * TODO(api): confirm with BE that a coupon never lowers `estimatedMentorPayoutScoin` (SkillSwap
+ * funds the discount); Swagger does not say who pays it.
+ */
+export function serviceMoneyFlow(
+  service: ServiceMoneyFields,
+  coupon: CouponDiscount | null,
+): ServiceMoneyFlow {
+  const safe = (value: number | null | undefined) =>
+    Number.isFinite(value) ? Math.max(0, Math.round(value as number)) : 0;
+  const priceWithSurcharge = menteePriceOf(service);
+  const basePrice = service.isFree ? 0 : safe(service.basePriceScoin);
+  const mentorGets = service.isFree
+    ? 0
+    : Math.min(
+        priceWithSurcharge,
+        service.estimatedMentorPayoutScoin != null
+          ? safe(service.estimatedMentorPayoutScoin)
+          : basePrice,
+      );
+  const menteePays = coupon ? menteePriceAfter(coupon, priceWithSurcharge) : priceWithSurcharge;
+  return {
+    basePrice,
+    priceWithSurcharge,
+    discount: priceWithSurcharge - menteePays,
+    menteePays,
+    mentorGets,
+    platformFee: priceWithSurcharge - mentorGets,
+  };
 }
 
 export interface CouponMoneyFlow {
