@@ -641,6 +641,10 @@ export function ScheduleManageView() {
   const canDeactivate =
     !selectedSlot?.deactivation?.mode || selectedSlot.deactivation.mode === 'ALLOWED';
   const deactivationReason = selectedSlot?.deactivation?.restrictionCode;
+  // A slot that has already ended can no longer take bookings; the BE rejects revoking it (400).
+  const isSelectedSlotEnded = selectedSlot
+    ? new Date(selectedSlot.endAt).getTime() <= Date.now()
+    : false;
 
   // Defaults of the "create service" editor (text fields start empty).
   const [createEditorKey, setCreateEditorKey] = useState(0);
@@ -1675,11 +1679,13 @@ export function ScheduleManageView() {
             .map((item) => item.message?.trim())
             .filter(Boolean)
             .join(' ');
+          const backendMessage = reason.message?.trim();
           showToast({
             type: 'error',
             title: 'Không thể thu hồi lịch rảnh',
             description:
               details ||
+              backendMessage ||
               (selectedSlotTemplate
                 ? 'Khung giờ này thuộc lịch lặp hằng tuần. Hãy tải lại trang rồi thử lại, hoặc vào tab “Lịch lặp” → “Bỏ qua một ngày”.'
                 : 'Máy chủ từ chối yêu cầu thu hồi. Hãy tải lại trang rồi thử lại.'),
@@ -3513,13 +3519,27 @@ export function ScheduleManageView() {
               </div>
             )}
 
+            {isSelectedSlotEnded && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-border-color bg-surface-subtle px-3.5 py-3 text-sm text-text-muted">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>
+                  Khung giờ này đã qua. Mentee không thể đặt lịch vào khung giờ đã qua nên bạn không
+                  cần thu hồi.
+                </span>
+              </div>
+            )}
+
             <footer className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
                 className="h-10 border-slate-300 text-slate-700 hover:border-red-300 hover:bg-red-50 hover:text-red-600 sm:min-w-36"
-                disabled={!canDeactivate}
-                title={deactivationReason || undefined}
+                disabled={!canDeactivate || isSelectedSlotEnded}
+                title={
+                  isSelectedSlotEnded
+                    ? 'Khung giờ này đã qua nên không cần thu hồi.'
+                    : deactivationReason || undefined
+                }
                 onClick={handleOpenDeactivateModal}
               >
                 Thu hồi lịch rảnh
