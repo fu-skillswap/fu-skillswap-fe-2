@@ -2,18 +2,12 @@
  * @file CouponHowItWorks.tsx
  * @description "Cơ chế hoạt động" tab of the coupon drawer: why applying a coupon helps, a worked
  * money-flow example from the mentor's own service and coupon (GET /api/me/coupons), cancellation rules and where to
- * check the payout. Every number comes from `couponMoneyFlow`; nothing is invented.
+ * check the payout. Every number comes from `serviceMoneyFlow` (the service's own API prices).
  */
 
 'use client';
 
-import {
-  MENTEE_SURCHARGE_BPS,
-  couponMoneyFlow,
-  formatScoin,
-  couponRule,
-  pickMoneyFlowExample,
-} from '@/lib/coupon';
+import { formatScoin, couponRule, pickMoneyFlowExample, serviceMoneyFlow } from '@/lib/coupon';
 import type {
   BookingCancellationRefundPolicy,
   MentorServiceManagementResponse,
@@ -23,6 +17,12 @@ import { ArrowDown, FileText, Ticket, UserPlus, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import styles from './couponOffers.module.css';
+
+/** Service + coupon used for the worked money-flow example. */
+export interface MoneyFlowExample {
+  service: MentorServiceManagementResponse;
+  coupon: Pick<UserCouponView, 'code' | 'discountType' | 'discountValue' | 'maxDiscountScoin'>;
+}
 
 function BenefitRow({
   icon,
@@ -79,23 +79,23 @@ function MoneyBar({ label, parts }: { label: string; parts: [BarPart, BarPart] }
 export function CouponHowItWorks({
   services,
   coupons,
+  example: exampleOverride,
   refundPolicy,
   walletHref,
   onShowOffers,
 }: {
   services: MentorServiceManagementResponse[];
   coupons: UserCouponView[];
+  /** Pre-picked example (coupon opt-in); omitted → picked from `coupons`. */
+  example?: MoneyFlowExample | null;
   /** From any of the mentor's bookings; null keeps the generic wording. */
   refundPolicy: BookingCancellationRefundPolicy | null;
   walletHref: string;
   onShowOffers: () => void;
 }) {
-  const example = pickMoneyFlowExample(services, coupons);
-  const surchargePercent = MENTEE_SURCHARGE_BPS / 100;
-
-  const flow = example
-    ? couponMoneyFlow(example.service.publicPriceScoin ?? 0, MENTEE_SURCHARGE_BPS, example.coupon)
-    : null;
+  const example =
+    exampleOverride !== undefined ? exampleOverride : pickMoneyFlowExample(services, coupons);
+  const flow = example ? serviceMoneyFlow(example.service, example.coupon) : null;
   const s = (value: number) => `${formatScoin(value)} S-coins`;
 
   const earlyRefund =
@@ -150,13 +150,12 @@ export function CouponHowItWorks({
             Tiền đi như thế nào
           </h3>
           <p className={styles.howSub}>
-            Ví dụ: {example.service.title} ({s(example.service.publicPriceScoin ?? 0)}), mã{' '}
+            Ví dụ: {example.service.title} (giá bạn đặt {s(flow.basePrice)}), mã{' '}
             {example.coupon.code} giảm {couponRule(example.coupon)}.
           </p>
 
           <p className={styles.barLabel}>
-            Giá buổi mentee thấy: {s(flow.priceWithSurcharge)} (gồm {surchargePercent}% phí nền
-            tảng)
+            Giá buổi mentee thấy: {s(flow.priceWithSurcharge)} (đã gồm phí nền tảng)
           </p>
           <MoneyBar
             label={`${formatScoin(flow.priceWithSurcharge)} S-coins gồm mentee trả ${formatScoin(flow.menteePays)} và SkillSwap tài trợ ${formatScoin(flow.discount)}`}
@@ -201,8 +200,9 @@ export function CouponHowItWorks({
               báo sự cố.
             </li>
             <li>
-              <strong>{s(flow.mentorGets)} vào Ví S-coins của bạn.</strong> Lịch sử ví ghi rõ dòng
-              &quot;SkillSwap tài trợ mã {example.coupon.code} · {s(flow.discount)}&quot;.
+              <strong>{s(flow.mentorGets)} (thu nhập dự kiến) vào Ví S-coins của bạn.</strong> Lịch
+              sử ví ghi rõ dòng &quot;SkillSwap tài trợ mã {example.coupon.code} ·{' '}
+              {s(flow.discount)}&quot;.
             </li>
             <li>
               <strong>Bạn rút về tài khoản</strong> như các buổi học khác.

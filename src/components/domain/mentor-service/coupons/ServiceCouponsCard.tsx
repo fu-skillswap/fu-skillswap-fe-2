@@ -8,20 +8,44 @@ import {
   couponBadgeText,
   formatScoin,
   isPercentDiscount,
-  withMenteeSurcharge,
 } from '@/lib/coupon';
-import type { UserCouponView } from '@/models/coupon';
+import type { MentorCouponOffer, UserCouponView } from '@/models/coupon';
 import type { ReactNode } from 'react';
 
+/** Fields a ticket needs; filled from GET /api/me/coupons or from a mentor coupon offer. */
+export type ServiceCouponTicketData = Pick<
+  UserCouponView,
+  | 'id'
+  | 'code'
+  | 'title'
+  | 'description'
+  | 'discountType'
+  | 'discountValue'
+  | 'maxDiscountScoin'
+  | 'minOrderValueScoin'
+  | 'quotaTotal'
+  | 'remainingQuota'
+>;
+
+export function offerToTicketData(offer: MentorCouponOffer): ServiceCouponTicketData {
+  return { ...offer, id: offer.couponId };
+}
+
 /** Same 80%-used threshold as `isNearlyExhausted`, computed from the remaining quota. */
-function isRunningLow(coupon: UserCouponView) {
+function isRunningLow(coupon: ServiceCouponTicketData) {
   if (coupon.quotaTotal == null || coupon.remainingQuota == null || coupon.quotaTotal <= 0) {
     return false;
   }
   return coupon.remainingQuota / coupon.quotaTotal <= 0.2;
 }
 
-function CouponTicket({ coupon, priceWithFee }: { coupon: UserCouponView; priceWithFee: number }) {
+function CouponTicket({
+  coupon,
+  priceWithFee,
+}: {
+  coupon: ServiceCouponTicketData;
+  priceWithFee: number;
+}) {
   const capLine = isPercentDiscount(coupon.discountType)
     ? coupon.maxDiscountScoin
       ? `tối đa ${formatScoin(coupon.maxDiscountScoin)} S-coins`
@@ -78,19 +102,29 @@ function CouponTicket({ coupon, priceWithFee }: { coupon: UserCouponView; priceW
 
 export function ServiceCouponsCard({
   coupons,
-  priceScoin,
+  menteePriceScoin,
+  basePriceScoin,
+  subtitle,
   incomeNote,
+  emptyText,
   footer,
 }: {
-  coupons: UserCouponView[];
-  priceScoin: number;
-  /** Mentor income line, shown before the surcharge note. */
+  coupons: ServiceCouponTicketData[];
+  /** `publicPriceScoin`: what the mentee sees, platform surcharge already included. */
+  menteePriceScoin: number;
+  /** `basePriceScoin`: the price the mentor set. */
+  basePriceScoin: number;
+  /** Replaces the default subtitle (coupon opt-in mode). */
+  subtitle?: ReactNode;
+  /** Line shown before the surcharge note (coupon opt-in mode). */
   incomeNote?: ReactNode;
-  /** Extra links at the bottom of the card. */
+  /** When set, the card stays visible without coupons and shows this text instead. */
+  emptyText?: string;
+  /** Extra links at the bottom of the card (coupon opt-in mode). */
   footer?: ReactNode;
 }) {
-  if (!coupons.length) return null;
-  const priceWithFee = withMenteeSurcharge(priceScoin);
+  if (!coupons.length && !emptyText) return null;
+  const priceWithFee = menteePriceScoin;
   return (
     <section
       className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
@@ -101,18 +135,23 @@ export function ServiceCouponsCard({
           Mã giảm giá mentee có thể dùng
         </h2>
         <p className="mt-0.5 text-sm text-text-muted">
-          SkillSwap tạo các mã này. Mentee nhập mã khi thanh toán, bạn không cần thao tác gì thêm.
+          {subtitle ??
+            'SkillSwap tạo các mã này. Mentee nhập mã khi thanh toán, bạn không cần thao tác gì thêm.'}
         </p>
       </div>
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(380px,1fr))]">
-        {coupons.map((coupon) => (
-          <CouponTicket key={coupon.id} coupon={coupon} priceWithFee={priceWithFee} />
-        ))}
-      </ul>
+      {coupons.length > 0 ? (
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(380px,1fr))]">
+          {coupons.map((coupon) => (
+            <CouponTicket key={coupon.id} coupon={coupon} priceWithFee={priceWithFee} />
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-text-secondary">{emptyText}</p>
+      )}
       {incomeNote && <p className="mt-3 text-sm font-semibold text-[#047857]">{incomeNote}</p>}
       <p className={`${incomeNote ? 'mt-1' : 'mt-3'} text-sm text-text-muted`}>
-        Giá mentee thấy đã gồm phí nền tảng ({formatScoin(priceScoin)} → {formatScoin(priceWithFee)}{' '}
-        S-coins).
+        Giá mentee thấy đã gồm phí nền tảng ({formatScoin(basePriceScoin)} →{' '}
+        {formatScoin(priceWithFee)} S-coins).
       </p>
       {footer}
     </section>

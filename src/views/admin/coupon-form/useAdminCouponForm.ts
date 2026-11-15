@@ -24,6 +24,7 @@ import {
   fieldId,
   formSnapshot,
   formToCommand,
+  isMentorOptInSupported,
   validateCouponForm,
   type CouponFormErrors,
   type CouponFormField,
@@ -144,6 +145,8 @@ export function useAdminCouponForm(mode: CouponFormMode, couponId?: string) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [isDirty]);
 
+  const mentorOptInSupported = isMentorOptInSupported(mode, coupon);
+
   const setField = useCallback(
     <K extends keyof CouponFormValues>(field: K, value: CouponFormValues[K]) => {
       setValues((current) => ({ ...current, [field]: value }));
@@ -200,7 +203,7 @@ export function useAdminCouponForm(mode: CouponFormMode, couponId?: string) {
 
     submittingRef.current = true;
     setSubmitting(true);
-    const command = formToCommand(values);
+    const command = formToCommand(values, { mentorOptInSupported });
     try {
       if (mode === 'create') {
         const created = await couponRepo.createCoupon(command);
@@ -288,6 +291,8 @@ export function useAdminCouponForm(mode: CouponFormMode, couponId?: string) {
     isDirty,
     /** Edit mode: a coupon that has been redeemed keeps its code. */
     codeLocked: mode === 'edit' && (coupon?.totalRedemptions ?? 0) > 0,
+    /** Offer the "Để mentor tự chọn dịch vụ áp mã" scope (TODO(api): mentorOptIn field). */
+    mentorOptInSupported,
     setField,
     addTarget,
     removeTarget,

@@ -79,12 +79,21 @@ interface ChatPanelProps {
   onRetry: () => void;
 }
 
+/**
+ * The backend decides who may send: `canSendMessages` / `messagingAccess` come from the
+ * conversation detail. A READ_ONLY conversation (e.g. NO_EFFECTIVE_BOOKING before the mentee pays,
+ * CHAT_WINDOW_EXPIRED after the session) answers POST /messages with 403, so never enable the
+ * composer against these flags.
+ */
 function canComposeMessage(conversation: ConversationResponse) {
-  if (conversation.canSendMessages !== false) return true;
+  if (conversation.status === 'LOCKED') return false;
+  if (conversation.messagingAccess === 'READ_ONLY') return false;
+  return conversation.canSendMessages !== false;
+}
 
-  // Conversation được tạo ngay khi Mentor accept. Một số response detail cũ vẫn trả
-  // NO_EFFECTIVE_BOOKING dù conversation đã ACTIVE; API gửi tin nhắn kiểm tra quyền cuối cùng.
-  return conversation.status === 'ACTIVE' && conversation.readOnlyReason === 'NO_EFFECTIVE_BOOKING';
+/** Backend `userActionMessage` first, then the reason-based text. */
+function readOnlyText(conversation: ConversationResponse) {
+  return conversation.userActionMessage?.trim() || readOnlyMessage(conversation.readOnlyReason);
 }
 
 export function ChatPanel({
@@ -259,7 +268,7 @@ export function ChatPanel({
           onKeyDown={handleComposerKeyDown}
           placeholder={
             !canCompose
-              ? readOnlyMessage(conversation.readOnlyReason)
+              ? readOnlyText(conversation)
               : `Nhắn tin cho ${conversation.otherUserName || 'người dùng'}...`
           }
           disabled={!canCompose || isSending}

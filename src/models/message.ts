@@ -36,6 +36,10 @@ export interface ConversationResponse {
   messagingWindowEndsAt?: string | null;
   postSessionChatPermanent?: boolean;
   participantCount?: number | null;
+  /** Safe message to show when chat is restricted (Swagger `ConversationResponse`). */
+  userActionMessage?: string | null;
+  /** Whether sending may be retried; usually false when permission is denied. */
+  retryable?: boolean | null;
 }
 
 export interface ConversationCursorPageResponse {
