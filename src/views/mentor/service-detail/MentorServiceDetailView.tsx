@@ -163,6 +163,12 @@ export function MentorServiceDetailView({
     }
   };
 
+  // Mentor's price = what the mentee pays = what the mentor receives (no platform spread).
+  const hasSamePricing =
+    !!service &&
+    (service.basePriceScoin ?? 0) === (service.publicPriceScoin ?? 0) &&
+    (service.basePriceScoin ?? 0) === (service.estimatedMentorPayoutScoin ?? 0);
+
   return (
     <div className="mentor-service-detail-page mx-auto w-full max-w-6xl space-y-3 pb-4">
       <Link
@@ -431,26 +437,37 @@ export function MentorServiceDetailView({
                       </h2>
                     </div>
                   </div>
+                  {/* Values come straight from the BE (base / public / payout). With no
+                      surcharge or commission configured they are equal and shown as one price. */}
                   <dl className="divide-y divide-slate-100 px-4">
                     <div className="flex items-center justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-slate-500">Giá công khai</dt>
+                      <dt className="text-sm text-slate-500">Giá bạn đặt</dt>
                       <dd className="text-sm font-bold text-primary">
-                        {formatScoin(service.publicPriceScoin)}
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-slate-500">Giá cơ sở</dt>
-                      <dd className="text-sm font-semibold text-slate-800">
                         {formatScoin(service.basePriceScoin)}
                       </dd>
                     </div>
-                    <div className="flex items-center justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-slate-500">Thu nhập dự kiến</dt>
-                      <dd className="text-sm font-semibold text-emerald-600">
-                        {formatScoin(service.estimatedMentorPayoutScoin)}
-                      </dd>
-                    </div>
+                    {!hasSamePricing && (
+                      <>
+                        <div className="flex items-center justify-between gap-4 py-2.5">
+                          <dt className="text-sm text-slate-500">Mentee thanh toán</dt>
+                          <dd className="text-sm font-semibold text-slate-800">
+                            {formatScoin(service.publicPriceScoin)}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 py-2.5">
+                          <dt className="text-sm text-slate-500">Bạn nhận về</dt>
+                          <dd className="text-sm font-semibold text-emerald-600">
+                            {formatScoin(service.estimatedMentorPayoutScoin)}
+                          </dd>
+                        </div>
+                      </>
+                    )}
                   </dl>
+                  {hasSamePricing && !service.isFree && (
+                    <p className="m-0 border-t border-slate-100 px-4 py-2.5 text-xs text-emerald-700">
+                      Mentee thanh toán đúng giá này và bạn nhận về đủ 100%.
+                    </p>
+                  )}
                 </section>
               </aside>
             </div>

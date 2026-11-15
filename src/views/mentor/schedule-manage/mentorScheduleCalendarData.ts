@@ -333,3 +333,43 @@ export function mergeAvailabilityTemplatesIntoCalendar(
 
   return [...mergedSlotEvents, ...templateEvents];
 }
+
+/**
+ * Finds the weekly template whose occurrence produced (overlaps) a concrete slot.
+ * Generated slots carry no template id, so the BE needs the template's `configVersion` as
+ * `expectedTemplateVersion(s)` to change them; this rebuilds the link from the template rules.
+ */
+export function findGeneratingTemplate(
+  slot: { startAt: string; endAt: string },
+  templates: AvailabilityTemplateResponse[],
+): AvailabilityTemplateResponse | undefined {
+  const slotStart = new Date(slot.startAt);
+  const slotEnd = new Date(slot.endAt);
+  if (Number.isNaN(slotStart.getTime()) || Number.isNaN(slotEnd.getTime())) return undefined;
+
+  return templates.find((template) => {
+    if (template.configuredStatus === 'ARCHIVED' || template.effectiveStatus === 'ARCHIVED') {
+      return false;
+    }
+    const date = getDateInTimezone(slotStart, template.timezone);
+    const weekdayIndex = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
+    if (!template.weekdays.includes(WEEKDAYS[weekdayIndex])) return false;
+    if (date < template.effectiveFrom || (template.effectiveTo && date > template.effectiveTo)) {
+      return false;
+    }
+    try {
+      const start = new Date(
+        localDateTimeToUtcIso(
+          { date, time: formatLocalTime(template.startTime) },
+          template.timezone,
+        ),
+      );
+      const end = new Date(
+        localDateTimeToUtcIso({ date, time: formatLocalTime(template.endTime) }, template.timezone),
+      );
+      return start < slotEnd && end > slotStart;
+    } catch {
+      return false;
+    }
+  });
+}

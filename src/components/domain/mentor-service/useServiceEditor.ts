@@ -55,7 +55,10 @@ export const serviceToEditorDefaults = (
   description: service.description,
   expectedOutcome: service.expectedOutcome,
   isFree: service.isFree,
-  priceScoin: service.publicPriceScoin ?? 0,
+  // `priceScoin` in Create/UpdateMentorServiceRequest is the price the mentor sets
+  // (`basePriceScoin`). Loading `publicPriceScoin` here re-saved the surcharged price as the
+  // new base, inflating the price on every edit.
+  priceScoin: service.basePriceScoin ?? service.publicPriceScoin ?? 0,
   maintainPostSessionChat: service.maintainPostSessionChat,
   durationMinutes: service.durationMinutes,
   coverImageUrl: service.coverImageUrl,

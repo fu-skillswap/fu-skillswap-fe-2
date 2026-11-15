@@ -512,7 +512,7 @@ export function ServiceEditor({
               htmlFor={ids.price}
               className="mb-1.5 block text-sm font-semibold text-text-main"
             >
-              Giá công khai (S-coins)
+              Giá dịch vụ (S-coins)
             </label>
             <input
               id={ids.price}
