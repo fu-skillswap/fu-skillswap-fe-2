@@ -5,6 +5,7 @@
  */
 
 import { MENTOR_COUPON_OPTIN_ENABLED } from '@/constants/featureFlags';
+import { isFixedDiscount, isPercentDiscount } from '@/lib/coupon';
 import type { CouponView, CreateCouponCommand, KnownCouponDiscountType } from '@/models/coupon';
 
 export const CODE_PATTERN = /^[A-Z0-9]{4,20}$/;
@@ -106,6 +107,28 @@ export function vnInputToIso(value: string): string {
   return value ? `${value}:00${VN_OFFSET}` : '';
 }
 
+/**
+ * "YYYY-MM-DDTHH:mm" (Vietnam time) → UTC ISO instant ("…Z"), the datetime format sent to the BE.
+ * The BE answers 400 VAL_3001 (unreadable body) to a "+07:00" offset.
+ */
+export function vnInputToUtcIso(value: string): string {
+  const time = vnInputToTime(value);
+  return time === null ? '' : new Date(time).toISOString();
+}
+
+/**
+ * Discount type as the BE spells it. The form works with PERCENTAGE / FIXED_SCOIN; a coupon loaded
+ * with the short spelling (PERCENT / FIXED, as GET /api/me/coupons returns) is saved back with it,
+ * because a value outside the BE enum makes the whole body unreadable (400 VAL_3001).
+ */
+export function toWireDiscountType(
+  formType: KnownCouponDiscountType,
+  loadedType?: string | null,
+): string {
+  if (loadedType !== 'PERCENT' && loadedType !== 'FIXED') return formType;
+  return formType === 'PERCENTAGE' ? 'PERCENT' : 'FIXED';
+}
+
 export function vnInputToTime(value: string): number | null {
   if (!value) return null;
   const time = Date.parse(vnInputToIso(value));
@@ -151,7 +174,7 @@ export function couponToForm(coupon: CouponView): CouponFormValues {
     title: coupon.title ?? '',
     description: coupon.description ?? '',
     // Unknown types fall back to the first known one; the raw value is shown in the heading note.
-    discountType: coupon.discountType === 'FIXED_SCOIN' ? 'FIXED_SCOIN' : 'PERCENTAGE',
+    discountType: isFixedDiscount(coupon.discountType) ? 'FIXED_SCOIN' : 'PERCENTAGE',
     discountValue: toText(coupon.discountValue),
     maxDiscountScoin: toText(coupon.maxDiscountScoin),
     minOrderValueScoin: toText(coupon.minOrderValueScoin),
@@ -182,7 +205,14 @@ function toInt(value: string): number | null {
 
 export function formToCommand(
   values: CouponFormValues,
-  { mentorOptInSupported = false }: { mentorOptInSupported?: boolean } = {},
+  {
+    mentorOptInSupported = false,
+    loadedDiscountType,
+  }: {
+    mentorOptInSupported?: boolean;
+    /** `discountType` of the coupon being edited, as the BE returned it. */
+    loadedDiscountType?: string | null;
+  } = {},
 ): CreateCouponCommand {
   const isPercent = values.discountType === 'PERCENTAGE';
   const selected = values.scope === 'selected';
@@ -194,12 +224,12 @@ export function formToCommand(
     code: values.code.trim().toUpperCase(),
     title: values.title.trim(),
     description: values.description.trim() || null,
-    discountType: values.discountType,
+    discountType: toWireDiscountType(values.discountType, loadedDiscountType),
     discountValue: toInt(values.discountValue) ?? 0,
     maxDiscountScoin: isPercent ? toInt(values.maxDiscountScoin) : null,
     minOrderValueScoin: toInt(values.minOrderValueScoin),
-    startAt: vnInputToIso(values.startAt),
-    endAt: vnInputToIso(values.endAt),
+    startAt: vnInputToUtcIso(values.startAt),
+    endAt: vnInputToUtcIso(values.endAt),
     quotaTotal: toInt(values.quotaTotal),
     quotaPerUser: toInt(values.quotaPerUser),
     applicableMentorIds: selected

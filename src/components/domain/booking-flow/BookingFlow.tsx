@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import type { CandidateSegmentResponse, CreateBookingRequest } from '@/models/auth';
 import type { Mentor, MentorService } from '@/models/entities';
+import { bookingRepo } from '@/repositories/bookingRepo';
 import { mentorRepo } from '@/repositories/mentorRepo';
 import { CheckCircle2, FileText, Calendar as CalendarIcon, Clock, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 /** Tạo chữ cái viết tắt từ tên người dùng cho avatar */
 function initials(name: string) {
@@ -101,6 +102,76 @@ function getCurrentWeekRange() {
   return { fromDate: formatDate(monday), toDate: formatDate(sunday) };
 }
 
+type SlotAttempt = { startTime: string; endTime: string };
+
+/** Booking statuses that still hold a time in the mentee's calendar. */
+const ACTIVE_BOOKING_STATUSES = new Set([
+  'PENDING',
+  'REQUESTED',
+  'ACCEPTED_AWAITING_PAYMENT',
+  'WAITING_PAYMENT',
+  'PAID',
+]);
+
+const timeOf = (value: string | number) =>
+  new Date(value).toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+const isSegmentBlocked = (segment: CandidateSegmentResponse) =>
+  segment.isSelectable === false ||
+  Boolean(
+    segment.blockedByAcceptedBooking ||
+    segment.blockedBySameService ||
+    segment.blockedByDifferentService ||
+    segment.isBlocked,
+  );
+
+/**
+ * Explains in plain words why the BE refused a time (409 BOOKING_4001 only says "no longer
+ * available"), using the refreshed calendar and the mentee's own bookings, and says what to do.
+ */
+async function explainUnavailableSlot(
+  attempt: SlotAttempt,
+  freshCandidates: CandidateSegmentResponse[],
+): Promise<string> {
+  const start = new Date(attempt.startTime).getTime();
+  const end = new Date(attempt.endTime).getTime() || start;
+  const day = new Date(start).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  const range = `${timeOf(start)}–${timeOf(end)} ngày ${day}`;
+
+  if (start <= Date.now()) {
+    return `Khung giờ ${range} đã bắt đầu nên không đặt được nữa. Bạn chọn một khung giờ khác còn trống trên lịch nhé.`;
+  }
+
+  try {
+    const mine = await bookingRepo.listForMentee();
+    const clash = mine.content?.find((booking) => {
+      if (!ACTIVE_BOOKING_STATUSES.has(booking.bookingStatus)) return false;
+      const bookedStart = new Date(booking.selectedStartTime).getTime();
+      const bookedEnd = new Date(booking.selectedEndTime).getTime();
+      return bookedStart < end && bookedEnd > start;
+    });
+    if (clash) {
+      const withMentor = clash.mentorDisplayName ? ` với mentor ${clash.mentorDisplayName}` : '';
+      return `Bạn đang có một lịch hẹn khác${withMentor} lúc ${timeOf(clash.selectedStartTime)}–${timeOf(clash.selectedEndTime)} cùng ngày, trùng với khung giờ ${range} nên không đặt thêm được. Bạn chọn khung giờ không trùng, hoặc vào “Booking của tôi” để xem lại lịch đã đặt.`;
+    }
+  } catch {
+    // The mentee's bookings are only a hint; keep explaining from the calendar.
+  }
+
+  const latest = freshCandidates.find((segment) => new Date(segment.startTime).getTime() === start);
+  if (!latest) {
+    return `Mentor vừa thay đổi lịch nên khung giờ ${range} không còn nữa. Lịch bên trên đã được cập nhật, bạn chọn một khung giờ khác còn trống nhé.`;
+  }
+  if (isSegmentBlocked(latest)) {
+    return `Khung giờ ${range} vừa có người khác đặt trước. Lịch bên trên đã được cập nhật, bạn chọn một khung giờ khác còn trống nhé.`;
+  }
+  return `Khung giờ ${range} hiện không nhận đặt lịch nữa, nhiều khả năng vì đã quá sát giờ bắt đầu (mentor cần được báo trước để chuẩn bị). Bạn chọn khung giờ muộn hơn hoặc một ngày khác nhé. Nếu khung giờ nào cũng báo lỗi, bạn tải lại trang rồi thử lại.`;
+}
+
 /** Props của BookingFlow Component */
 interface BookingFlowProps {
   /** Thông tin Mentor được chọn */
@@ -119,6 +190,8 @@ interface BookingFlowProps {
   isSubmitting: boolean;
   /** Thông báo lỗi nếu có */
   error?: string;
+  /** The BE refused the chosen time itself (409): explain why and refresh the calendar. */
+  isSlotUnavailable?: boolean;
   /** Cờ đánh dấu đã đặt thành công */
   success: boolean;
   /** Callback đóng modal quy trình đặt */
@@ -137,6 +210,7 @@ export function BookingFlow({
   onConfirmWithPayload,
   isSubmitting,
   error,
+  isSlotUnavailable = false,
   success,
   onClose,
 }: BookingFlowProps) {
@@ -145,6 +219,14 @@ export function BookingFlow({
   const [candidateSegments, setCandidateSegments] = useState<CandidateSegmentResponse[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(true);
   const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
+  /** Week shown by the calendar, so a refresh reloads the week the mentee is looking at. */
+  const weekRangeRef = useRef(getCurrentWeekRange());
+  /** Time of the booking request in flight, kept to explain a refusal. */
+  const lastAttemptRef = useRef<SlotAttempt | null>(null);
+  /** Plain-language reason why the last chosen time was refused. */
+  const [slotProblem, setSlotProblem] = useState<string>();
+  /** Start times the BE refused in this session, although the calendar still lists them. */
+  const [refusedStarts, setRefusedStarts] = useState<number[]>([]);
 
   // Trạng thái bật/tắt Pop-up Modal xác nhận nhập tiêu đề & mô tả
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -155,14 +237,16 @@ export function BookingFlow({
   const loadSlotsAndCandidates = useCallback(
     async (query?: { fromDate?: string; toDate?: string }) => {
       const mentorUserId = mentor.mentorUserId || mentor.id;
-      if (!mentorUserId || !service?.id) return;
+      if (!mentorUserId || !service?.id) return [];
 
       setIsLoadingSlots(true);
       try {
         const candidates = await mentorRepo.getMentorCandidates(mentorUserId, service.id, query);
         setCandidateSegments(candidates);
+        return candidates;
       } catch {
         setCandidateSegments([]);
+        return [];
       } finally {
         setIsLoadingSlots(false);
       }
@@ -171,8 +255,23 @@ export function BookingFlow({
   );
 
   useEffect(() => {
-    loadSlotsAndCandidates(getCurrentWeekRange());
+    void loadSlotsAndCandidates(weekRangeRef.current);
   }, [loadSlotsAndCandidates]);
+
+  // Times that cannot be booked are shown as locked: already started, or refused by the BE.
+  const calendarCandidates = useMemo(() => {
+    const now = Date.now();
+    return candidateSegments.map((segment) => {
+      const start = new Date(segment.startTime).getTime();
+      if (start > now && !refusedStarts.includes(start)) return segment;
+      return {
+        ...segment,
+        isBlocked: true,
+        blockedReason:
+          start <= now ? 'Khung giờ này đã bắt đầu.' : 'Khung giờ này hiện không đặt được.',
+      };
+    });
+  }, [candidateSegments, refusedStarts]);
 
   // A server validation error about the session title belongs next to that field in the goal
   // modal, not in the generic box (which would also show the raw field name).
@@ -180,14 +279,30 @@ export function BookingFlow({
 
   // Tự động refresh tải lại danh sách slot khi có lỗi (ví dụ slot bị trùng/người khác chọn mất)
   useEffect(() => {
+    setSlotProblem(undefined);
     if (!error) return;
     if (/learningGoalTitle/i.test(error)) {
       setIsConfirmModalOpen(true);
       return;
     }
-    void loadSlotsAndCandidates();
+
+    const attempt = lastAttemptRef.current;
+    setSelectedSlotObj(null);
     onSlotChange('', null);
-  }, [error, loadSlotsAndCandidates, onSlotChange]);
+
+    let cancelled = false;
+    void (async () => {
+      const fresh = await loadSlotsAndCandidates(weekRangeRef.current);
+      if (cancelled || !isSlotUnavailable || !attempt) return;
+      const start = new Date(attempt.startTime).getTime();
+      setRefusedStarts((current) => (current.includes(start) ? current : [...current, start]));
+      const reason = await explainUnavailableSlot(attempt, fresh);
+      if (!cancelled) setSlotProblem(reason);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [error, isSlotUnavailable, loadSlotsAndCandidates, onSlotChange]);
 
   // Click nút Đặt lịch trên lịch -> Bật pop-up modal
   const handleOpenConfirmModal = () => {
@@ -207,6 +322,8 @@ export function BookingFlow({
     const rawEndAt = selectedSlotObj.endTime || selectedSlotObj.endAt || slot;
     const slotId =
       selectedSlotObj.slotId || selectedSlotObj.segmentId || selectedSlotObj.candidateId || slot;
+
+    lastAttemptRef.current = { startTime: rawStartAt, endTime: rawEndAt };
 
     const payload: CreateBookingRequest = {
       slotId,
@@ -285,13 +402,14 @@ export function BookingFlow({
       {/* Lịch đặt dạng Google Calendar */}
       <div className="w-full overflow-x-auto">
         <BookingCalendar
-          candidates={candidateSegments}
+          candidates={calendarCandidates}
           selectedServiceId={service.id}
           selectedServiceName={service.name}
           value={slot}
           isLoading={isLoadingSlots}
           onRangeChange={(fromDate, toDate) => {
-            loadSlotsAndCandidates({ fromDate, toDate });
+            weekRangeRef.current = { fromDate, toDate };
+            void loadSlotsAndCandidates({ fromDate, toDate });
           }}
           onSelectSlot={(candidateObj, slotTimeStr) => {
             setSelectedSlotObj(candidateObj);
@@ -340,7 +458,7 @@ export function BookingFlow({
           className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-medium m-0"
           role="alert"
         >
-          {error}
+          {slotProblem ?? error}
         </p>
       )}
 

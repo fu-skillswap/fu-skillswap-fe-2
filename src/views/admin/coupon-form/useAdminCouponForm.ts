@@ -203,7 +203,10 @@ export function useAdminCouponForm(mode: CouponFormMode, couponId?: string) {
 
     submittingRef.current = true;
     setSubmitting(true);
-    const command = formToCommand(values, { mentorOptInSupported });
+    const command = formToCommand(values, {
+      mentorOptInSupported,
+      loadedDiscountType: coupon?.discountType,
+    });
     try {
       if (mode === 'create') {
         const created = await couponRepo.createCoupon(command);
@@ -245,6 +248,13 @@ export function useAdminCouponForm(mode: CouponFormMode, couponId?: string) {
         if (Object.keys(fieldErrors).length) {
           setErrors(fieldErrors);
           focusFirstError(fieldErrors);
+          return;
+        }
+        if (reason.code === 'VAL_3001') {
+          // The BE could not read the request at all: nothing the admin typed is wrong.
+          setFormError(
+            'Máy chủ chưa nhận được dữ liệu của biểu mẫu này, dù các ô đã được điền đúng. Đây là lỗi hệ thống, không phải do bạn nhập sai. Bạn tải lại trang rồi lưu lại; nếu vẫn không được, hãy báo đội kỹ thuật kèm mã lỗi VAL_3001.',
+          );
           return;
         }
       }
