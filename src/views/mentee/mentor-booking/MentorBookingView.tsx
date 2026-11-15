@@ -68,7 +68,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
   const [profile, setProfile] = useState<MatchProfile>();
   const isInitialMountRef = useRef(true);
 
-  const { book, error, isSubmitting } = useMentorBooking();
+  const { book, error, isSlotUnavailable, isSubmitting } = useMentorBooking();
   const { setHeaderTitle } = useMenteeShell();
   const { isAuthenticated } = useAuth();
   const recommendations = useMentorRecommendations(RECOMMENDATION_LIMIT);
@@ -337,6 +337,7 @@ export function MentorBookingView({ mentors, locale }: MentorBookingViewProps) {
             }}
             isSubmitting={isSubmitting}
             error={error}
+            isSlotUnavailable={isSlotUnavailable}
             success={bookingSuccess}
             onClose={closeBooking}
           />

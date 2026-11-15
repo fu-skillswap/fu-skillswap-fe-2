@@ -5,10 +5,12 @@
 
 'use client';
 
+import { ApiClientError } from '@/models/apiClient';
 import type { CreateBookingRequest } from '@/models/auth';
+import { newIdempotencyKey } from '@/repositories/bookingRepo';
 import { mentorRepo } from '@/repositories/mentorRepo';
 import { getUserFriendlyErrorMessage } from '@/utils/toast';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { track } from '@/lib/analytics';
 
 /**
@@ -17,42 +19,45 @@ import { track } from '@/lib/analytics';
 export function useMentorBooking() {
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
+  /** The BE refused the chosen time (409 / BOOKING_4001): the mentee must pick another one. */
+  const [isSlotUnavailable, setIsSlotUnavailable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+  // Idempotency-Key of the attempt in flight, tied to its payload. It is reused only when the
+  // SAME request is retried after a timeout / network / server error. Reusing it for another
+  // time slot would make the BE replay the previous answer.
+  const attemptRef = useRef<{ signature: string; key: string } | null>(null);
 
   /**
    * Tạo lịch hẹn mới với Mentor theo mốc thời gian đã chọn (POST /api/bookings).
-   * Giữ nguyên Idempotency-Key trong Header nếu thực hiện Retry cùng một yêu cầu đặt lịch.
+   * @param subject Service title, sent to analytics (never the mentee's own goal text).
    */
-  /** @param subject Service title, sent to analytics (never the mentee's own goal text). */
   const book = async (payload: CreateBookingRequest, subject?: string) => {
     setIsSubmitting(true);
     setError(undefined);
+    setIsSlotUnavailable(false);
 
-    // Lấy hoặc tạo Idempotency-Key cố định cho session retry hiện tại
-    let currentKey = idempotencyKey;
-    if (!currentKey) {
-      currentKey =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `idem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      setIdempotencyKey(currentKey);
+    const signature = JSON.stringify(payload);
+    if (attemptRef.current?.signature !== signature) {
+      attemptRef.current = { signature, key: newIdempotencyKey() };
     }
 
     try {
-      await mentorRepo.createBookingRequest(payload, currentKey);
+      await mentorRepo.createBookingRequest(payload, attemptRef.current.key);
       track('booking_created', { subject: subject ?? '' });
 
-      // Đặt lịch thành công -> Reset Idempotency-Key cho lần đặt lịch sau
-      setIdempotencyKey(null);
+      attemptRef.current = null;
       setMessage('Gửi yêu cầu đặt lịch thành công.');
       return true;
     } catch (err) {
-      // Giữ nguyên Idempotency-Key để hỗ trợ Retry cùng request
+      if (err instanceof ApiClientError && err.status >= 400 && err.status < 500) {
+        // The BE answered, so this attempt is over; the next click is a new attempt.
+        attemptRef.current = null;
+        setIsSlotUnavailable(err.status === 409 || err.code === 'BOOKING_4001');
+      }
       setError(
         getUserFriendlyErrorMessage(
           err,
-          'Không thể gửi yêu cầu đặt lịch. Vui lòng chọn khung giờ khác hoặc thử lại.',
+          'Chưa gửi được yêu cầu đặt lịch. Bạn chọn khung giờ khác hoặc thử lại sau ít phút nhé.',
         ),
       );
       return false;
@@ -62,7 +67,9 @@ export function useMentorBooking() {
   };
 
   /** Reset Idempotency Key cho phiên đặt lịch mới */
-  const resetIdempotencyKey = () => setIdempotencyKey(null);
+  const resetIdempotencyKey = () => {
+    attemptRef.current = null;
+  };
 
-  return { message, error, isSubmitting, book, idempotencyKey, resetIdempotencyKey };
+  return { message, error, isSlotUnavailable, isSubmitting, book, resetIdempotencyKey };
 }
