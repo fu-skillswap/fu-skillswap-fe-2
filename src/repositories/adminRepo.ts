@@ -21,6 +21,7 @@ import type {
   AdminMentorsQuery,
   AdminMentorsResponse,
   AdminMentorDetail,
+  AdminMentorViolationRequest,
   AdminForumReport,
   AdminForumReportsQuery,
   AdminForumReportsResponse,
@@ -33,6 +34,7 @@ import type {
   MentorVerificationLock,
   MentorVerificationRequestDetail,
 } from '@/models/admin';
+import type { MentorViolationHistoryResponse } from '@/models/auth';
 
 function queryString(query: object) {
   const params = new URLSearchParams();
@@ -84,6 +86,23 @@ export const adminRepo = {
 
   getMentor: (mentorUserId: string) =>
     apiClient<AdminMentorDetail>(`/api/admin/mentors/${mentorUserId}`),
+
+  getMentorViolations: (mentorUserId: string, page = 0, size = 20) =>
+    apiClient<MentorViolationHistoryResponse>(
+      `/api/admin/mentors/${mentorUserId}/violations${queryString({ page, size })}`,
+    ),
+
+  recordMentorViolation: (mentorUserId: string, request: AdminMentorViolationRequest) =>
+    apiClient<unknown>(`/api/admin/mentors/${mentorUserId}/violations`, {
+      method: 'POST',
+      data: request,
+    }),
+
+  reverseMentorViolation: (mentorUserId: string, violationId: string, reason: string) =>
+    apiClient<unknown>(`/api/admin/mentors/${mentorUserId}/violations/${violationId}/reverse`, {
+      method: 'POST',
+      data: { reason },
+    }),
 
   getUserSummary: (userId: string) =>
     apiClient<AdminUserSummary>(`/api/admin/users/${userId}/summary`),

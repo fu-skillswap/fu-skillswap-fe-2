@@ -1402,3 +1402,34 @@ export interface PayoutRequestResponse {
   paidAt?: string | null;
   rejectedAt?: string | null;
 }
+
+/** One recorded mentor violation (GET /api/me/mentor-violations). */
+export interface MentorViolationItemResponse {
+  violationId: string;
+  type: string;
+  sourceModule?: string;
+  severity?: string;
+  points?: number;
+  reason?: string | null;
+  bookingId?: string | null;
+  occurredAt?: string | null;
+  reversedAt?: string | null;
+}
+
+/** Penalty score and violation history of the current mentor. */
+export interface MentorViolationHistoryResponse {
+  mentorUserId: string;
+  lifetimePenaltyScore?: number;
+  activePenaltyScore?: number;
+  activeWindowStartAt?: string | null;
+  bookingSuspendedUntil?: string | null;
+  totalViolations?: number;
+  history?: {
+    content?: MentorViolationItemResponse[];
+    page?: number;
+    size?: number;
+    totalElements?: number;
+    totalPages?: number;
+    last?: boolean;
+  };
+}

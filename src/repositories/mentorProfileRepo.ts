@@ -16,6 +16,7 @@ import type {
   MentorProfileResponse,
   MentorVerificationProgressResponse,
   MentorVerificationResponse,
+  MentorViolationHistoryResponse,
   SaveMentorProfileRequest,
   SubmitMentorVerificationRequest,
   UploadIntentResponse,
@@ -258,4 +259,8 @@ export const mentorProfileRepo = {
     cachedMentorProfile = null;
     mentorProfilePromise = null;
   },
+
+  /** Penalty score and violation history of the current mentor (GET `/api/me/mentor-violations`). */
+  getMyViolations: (): Promise<MentorViolationHistoryResponse> =>
+    apiClient<MentorViolationHistoryResponse>('/api/me/mentor-violations?page=0&size=20'),
 };

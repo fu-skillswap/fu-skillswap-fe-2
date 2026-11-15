@@ -5,6 +5,7 @@
 
 'use client';
 
+import { MentorVisibilityNotice } from '@/components/domain/mentor-shell/MentorVisibilityNotice';
 import { BookingStatusBadge } from '@/components/ui/BookingStatusBadge';
 import { Button } from '@/components/ui/Button';
 import type { MentorBookingResponse, MentorReviewResponse } from '@/models/auth';
@@ -109,6 +110,8 @@ export function MentorDashboardView({ locale }: { locale: string }) {
           Làm mới
         </Button>
       </section>
+
+      <MentorVisibilityNotice profile={profile} profileHref={`/${locale}/profile`} />
 
       {failedSections.length > 0 && (
         <p

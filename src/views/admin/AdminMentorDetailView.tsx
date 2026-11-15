@@ -14,6 +14,7 @@ import type {
 } from '@/models/admin';
 import { adminRepo } from '@/repositories/adminRepo';
 import { getUserFriendlyErrorMessage } from '@/utils/toast';
+import { AdminMentorViolationsSection } from '@/views/admin/mentor-violations/AdminMentorViolationsSection';
 import {
   ArrowLeft,
   Award,
@@ -80,21 +81,35 @@ export function AdminMentorDetailView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
-  const loadMentor = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      setMentor(await adminRepo.getMentor(mentorUserId));
-    } catch (reason) {
-      setError(getErrorMessage(reason));
-    } finally {
-      setLoading(false);
-    }
-  }, [mentorUserId]);
+  /** `silent` refreshes the data in place, without swapping the page for the loading state. */
+  const loadMentor = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setLoading(true);
+        setError(undefined);
+      }
+      try {
+        setMentor(await adminRepo.getMentor(mentorUserId));
+      } catch (reason) {
+        if (!silent) setError(getErrorMessage(reason));
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [mentorUserId],
+  );
 
   useEffect(() => {
     void loadMentor();
   }, [loadMentor]);
+
+  // The page renders after an async load, so the browser cannot scroll to "#violations" itself.
+  const isLoaded = Boolean(mentor);
+  useEffect(() => {
+    if (isLoaded && window.location.hash === '#violations') {
+      document.getElementById('violations')?.scrollIntoView({ block: 'start' });
+    }
+  }, [isLoaded]);
 
   if (loading) {
     return (
@@ -200,6 +215,11 @@ export function AdminMentorDetailView({
         </section>
         <div className="admin-mentor-detail-grid">
           <div className="admin-mentor-detail-main">
+            <AdminMentorViolationsSection
+              mentorUserId={mentor.mentorUserId}
+              mentorName={mentor.displayName}
+              onChanged={() => void loadMentor(true)}
+            />
             <section className="admin-mentor-detail-card">
               <h2 className="admin-card-title">
                 <GraduationCap aria-hidden="true" /> Chuyên môn &amp; hỗ trợ
