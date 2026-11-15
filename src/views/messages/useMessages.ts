@@ -8,7 +8,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ConversationResponse, MessageResponse } from '@/models/message';
 import { messageRepo } from '@/repositories/messageRepo';
-import { getUserFriendlyError, showError } from '@/utils/toast';
+import { ApiClientError } from '@/models/apiClient';
+import { getUserFriendlyError, showError, showToast } from '@/utils/toast';
 
 function chronological(messages: MessageResponse[]) {
   return [...messages].sort((left, right) => {
@@ -160,6 +161,28 @@ export function useMessages(preferredParticipantId?: string) {
         );
         return true;
       } catch (reason) {
+        if (reason instanceof ApiClientError && reason.status === 403) {
+          // The conversation became read-only (unpaid booking, chat window over, blocked…):
+          // reload its permissions so the composer disables itself and shows the reason.
+          const conversationId = activeConversation.id;
+          const detail = await messageRepo.getConversationDetail(conversationId).catch(() => null);
+          if (detail) {
+            setConversations((current) =>
+              current.map((conversation) =>
+                conversation.id === conversationId ? { ...conversation, ...detail } : conversation,
+              ),
+            );
+          }
+          // showError would replace this with the generic 403 text, so show the reason directly.
+          showToast({
+            type: 'error',
+            title: 'Không thể gửi tin nhắn',
+            description:
+              detail?.userActionMessage?.trim() ||
+              'Bạn chưa thể nhắn tin trong cuộc trò chuyện này. Tin nhắn chưa được gửi.',
+          });
+          return false;
+        }
         showError(reason, {
           title: 'Không thể gửi tin nhắn',
           description: 'Tin nhắn chưa được gửi. Vui lòng thử lại.',
