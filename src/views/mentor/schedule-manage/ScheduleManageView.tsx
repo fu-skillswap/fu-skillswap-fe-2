@@ -12,7 +12,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
 import { getGoogleCalendarClientId, getGoogleCalendarRedirectUri } from '@/lib/auth/google';
-import { formatDateVi } from './mentorTemplateHelpers';
+import { formatDateVi, formatLocalTime } from './mentorTemplateHelpers';
 import { ApiClientError } from '@/models/apiClient';
 import type {
   AvailabilityTemplateResponse,
@@ -1302,6 +1302,59 @@ export function ScheduleManageView() {
     setIsDeactivateModalOpen(true);
   };
 
+  /**
+   * Explains a 409 on "create slot" in plain words. The BE only answers with a generic
+   * "invalid or conflicting data" message, so look up what the chosen time collides with.
+   */
+  const explainCreateConflict = async (date: string, startAt: string, endAt: string) => {
+    const requestStart = new Date(startAt).getTime();
+    const requestEnd = new Date(endAt).getTime();
+    const timeOf = (iso: string) => getLocalDateTimeParts(iso, timezone).time;
+    const dateLabel = formatDateVi(date);
+    const requested = `${timeOf(startAt)}–${timeOf(endAt)} ngày ${dateLabel}`;
+    const overlapsRequest = (slot: { startAt: string; endAt: string }) =>
+      new Date(slot.startAt).getTime() < requestEnd &&
+      new Date(slot.endAt).getTime() > requestStart;
+
+    let conflictingSlot: MentorManagedAvailabilitySlotResponse | undefined;
+    try {
+      // The chosen date may be outside the week on screen, so ask the BE for that day.
+      const day = new Date(`${date}T00:00:00Z`);
+      const latestSlots = await mentorSchedulingRepo.listAvailabilitySlots({
+        isActive: true,
+        fromDate: toDateQuery(addDays(day, -1)),
+        toDate: toDateQuery(addDays(day, 1)),
+      });
+      conflictingSlot = latestSlots.find(overlapsRequest);
+    } catch {
+      conflictingSlot = availabilitySlots?.find(overlapsRequest);
+    }
+
+    const recurringTemplate = conflictingSlot
+      ? findGeneratingTemplate(conflictingSlot, templates)
+      : [findGeneratingTemplate({ startAt, endAt }, templates)].find(
+          (template) =>
+            template?.configuredStatus === 'ACTIVE' &&
+            template.effectiveStatus === 'ACTIVE' &&
+            !template.skippedDates?.includes(date),
+        );
+
+    if (recurringTemplate) {
+      const recurringRange = conflictingSlot
+        ? `${timeOf(conflictingSlot.startAt)}–${timeOf(conflictingSlot.endAt)}`
+        : `${formatLocalTime(recurringTemplate.startTime)}–${formatLocalTime(recurringTemplate.endTime)}`;
+      return `Khung giờ ${requested} bị trùng với lịch lặp hằng tuần ${recurringRange} của bạn. Bạn chọn giờ khác không trùng, hoặc vào tab “Lịch lặp”, mở lịch đó, chọn “Bỏ qua một ngày” cho ngày ${dateLabel} rồi tạo lại nhé.`;
+    }
+
+    if (conflictingSlot) {
+      const existingStart = timeOf(conflictingSlot.startAt);
+      const existingEnd = timeOf(conflictingSlot.endAt);
+      return `Ngày ${dateLabel} bạn đã có lịch rảnh ${existingStart}–${existingEnd}, bị trùng với khung giờ ${timeOf(startAt)}–${timeOf(endAt)} vừa chọn. Bạn chọn giờ bắt đầu từ ${existingEnd} trở đi hoặc giờ kết thúc trước ${existingStart}. Nếu muốn đổi giờ của lịch đã có, bạn bấm vào lịch đó trên bảng lịch rồi chọn sửa.`;
+    }
+
+    return `Chưa tạo được khung giờ ${requested} vì có thể đang trùng với một lịch rảnh hoặc lịch lặp khác của bạn. Bạn xem lại lịch ngày ${dateLabel} rồi chọn khung giờ còn trống. Nếu vẫn không được, bạn tải lại trang rồi thử lại nhé.`;
+  };
+
   const onSubmitAvailabilitySlot = async (values: AvailabilitySlotFormValues) => {
     if (isCreatingAvailability || availabilityRetryUntil) return;
 
@@ -1408,6 +1461,16 @@ export function ScheduleManageView() {
           showError(firstFieldMessage || reason, {
             title: 'Thông tin lịch rảnh chưa hợp lệ',
           });
+        } else if (reason.status === 409) {
+          // Keep the reason inside the form too: the toast disappears after a few seconds.
+          const message = await explainCreateConflict(values.date, startAt, endAt);
+          availabilityForm.setError('root', { type: 'server', message });
+          showToast({
+            type: 'error',
+            title: 'Khung giờ này bị trùng lịch',
+            description: message,
+          });
+          void reloadScheduling();
         } else if (reason.status === 429) {
           const retryAfterSeconds = reason.retryAfterSeconds ?? 0;
           if (retryAfterSeconds > 0) {
@@ -2410,6 +2473,15 @@ export function ScheduleManageView() {
                 </span>
               )}
             </div>
+
+            {availabilityForm.formState.errors.root?.message && (
+              <p
+                className="m-0 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700"
+                role="alert"
+              >
+                {availabilityForm.formState.errors.root.message}
+              </p>
+            )}
 
             {!canCreateAvailability && (
               <p className="text-xs text-slate-500" role="status">
