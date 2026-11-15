@@ -7,6 +7,8 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { ApiClientError } from '@/models/apiClient';
+import type { MentorReviewPageResponse } from '@/models/auth';
 import { useAuth } from '@/providers/AuthProvider';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 
@@ -23,12 +25,28 @@ export function useMentorReviews(mentorUserId: string | undefined, sort: MentorR
 
   const query = useInfiniteQuery({
     queryKey: [...mentorReviewsQueryKey(mentorUserId ?? ''), sort],
-    queryFn: ({ pageParam }) =>
-      mentorDiscoveryRepo.getReviews(mentorUserId ?? '', {
-        page: pageParam,
-        size: MENTOR_REVIEWS_PAGE_SIZE,
-        direction: sort === 'new' ? 'DESC' : 'ASC',
-      }),
+    queryFn: async ({ pageParam }): Promise<MentorReviewPageResponse> => {
+      try {
+        return await mentorDiscoveryRepo.getReviews(mentorUserId ?? '', {
+          page: pageParam,
+          size: MENTOR_REVIEWS_PAGE_SIZE,
+          direction: sort === 'new' ? 'DESC' : 'ASC',
+        });
+      } catch (reason) {
+        // 404 = mentor hidden from discovery (SYS_0003): no public reviews, not an error.
+        if (reason instanceof ApiClientError && reason.status === 404) {
+          return {
+            content: [],
+            page: pageParam,
+            size: MENTOR_REVIEWS_PAGE_SIZE,
+            totalElements: 0,
+            totalPages: 0,
+            last: true,
+          };
+        }
+        throw reason;
+      }
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.page + 1),
     enabled,
