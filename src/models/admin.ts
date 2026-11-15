@@ -217,8 +217,20 @@ export interface AdminMentorsResponse {
 export interface AdminMentorsQuery {
   /** Name/email search (Swagger: GET /api/admin/mentors?keyword=). */
   keyword?: string;
+  /** Mentor status filter; without it the BE hides DRAFT mentors. */
+  status?: string;
   page?: number;
   size?: number;
+}
+
+/** Body of POST /api/admin/mentors/{mentorUserId}/violations. */
+export interface AdminMentorViolationRequest {
+  sourceModule: string;
+  sourceReferenceId: string;
+  type: string;
+  severity: string;
+  reason?: string;
+  decisionNote?: string;
 }
 
 export interface AdminBookingAttendance {
