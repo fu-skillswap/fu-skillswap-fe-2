@@ -393,7 +393,6 @@ export function AvailabilityTemplateDetailModal({
         open={isSkipModalOpen}
         title="Bỏ qua một ngày"
         onClose={() => !isSubmittingException && setIsSkipModalOpen(false)}
-        className="mentor-availability-slot-modal"
       >
         <div className="space-y-4">
           <div className="p-3 bg-sky-50 border border-sky-100 rounded-xl text-xs space-y-1">
@@ -420,7 +419,7 @@ export function AvailabilityTemplateDetailModal({
             Hệ thống sẽ không mở lịch rảnh từ mẫu này vào ngày đã chọn.
           </p>
 
-          <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -448,7 +447,6 @@ export function AvailabilityTemplateDetailModal({
         open={Boolean(restoreConfirmDate)}
         title="Khôi phục ngày này?"
         onClose={() => !isSubmittingException && setRestoreConfirmDate(null)}
-        className="mentor-availability-slot-modal"
       >
         <div className="space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -459,7 +457,7 @@ export function AvailabilityTemplateDetailModal({
             .
           </p>
 
-          <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"

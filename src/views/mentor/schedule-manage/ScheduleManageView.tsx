@@ -491,6 +491,10 @@ function MentorServiceCard({
   );
 }
 
+/** Input style of the edit-slot form; mirrors the "Thêm lịch rảnh" form. */
+const EDIT_SLOT_INPUT_CLASS =
+  'h-10 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 disabled:hover:border-slate-200';
+
 export function ScheduleManageView() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
@@ -3561,155 +3565,213 @@ export function ScheduleManageView() {
         open={isEditModalOpen && Boolean(selectedSlot)}
         title="Chỉnh sửa lịch rảnh"
         onClose={() => !isUpdatingSlot && setIsEditModalOpen(false)}
-        className="mentor-availability-slot-modal"
+        className="max-h-[95vh] max-w-2xl"
       >
         {activeOneToOneServices.length ? (
           <form
-            className="mentor-availability-slot-form"
+            className="space-y-3"
             onSubmit={editAvailabilityForm.handleSubmit((values) =>
               onSubmitUpdateAvailabilitySlot(values),
             )}
             noValidate
           >
             {editStaleNotice && (
-              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-medium mb-3">
+              <div
+                className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-800"
+                role="status"
+              >
                 {editStaleNotice}
               </div>
             )}
 
             {isTimeEditBlocked && (
-              <div className="p-2.5 bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs mb-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
                 Thời gian không thể thay đổi do:{' '}
                 <strong>{timeMutationReason || 'Lịch đã có booking.'}</strong>
               </div>
             )}
 
-            <div className="form-field-group">
-              <label className="form-label" htmlFor="edit-availability-date">
+            <div>
+              <label
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
+                htmlFor="edit-availability-date"
+              >
                 Ngày <span className="text-red-500">*</span>
               </label>
-              <input
-                id="edit-availability-date"
-                type="date"
-                disabled={isTimeEditBlocked}
-                className="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
-                {...editAvailabilityForm.register('date')}
-              />
+              <div className="relative">
+                <CalendarDays
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                  aria-hidden="true"
+                />
+                <input
+                  id="edit-availability-date"
+                  type="date"
+                  disabled={isTimeEditBlocked}
+                  aria-invalid={Boolean(editAvailabilityForm.formState.errors.date)}
+                  className={EDIT_SLOT_INPUT_CLASS}
+                  {...editAvailabilityForm.register('date')}
+                />
+              </div>
               {editAvailabilityForm.formState.errors.date && (
-                <span className="form-error-msg">
+                <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
                   {editAvailabilityForm.formState.errors.date.message}
                 </span>
               )}
             </div>
 
-            <div className="mentor-availability-time-fields">
-              <div className="form-field-group">
-                <label className="form-label" htmlFor="edit-availability-start-time">
-                  Bắt đầu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="edit-availability-start-time"
-                  type="time"
-                  disabled={isTimeEditBlocked}
-                  className="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  {...editAvailabilityForm.register('startTime')}
-                />
-                {schedulingConstraints && !isTimeEditBlocked && (
-                  <small className="mentor-availability-helper">
-                    Thời lượng tối đa: {schedulingConstraints.maximumParentSlotDurationMinutes}{' '}
-                    phút.
-                  </small>
-                )}
-                {editAvailabilityForm.formState.errors.startTime && (
-                  <span className="form-error-msg">
-                    {editAvailabilityForm.formState.errors.startTime.message}
-                  </span>
-                )}
+            <div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
+                    htmlFor="edit-availability-start-time"
+                  >
+                    Bắt đầu <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="edit-availability-start-time"
+                      type="time"
+                      disabled={isTimeEditBlocked}
+                      aria-invalid={Boolean(editAvailabilityForm.formState.errors.startTime)}
+                      className={EDIT_SLOT_INPUT_CLASS}
+                      {...editAvailabilityForm.register('startTime')}
+                    />
+                  </div>
+                  {editAvailabilityForm.formState.errors.startTime && (
+                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                      {editAvailabilityForm.formState.errors.startTime.message}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <label
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
+                    htmlFor="edit-availability-end-time"
+                  >
+                    Kết thúc <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#119CF7]"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="edit-availability-end-time"
+                      type="time"
+                      disabled={isTimeEditBlocked}
+                      aria-invalid={Boolean(editAvailabilityForm.formState.errors.endTime)}
+                      className={EDIT_SLOT_INPUT_CLASS}
+                      {...editAvailabilityForm.register('endTime')}
+                    />
+                  </div>
+                  {editAvailabilityForm.formState.errors.endTime && (
+                    <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
+                      {editAvailabilityForm.formState.errors.endTime.message}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="form-field-group">
-                <label className="form-label" htmlFor="edit-availability-end-time">
-                  Kết thúc <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="edit-availability-end-time"
-                  type="time"
-                  disabled={isTimeEditBlocked}
-                  className="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  {...editAvailabilityForm.register('endTime')}
-                />
-                {editAvailabilityForm.formState.errors.endTime && (
-                  <span className="form-error-msg">
-                    {editAvailabilityForm.formState.errors.endTime.message}
-                  </span>
-                )}
-              </div>
+              {schedulingConstraints && !isTimeEditBlocked && (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  Thời lượng tối đa: {schedulingConstraints.maximumParentSlotDurationMinutes} phút.
+                </p>
+              )}
             </div>
 
-            <fieldset className="mentor-availability-service-options">
-              <legend>
+            <fieldset className="m-0 min-w-0 border-0 p-0">
+              <legend className="mb-1.5 p-0 text-sm font-semibold text-slate-700">
                 Dịch vụ áp dụng <span className="text-red-500">*</span>
               </legend>
-              {activeOneToOneServices.map((service) => (
-                <label key={service.serviceId}>
-                  <input
-                    type="checkbox"
-                    value={service.serviceId}
-                    {...editAvailabilityForm.register('serviceIds')}
-                  />
-                  <span>
-                    <strong>{service.title}</strong>
-                    <small>
-                      {service.durationMinutes} phút · {formatServicePrice(service)}
-                    </small>
-                  </span>
-                </label>
-              ))}
+              <div className="max-h-52 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5">
+                {activeOneToOneServices.map((service) => (
+                  <label
+                    key={service.serviceId}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 outline-none transition hover:bg-sky-50 has-[:checked]:bg-sky-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#119CF7]/30"
+                  >
+                    <input
+                      type="checkbox"
+                      value={service.serviceId}
+                      className="peer sr-only"
+                      {...editAvailabilityForm.register('serviceIds')}
+                    />
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white transition peer-checked:border-[#119CF7] peer-checked:bg-[#119CF7] peer-checked:[&_svg]:opacity-100"
+                      aria-hidden="true"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-white opacity-0 transition-opacity" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate text-sm font-semibold text-slate-900">
+                        {service.title}
+                      </strong>
+                      <small className="mt-0.5 block text-xs text-slate-500">
+                        {service.durationMinutes} phút · {formatServicePrice(service)}
+                      </small>
+                    </span>
+                  </label>
+                ))}
+              </div>
               {editAvailabilityForm.formState.errors.serviceIds && (
-                <span className="form-error-msg">
+                <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
                   {editAvailabilityForm.formState.errors.serviceIds.message}
                 </span>
               )}
             </fieldset>
 
-            <div className="form-field-group">
-              <label className="form-label" htmlFor="edit-availability-note">
+            <div>
+              <label
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
+                htmlFor="edit-availability-note"
+              >
                 Ghi chú
               </label>
               <textarea
                 id="edit-availability-note"
-                className="form-textarea"
-                rows={3}
+                className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-[#119CF7] focus:ring-4 focus:ring-[#119CF7]/10"
+                rows={2}
                 maxLength={200}
+                placeholder="Thêm ghi chú cho khung giờ này (không bắt buộc)..."
                 {...editAvailabilityForm.register('note')}
               />
               {editAvailabilityForm.formState.errors.note && (
-                <span className="form-error-msg">
+                <span className="mt-1.5 block text-xs font-medium text-red-600" role="alert">
                   {editAvailabilityForm.formState.errors.note.message}
                 </span>
               )}
             </div>
 
             {editAvailabilityForm.formState.errors.root?.message && (
-              <p className="mentor-availability-form-error" role="alert">
+              <p
+                className="m-0 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700"
+                role="alert"
+              >
                 {editAvailabilityForm.formState.errors.root.message}
               </p>
             )}
 
-            <div className="form-modal-footer">
-              <button
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
+              <Button
                 type="button"
-                className="btn-modal-cancel"
+                variant="outline"
+                className="h-10 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 sm:min-w-24"
                 disabled={isUpdatingSlot}
                 onClick={() => setIsEditModalOpen(false)}
               >
                 Hủy
-              </button>
+              </Button>
               <Button
                 type="submit"
-                className="btn-modal-submit"
+                loading={isUpdatingSlot}
+                className="h-10 border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc] sm:min-w-36"
                 disabled={isUpdatingSlot || Boolean(availabilityRetryUntil)}
               >
-                {isUpdatingSlot ? 'Đang lưu...' : 'Lưu thay đổi'}
+                Lưu thay đổi
               </Button>
             </div>
           </form>
@@ -3736,7 +3798,6 @@ export function ScheduleManageView() {
         open={isDeactivateModalOpen && Boolean(selectedSlot)}
         title="Thu hồi lịch rảnh?"
         onClose={() => !isDeactivatingSlot && setIsDeactivateModalOpen(false)}
-        className="mentor-availability-slot-modal"
       >
         {selectedSlot && (
           <div className="space-y-4">
@@ -3784,18 +3845,19 @@ export function ScheduleManageView() {
               </div>
             )}
 
-            <div className="form-modal-footer flex justify-end gap-2 pt-2">
-              <button
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <Button
                 type="button"
-                className="btn-modal-cancel"
+                variant="outline"
+                className="border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
                 disabled={isDeactivatingSlot}
                 onClick={() => setIsDeactivateModalOpen(false)}
               >
                 Hủy
-              </button>
+              </Button>
               <Button
                 type="button"
-                className="btn-modal-submit bg-red-600 hover:bg-red-700 text-white"
+                className="border-red-600 bg-red-600 hover:bg-red-700"
                 disabled={isDeactivatingSlot || Boolean(availabilityRetryUntil)}
                 onClick={() => handleDeactivateSlot(false)}
               >
@@ -3811,7 +3873,6 @@ export function ScheduleManageView() {
         open={pendingRejectionConfirm !== null}
         title="Xác nhận từ chối yêu cầu đặt lịch"
         onClose={() => setPendingRejectionConfirm(null)}
-        className="mentor-availability-slot-modal"
       >
         <div className="space-y-4">
           <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-sm flex items-start gap-2">
@@ -3825,17 +3886,18 @@ export function ScheduleManageView() {
             </div>
           </div>
 
-          <div className="form-modal-footer flex justify-end gap-2 pt-2">
-            <button
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <Button
               type="button"
-              className="btn-modal-cancel"
+              variant="outline"
+              className="border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
               onClick={() => setPendingRejectionConfirm(null)}
             >
               Hủy
-            </button>
+            </Button>
             <Button
               type="button"
-              className="btn-modal-submit bg-amber-600 hover:bg-amber-700 text-white"
+              className="border-amber-600 bg-amber-600 hover:bg-amber-700"
               onClick={handleConfirmPendingRejection}
             >
               Tiếp tục
@@ -3896,7 +3958,6 @@ export function ScheduleManageView() {
               : 'Lưu trữ lịch hàng tuần?'
         }
         onClose={() => setPendingTemplateActionConfirm(null)}
-        className="mentor-availability-slot-modal"
       >
         {pendingTemplateActionConfirm && (
           <div className="space-y-4 text-sm text-gray-700">
@@ -3908,20 +3969,21 @@ export function ScheduleManageView() {
                   : 'Sau khi lưu trữ, mẫu lịch này sẽ ngừng hoạt động vĩnh viễn và không tạo thêm lịch rảnh mới.'}
             </p>
 
-            <div className="form-modal-footer flex justify-end gap-2 pt-2">
-              <button
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <Button
                 type="button"
-                className="btn-modal-cancel"
+                variant="outline"
+                className="border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
                 onClick={() => setPendingTemplateActionConfirm(null)}
               >
                 Hủy
-              </button>
+              </Button>
               <Button
                 type="button"
-                className={`btn-modal-submit ${
+                className={`${
                   pendingTemplateActionConfirm.type === 'archive'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-sky-600 hover:bg-sky-700 text-white'
+                    ? 'border-red-600 bg-red-600 hover:bg-red-700'
+                    : 'border-[#119CF7] bg-[#119CF7] hover:bg-[#0789dc]'
                 }`}
                 onClick={async () => {
                   const { type, template } = pendingTemplateActionConfirm;
@@ -3951,14 +4013,13 @@ export function ScheduleManageView() {
         open={isDisconnectModalOpen}
         title="Ngắt kết nối Google Calendar?"
         onClose={() => !isDisconnecting && setIsDisconnectModalOpen(false)}
-        className="mentor-availability-slot-modal"
       >
         <div className="space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">
             SkillSwap sẽ ngừng đồng bộ Google Calendar cho các lịch mới.
           </p>
 
-          <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -3986,12 +4047,11 @@ export function ScheduleManageView() {
         open={Boolean(cannotDisconnectNotice)}
         title="Chưa thể ngắt Google Calendar"
         onClose={() => setCannotDisconnectNotice(null)}
-        className="mentor-availability-slot-modal"
       >
         <div className="space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">{cannotDisconnectNotice}</p>
 
-          <div className="form-modal-footer pt-3 border-t border-slate-100 flex justify-end">
+          <div className="pt-3 border-t border-slate-100 flex justify-end">
             <Button
               type="button"
               variant="primary"
