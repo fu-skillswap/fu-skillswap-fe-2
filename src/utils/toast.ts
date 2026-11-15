@@ -96,7 +96,8 @@ function looksTechnical(message: string) {
   );
 }
 
-function usableBusinessMessage(message: string) {
+/** True when a backend message is plain wording a user can read (not a code or a stack trace). */
+export function usableBusinessMessage(message: string) {
   const normalized = message.trim();
   return (
     normalized.length >= 4 &&
@@ -186,6 +187,13 @@ export function getUserFriendlyError(
       return {
         title: 'Bạn đang thao tác quá nhanh',
         description: 'Vui lòng chờ một chút rồi thử lại.',
+      };
+    }
+    if (/IDEMPOTENCY_KEY_REQUIRED/i.test(technicalText)) {
+      // The request was sent without its safety key: nothing the user typed is wrong.
+      return {
+        title: context.title || 'Chưa gửi được yêu cầu',
+        description: 'Chưa có gì thay đổi. Bạn tải lại trang rồi thử lại sau ít phút nhé.',
       };
     }
     if (reason.status === 400 || reason.status === 422) {

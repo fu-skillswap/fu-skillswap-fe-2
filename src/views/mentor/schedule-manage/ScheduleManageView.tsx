@@ -34,6 +34,7 @@ import {
   availabilitySlotSchema,
   type AvailabilitySlotFormValues,
 } from '@/models/schemas/availabilitySlotSchema';
+import { newIdempotencyKey } from '@/repositories/bookingRepo';
 import { mentorSchedulingRepo } from '@/repositories/mentorSchedulingRepo';
 import { mentorServiceRepo } from '@/repositories/mentorServiceRepo';
 import { useMyMentorCoupons } from '@/components/domain/mentor-service/coupons/useMentorServiceCoupons';
@@ -57,6 +58,7 @@ import {
   showInfo,
   showSuccess,
   showToast,
+  usableBusinessMessage,
 } from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -553,6 +555,8 @@ export function ScheduleManageView() {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [isUpdatingSlot, setIsUpdatingSlot] = useState(false);
   const [isDeactivatingSlot, setIsDeactivatingSlot] = useState(false);
+  // Idempotency-Key of the revoke attempt in flight; reused when the same attempt is retried.
+  const deactivateAttemptRef = useRef<{ signature: string; key: string } | null>(null);
   const [editStaleNotice, setEditStaleNotice] = useState<string | null>(null);
   const [pendingRejectionConfirm, setPendingRejectionConfirm] = useState<{
     type: 'update' | 'deactivate';
@@ -1616,18 +1620,32 @@ export function ScheduleManageView() {
         expectedTemplateVersion: selectedSlotTemplate?.configVersion,
       };
 
-      await mentorSchedulingRepo.deactivateAvailabilitySlot(selectedSlot.slotId, deactivatePayload);
+      // A retry after a timeout / network error must reuse the key, so the BE revokes only once.
+      const signature = JSON.stringify([selectedSlot.slotId, deactivatePayload]);
+      if (deactivateAttemptRef.current?.signature !== signature) {
+        deactivateAttemptRef.current = { signature, key: newIdempotencyKey() };
+      }
+
+      await mentorSchedulingRepo.deactivateAvailabilitySlot(
+        selectedSlot.slotId,
+        deactivatePayload,
+        deactivateAttemptRef.current.key,
+      );
+      deactivateAttemptRef.current = null;
       setIsDeactivateModalOpen(false);
       setIsDetailModalOpen(false);
       setSelectedSlotId(null);
       setPendingRejectionConfirm(null);
       showSuccess({
         title: 'Đã thu hồi lịch rảnh',
-        description: 'Khung giờ này không còn nhận booking mới.',
+        description: 'Mentee sẽ không thể đặt khung giờ này nữa.',
       });
       await reloadScheduling();
     } catch (reason) {
       if (reason instanceof ApiClientError) {
+        // The BE answered, so this attempt is over; the next click is a new attempt.
+        if (reason.status >= 400 && reason.status < 500) deactivateAttemptRef.current = null;
+
         if (reason.status === 409) {
           const latestSlots = await mentorSchedulingRepo.listAvailabilitySlots({
             isActive: true,
@@ -1640,7 +1658,10 @@ export function ScheduleManageView() {
             setIsDeactivateModalOpen(false);
             setIsDetailModalOpen(false);
             setSelectedSlotId(null);
-            showInfo('Lịch này đã được thay đổi hoặc thu hồi.');
+            showInfo({
+              title: 'Khung giờ này đã được thu hồi',
+              description: 'Lịch rảnh trên trang đã được cập nhật lại.',
+            });
             await reloadScheduling();
             return;
           }
@@ -1657,48 +1678,60 @@ export function ScheduleManageView() {
           }
 
           setSelectedSlotId(freshSlot.slotId);
-          showError(
-            'Lịch này vừa có thay đổi từ nơi khác. Vui lòng kiểm tra lại thông tin mới nhất.',
-          );
+          showToast({
+            type: 'warning',
+            title: 'Khung giờ này vừa được cập nhật',
+            description: 'Thông tin mới nhất đã được tải lại. Bạn xem lại rồi thu hồi lần nữa nhé.',
+          });
           await reloadScheduling();
         } else if (reason.status === 404) {
           setIsDeactivateModalOpen(false);
           setIsDetailModalOpen(false);
           setSelectedSlotId(null);
-          showError('Lịch này không còn tồn tại.');
+          showInfo({
+            title: 'Khung giờ này không còn nữa',
+            description:
+              'Có thể khung giờ đã được thu hồi trước đó. Lịch rảnh đã được cập nhật lại.',
+          });
           await reloadScheduling();
         } else if (reason.status === 429) {
           const retryAfterSeconds = reason.retryAfterSeconds ?? 0;
           if (retryAfterSeconds > 0) {
             setAvailabilityRetryUntil(Date.now() + retryAfterSeconds * 1000);
           }
-          showError(
-            retryAfterSeconds > 0
-              ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
-              : getUserFriendlyErrorMessage(reason),
-          );
+          showToast({
+            type: 'warning',
+            title: 'Bạn thao tác hơi nhanh',
+            description:
+              retryAfterSeconds > 0
+                ? `Bạn chờ khoảng ${retryAfterSeconds} giây rồi thử lại nhé.`
+                : 'Bạn chờ một chút rồi thử lại nhé.',
+          });
         } else if (reason.status === 400 || reason.status === 422) {
-          // Show the BE's own reasons instead of the generic "Thông tin chưa hợp lệ".
-          const details = (reason.data ?? [])
-            .map((item) => item.message?.trim())
-            .filter(Boolean)
-            .join(' ');
-          const backendMessage = reason.message?.trim();
+          // Show the BE's own reason only when it is plain wording; codes such as
+          // IDEMPOTENCY_KEY_REQUIRED mean nothing to a mentor.
+          const readable = [
+            ...(reason.data ?? []).map((item) => item.message?.trim() ?? ''),
+            reason.message?.trim() ?? '',
+          ].filter((message) => message && usableBusinessMessage(message));
           showToast({
             type: 'error',
-            title: 'Không thể thu hồi lịch rảnh',
+            title: 'Chưa thu hồi được lịch rảnh',
             description:
-              details ||
-              backendMessage ||
+              readable[0] ??
               (selectedSlotTemplate
-                ? 'Khung giờ này thuộc lịch lặp hằng tuần. Hãy tải lại trang rồi thử lại, hoặc vào tab “Lịch lặp” → “Bỏ qua một ngày”.'
-                : 'Máy chủ từ chối yêu cầu thu hồi. Hãy tải lại trang rồi thử lại.'),
+                ? 'Khung giờ này thuộc lịch lặp hằng tuần. Bạn tải lại trang rồi thử lại, hoặc vào tab “Lịch lặp” và chọn “Bỏ qua một ngày”.'
+                : 'Khung giờ của bạn vẫn được giữ nguyên. Bạn tải lại trang rồi thử lại sau ít phút nhé.'),
           });
         } else {
-          showError(reason);
+          showError(reason, { title: 'Chưa thu hồi được lịch rảnh' });
         }
       } else {
-        showError('Không thể thu hồi lịch rảnh. Vui lòng thử lại.');
+        showToast({
+          type: 'error',
+          title: 'Chưa thu hồi được lịch rảnh',
+          description: 'Khung giờ của bạn vẫn được giữ nguyên. Bạn thử lại sau ít phút nhé.',
+        });
       }
     } finally {
       setIsDeactivatingSlot(false);
