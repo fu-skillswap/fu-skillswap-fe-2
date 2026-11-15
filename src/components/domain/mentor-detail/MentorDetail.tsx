@@ -16,6 +16,7 @@ import { MentorReviews, type MentorReputation } from './MentorReviews';
 import { MentorServiceCard } from './MentorServiceCard';
 import { ServiceDescriptionDetail } from '@/components/domain/mentor-service/ServiceDescriptionDetail';
 import { parseServiceDescription } from '@/components/domain/mentor-service/serviceDescription';
+import { ApiClientError } from '@/models/apiClient';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
 import { mapApiMentorToEntity } from '@/repositories/mentorRepo';
 import { useAuth } from '@/providers/AuthProvider';
@@ -32,6 +33,7 @@ import {
   GitBranch,
   Globe,
   Heart,
+  SearchX,
   Trophy,
 } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -72,6 +74,8 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   const [detailService, setDetailService] = useState<MentorService>();
   const [servicesError, setServicesError] = useState<string>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  /** `GET /api/mentors/{id}` answered 404: the mentor is hidden from discovery. */
+  const [isUnavailable, setIsUnavailable] = useState(false);
   const [projects, setProjects] = useState<MentorProjectResponse[]>([]);
   const [achievements, setAchievements] = useState<MentorAchievementResponse[]>([]);
   const [githubUrl, setGithubUrl] = useState<string>();
@@ -109,6 +113,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
     }
     setIsLoading(true);
     setServicesError(undefined);
+    setIsUnavailable(false);
 
     void mentorDiscoveryRepo
       .getDetail(targetUserId)
@@ -166,8 +171,12 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
             })),
         );
       })
-      .catch(() => {
-        if (isMounted) setServicesError('Không thể tải hồ sơ chi tiết của mentor.');
+      .catch((reason) => {
+        if (!isMounted) return;
+        // 404 (SYS_0003) = the mentor exists but is not discoverable (no active service,
+        // profile not ACTIVE…). Follow / booking would fail too, so show a dedicated state.
+        if (reason instanceof ApiClientError && reason.status === 404) setIsUnavailable(true);
+        else setServicesError('Không thể tải hồ sơ chi tiết của mentor.');
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -179,7 +188,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
   }, [targetUserId]);
 
   useEffect(() => {
-    if (!isAuthenticated || !targetUserId) {
+    if (!isAuthenticated || !targetUserId || isUnavailable) {
       setIsFollowing(false);
       return;
     }
@@ -196,7 +205,7 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, targetUserId]);
+  }, [isAuthenticated, targetUserId, isUnavailable]);
 
   const handleServiceClick = (service: MentorService) => {
     if (!isAuthenticated) {
@@ -239,6 +248,41 @@ export function MentorDetail({ mentor, mentorUserId, onBack, onBook }: MentorDet
       setIsFollowLoading(false);
     }
   };
+
+  if (isUnavailable) {
+    return (
+      <main className="min-h-screen bg-slate-50/60 py-8 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Quay lại danh sách
+          </button>
+          <section
+            className="bg-white rounded-2xl p-8 sm:p-10 border border-slate-200/80 shadow-sm flex flex-col items-center text-center gap-3"
+            role="status"
+          >
+            <span className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+              <SearchX className="w-7 h-7" aria-hidden="true" />
+            </span>
+            <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 m-0">
+              Hồ sơ mentor hiện chưa hiển thị
+            </h1>
+            <p className="text-sm text-slate-500 m-0 max-w-md">
+              Mentor này tạm thời chưa nhận lịch hoặc đang cập nhật hồ sơ, nên bạn chưa thể xem chi
+              tiết, theo dõi hay đặt lịch. Hãy quay lại sau hoặc chọn một mentor khác nhé.
+            </p>
+            <Button variant="primary" onClick={onBack}>
+              Xem mentor khác
+            </Button>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-50/60 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:16px_16px] py-8 px-4 sm:px-6">
