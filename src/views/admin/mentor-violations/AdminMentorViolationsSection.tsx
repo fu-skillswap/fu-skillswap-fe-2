@@ -1,99 +1,35 @@
 /**
  * @file AdminMentorViolationsSection.tsx
- * @description Admin card on the mentor detail page: penalty score, booking suspension and the
- * violation history, with dialogs to record a verified violation or reverse a wrong one.
+ * @description Full-width admin card on the mentor detail page: penalty score band, booking
+ * suspension and the violation history (table, cards below 768px), with the dialogs to record a
+ * verified violation or reverse ("gỡ") a wrong one.
  */
 
 'use client';
 
 import { AdminTableState } from '@/components/domain/admin/AdminTableState';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { SelectField } from '@/components/ui/SelectField';
-import { TextArea } from '@/components/ui/TextArea';
-import { TextField } from '@/components/ui/TextField';
-import {
-  MENTOR_VIOLATION_SEVERITY_LABELS,
-  MENTOR_VIOLATION_SOURCE_LABELS,
-  MENTOR_VIOLATION_TYPE_LABELS,
-  toSelectOptions,
-} from '@/constants/mentorViolations';
-import type { AdminMentorViolationRequest } from '@/models/admin';
 import type { MentorViolationItemResponse } from '@/models/auth';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { Plus, ShieldAlert, Undo2 } from 'lucide-react';
+import { Lock, Plus, ShieldAlert, Undo2 } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import * as yup from 'yup';
+import {
+  DANGER_OUTLINE_BUTTON_CLASS,
+  formatPoints,
+  formatViolationDateTime,
+  isBookingSuspended,
+  violationState,
+} from './mentorViolations.helpers';
+import { RecordViolationModal } from './RecordViolationModal';
+import { ReverseViolationDialog } from './ReverseViolationDialog';
 import { useAdminMentorViolations } from './useAdminMentorViolations';
+import {
+  BookingReference,
+  SeverityPill,
+  ViolationStatePill,
+  violationTypeLabel,
+} from './ViolationPills';
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const TYPE_OPTIONS = toSelectOptions(MENTOR_VIOLATION_TYPE_LABELS);
-const SEVERITY_OPTIONS = toSelectOptions(MENTOR_VIOLATION_SEVERITY_LABELS);
-const SOURCE_OPTIONS = toSelectOptions(MENTOR_VIOLATION_SOURCE_LABELS);
-
-const SOURCE_REFERENCE_HINTS: Record<string, string> = {
-  BOOKING: 'Mã (UUID) của lịch đặt liên quan.',
-  CHAT: 'Mã (UUID) của cuộc trò chuyện liên quan.',
-  FORUM: 'Mã (UUID) của bài viết hoặc bình luận liên quan.',
-  VERIFICATION: 'Mã (UUID) của hồ sơ xác minh liên quan.',
-  ADMIN: 'Mã (UUID) của đối tượng liên quan; mặc định là mã mentor.',
-};
-
-const recordSchema = yup.object({
-  type: yup.string().required('Vui lòng chọn loại vi phạm.'),
-  severity: yup.string().required('Vui lòng chọn mức độ.'),
-  sourceModule: yup.string().required('Vui lòng chọn nguồn phát sinh.'),
-  sourceReferenceId: yup
-    .string()
-    .trim()
-    .required('Vui lòng nhập mã tham chiếu.')
-    .matches(UUID_PATTERN, 'Mã tham chiếu phải là UUID hợp lệ.'),
-  reason: yup
-    .string()
-    .trim()
-    .required('Vui lòng nhập lý do.')
-    .min(3, 'Lý do cần ít nhất 3 ký tự.')
-    .max(500, 'Lý do tối đa 500 ký tự.'),
-  decisionNote: yup.string().trim().max(1000, 'Ghi chú tối đa 1000 ký tự.').default(''),
-});
-
-type RecordFormValues = yup.InferType<typeof recordSchema>;
-
-const reverseSchema = yup.object({
-  reason: yup
-    .string()
-    .trim()
-    .required('Vui lòng nhập lý do đảo vi phạm.')
-    .max(500, 'Lý do tối đa 500 ký tự.'),
-});
-
-type ReverseFormValues = yup.InferType<typeof reverseSchema>;
-
-function formatDateTime(value?: string | null) {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(date);
-}
-
-function formatScore(value?: number) {
-  return value == null ? '—' : new Intl.NumberFormat('vi-VN').format(value);
-}
-
-function isFuture(value?: string | null) {
-  if (!value) return false;
-  const time = new Date(value).getTime();
-  return !Number.isNaN(time) && time > Date.now();
-}
-
-function severityVariant(severity?: string) {
-  if (severity === 'CRITICAL' || severity === 'HIGH') return 'danger';
-  if (severity === 'MEDIUM') return 'warning';
-  return 'neutral';
-}
+const COLUMN_COUNT = 7;
 
 export function AdminMentorViolationsSection({
   mentorUserId,
@@ -105,15 +41,53 @@ export function AdminMentorViolationsSection({
   /** Called after a violation is recorded or reversed, so the page can refresh the mentor. */
   onChanged?: () => void;
 }) {
-  const { data, page, isLoading, error, isSubmitting, goToPage, reload, record, reverse } =
-    useAdminMentorViolations(mentorUserId, onChanged);
+  const { data, page, isLoading, isFetching, error, isSubmitting, goToPage, reload, record } =
+    useAdminMentorViolations(mentorUserId, { onChanged });
   const [isRecordOpen, setIsRecordOpen] = useState(false);
   const [reverseTarget, setReverseTarget] = useState<MentorViolationItemResponse>();
 
   const items = data?.history?.content ?? [];
   const totalPages = data?.history?.totalPages ?? 1;
-  const suspendedUntil = data?.bookingSuspendedUntil;
-  const isSuspended = isFuture(suspendedUntil);
+  const activeWindowStartAt = data?.activeWindowStartAt;
+  const suspended = isBookingSuspended(data);
+
+  const reverseButton = (item: MentorViolationItemResponse) => (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className={DANGER_OUTLINE_BUTTON_CLASS}
+      leftIcon={<Undo2 className="h-4 w-4" aria-hidden="true" />}
+      onClick={() => setReverseTarget(item)}
+    >
+      Gỡ vi phạm
+    </Button>
+  );
+
+  const pointsCell = (item: MentorViolationItemResponse) =>
+    item.reversedAt ? (
+      <>
+        <strong className="block text-base font-bold">0</strong>
+        <small className="whitespace-nowrap text-xs">đã gỡ {formatPoints(item.points ?? 0)}</small>
+      </>
+    ) : (
+      <strong className="text-base font-bold text-slate-900">
+        {formatPoints(item.points ?? 0)}
+      </strong>
+    );
+
+  const stateCell = (item: MentorViolationItemResponse) => (
+    <>
+      <ViolationStatePill state={violationState(item, activeWindowStartAt)} />
+      {item.reversedAt && (
+        // TODO(api): show who reversed it and why once MentorViolationItemResponse has
+        // reversedBy + reverseReason.
+        <small className="mt-1 block whitespace-nowrap text-xs text-slate-500">
+          Đã gỡ lúc {formatViolationDateTime(item.reversedAt)}
+        </small>
+      )}
+    </>
+  );
 
   return (
     <section
@@ -136,29 +110,51 @@ export function AdminMentorViolationsSection({
         </Button>
       </div>
 
-      <dl className="m-0 mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SummaryItem label="Điểm phạt hiện hành" value={formatScore(data?.activePenaltyScore)} />
-        <SummaryItem label="Điểm phạt tích lũy" value={formatScore(data?.lifetimePenaltyScore)} />
-        <SummaryItem label="Tổng số vi phạm" value={formatScore(data?.totalViolations)} />
-        <SummaryItem
-          label="Tạm khóa nhận lịch"
-          value={
-            isSuspended
-              ? `Đến ${formatDateTime(suspendedUntil)}`
-              : suspendedUntil
-                ? `Đã hết (${formatDateTime(suspendedUntil)})`
-                : 'Không'
-          }
-          tone={isSuspended ? 'danger' : undefined}
-        />
-      </dl>
-      {data?.activeWindowStartAt && (
-        <p className="m-0 mt-2 text-xs text-text-muted">
-          Điểm phạt hiện hành được tính từ {formatDateTime(data.activeWindowStartAt)}.
-        </p>
-      )}
+      <div
+        className={`mt-4 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-2xl border border-solid p-5 ${
+          suspended ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50'
+        }`}
+      >
+        <div className="flex items-baseline gap-2.5">
+          {isLoading ? (
+            <span className="inline-block h-11 w-14 animate-pulse rounded-lg bg-slate-200" />
+          ) : (
+            <strong
+              className={`text-[44px] font-extrabold leading-none ${
+                suspended ? 'text-red-700' : 'text-slate-900'
+              }`}
+            >
+              {formatPoints(data?.activePenaltyScore ?? 0)}
+            </strong>
+          )}
+          <span className="text-sm font-semibold text-slate-600">điểm phạt hiện hành</span>
+        </div>
+        <dl className="m-0 flex flex-wrap gap-x-8 gap-y-3">
+          <SummaryFact
+            label="Tích lũy"
+            value={isLoading ? '—' : `${formatPoints(data?.lifetimePenaltyScore ?? 0)} điểm`}
+          />
+          <SummaryFact
+            label="Tổng số vi phạm"
+            value={isLoading ? '—' : formatPoints(data?.totalViolations ?? 0)}
+          />
+          {activeWindowStartAt && (
+            <SummaryFact
+              label="Tính điểm từ"
+              value={formatViolationDateTime(activeWindowStartAt)}
+            />
+          )}
+        </dl>
+        {suspended && (
+          <span className="inline-flex items-center gap-2 rounded-full border border-solid border-red-200 bg-white px-3.5 py-1.5 text-sm font-bold text-red-700 lg:ml-auto">
+            <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Tạm khóa nhận lịch đến {formatViolationDateTime(data?.bookingSuspendedUntil)}
+          </span>
+        )}
+      </div>
 
-      <div className="admin-mentor-subject-table mt-4">
+      {/* Table from 768px */}
+      <div className="admin-mentor-subject-table mt-4 hidden md:block">
         <table>
           <thead>
             <tr>
@@ -168,73 +164,53 @@ export function AdminMentorViolationsSection({
               <th>Điểm</th>
               <th>Lý do</th>
               <th>Trạng thái</th>
-              <th aria-label="Thao tác" />
+              <th>
+                <span className="sr-only">Thao tác</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <AdminTableState variant="loading" colSpan={7} title="Đang tải lịch sử vi phạm..." />
+              <AdminTableState
+                variant="loading"
+                colSpan={COLUMN_COUNT}
+                title="Đang tải lịch sử vi phạm…"
+              />
             ) : error ? (
               <AdminTableState
                 variant="error"
-                colSpan={7}
+                colSpan={COLUMN_COUNT}
                 title="Không thể tải lịch sử vi phạm"
                 description={error}
                 onRetry={reload}
               />
             ) : items.length ? (
               items.map((item) => (
-                <tr key={item.violationId}>
-                  <td className="whitespace-nowrap">{formatDateTime(item.occurredAt)}</td>
-                  <td>
-                    <strong className="block">
-                      {MENTOR_VIOLATION_TYPE_LABELS[item.type] ?? item.type}
+                <tr key={item.violationId} className={item.reversedAt ? 'text-slate-400' : ''}>
+                  <td className="whitespace-nowrap !text-inherit">
+                    {formatViolationDateTime(item.occurredAt)}
+                  </td>
+                  <td className="!text-inherit">
+                    <strong
+                      className={`block font-bold ${item.reversedAt ? '' : 'text-slate-900'}`}
+                    >
+                      {violationTypeLabel(item.type)}
                     </strong>
-                    {item.sourceModule && (
-                      <small className="text-text-muted">
-                        Nguồn:{' '}
-                        {MENTOR_VIOLATION_SOURCE_LABELS[item.sourceModule] ?? item.sourceModule}
-                        {item.bookingId ? ` · Booking ${item.bookingId.slice(0, 8)}` : ''}
-                      </small>
-                    )}
+                    <BookingReference bookingId={item.bookingId} />
                   </td>
-                  <td>
-                    {item.severity ? (
-                      <Badge variant={severityVariant(item.severity)}>
-                        {MENTOR_VIOLATION_SEVERITY_LABELS[item.severity] ?? item.severity}
-                      </Badge>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                  <td>{formatScore(item.points)}</td>
-                  <td className="max-w-64 break-words">{item.reason || '—'}</td>
                   <td className="whitespace-nowrap">
-                    {item.reversedAt ? (
-                      <Badge variant="neutral">Đã đảo {formatDateTime(item.reversedAt)}</Badge>
-                    ) : (
-                      <Badge variant="warning">Đang tính điểm</Badge>
-                    )}
+                    <SeverityPill severity={item.severity} />
                   </td>
-                  <td>
-                    {!item.reversedAt && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        leftIcon={<Undo2 className="h-4 w-4" aria-hidden="true" />}
-                        onClick={() => setReverseTarget(item)}
-                      >
-                        Đảo
-                      </Button>
-                    )}
-                  </td>
+                  <td className="!text-inherit">{pointsCell(item)}</td>
+                  <td className="max-w-[340px] break-words !text-inherit">{item.reason || '—'}</td>
+                  <td>{stateCell(item)}</td>
+                  <td className="text-right">{!item.reversedAt && reverseButton(item)}</td>
                 </tr>
               ))
             ) : (
               <AdminTableState
                 variant="empty"
-                colSpan={7}
+                colSpan={COLUMN_COUNT}
                 title="Chưa có vi phạm nào"
                 description="Mentor này chưa bị ghi nhận vi phạm."
               />
@@ -243,13 +219,75 @@ export function AdminMentorViolationsSection({
         </table>
       </div>
 
+      {/* Cards below 768px */}
+      <div className="mt-4 md:hidden">
+        {isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Đang tải lịch sử vi phạm">
+            {[0, 1].map((index) => (
+              <div key={index} className="h-32 animate-pulse rounded-2xl bg-slate-100" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-solid border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <p className="m-0 font-semibold">Không thể tải lịch sử vi phạm</p>
+            <p className="m-0 mt-1">{error}</p>
+            <Button type="button" size="sm" variant="outline" className="mt-3" onClick={reload}>
+              Thử lại
+            </Button>
+          </div>
+        ) : items.length ? (
+          <ul className="m-0 list-none space-y-3 p-0">
+            {items.map((item) => (
+              <li
+                key={item.violationId}
+                className={`rounded-2xl border border-solid border-slate-200 p-4 ${
+                  item.reversedAt ? 'text-slate-400' : 'text-slate-600'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <strong
+                      className={`block text-sm font-bold ${item.reversedAt ? '' : 'text-slate-900'}`}
+                    >
+                      {violationTypeLabel(item.type)}
+                    </strong>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs">
+                      <span className="whitespace-nowrap">
+                        {formatViolationDateTime(item.occurredAt)}
+                      </span>
+                      <SeverityPill severity={item.severity} />
+                      <BookingReference bookingId={item.bookingId} />
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right text-xs">
+                    {pointsCell(item)}
+                    {!item.reversedAt && <span className="block">điểm</span>}
+                  </div>
+                </div>
+                {item.reason && (
+                  <p className="m-0 mt-2.5 break-words text-sm leading-6">{item.reason}</p>
+                )}
+                <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
+                  <div>{stateCell(item)}</div>
+                  {!item.reversedAt && reverseButton(item)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="m-0 rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+            Mentor này chưa bị ghi nhận vi phạm.
+          </p>
+        )}
+      </div>
+
       {totalPages > 1 && (
         <div className="mt-3 flex items-center justify-end gap-2 text-xs text-text-secondary">
           <Button
             type="button"
             size="sm"
             variant="outline"
-            disabled={page <= 0 || isLoading}
+            disabled={page <= 0 || isFetching}
             onClick={() => goToPage(page - 1)}
           >
             Trước
@@ -261,7 +299,7 @@ export function AdminMentorViolationsSection({
             type="button"
             size="sm"
             variant="outline"
-            disabled={page >= totalPages - 1 || isLoading}
+            disabled={page >= totalPages - 1 || isFetching}
             onClick={() => goToPage(page + 1)}
           >
             Sau
@@ -282,263 +320,25 @@ export function AdminMentorViolationsSection({
       )}
 
       {reverseTarget && (
-        <ReverseViolationModal
+        <ReverseViolationDialog
+          mentorUserId={mentorUserId}
+          mentorName={mentorName}
           violation={reverseTarget}
-          isSubmitting={isSubmitting}
+          activePenaltyScore={data?.activePenaltyScore}
+          activeWindowStartAt={activeWindowStartAt}
           onClose={() => setReverseTarget(undefined)}
-          onSubmit={async (reason) => {
-            if (await reverse(reverseTarget.violationId, reason)) setReverseTarget(undefined);
-          }}
+          onReversed={onChanged}
         />
       )}
     </section>
   );
 }
 
-function SummaryItem({ label, value, tone }: { label: string; value: string; tone?: 'danger' }) {
+function SummaryFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-solid border-border-light bg-surface-subtle p-3">
-      <dt className="text-[11px] font-semibold text-text-muted">{label}</dt>
-      <dd
-        className={`m-0 mt-1 text-sm font-extrabold ${tone === 'danger' ? 'text-danger' : 'text-text-main'}`}
-      >
-        {value}
-      </dd>
+    <div>
+      <dt className="text-[12.5px] text-slate-500">{label}</dt>
+      <dd className="m-0 mt-0.5 text-[15px] font-bold text-slate-900">{value}</dd>
     </div>
-  );
-}
-
-function RecordViolationModal({
-  mentorUserId,
-  mentorName,
-  isSubmitting,
-  onClose,
-  onSubmit,
-}: {
-  mentorUserId: string;
-  mentorName: string;
-  isSubmitting: boolean;
-  onClose: () => void;
-  onSubmit: (request: AdminMentorViolationRequest) => Promise<void>;
-}) {
-  const {
-    control,
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<RecordFormValues>({
-    resolver: yupResolver(recordSchema),
-    defaultValues: {
-      type: 'ADMIN_CONFIRMED_BREACH',
-      severity: 'LOW',
-      sourceModule: 'ADMIN',
-      sourceReferenceId: mentorUserId,
-      reason: '',
-      decisionNote: '',
-    },
-  });
-  const sourceModule = watch('sourceModule');
-
-  return (
-    <Modal
-      open
-      title="Ghi nhận vi phạm"
-      onClose={() => !isSubmitting && onClose()}
-      className="max-w-xl"
-    >
-      <form
-        className="space-y-3"
-        noValidate
-        onSubmit={handleSubmit((values) =>
-          onSubmit({
-            type: values.type,
-            severity: values.severity,
-            sourceModule: values.sourceModule,
-            sourceReferenceId: values.sourceReferenceId,
-            reason: values.reason,
-            decisionNote: values.decisionNote || undefined,
-          }),
-        )}
-      >
-        <p className="m-0 rounded-xl border border-solid border-amber-200 bg-warning-soft p-3 text-xs leading-5 text-text-secondary">
-          Vi phạm sẽ cộng điểm phạt cho <strong>{mentorName}</strong> và có thể khiến mentor bị tạm
-          khóa nhận lịch. Chỉ ghi nhận khi vi phạm đã được xác minh.
-        </p>
-
-        <Controller
-          control={control}
-          name="type"
-          render={({ field }) => (
-            <SelectField
-              id="violation-type"
-              label="Loại vi phạm"
-              required
-              options={TYPE_OPTIONS}
-              value={field.value}
-              onValueChange={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.type?.message}
-            />
-          )}
-        />
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Controller
-            control={control}
-            name="severity"
-            render={({ field }) => (
-              <SelectField
-                id="violation-severity"
-                label="Mức độ"
-                required
-                options={SEVERITY_OPTIONS}
-                value={field.value}
-                onValueChange={field.onChange}
-                onBlur={field.onBlur}
-                error={errors.severity?.message}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="sourceModule"
-            render={({ field }) => (
-              <SelectField
-                id="violation-source"
-                label="Nguồn phát sinh"
-                required
-                options={SOURCE_OPTIONS}
-                value={field.value}
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  // Only the admin source has an obvious default reference: the mentor itself.
-                  setValue('sourceReferenceId', value === 'ADMIN' ? mentorUserId : '');
-                }}
-                onBlur={field.onBlur}
-                error={errors.sourceModule?.message}
-              />
-            )}
-          />
-        </div>
-
-        <TextField
-          id="violation-reference"
-          label="Mã tham chiếu"
-          required
-          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-          helperText={SOURCE_REFERENCE_HINTS[sourceModule]}
-          error={errors.sourceReferenceId?.message}
-          {...register('sourceReferenceId')}
-        />
-
-        <TextArea
-          id="violation-reason"
-          label="Lý do"
-          required
-          rows={3}
-          maxLength={500}
-          placeholder="Mô tả ngắn gọn vi phạm đã xác minh..."
-          error={errors.reason?.message}
-          {...register('reason')}
-        />
-
-        <TextArea
-          id="violation-note"
-          label="Ghi chú quyết định (nội bộ)"
-          rows={2}
-          maxLength={1000}
-          className="!min-h-16"
-          error={errors.decisionNote?.message}
-          {...register('decisionNote')}
-        />
-
-        <div className="flex flex-col-reverse gap-2 border-t border-solid border-border-light pt-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" disabled={isSubmitting} onClick={onClose}>
-            Hủy
-          </Button>
-          <Button type="submit" variant="destructive" loading={isSubmitting}>
-            Ghi nhận vi phạm
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-
-function ReverseViolationModal({
-  violation,
-  isSubmitting,
-  onClose,
-  onSubmit,
-}: {
-  violation: MentorViolationItemResponse;
-  isSubmitting: boolean;
-  onClose: () => void;
-  onSubmit: (reason: string) => Promise<void>;
-}) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ReverseFormValues>({
-    resolver: yupResolver(reverseSchema),
-    defaultValues: { reason: '' },
-  });
-
-  return (
-    <Modal open title="Đảo vi phạm?" onClose={() => !isSubmitting && onClose()}>
-      <form
-        className="space-y-3"
-        noValidate
-        onSubmit={handleSubmit((values) => onSubmit(values.reason))}
-      >
-        <div className="rounded-xl border border-solid border-border-light bg-surface-subtle p-3 text-xs leading-5 text-text-secondary">
-          <div>
-            <strong>Loại: </strong>
-            {MENTOR_VIOLATION_TYPE_LABELS[violation.type] ?? violation.type}
-          </div>
-          <div>
-            <strong>Thời điểm: </strong>
-            {formatDateTime(violation.occurredAt)}
-          </div>
-          <div>
-            <strong>Điểm phạt: </strong>
-            {formatScore(violation.points)}
-          </div>
-          {violation.reason && (
-            <div>
-              <strong>Lý do ghi nhận: </strong>
-              {violation.reason}
-            </div>
-          )}
-        </div>
-        <p className="m-0 text-xs leading-5 text-text-secondary">
-          Điểm phạt của vi phạm này sẽ không còn được tính, và thời gian tạm khóa nhận lịch của
-          mentor sẽ được hệ thống tính lại.
-        </p>
-
-        <TextArea
-          id="reverse-reason"
-          label="Lý do đảo vi phạm"
-          required
-          rows={3}
-          maxLength={500}
-          placeholder="Ví dụ: Vi phạm được ghi nhận nhầm..."
-          error={errors.reason?.message}
-          {...register('reason')}
-        />
-
-        <div className="flex flex-col-reverse gap-2 border-t border-solid border-border-light pt-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" disabled={isSubmitting} onClick={onClose}>
-            Hủy
-          </Button>
-          <Button type="submit" loading={isSubmitting}>
-            Đảo vi phạm
-          </Button>
-        </div>
-      </form>
-    </Modal>
   );
 }
