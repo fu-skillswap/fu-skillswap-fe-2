@@ -24,6 +24,7 @@ import type {
   UpdateAvailabilityTemplateRequest,
   UpdateMentorBookingPolicyRequest,
 } from '@/models/auth';
+import { newIdempotencyKey } from './bookingRepo';
 
 function queryString(query: AvailabilitySlotsQuery) {
   const params = new URLSearchParams();
@@ -96,15 +97,22 @@ export const mentorSchedulingRepo = {
       data,
     }),
 
+  /**
+   * The BE rejects this call with 400 IDEMPOTENCY_KEY_REQUIRED when the `Idempotency-Key` header
+   * is missing. Pass the same `idempotencyKey` when retrying the SAME attempt (timeout / network
+   * error); omit it for a new attempt.
+   */
   deactivateAvailabilitySlot: (
     slotId: string,
     data: DeactivateAvailabilitySlotRequest,
+    idempotencyKey: string = newIdempotencyKey(),
   ): Promise<MentorManagedAvailabilitySlotResponse> =>
     apiClient<MentorManagedAvailabilitySlotResponse>(
       `/api/me/availability-slots/${slotId}/deactivate`,
       {
         method: 'POST',
         data,
+        headers: { 'Idempotency-Key': idempotencyKey },
       },
     ),
 
