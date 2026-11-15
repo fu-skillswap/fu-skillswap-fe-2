@@ -51,7 +51,13 @@ import { ServiceOfferRow } from '@/components/domain/mentor-service/coupons/Serv
 import { CouponOptInDrawer } from '@/components/domain/mentor-service/coupons/CouponOptInDrawer';
 import { useMentorCouponOffers } from '@/components/domain/mentor-service/coupons/useMentorCouponOffers';
 import { appliedOfferFor, bestCouponFor, couponFitsService, menteePriceOf } from '@/lib/coupon';
-import { getUserFriendlyErrorMessage, showError, showInfo, showSuccess } from '@/utils/toast';
+import {
+  getUserFriendlyErrorMessage,
+  showError,
+  showInfo,
+  showSuccess,
+  showToast,
+} from '@/utils/toast';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   AlertTriangle,
@@ -64,6 +70,7 @@ import {
   Compass,
   FileText,
   Globe,
+  HelpCircle,
   Lock,
   Plus,
   RefreshCw,
@@ -84,7 +91,9 @@ import type {
   ServiceEditorPayload,
 } from '@/components/domain/mentor-service/useServiceEditor';
 import { MentorScheduleCalendar } from './MentorScheduleCalendar';
+import { ScheduleRulesGuide } from './ScheduleRulesGuide';
 import {
+  findGeneratingTemplate,
   mergeBookingsIntoCalendar,
   mergeAvailabilityTemplatesIntoCalendar,
   toMentorScheduleCalendarData,
@@ -519,6 +528,15 @@ export function ScheduleManageView() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [activeScheduleTab, setActiveScheduleTab] = useState<'calendar' | 'recurring'>('calendar');
   const [isScheduleSettingsOpen, setIsScheduleSettingsOpen] = useState(false);
+  // `?guide=schedule` deep-links to the scheduling rules guide.
+  const [isRulesGuideOpen, setIsRulesGuideOpen] = useState(false);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('guide') !== 'schedule') return;
+    url.searchParams.delete('guide');
+    window.history.replaceState(window.history.state, '', url.toString());
+    setIsRulesGuideOpen(true);
+  }, []);
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
   const [isCreatingAvailability, setIsCreatingAvailability] = useState(false);
   const [availabilityRetryUntil, setAvailabilityRetryUntil] = useState<number>();
@@ -603,6 +621,18 @@ export function ScheduleManageView() {
   );
 
   const selectedSlot = availabilitySlots?.find((slot) => slot.slotId === selectedSlotId);
+  // Weekly template that generated the selected slot (if any): its version must be sent when
+  // changing the slot, and its services are shown when the generated slot lists none.
+  const selectedSlotTemplate = useMemo(
+    () => (selectedSlot ? findGeneratingTemplate(selectedSlot, templates) : undefined),
+    [selectedSlot, templates],
+  );
+  const selectedSlotServiceTitles = (
+    selectedSlot?.services.length ? selectedSlot.services : (selectedSlotTemplate?.services ?? [])
+  )
+    .map((service) => service.title)
+    .filter(Boolean)
+    .join(', ');
   const selectedBooking = bookings?.find((booking) => booking.bookingId === selectedBookingId);
   const isTimeEditBlocked = Boolean(
     selectedSlot?.timeMutation?.mode && selectedSlot.timeMutation.mode !== 'ALLOWED',
@@ -1446,6 +1476,14 @@ export function ScheduleManageView() {
         note: values.note.trim() || undefined,
         rejectPendingBookings: confirmRejection ? true : undefined,
         pendingRejectionToken: pendingToken,
+        expectedTemplateVersions: selectedSlotTemplate
+          ? [
+              {
+                templateId: selectedSlotTemplate.templateId,
+                expectedVersion: selectedSlotTemplate.configVersion,
+              },
+            ]
+          : undefined,
       };
 
       await mentorSchedulingRepo.updateAvailabilitySlot(selectedSlot.slotId, updatePayload);
@@ -1566,6 +1604,8 @@ export function ScheduleManageView() {
         expectedVersion: selectedSlot.version,
         rejectPendingBookings: confirmRejection ? true : undefined,
         pendingRejectionToken: pendingToken,
+        // Generated slots are guarded by their template version.
+        expectedTemplateVersion: selectedSlotTemplate?.configVersion,
       };
 
       await mentorSchedulingRepo.deactivateAvailabilitySlot(selectedSlot.slotId, deactivatePayload);
@@ -1629,6 +1669,21 @@ export function ScheduleManageView() {
               ? `Bạn thao tác quá nhanh. Vui lòng thử lại sau ${retryAfterSeconds} giây.`
               : getUserFriendlyErrorMessage(reason),
           );
+        } else if (reason.status === 400 || reason.status === 422) {
+          // Show the BE's own reasons instead of the generic "Thông tin chưa hợp lệ".
+          const details = (reason.data ?? [])
+            .map((item) => item.message?.trim())
+            .filter(Boolean)
+            .join(' ');
+          showToast({
+            type: 'error',
+            title: 'Không thể thu hồi lịch rảnh',
+            description:
+              details ||
+              (selectedSlotTemplate
+                ? 'Khung giờ này thuộc lịch lặp hằng tuần. Hãy tải lại trang rồi thử lại, hoặc vào tab “Lịch lặp” → “Bỏ qua một ngày”.'
+                : 'Máy chủ từ chối yêu cầu thu hồi. Hãy tải lại trang rồi thử lại.'),
+          });
         } else {
           showError(reason);
         }
@@ -1887,6 +1942,14 @@ export function ScheduleManageView() {
               onClick={() => setIsScheduleSettingsOpen(true)}
             >
               Cài đặt lịch
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              leftIcon={<HelpCircle className="h-4 w-4" />}
+              onClick={() => setIsRulesGuideOpen(true)}
+            >
+              Quy chế đặt lịch
             </Button>
             {activeScheduleTab === 'calendar' ? (
               <Button
@@ -3633,6 +3696,21 @@ export function ScheduleManageView() {
         ) : null}
       </Modal>
 
+      <Modal
+        open={isRulesGuideOpen}
+        title="Quy chế đặt lịch"
+        onClose={() => setIsRulesGuideOpen(false)}
+        className="w-[92vw] max-w-2xl"
+      >
+        <ScheduleRulesGuide
+          leadTimeMinutes={bookingPolicy?.minimumBookingLeadTimeMinutes}
+          horizonDays={bookingPolicy?.maximumBookingHorizonDays}
+          maxSlotMinutes={schedulingConstraints?.maximumParentSlotDurationMinutes}
+          allowedDurations={constraints?.allowedDurationMinutes}
+          timezone={timezone}
+        />
+      </Modal>
+
       {/* Modal Confirm Thu hồi Lịch rảnh */}
       <Modal
         open={isDeactivateModalOpen && Boolean(selectedSlot)}
@@ -3657,9 +3735,24 @@ export function ScheduleManageView() {
               </div>
               <div>
                 <strong>Dịch vụ: </strong>
-                {selectedSlot.services.map((s) => s.title).join(', ')}
+                {selectedSlotServiceTitles || 'Chưa gắn dịch vụ'}
               </div>
+              {selectedSlotTemplate && (
+                <div>
+                  <strong>Nguồn: </strong>
+                  Lịch lặp hằng tuần — nếu chỉ nghỉ ngày này, nên dùng “Bỏ qua một ngày” trong tab
+                  “Lịch lặp”.
+                </div>
+              )}
             </div>
+
+            <button
+              type="button"
+              className="m-0 border-0 bg-transparent p-0 text-xs font-semibold text-primary underline underline-offset-2"
+              onClick={() => setIsRulesGuideOpen(true)}
+            >
+              Xem quy chế thu hồi lịch rảnh
+            </button>
 
             {selectedSlot.pendingBookingCount > 0 && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-medium flex items-center gap-2">
