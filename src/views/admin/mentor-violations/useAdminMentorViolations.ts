@@ -1,86 +1,73 @@
 /**
  * @file useAdminMentorViolations.ts
- * @description Loads a mentor's penalty score and violation history for admins, and records or
- * reverses violations.
+ * @description Loads a mentor's penalty score and one page of the violation history for admins,
+ * and records a verified violation. Reversing lives in `ReverseViolationDialog`.
  */
 
 'use client';
 
 import type { AdminMentorViolationRequest } from '@/models/admin';
-import type { MentorViolationHistoryResponse } from '@/models/auth';
 import { adminRepo } from '@/repositories/adminRepo';
 import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
-import { useCallback, useEffect, useState } from 'react';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import {
+  ADMIN_MENTORS_QUERY_KEY,
+  ADMIN_VIOLATIONS_STALE_TIME,
+  mentorViolationsQueryKey,
+} from './mentorViolations.helpers';
 
 export const VIOLATION_PAGE_SIZE = 10;
 
-export function useAdminMentorViolations(mentorUserId: string, onChanged?: () => void) {
-  const [data, setData] = useState<MentorViolationHistoryResponse>();
+export function useAdminMentorViolations(
+  mentorUserId: string,
+  { pageSize = VIOLATION_PAGE_SIZE, onChanged }: { pageSize?: number; onChanged?: () => void } = {},
+) {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const load = useCallback(
-    async (targetPage: number) => {
-      setIsLoading(true);
-      setError(undefined);
-      try {
-        setData(await adminRepo.getMentorViolations(mentorUserId, targetPage, VIOLATION_PAGE_SIZE));
-        setPage(targetPage);
-      } catch (reason) {
-        setError(getUserFriendlyErrorMessage(reason, 'Không thể tải lịch sử vi phạm của mentor.'));
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [mentorUserId],
-  );
+  const query = useQuery({
+    queryKey: [...mentorViolationsQueryKey(mentorUserId), 'history', page, pageSize],
+    queryFn: () => adminRepo.getMentorViolations(mentorUserId, page, pageSize),
+    enabled: Boolean(mentorUserId),
+    retry: false,
+    staleTime: ADMIN_VIOLATIONS_STALE_TIME,
+    placeholderData: keepPreviousData,
+  });
 
-  useEffect(() => {
-    void load(0);
-  }, [load]);
-
-  /** Resolves to true when the BE accepted the change, so the caller can close its dialog. */
-  const submit = async (action: () => Promise<unknown>, successMessage: string, title: string) => {
+  /** Resolves to true when the BE accepted the violation, so the caller can close its dialog. */
+  const record = async (request: AdminMentorViolationRequest) => {
     setIsSubmitting(true);
     try {
-      await action();
-      showSuccess(successMessage);
-      await load(0);
+      await adminRepo.recordMentorViolation(mentorUserId, request);
+      showSuccess('Đã ghi nhận vi phạm của mentor.');
+      setPage(0);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: mentorViolationsQueryKey(mentorUserId) }),
+        queryClient.invalidateQueries({ queryKey: ADMIN_MENTORS_QUERY_KEY }),
+      ]);
       onChanged?.();
       return true;
     } catch (reason) {
-      showError(reason, { title });
+      showError(reason, { title: 'Không thể ghi nhận vi phạm' });
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const record = (request: AdminMentorViolationRequest) =>
-    submit(
-      () => adminRepo.recordMentorViolation(mentorUserId, request),
-      'Đã ghi nhận vi phạm của mentor.',
-      'Không thể ghi nhận vi phạm',
-    );
-
-  const reverse = (violationId: string, reason: string) =>
-    submit(
-      () => adminRepo.reverseMentorViolation(mentorUserId, violationId, reason),
-      'Đã đảo vi phạm. Điểm phạt của mentor đã được tính lại.',
-      'Không thể đảo vi phạm',
-    );
-
   return {
-    data,
+    data: query.data,
     page,
-    isLoading,
-    error,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.isError
+      ? getUserFriendlyErrorMessage(query.error, 'Không thể tải lịch sử vi phạm của mentor.')
+      : undefined,
     isSubmitting,
-    goToPage: (targetPage: number) => void load(targetPage),
-    reload: () => void load(page),
+    goToPage: setPage,
+    reload: () => void query.refetch(),
     record,
-    reverse,
   };
 }

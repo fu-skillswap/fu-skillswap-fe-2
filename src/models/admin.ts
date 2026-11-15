@@ -203,6 +203,12 @@ export interface AdminMentor {
   ratingAverage: number | null;
   mentorStatus: string;
   createdAt: string;
+  // TODO(api): not in AdminMentorListItemResponse yet. Read first when present; until then the
+  // list falls back to GET /api/admin/mentors/{mentorUserId}/violations per row.
+  activePenaltyScore?: number | null;
+  lifetimePenaltyScore?: number | null;
+  totalViolations?: number | null;
+  bookingSuspendedUntil?: string | null;
 }
 
 export interface AdminMentorsResponse {
