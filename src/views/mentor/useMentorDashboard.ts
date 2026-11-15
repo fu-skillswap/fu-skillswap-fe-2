@@ -13,6 +13,7 @@ import type {
   MentorWalletResponse,
   WalletTransactionResponse,
 } from '@/models/auth';
+import { ApiClientError } from '@/models/apiClient';
 import { useAuth } from '@/providers/AuthProvider';
 import { mentorBookingRepo } from '@/repositories/mentorBookingRepo';
 import { mentorDiscoveryRepo } from '@/repositories/mentorDiscoveryRepo';
@@ -69,10 +70,14 @@ export function useMentorDashboard() {
     const mentorUserId = profileResult.status === 'fulfilled' ? profileResult.value.userId : '';
     if (mentorUserId) {
       try {
+        // TODO(api): GET /api/me/mentor-reviews — the public endpoint below returns 404
+        // ("mentor not found") whenever the mentor is not discoverable (no active service,
+        // hidden or not ACTIVE profile), even though the mentor can still see their dashboard.
         const page = await mentorDiscoveryRepo.getReviews(mentorUserId);
         setReviews((page.content ?? []).slice(0, REVIEW_LIMIT));
-      } catch {
-        failed.push('đánh giá');
+      } catch (reason) {
+        if (reason instanceof ApiClientError && reason.status === 404) setReviews([]);
+        else failed.push('đánh giá');
       }
     }
 
