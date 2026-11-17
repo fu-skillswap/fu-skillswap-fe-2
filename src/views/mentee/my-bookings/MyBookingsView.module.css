@@ -104,6 +104,12 @@
   font-weight: 700;
   color: var(--primary);
   text-decoration: none;
+  /* Also used on <button>: drop the native button chrome. */
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .link:hover {
