@@ -24,6 +24,7 @@ import { adminRepo } from '@/repositories/adminRepo';
 import { showError } from '@/utils/toast';
 import {
   ArrowRight,
+  CalendarCheck,
   CalendarDays,
   CirclePlus,
   ClipboardList,
@@ -159,7 +160,8 @@ export function AdminDashboardView() {
   const users = overview?.users;
   const retention = overview?.retention;
   const activeBookings = sumStatuses(overview?.bookings, ACTIVE_BOOKING_STATUSES);
-  const underReviewBookings = sumStatuses(overview?.bookings, ['UNDER_REVIEW']);
+  // Raw status COMPLETED = the session took place and was confirmed, across every mentor.
+  const completedSessions = sumStatuses(overview?.bookings, ['COMPLETED']);
   const openReports = sumStatuses(overview?.forumReports, ['OPEN']);
   const pendingVerifications = overview?.mentorVerification?.pendingReview;
 
@@ -195,12 +197,13 @@ export function AdminDashboardView() {
       href: `${adminRoot}/users`,
     },
     {
-      label: 'Lịch hẹn đang hoạt động',
-      description: underReviewBookings
-        ? `${formatNumber(underReviewBookings)} lịch hẹn đang khiếu nại`
-        : 'Lịch hẹn chưa kết thúc',
-      value: activeBookings,
-      icon: CalendarDays,
+      label: 'Buổi học đã hoàn thành',
+      description:
+        activeBookings !== undefined
+          ? `Của tất cả mentor · ${formatNumber(activeBookings)} lịch hẹn chưa kết thúc`
+          : 'Tổng số buổi học đã hoàn thành của tất cả mentor',
+      value: completedSessions,
+      icon: CalendarCheck,
       tone: 'green',
       href: `${adminRoot}/bookings`,
     },
