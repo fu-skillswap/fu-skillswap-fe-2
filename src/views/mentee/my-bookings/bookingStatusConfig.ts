@@ -274,6 +274,13 @@ export function getMentorName(booking: MentorBookingResponse) {
   return booking.mentorDisplayName?.trim() || 'Mentor';
 }
 
+/** The mentor's public profile (it also holds the booking form). */
+export function mentorProfileHref(locale: string, booking: MentorBookingResponse) {
+  return booking.mentorUserId
+    ? `/${locale}/mentor-booking?mentorId=${encodeURIComponent(booking.mentorUserId)}`
+    : undefined;
+}
+
 export function getBookingPrice(booking: MentorBookingResponse) {
   return Math.max(0, Number(booking.servicePriceScoinSnapshot) || 0);
 }

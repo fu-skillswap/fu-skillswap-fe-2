@@ -37,6 +37,9 @@ interface ModalProps {
   disableScaleAnimation?: boolean;
 }
 
+/** Open modals, newest last: only the top one reacts to Escape / Tab when dialogs are stacked. */
+const openModalStack: object[] = [];
+
 /**
  * Component Modal hiển thị popup đè trên giao diện.
  * Sử dụng React Portal để đưa Modal lên root document.body, tránh bị che khuất / clipping bởi stacking context (sidebar/header).
@@ -71,7 +74,10 @@ export function Modal({
     if (!open) return;
     const previouslyFocused =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const stackToken = {};
+    openModalStack.push(stackToken);
     const handleKeyboard = (event: KeyboardEvent) => {
+      if (openModalStack[openModalStack.length - 1] !== stackToken) return;
       if (event.key === 'Escape') {
         onCloseRef.current();
         return;
@@ -105,6 +111,7 @@ export function Modal({
       target?.focus();
     }, 0);
     return () => {
+      openModalStack.splice(openModalStack.indexOf(stackToken), 1);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyboard);
       previouslyFocused?.focus();

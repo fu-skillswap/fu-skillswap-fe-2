@@ -505,6 +505,15 @@ export interface MentorBookingResponse {
     checkInClosesAt?: string | null;
   } | null;
   joinAvailableAt?: string | null;
+  /** When the join button closes again (Swagger). */
+  joinClosesAt?: string | null;
+  serviceIsFreeSnapshot?: boolean | null;
+  /** NOT_REQUIRED | PENDING | PAID | FAILED | EXPIRED | CANCELLED | REFUNDED (Swagger). */
+  paymentStatus?: string | null;
+  settlementStatus?: 'HELD' | 'RELEASED' | 'PARTIALLY_SETTLED' | 'REFUNDED' | null;
+  refundedScoin?: number | null;
+  /** Booking-time snapshot: chat stays open after the session ended. */
+  maintainPostSessionChatSnapshot?: boolean | null;
   /** When the request auto-closed because the mentor did not respond in time (Swagger). */
   autoClosedAt?: string | null;
   cancelledAt?: string | null;

@@ -158,7 +158,13 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
   const execute = async (booking: MentorBookingResponse, mutation: MenteeBookingMutation) => {
     try {
       await mutate(booking.bookingId, mutation);
-      showSuccess({ title: 'Đã cập nhật lịch đặt', description: 'Thay đổi của bạn đã được lưu.' });
+      if (mutation.type === 'confirm') showSuccess('Đã xác nhận buổi học.');
+      else {
+        showSuccess({
+          title: 'Đã cập nhật lịch đặt',
+          description: 'Thay đổi của bạn đã được lưu.',
+        });
+      }
       setNoteAction(undefined);
     } catch (reason) {
       showError(reason, { title: 'Không thể cập nhật lịch đặt' });

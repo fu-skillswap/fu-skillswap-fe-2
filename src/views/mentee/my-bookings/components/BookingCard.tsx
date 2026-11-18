@@ -43,6 +43,7 @@ import {
   getPlatformLabel,
   isBookingPaid,
   isFinalizedBooking,
+  mentorProfileHref,
   toDate,
 } from '../bookingStatusConfig';
 import { BookingDetailModal } from './BookingDetailModal';
@@ -61,12 +62,6 @@ interface BookingCardProps {
   onAction: (type: BookingFormAction, trigger?: HTMLElement | null) => void;
   onImmediate: (mutation: MenteeBookingMutation) => void;
   onMessage: () => void;
-}
-
-function mentorProfileHref(locale: string, booking: MentorBookingResponse) {
-  return booking.mentorUserId
-    ? `/${locale}/mentor-booking?mentorId=${encodeURIComponent(booking.mentorUserId)}`
-    : undefined;
 }
 
 function DateTile({ value, muted = false }: { value: string; muted?: boolean }) {
@@ -491,7 +486,10 @@ export function BookingCard({
       </footer>
       <BookingDetailModal
         booking={showDetail ? booking : undefined}
+        locale={locale}
         onClose={() => setShowDetail(false)}
+        onAction={onAction}
+        onMessage={onMessage}
       />
     </article>
   );
