@@ -19,9 +19,20 @@ export const bookingDetailQueryKey = (bookingId: string) => ['booking', bookingI
 export interface ReviewSubmission {
   rating: number;
   comment: string;
-  // TODO(api): SubmitFeedbackRequest has no tags field; send the picked tags once it does.
+  /** Picked tag chips. */
+  tags: string[];
+  // TODO(api): SubmitFeedbackRequest has no tags field, so the tags travel inside `comment` (see
+  // buildReviewComment); send them on their own once the API has a field for them.
   // TODO(api): no anonymity field either (`isPublic` hides the whole review, it does not hide the
   // name), so "Hiện tên của tôi trong đánh giá" is not offered yet.
+}
+
+/**
+ * The text stored as the review's comment: the picked tags on the first line, then what the mentee
+ * wrote. Without this a review made of tags only was saved with no text at all.
+ */
+export function buildReviewComment(tags: readonly string[], comment: string) {
+  return [tags.join(' · '), comment.trim()].filter(Boolean).join('\n');
 }
 
 const isAccessError = (error: unknown) =>
@@ -47,11 +58,11 @@ export function useBookingReview(bookingId: string) {
   });
 
   const submit = useMutation({
-    mutationFn: async ({ rating, comment }: ReviewSubmission) => {
+    mutationFn: async ({ rating, comment, tags }: ReviewSubmission) => {
       try {
         return await reviewRepo.create(bookingId, {
           rating,
-          comment: comment.trim() || undefined,
+          comment: buildReviewComment(tags, comment) || undefined,
           // The success copy says the review shows on the mentor's profile.
           isPublic: true,
         });
