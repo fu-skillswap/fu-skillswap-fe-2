@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
   CreditCard,
+  Eye,
   Info,
   Lock,
   Search,
@@ -43,6 +45,7 @@ import {
   isFinalizedBooking,
   toDate,
 } from '../bookingStatusConfig';
+import { BookingDetailModal } from './BookingDetailModal';
 import { BookingProgress, ExpiredBookingProgress } from './BookingProgress';
 import { BookingStatusPill } from './BookingStatusPill';
 import styles from '../MyBookingsView.module.css';
@@ -328,6 +331,7 @@ export function BookingCard({
 }: BookingCardProps) {
   const config = getBookingStatusConfig(booking);
   const isDone = getBookingStateKey(booking) === 'DONE';
+  const [showDetail, setShowDetail] = useState(false);
   // TODO(api): include the mentee's review (or a hasFeedback flag) in the booking list so finished
   // cards don't need one request each.
   const { data: myReview } = useQuery({
@@ -397,7 +401,10 @@ export function BookingCard({
       {myReview && <MyReviewBox review={myReview} />}
 
       <footer className={styles.footer}>
-        {/* No booking detail route/modal exists yet, so "Xem chi tiết" is intentionally omitted. */}
+        <button type="button" className={styles.link} onClick={() => setShowDetail(true)}>
+          <Eye aria-hidden="true" style={{ width: 16, height: 16, marginRight: 6 }} />
+          Xem chi tiết
+        </button>
         <div className={styles.footerActions}>
           {actions.canCancel && (
             <button
@@ -482,6 +489,10 @@ export function BookingCard({
           )}
         </div>
       </footer>
+      <BookingDetailModal
+        booking={showDetail ? booking : undefined}
+        onClose={() => setShowDetail(false)}
+      />
     </article>
   );
 }
