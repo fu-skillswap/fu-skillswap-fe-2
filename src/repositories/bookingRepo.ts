@@ -13,6 +13,7 @@ import type {
   SubmitBookingIssueRequest,
 } from '@/models/auth';
 import type { CheckoutPreviewResponse } from '@/models/coupon';
+import { reviewRepo } from '@/repositories/reviewRepo';
 
 /**
  * New `Idempotency-Key` value. Callers that retry the SAME attempt (e.g. after a timeout) must
@@ -26,16 +27,46 @@ export function newIdempotencyKey() {
 
 const idempotencyKey = newIdempotencyKey;
 
+/**
+ * The BE keeps a reviewed booking at FEEDBACK_REQUIRED with `canSubmitFeedback: true`, so the
+ * mentee was asked to review again forever. Look up the saved review of those bookings and show
+ * the reviewed ones as completed. A failed lookup leaves the booking as the BE sent it.
+ * TODO(api): return a hasFeedback flag (or the right displayState) in the booking list instead.
+ */
+async function markReviewedBookings(bookings: MentorBookingResponse[]) {
+  return Promise.all(
+    bookings.map(async (booking) => {
+      const awaitsReview =
+        String(booking.displayState || '').toUpperCase() === 'FEEDBACK_REQUIRED' ||
+        Boolean(booking.canSubmitFeedback);
+      if (!awaitsReview) return booking;
+      try {
+        const review = await reviewRepo.getByBooking(booking.bookingId);
+        if (!review) return booking;
+        return {
+          ...booking,
+          displayState: 'COMPLETED' as MentorBookingResponse['displayState'],
+          canSubmitFeedback: false,
+        };
+      } catch {
+        return booking;
+      }
+    }),
+  );
+}
+
 function normalizeCouponCode(couponCode: string | null | undefined) {
   const trimmed = couponCode?.trim();
   return trimmed ? trimmed.toUpperCase() : null;
 }
 
 export const bookingRepo = {
-  listForMentee: () =>
-    apiClient<MentorBookingPageResponse>(
+  listForMentee: async (): Promise<MentorBookingPageResponse> => {
+    const page = await apiClient<MentorBookingPageResponse>(
       '/api/me/bookings?role=MENTEE&page=0&size=100&sortBy=createdAt&direction=DESC',
-    ),
+    );
+    return { ...page, content: await markReviewedBookings(page.content ?? []) };
+  },
   detail: (bookingId: string) => apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}`),
   cancel: (bookingId: string, cancelReason: string) =>
     apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}/cancel`, {

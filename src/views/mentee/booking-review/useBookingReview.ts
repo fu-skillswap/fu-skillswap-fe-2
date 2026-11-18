@@ -69,6 +69,8 @@ export function useBookingReview(bookingId: string) {
       // The booking moves to "Đã học"; mentor rating and review lists change too.
       void queryClient.invalidateQueries({ queryKey: bookingDetailQueryKey(bookingId) });
       void queryClient.invalidateQueries({ queryKey: ['mentor-recommendations'] });
+      // "Cần bạn xử lý" badge in the sidebar counts this booking until the list is reloaded.
+      void queryClient.invalidateQueries({ queryKey: ['nav-badges', 'mentee-bookings'] });
       const mentorUserId = booking.data?.mentorUserId;
       if (mentorUserId) {
         void queryClient.invalidateQueries({ queryKey: mentorReviewsQueryKey(mentorUserId) });
