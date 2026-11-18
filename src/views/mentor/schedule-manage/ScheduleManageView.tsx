@@ -10,6 +10,17 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
+import {
+  BOOKING_DETAIL_MODAL_PROPS,
+  BookingDetailLayout,
+  DETAIL_OUTLINE_BUTTON,
+  DETAIL_PRIMARY_BUTTON,
+} from '@/components/domain/booking-detail/BookingDetailShell';
+import {
+  BookingDetailList,
+  BookingDetailRow,
+} from '@/components/domain/booking-detail/BookingDetailList';
+import { BookingTimeBlock } from '@/components/domain/booking-detail/BookingTimeBlock';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/auth/pkce';
 import { getGoogleCalendarClientId, getGoogleCalendarRedirectUri } from '@/lib/auth/google';
 import { formatDateVi, formatLocalTime } from './mentorTemplateHelpers';
@@ -81,11 +92,10 @@ import {
   ShieldCheck,
   Target,
   UserRound,
-  Video,
   X,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ServiceEditor } from '@/components/domain/mentor-service/ServiceEditor';
 import type {
@@ -204,6 +214,7 @@ function meetingPlatformLabel(platform: MentorBookingResponse['meetingPlatform']
 function BookingAvailabilityDetail({
   booking,
   timezone,
+  titleId,
   canDeactivate,
   canEdit,
   onClose,
@@ -212,6 +223,8 @@ function BookingAvailabilityDetail({
 }: {
   booking: MentorBookingResponse;
   timezone: string;
+  /** id of the dialog title (the Modal's aria-labelledby). */
+  titleId: string;
   canDeactivate: boolean;
   canEdit: boolean;
   onClose: () => void;
@@ -220,140 +233,24 @@ function BookingAvailabilityDetail({
 }) {
   const start = new Date(booking.selectedStartTime);
   const end = new Date(booking.selectedEndTime);
-  const startParts = getLocalDateTimeParts(booking.selectedStartTime, timezone);
-  const endParts = getLocalDateTimeParts(booking.selectedEndTime, timezone);
   const scheduledMinutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
   const sessionDuration = booking.serviceDurationSnapshot ?? scheduledMinutes;
   const status = bookingStatusPresentation(booking);
-  const weekday = new Intl.DateTimeFormat('vi-VN', {
-    timeZone: timezone,
-    weekday: 'long',
-  }).format(start);
+  const isPast = end.getTime() <= Date.now();
+  const note = booking.learningGoalDescription?.trim();
 
   return (
-    <div className="bookingAvailabilityDetailModal">
-      <header className="bookingDetailHeader">
-        <h2>Chi tiết lịch hẹn</h2>
-        <button type="button" aria-label="Đóng" onClick={onClose}>
-          <X aria-hidden="true" />
-        </button>
-      </header>
-
-      <section className="bookingDetailSummary" aria-label="Thông tin lịch hẹn">
-        <div className="bookingDetailInfoItem">
-          <span className="bookingDetailInfoIcon" aria-hidden="true">
-            <CalendarDays />
-          </span>
-          <div>
-            <span>Ngày hẹn</span>
-            <strong>{startParts.date.split('-').reverse().join('/')}</strong>
-            <small>({weekday})</small>
-          </div>
-        </div>
-
-        <div className="bookingDetailInfoItem">
-          <span className="bookingDetailInfoIcon" aria-hidden="true">
-            <Clock />
-          </span>
-          <div>
-            <span>Thời gian</span>
-            <strong>
-              {startParts.time} – {endParts.time}
-            </strong>
-            {scheduledMinutes > 0 && <small>{formatDuration(scheduledMinutes)}</small>}
-          </div>
-        </div>
-
-        <div className="bookingDetailInfoItem bookingDetailStatus">
-          <span>Trạng thái</span>
-          <Badge variant={status.variant}>{status.label}</Badge>
-        </div>
-
-        <div className="bookingDetailInfoItem">
-          <span className="bookingDetailInfoIcon" aria-hidden="true">
-            <Globe />
-          </span>
-          <div>
-            <span>Múi giờ</span>
-            <strong>{timezone}</strong>
-            <small>{formatTimezoneOffset(start, timezone)}</small>
-          </div>
-        </div>
-
-        <div className="bookingDetailInfoItem">
-          <span className="bookingDetailInfoIcon" aria-hidden="true">
-            <FileText />
-          </span>
-          <div>
-            <span>Ghi chú từ mentee</span>
-            <strong>{booking.learningGoalDescription?.trim() || 'Không có ghi chú'}</strong>
-          </div>
-        </div>
-
-        <div className="bookingDetailInfoItem">
-          <span className="bookingDetailInfoIcon" aria-hidden="true">
-            <Video />
-          </span>
-          <div>
-            <span>Hình thức</span>
-            <strong>{meetingPlatformLabel(booking.meetingPlatform)}</strong>
-            {booking.meetingLink && (
-              <a href={booking.meetingLink} target="_blank" rel="noreferrer">
-                Mở liên kết buổi học
-              </a>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="bookingDetailSession">
-        <h3>Thông tin buổi học</h3>
-        <div>
-          <article>
-            <span>Dịch vụ đã đặt</span>
-            <strong>{booking.serviceTitle || 'Chưa có thông tin dịch vụ'}</strong>
-          </article>
-          <article>
-            <span>Thời lượng</span>
-            <strong>
-              {sessionDuration > 0 ? formatDuration(sessionDuration) : 'Chưa xác định'}
-            </strong>
-          </article>
-        </div>
-      </section>
-
-      <section className="bookingDetailMentee" aria-label="Mentee đặt lịch">
-        <span className="bookingDetailMenteeAvatar" aria-hidden={!booking.menteeAvatarUrl}>
-          {booking.menteeAvatarUrl ? (
-            <img src={booking.menteeAvatarUrl} alt="" />
-          ) : (
-            menteeInitials(booking.menteeDisplayName)
-          )}
-        </span>
-        <div>
-          <span>Mentee đặt lịch</span>
-          <strong>{booking.menteeDisplayName}</strong>
-        </div>
-      </section>
-
-      {(!canDeactivate || !canEdit) && (
-        <p className="bookingDetailCapabilityNote">
-          {!canDeactivate && !canEdit
-            ? 'Không thể thu hồi hoặc chỉnh sửa vì lịch đã có booking.'
-            : !canDeactivate
-              ? 'Không thể thu hồi vì lịch đã có booking.'
-              : 'Không thể chỉnh sửa thời gian vì lịch đã có booking.'}
-        </p>
-      )}
-
-      <footer className="bookingDetailFooter">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Đóng
-        </Button>
-        <div>
+    <BookingDetailLayout
+      titleId={titleId}
+      status={<Badge variant={status.variant}>{status.label}</Badge>}
+      title={booking.serviceTitle?.trim() || 'Chi tiết lịch hẹn'}
+      onClose={onClose}
+      footerEnd={
+        <>
           <Button
             type="button"
             variant="outline"
+            className={DETAIL_OUTLINE_BUTTON}
             disabled={!canDeactivate}
             title={!canDeactivate ? 'Không thể thu hồi vì đã có booking.' : undefined}
             onClick={onDeactivate}
@@ -362,15 +259,84 @@ function BookingAvailabilityDetail({
           </Button>
           <Button
             type="button"
+            className={DETAIL_PRIMARY_BUTTON}
             disabled={!canEdit}
             title={!canEdit ? 'Không thể chỉnh sửa vì đã có booking.' : undefined}
             onClick={onEdit}
           >
             Chỉnh sửa
           </Button>
-        </div>
-      </footer>
-    </div>
+        </>
+      }
+    >
+      <BookingTimeBlock
+        start={start}
+        end={end}
+        durationMinutes={sessionDuration}
+        past={isPast}
+        timeZone={timezone}
+        trailing={`${timezone} (${formatTimezoneOffset(start, timezone)})`}
+      />
+
+      <BookingDetailList>
+        <BookingDetailRow label="Mentee">
+          <span className="flex items-center gap-3">
+            {booking.menteeAvatarUrl ? (
+              <img
+                src={booking.menteeAvatarUrl}
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-bold text-primary-text"
+              >
+                {menteeInitials(booking.menteeDisplayName)}
+              </span>
+            )}
+            <span className="font-semibold">{booking.menteeDisplayName}</span>
+          </span>
+        </BookingDetailRow>
+        <BookingDetailRow label="Mục tiêu">
+          {booking.learningGoalTitle?.trim() && (
+            <span className="block">{booking.learningGoalTitle.trim()}</span>
+          )}
+          {note ? (
+            <span className="mt-1 line-clamp-3 block text-sm whitespace-pre-line text-text-secondary">
+              {note}
+            </span>
+          ) : (
+            !booking.learningGoalTitle?.trim() && (
+              <span className="text-text-secondary italic">Không có ghi chú</span>
+            )
+          )}
+        </BookingDetailRow>
+        <BookingDetailRow label="Hình thức">
+          <span className="block">{meetingPlatformLabel(booking.meetingPlatform)}</span>
+          {booking.meetingLink && (
+            <a
+              href={booking.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-text underline-offset-4 hover:underline sm:min-h-0"
+            >
+              Mở liên kết buổi học
+            </a>
+          )}
+        </BookingDetailRow>
+      </BookingDetailList>
+
+      {(!canDeactivate || !canEdit) && (
+        <p className="m-0 rounded-xl bg-surface-subtle p-3 text-sm text-text-secondary">
+          {!canDeactivate && !canEdit
+            ? 'Không thể thu hồi hoặc chỉnh sửa vì lịch đã có booking.'
+            : !canDeactivate
+              ? 'Không thể thu hồi vì lịch đã có booking.'
+              : 'Không thể chỉnh sửa thời gian vì lịch đã có booking.'}
+        </p>
+      )}
+    </BookingDetailLayout>
   );
 }
 
@@ -500,6 +466,7 @@ const EDIT_SLOT_INPUT_CLASS =
 export function ScheduleManageView() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
+  const bookingDetailTitleId = useId();
   const [services, setServices] = useState<MentorServiceManagementResponse[]>([]);
   const mentorCoupons = useMyMentorCoupons();
   // Coupons with quota left (GET /api/me/coupons): strip, card rows and the offers drawer.
@@ -3447,17 +3414,25 @@ export function ScheduleManageView() {
         open={isDetailModalOpen && Boolean(selectedSlot || selectedBooking)}
         title={selectedBooking ? 'Chi tiết lịch hẹn' : 'Chi tiết lịch rảnh'}
         hideHeader
+        labelledBy={selectedBooking ? bookingDetailTitleId : undefined}
         onClose={() => {
           setIsDetailModalOpen(false);
           setSelectedSlotId(null);
           setSelectedBookingId(null);
         }}
-        className={selectedBooking ? 'bookingAvailabilityDetailModalShell' : 'max-w-xl'}
+        {...(selectedBooking
+          ? {
+              className: BOOKING_DETAIL_MODAL_PROPS.className,
+              contentClassName: BOOKING_DETAIL_MODAL_PROPS.contentClassName,
+              overlayClassName: BOOKING_DETAIL_MODAL_PROPS.overlayClassName,
+            }
+          : { className: 'max-w-xl' })}
       >
         {selectedBooking ? (
           <BookingAvailabilityDetail
             booking={selectedBooking}
             timezone={timezone}
+            titleId={bookingDetailTitleId}
             canDeactivate={Boolean(selectedSlot && canDeactivate)}
             canEdit={Boolean(selectedSlot && !isTimeEditBlocked)}
             onClose={() => {
