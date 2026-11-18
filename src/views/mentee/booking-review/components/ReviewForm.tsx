@@ -21,7 +21,7 @@ import {
   REVIEW_TAG_GROUPS,
   tagGroupOf,
 } from '../review.constants';
-import type { ReviewSubmission } from '../useBookingReview';
+import { buildReviewComment, type ReviewSubmission } from '../useBookingReview';
 import { RatingStars, type RatingStarsHandle } from './RatingStars';
 
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -62,6 +62,8 @@ export function ReviewForm({
     ? `${listHref}#booking-${encodeURIComponent(booking.bookingId)}`
     : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Báo sự cố buổi học ${booking.bookingId}`)}`;
   const now = new Date();
+  // Same text the review is saved with, so the preview matches the mentor's profile.
+  const previewComment = buildReviewComment(tags, comment);
 
   const changeRating = (next: number) => {
     // Positive and negative tags never mix: switching group clears the picks.
@@ -83,7 +85,7 @@ export function ReviewForm({
       starsRef.current?.focus();
       return;
     }
-    onSubmit({ rating, comment });
+    onSubmit({ rating, comment, tags });
   };
 
   return (
@@ -115,7 +117,7 @@ export function ReviewForm({
           <legend className="mb-2.5 p-0 text-sm font-bold text-text-main">
             {tagGroup.question}
           </legend>
-          {/* TODO(api): tags are not stored by POST /feedback yet, so they are not sent. */}
+          {/* TODO(api): POST /feedback has no tags field; the picks are sent inside `comment`. */}
           <div className="flex flex-wrap gap-2">
             {tagGroup.tags.map((tag) => {
               const pressed = tags.includes(tag);
@@ -189,8 +191,8 @@ export function ReviewForm({
               tháng {pad(now.getMonth() + 1)}/{now.getFullYear()}
             </span>
           </div>
-          {comment.trim() && (
-            <p className="m-0 text-sm whitespace-pre-line text-text-secondary">{comment.trim()}</p>
+          {previewComment && (
+            <p className="m-0 text-sm whitespace-pre-line text-text-secondary">{previewComment}</p>
           )}
         </section>
       )}
