@@ -9,11 +9,11 @@
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type { AdminDashboardOverviewResponse } from '@/models/admin';
-import { ACTIVE_BOOKING_STATUSES, sumStatuses } from '@/views/admin/dashboard.helpers';
+import { sumStatuses } from '@/views/admin/dashboard.helpers';
 import { adminRepo } from '@/repositories/adminRepo';
 import {
   Activity,
-  CalendarDays,
+  CalendarCheck,
   ExternalLink,
   GraduationCap,
   LockKeyhole,
@@ -63,10 +63,11 @@ const METRICS: Metric[] = [
     tone: 'green',
   },
   {
-    label: 'Lịch hẹn đang hoạt động',
-    description: 'Lịch hẹn chưa kết thúc',
-    value: (data) => sumStatuses(data.bookings, ACTIVE_BOOKING_STATUSES),
-    icon: CalendarDays,
+    label: 'Buổi học đã hoàn thành',
+    description: 'Tổng số buổi học đã hoàn thành của tất cả mentor',
+    // Raw status COMPLETED = the session took place and was confirmed.
+    value: (data) => sumStatuses(data.bookings, ['COMPLETED']),
+    icon: CalendarCheck,
     tone: 'green',
   },
 ];
