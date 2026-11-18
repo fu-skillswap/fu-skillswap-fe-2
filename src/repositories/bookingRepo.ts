@@ -54,11 +54,21 @@ export const bookingRepo = {
     apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}/confirm`, {
       method: 'POST',
       data,
+      // The BE rejects booking state changes without this header (400 IDEMPOTENCY_KEY_REQUIRED).
+      headers: { 'Idempotency-Key': idempotencyKey() },
     }),
   reportIssue: (bookingId: string, data: SubmitBookingIssueRequest) =>
-    apiClient(`/api/me/bookings/${bookingId}/issue`, { method: 'POST', data }),
+    apiClient(`/api/me/bookings/${bookingId}/issue`, {
+      method: 'POST',
+      data,
+      headers: { 'Idempotency-Key': idempotencyKey() },
+    }),
   respondIssue: (bookingId: string, data: RespondBookingIssueRequest) =>
-    apiClient(`/api/me/bookings/${bookingId}/issue/respond`, { method: 'POST', data }),
+    apiClient(`/api/me/bookings/${bookingId}/issue/respond`, {
+      method: 'POST',
+      data,
+      headers: { 'Idempotency-Key': idempotencyKey() },
+    }),
   /** Read-only estimate: does not create a payment order or reserve the coupon/credit. */
   previewCheckout: (bookingId: string, couponCode: string | null = null) =>
     apiClient<CheckoutPreviewResponse>(`/api/me/bookings/${bookingId}/checkout-preview`, {
