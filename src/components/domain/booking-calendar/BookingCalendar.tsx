@@ -421,11 +421,18 @@ export function BookingCalendar({
                       segmentItem.isBlocked,
                     );
 
+                  const blockedLabel = segmentItem.blockedLabel || 'Bị khóa';
                   const blockedReasonText =
-                    segmentItem.reasonIfBlocked ||
-                    segmentItem.bookingConflictNote ||
-                    segmentItem.blockedReason ||
-                    'Candidate segment này bị block bởi booking đã được chốt';
+                    segmentItem.blockedLabel && segmentItem.blockedReason
+                      ? segmentItem.blockedReason
+                      : segmentItem.reasonIfBlocked ||
+                        segmentItem.bookingConflictNote ||
+                        segmentItem.blockedReason ||
+                        'Candidate segment này bị block bởi booking đã được chốt';
+                  const blockHeightPx = Math.max(24, heightPx - 4);
+                  // A 30-minute block has room for one line only: a locked one shows its label
+                  // (the time is on the axis and in the tooltip), so the lines do not overlap.
+                  const isCompact = blockHeightPx < 44;
 
                   const keyId =
                     segmentItem.segmentId ||
@@ -453,16 +460,25 @@ export function BookingCalendar({
                           onSelectSlot(segmentItem, `${day.dateStr}T${startTimeStr}`);
                         }
                       }}
-                      title={isBlocked ? blockedReasonText : undefined}
+                      title={
+                        isBlocked
+                          ? `${startTimeStr}–${endTimeStr}: ${blockedReasonText}`
+                          : undefined
+                      }
+                      aria-label={
+                        isBlocked
+                          ? `${startTimeStr}–${endTimeStr}, ${blockedLabel}`
+                          : `${startTimeStr}–${endTimeStr}`
+                      }
                       style={{
                         position: 'absolute',
                         top: `${topPx + 2}px`,
-                        height: `${Math.max(36, heightPx - 4)}px`,
+                        height: `${blockHeightPx}px`,
                         left: '4px',
                         right: '4px',
                         zIndex: isSelected ? 20 : 10,
                         textAlign: 'left',
-                        padding: '6px 8px',
+                        padding: isCompact ? '2px 6px' : '6px 8px',
                         borderRadius: '8px',
                         cursor: isBlocked ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s ease',
@@ -497,11 +513,14 @@ export function BookingCalendar({
                           lineHeight: '1.2',
                           textAlign: 'center',
                           whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '100%',
                         }}
                       >
-                        {startTimeStr}–{endTimeStr}
+                        {isBlocked && isCompact ? blockedLabel : `${startTimeStr}–${endTimeStr}`}
                       </div>
-                      {isBlocked && (
+                      {isBlocked && !isCompact && (
                         <div
                           style={{
                             fontSize: '10px',
@@ -511,7 +530,7 @@ export function BookingCalendar({
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          Bị khóa
+                          {blockedLabel}
                         </div>
                       )}
                     </button>

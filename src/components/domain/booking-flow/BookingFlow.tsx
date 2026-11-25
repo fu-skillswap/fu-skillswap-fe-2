@@ -112,6 +112,26 @@ const isSegmentBlocked = (segment: CandidateSegmentResponse) =>
     segment.isBlocked,
   );
 
+/** Start/end of a segment in epoch ms (end falls back to start). */
+const rangeOf = (segment: CandidateSegmentResponse) => {
+  const start = new Date(segment.startTime).getTime();
+  const end = new Date(segment.endTime).getTime();
+  return { start, end: Number.isNaN(end) ? start : end };
+};
+
+/**
+ * A mentee already holds this time: a pending request (not yet confirmed by the mentor) or a
+ * booking of this or another service. The BE still accepts several pending requests per time,
+ * so the calendar locks it to avoid mentees competing for the same time.
+ */
+const hasBooking = (segment: CandidateSegmentResponse) =>
+  (segment.pendingCount ?? 0) > 0 ||
+  Boolean(
+    segment.blockedByAcceptedBooking ||
+    segment.blockedBySameService ||
+    segment.blockedByDifferentService,
+  );
+
 /**
  * Explains in plain words why the BE refused a time (409 BOOKING_4001 only says "no longer
  * available"), using the refreshed calendar and the mentee's own bookings, and says what to do.
@@ -241,18 +261,36 @@ export function BookingFlow({
     void loadSlotsAndCandidates(weekRangeRef.current);
   }, [loadSlotsAndCandidates]);
 
-  // Times that cannot be booked are shown as locked: already started, or refused by the BE.
+  // Times that cannot be booked are shown as locked: already started, already booked by a mentee
+  // (even while the mentor has not confirmed yet, so two mentees do not request the same time),
+  // or refused by the BE.
   const calendarCandidates = useMemo(() => {
     const now = Date.now();
+    const bookedRanges = candidateSegments.filter(hasBooking).map((segment) => ({
+      ...rangeOf(segment),
+      accepted: Boolean(segment.blockedByAcceptedBooking),
+    }));
+
     return candidateSegments.map((segment) => {
-      const start = new Date(segment.startTime).getTime();
-      if (start > now && !refusedStarts.includes(start)) return segment;
-      return {
-        ...segment,
-        isBlocked: true,
-        blockedReason:
-          start <= now ? 'Khung giờ này đã bắt đầu.' : 'Khung giờ này hiện không đặt được.',
-      };
+      const { start, end } = rangeOf(segment);
+      if (start <= now) {
+        return { ...segment, isBlocked: true, blockedReason: 'Khung giờ này đã bắt đầu.' };
+      }
+      const booked = bookedRanges.filter((range) => range.start < end && range.end > start);
+      if (booked.length > 0) {
+        return {
+          ...segment,
+          isBlocked: true,
+          blockedLabel: 'Đã có booking',
+          blockedReason: booked.some((range) => range.accepted)
+            ? 'Khung giờ này đã có booking được mentor xác nhận.'
+            : 'Khung giờ này đã có mentee đặt và đang chờ mentor xác nhận.',
+        };
+      }
+      if (refusedStarts.includes(start)) {
+        return { ...segment, isBlocked: true, blockedReason: 'Khung giờ này hiện không đặt được.' };
+      }
+      return segment;
     });
   }, [candidateSegments, refusedStarts]);
 
