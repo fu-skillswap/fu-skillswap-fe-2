@@ -5,7 +5,7 @@
  */
 
 import { MENTOR_COUPON_OPTIN_ENABLED } from '@/constants/featureFlags';
-import { isFixedDiscount, isPercentDiscount } from '@/lib/coupon';
+import { isFixedDiscount, isPercentDiscount, parseServerTime } from '@/lib/coupon';
 import type { CouponView, CreateCouponCommand, KnownCouponDiscountType } from '@/models/coupon';
 
 export const CODE_PATTERN = /^[A-Z0-9]{4,20}$/;
@@ -93,11 +93,14 @@ const vnParts = new Intl.DateTimeFormat('en-CA', {
   hourCycle: 'h23',
 });
 
-/** ISO instant → "YYYY-MM-DDTHH:mm" in Vietnam time, for `<input type="datetime-local">`. */
+/**
+ * BE datetime (UTC, with or without "Z") → "YYYY-MM-DDTHH:mm" in Vietnam time, for
+ * `<input type="datetime-local">`.
+ */
 export function isoToVnInput(value: string | null | undefined): string {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
+  const time = parseServerTime(value);
+  if (time === null) return '';
+  const date = new Date(time);
   const parts = Object.fromEntries(vnParts.formatToParts(date).map((p) => [p.type, p.value]));
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }

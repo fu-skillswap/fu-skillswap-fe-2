@@ -3,6 +3,7 @@
  * @description Redemption status mapping and time helpers for the admin coupon detail screen.
  */
 
+import { parseServerTime } from '@/lib/coupon';
 import type { CouponRedemptionView, CouponView } from '@/models/coupon';
 
 export const REDEMPTION_PAGE_SIZE = 10;
@@ -37,13 +38,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** "Còn N ngày" | "Còn dưới 1 ngày" | "Bắt đầu sau N ngày" | "Đã kết thúc". */
 export function describeTimeLeft(coupon: Pick<CouponView, 'startAt' | 'endAt'>, now: number) {
-  const start = Date.parse(coupon.startAt);
-  const end = Date.parse(coupon.endAt);
-  if (!Number.isNaN(start) && now < start) {
+  const start = parseServerTime(coupon.startAt);
+  const end = parseServerTime(coupon.endAt);
+  if (start !== null && now < start) {
     const days = Math.ceil((start - now) / DAY_MS);
     return days <= 1 ? 'Bắt đầu trong hôm nay' : `Bắt đầu sau ${days} ngày`;
   }
-  if (Number.isNaN(end)) return '—';
+  if (end === null) return '—';
   if (now > end) return 'Đã kết thúc';
   const days = Math.floor((end - now) / DAY_MS);
   return days < 1 ? 'Còn dưới 1 ngày' : `Còn ${days} ngày`;
@@ -61,7 +62,6 @@ const dateTime = new Intl.DateTimeFormat('vi-VN', {
 
 /** dd/MM/yyyy HH:mm in Vietnam time. */
 export function formatDateTime(value: string | null | undefined) {
-  if (!value) return '—';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '—' : dateTime.format(date);
+  const time = parseServerTime(value);
+  return time === null ? '—' : dateTime.format(time);
 }

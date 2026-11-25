@@ -3,6 +3,7 @@
  * @description Filter options and formatters for the admin coupon list.
  */
 
+import { parseServerTime } from '@/lib/coupon';
 import type { CouponDiscountType, CouponStatus, CouponView } from '@/models/coupon';
 
 export const COUPON_PAGE_SIZE = 20;
@@ -70,9 +71,8 @@ const fullDateTime = new Intl.DateTimeFormat('vi-VN', {
 const yearOnly = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, year: 'numeric' });
 
 function parseDate(value: string | null | undefined) {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const time = parseServerTime(value);
+  return time === null ? null : new Date(time);
 }
 
 function formatDay(date: Date | null, currentYear: string) {

@@ -65,11 +65,22 @@ type StateFields = Pick<
   'status' | 'startAt' | 'endAt' | 'quotaTotal' | 'totalRedemptions'
 >;
 
-function toTime(value: string | null | undefined): number | null {
+/**
+ * Parses a BE datetime into epoch ms. The BE stores coupon times in UTC but may return them
+ * without an offset ("2026-11-25T16:30:00"); `Date.parse` would read that as the browser's local
+ * time (GMT+7), shifting it 7 hours earlier — the coupon then looks expired, and re-saving the
+ * admin form shifts it again on every save. A datetime without an offset is therefore read as UTC.
+ */
+export function parseServerTime(value: string | null | undefined): number | null {
   if (!value) return null;
-  const time = Date.parse(value);
+  const trimmed = value.trim();
+  const isDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(trimmed);
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(trimmed);
+  const time = Date.parse(isDateTime && !hasZone ? `${trimmed}Z` : trimmed);
   return Number.isNaN(time) ? null : time;
 }
+
+const toTime = parseServerTime;
 
 /**
  * Display state, in priority order: suspended → inactive → scheduled → expired → exhausted →
