@@ -21,6 +21,8 @@ type AdminDialogProps = {
   /** `wide` is used for document previews. */
   size?: 'default' | 'wide';
   busy?: boolean;
+  /** Confirmation of a consequential action: announced as role="alertdialog". */
+  alert?: boolean;
   onClose: () => void;
   /** When set, the dialog body renders as a form. */
   onSubmit?: FormEventHandler<HTMLFormElement>;
@@ -54,6 +56,7 @@ export function AdminDialog({
   tone = 'info',
   size = 'default',
   busy = false,
+  alert = false,
   onClose,
   onSubmit,
   footer,
@@ -143,11 +146,11 @@ export function AdminDialog({
 
   const shared = {
     className: `admin-dialog is-${size}`,
-    role: 'dialog',
+    role: alert ? 'alertdialog' : 'dialog',
     'aria-modal': true,
     'aria-labelledby': titleId,
     tabIndex: -1,
-  } as const;
+  };
 
   return (
     <div

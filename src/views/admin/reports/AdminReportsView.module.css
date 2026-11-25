@@ -1,36 +1,7 @@
 /* Reports & AI-flagged content — page-specific bits. Shared list styles: AdminList.module.css. */
 
-.reportsTable,
 .aiTable {
   min-width: 880px;
-}
-
-.reportsTable th:nth-child(1) {
-  width: 44%;
-}
-
-.reportsTable th:nth-child(2) {
-  width: 16%;
-}
-
-.reportsTable th:nth-child(3) {
-  width: 14%;
-}
-
-.reportsTable th:nth-child(4) {
-  width: 14%;
-}
-
-.reportsTable th:last-child {
-  width: 12%;
-}
-
-.reportsTable[data-mode='resolved'] th:nth-child(1) {
-  width: 36%;
-}
-
-.reportsTable[data-mode='resolved'] th:nth-child(5) {
-  width: 12%;
 }
 
 .aiTable th:nth-child(1) {

@@ -53,7 +53,7 @@ export function AdminReportsView() {
   };
 
   const tabs: Array<{ value: ReportsTab; label: string; count?: number }> = [
-    { value: 'reports', label: 'Người dùng báo cáo', count: openCount },
+    { value: 'reports', label: 'Cần xử lý', count: openCount },
     ...(AI_FLAGGED_ENABLED ? [{ value: 'ai' as const, label: 'AI gắn cờ', count: aiCount }] : []),
     { value: 'resolved', label: 'Đã xử lý' },
   ];
@@ -70,7 +70,10 @@ export function AdminReportsView() {
         <section className="admin-page-heading">
           <div>
             <h1>Báo cáo &amp; nội dung gắn cờ</h1>
-            <p>Báo cáo do người dùng gửi và bài viết, bình luận AI đánh dấu cần xem lại.</p>
+            <p>
+              Báo cáo do người dùng gửi về bài viết, bình luận trên Forum. Nhận một báo cáo rồi chọn
+              cách xử lý.
+            </p>
           </div>
         </section>
         <section className={list.card} aria-label="Báo cáo và nội dung gắn cờ">
