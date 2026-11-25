@@ -372,6 +372,8 @@ export interface CandidateServiceSlot {
   title?: string;
   isBlocked?: boolean;
   blockedReason?: string | null;
+  /** Short label shown on a locked segment in the calendar (defaults to "Bị khóa"). */
+  blockedLabel?: string;
 }
 
 /** Response payload of GET /api/mentors/{mentorUserId}/availability-slots/{slotId}/candidates */
