@@ -324,7 +324,7 @@ export interface AdminForumReport {
 
 /** Body of POST /api/admin/forum/reports/{reportId}/resolve. */
 export interface AdminForumReportResolveRequest {
-  /** See REPORT_ACTIONS in views/admin/reports/reportModeration.constants.ts. */
+  /** BE `ForumModerationAction`: CONFIRM_NO_ACTION | HIDE_POST | HIDE_COMMENT | DISMISS. */
   action: string;
   /** ≤ 500 characters. */
   reviewNote?: string;

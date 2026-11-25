@@ -15,7 +15,7 @@ import { showError, showInfo, showSuccess, showWarning } from '@/utils/toast';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FORUM_REPORT_CASE_TYPE,
-  REPORT_ACTIONS,
+  getResolveAction,
   getTargetType,
   personName,
   type ReportDecision,
@@ -135,10 +135,11 @@ export function useAdminReportDetail(reportId: string) {
 
   const resolve = (decision: ReportDecision, reviewNote: string) =>
     run('resolve', async () => {
+      if (!report) return;
       try {
         const note = reviewNote.trim();
         await adminRepo.resolveForumReport(reportId, {
-          action: REPORT_ACTIONS[decision],
+          action: getResolveAction(decision, report.targetType),
           ...(note ? { reviewNote: note } : {}),
         });
         await refetch();
