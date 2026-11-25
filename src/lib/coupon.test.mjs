@@ -23,6 +23,7 @@ import {
   pickOfferMoneyFlowExample,
   menteePriceOf,
   serviceMoneyFlow,
+  parseServerTime,
 } from './coupon.ts';
 
 const CHAOK19 = { discountType: 'PERCENT', discountValue: 20, maxDiscountScoin: 3000 };
@@ -236,4 +237,20 @@ test('serviceMoneyFlow uses the API prices and adds up', () => {
   assert.equal(none.discount, 0);
   assert.equal(none.mentorGets, 16500);
   assert.equal(serviceMoneyFlow(free, CHAOK19).priceWithSurcharge, 0);
+});
+
+test('parseServerTime reads a BE datetime without an offset as UTC', () => {
+  const utc = Date.UTC(2026, 10, 25, 16, 30);
+  assert.equal(parseServerTime('2026-11-25T16:30:00'), utc);
+  assert.equal(parseServerTime('2026-11-25T16:30:00.123456'), utc + 123);
+  assert.equal(parseServerTime('2026-11-25T16:30:00Z'), utc);
+  assert.equal(parseServerTime('2026-11-25T23:30:00+07:00'), utc);
+  assert.equal(parseServerTime(''), null);
+  assert.equal(parseServerTime('not a date'), null);
+});
+
+test('offerState keeps an offset-less endAt valid until its UTC instant', () => {
+  const offer = { startAt: '2026-11-25T00:00:00', endAt: '2026-11-25T16:30:00', remainingQuota: 5 };
+  assert.equal(offerState(offer, Date.UTC(2026, 10, 25, 16, 0)), 'running');
+  assert.equal(offerState(offer, Date.UTC(2026, 10, 25, 17, 0)), 'ended');
 });
