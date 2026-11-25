@@ -294,8 +294,27 @@ export interface SlotMutationCapabilityResponse {
   affectedPendingBookingCount: number;
 }
 
+/**
+ * Optional coupon pricing fields the backend attaches to service/slot objects (BE update 21/11).
+ * Every field may be missing or null on older builds; use `getServicePriceDisplay` to read them.
+ * `couponTitle` is only returned by `MentorServiceResponse` and `ServicePricingPreviewResponse`.
+ * Not returned by GET /api/me/mentor-services (`MentorServiceManagementResponse`) yet.
+ */
+export interface ServiceCouponPricingFields {
+  /** Price before the coupon; falls back to `priceScoin` when missing. */
+  originalPriceScoin?: number | null;
+  /** Price after the coupon, computed by the backend (source of truth). */
+  discountedPriceScoin?: number | null;
+  couponDiscountScoin?: number | null;
+  hasCouponDiscount?: boolean | null;
+  couponCode?: string | null;
+  couponTitle?: string | null;
+  /** Remaining uses of the coupon; null means unlimited or unknown. */
+  couponRemainingQuota?: number | null;
+}
+
 /** Basic mentor service bound to an availability slot. */
-export interface AvailabilitySlotServiceBasicResponse {
+export interface AvailabilitySlotServiceBasicResponse extends ServiceCouponPricingFields {
   serviceId: string;
   title: string;
   durationMinutes: number;
@@ -305,7 +324,7 @@ export interface AvailabilitySlotServiceBasicResponse {
 }
 
 /** Service info attached to public availability slots (GET /api/mentors/{mentorUserId}/availability-slots). */
-export interface PublicSlotServiceInfo {
+export interface PublicSlotServiceInfo extends ServiceCouponPricingFields {
   serviceId: string;
   title: string;
   durationMinutes: number;
@@ -921,7 +940,7 @@ export interface MentorServiceCoverAssetResponse {
 }
 
 /** Dịch vụ công khai trong hồ sơ mentor, dùng để mentee chọn trước khi đặt lịch. */
-export interface MentorServiceResponse {
+export interface MentorServiceResponse extends ServiceCouponPricingFields {
   serviceId: string;
   mentorUserId: string;
   title: string;

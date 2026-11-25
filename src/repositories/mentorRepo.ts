@@ -55,6 +55,19 @@ function formatIso8601(input?: string): string {
   return new Date().toISOString().replace(/Z$/, '');
 }
 
+/**
+ * Normalizes a datetime for a request body into a UTC instant that keeps its trailing "Z".
+ * The BE reads a datetime without an offset as Vietnam time, so dropping the "Z" shifts the
+ * booking by 7 hours and it falls outside the mentor's availability slot (BOOKING 400).
+ * Input without an offset is treated as UTC, the format the BE returns.
+ */
+function toUtcInstant(input: string): string {
+  const trimmed = input.trim();
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(trimmed);
+  const d = new Date(hasZone ? trimmed : `${trimmed}Z`);
+  return Number.isNaN(d.getTime()) ? trimmed : d.toISOString();
+}
+
 /** Mapping dữ liệu Mentor từ Backend DTO (chứa identity, mentoring, evidence) về Entity Mentor chuẩn của Frontend */
 export function mapApiMentorToEntity(raw: any): Mentor {
   if (!raw || typeof raw !== 'object') {
@@ -417,9 +430,9 @@ export const mentorRepo = {
   ): Promise<UserBookingItem> {
     const normalizedPayload: CreateBookingRequest = {
       ...payload,
-      startAt: formatIso8601(payload.startAt),
+      startAt: toUtcInstant(payload.startAt),
       ...(payload.legacySelectedEndTime
-        ? { legacySelectedEndTime: formatIso8601(payload.legacySelectedEndTime) }
+        ? { legacySelectedEndTime: toUtcInstant(payload.legacySelectedEndTime) }
         : {}),
     };
 
