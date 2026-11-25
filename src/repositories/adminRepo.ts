@@ -3,7 +3,7 @@
  * @description Repository gọi các API vận hành dành riêng cho ADMIN và SYSTEM_ADMIN.
  */
 
-import { apiClient } from '@/models/apiClient';
+import { ApiClientError, apiClient } from '@/models/apiClient';
 import type {
   AdminAuditLogItem,
   AdminAuditLogsQuery,
@@ -23,6 +23,7 @@ import type {
   AdminMentorDetail,
   AdminMentorViolationRequest,
   AdminForumReport,
+  AdminForumReportResolveRequest,
   AdminForumReportsQuery,
   AdminForumReportsResponse,
   AdminUsersQuery,
@@ -43,6 +44,16 @@ function queryString(query: object) {
   });
   const serialized = params.toString();
   return serialized ? `?${serialized}` : '';
+}
+
+/** Restore endpoints may answer 2xx with `data: null`, which apiClient reports as an error. */
+async function allowEmptySuccess(request: Promise<unknown>) {
+  try {
+    await request;
+  } catch (reason) {
+    if (reason instanceof ApiClientError && reason.status >= 200 && reason.status < 300) return;
+    throw reason;
+  }
 }
 
 export const adminRepo = {
@@ -75,6 +86,22 @@ export const adminRepo = {
 
   getForumReport: (reportId: string) =>
     apiClient<AdminForumReport>(`/api/admin/forum/reports/${reportId}`),
+
+  resolveForumReport: (reportId: string, body: AdminForumReportResolveRequest) =>
+    apiClient<AdminForumReport>(`/api/admin/forum/reports/${reportId}/resolve`, {
+      method: 'POST',
+      data: body,
+    }),
+
+  restoreForumPost: (postId: string) =>
+    allowEmptySuccess(
+      apiClient<unknown>(`/api/admin/forum/posts/${postId}/restore`, { method: 'POST' }),
+    ),
+
+  restoreForumComment: (commentId: string) =>
+    allowEmptySuccess(
+      apiClient<unknown>(`/api/admin/forum/comments/${commentId}/restore`, { method: 'POST' }),
+    ),
 
   getCaseOwnership: (caseType: string, caseId: string) =>
     apiClient<AdminCaseOwnership>(`/api/admin/cases/${caseType}/${caseId}/ownership`),

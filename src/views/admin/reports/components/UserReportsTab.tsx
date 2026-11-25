@@ -1,6 +1,6 @@
 /**
  * @file UserReportsTab.tsx
- * @description Bảng báo cáo do người dùng gửi: đang mở hoặc đã xử lý.
+ * @description Bảng báo cáo do người dùng gửi: "Cần xử lý" (OPEN) hoặc "Đã xử lý".
  */
 
 'use client';
@@ -10,17 +10,71 @@ import {
   adminListStyles as list,
 } from '@/components/domain/admin/AdminListControls';
 import { AdminTableState } from '@/components/domain/admin/AdminTableState';
-import type { AdminForumReport, ForumReportStatus } from '@/models/admin';
+import type { AdminCaseOwnership, AdminForumReport, ForumReportStatus } from '@/models/admin';
+import { useAuth } from '@/providers/AuthProvider';
 import { adminRepo } from '@/repositories/adminRepo';
-import { showError } from '@/utils/toast';
 import { RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
-import styles from '../AdminReportsView.module.css';
-import { formatDateTime, labelOf, resolvedStatuses } from '../reports.constants';
-import { ContentCell } from './ContentCell';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import styles from '../ReportModeration.module.css';
+import {
+  FORUM_REPORT_CASE_TYPE,
+  RESOLVED_FILTER_OPTIONS,
+  STATUS_UI,
+  TARGET_TYPE_FILTER_OPTIONS,
+  formatReportTime,
+  type TargetType,
+} from '../reportModeration.constants';
+import {
+  OwnerCell,
+  ReasonCell,
+  ReportContentCell,
+  WaitCell,
+  type OwnershipEntry,
+} from './ReportListCells';
+import { StatusPill } from './ReportPills';
 
 const pageSize = 10;
+const columnCount = 6;
+
+/**
+ * Ownership of every report on the current page, fetched in parallel and cached per report.
+ * TODO(api): add assignedAdminUserId / assignedAdminDisplayName to the list item to drop these calls.
+ */
+function useOwnerships(reports: AdminForumReport[], enabled: boolean) {
+  const cache = useRef(new Map<string, AdminCaseOwnership>());
+  const [entries, setEntries] = useState<Record<string, OwnershipEntry>>({});
+
+  useEffect(() => {
+    if (!enabled || !reports.length) return;
+    let cancelled = false;
+    const missing = reports.filter((report) => !cache.current.has(report.reportId));
+    setEntries(() => {
+      const next: Record<string, OwnershipEntry> = {};
+      reports.forEach((report) => {
+        next[report.reportId] = cache.current.get(report.reportId) ?? 'loading';
+      });
+      return next;
+    });
+    missing.forEach((report) => {
+      adminRepo
+        .getCaseOwnership(FORUM_REPORT_CASE_TYPE, report.reportId)
+        .then((ownership) => {
+          cache.current.set(report.reportId, ownership);
+          if (!cancelled) setEntries((current) => ({ ...current, [report.reportId]: ownership }));
+        })
+        .catch(() => {
+          if (!cancelled) setEntries((current) => ({ ...current, [report.reportId]: 'error' }));
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, reports]);
+
+  const clear = useCallback(() => cache.current.clear(), []);
+  return { entries, clear };
+}
 
 export function UserReportsTab({
   mode,
@@ -35,18 +89,22 @@ export function UserReportsTab({
   /** Called after each successful load, e.g. to refresh the tab counts. */
   onLoaded?: () => void;
 }) {
+  const { user } = useAuth();
   const [reports, setReports] = useState<AdminForumReport[]>([]);
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   // TODO(api): accept several statuses so "Đã xử lý" can list every resolved report at once.
   const [resolvedStatus, setResolvedStatus] = useState<ForumReportStatus>('RESOLVED_ACTION_TAKEN');
+  const [targetType, setTargetType] = useState<'' | TargetType>('');
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const status: ForumReportStatus = mode === 'open' ? 'OPEN' : resolvedStatus;
-  const columnCount = mode === 'open' ? 5 : 6;
+  const isOpenMode = mode === 'open';
+  const isFiltered = Boolean(keyword || targetType);
+  const ownerships = useOwnerships(reports, isOpenMode);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -60,59 +118,113 @@ export function UserReportsTab({
     setLoading(true);
     setFailed(false);
     try {
+      // TODO(api): add a sort param (createdAt ASC) so the queue lists the longest-waiting report
+      // first; until then the server order is kept.
       const data = await adminRepo.getForumReports({
         page,
         size: pageSize,
         keyword: keyword || undefined,
         status,
+        targetType: targetType || undefined,
       });
       setReports(data.content);
       setTotalElements(data.totalElements);
       setTotalPages(data.totalPages);
       onLoaded?.();
-    } catch (reason) {
+    } catch {
       setFailed(true);
-      showError(reason, { title: 'Không thể tải báo cáo' });
     } finally {
       setLoading(false);
     }
-  }, [keyword, page, status, onLoaded]);
+  }, [keyword, page, status, targetType, onLoaded]);
 
   useEffect(() => {
     void loadReports();
   }, [loadReports]);
 
+  const refresh = () => {
+    ownerships.clear();
+    void loadReports();
+  };
+
   const clearFilters = () => {
     setKeywordInput('');
     setKeyword('');
+    setTargetType('');
     setPage(0);
   };
 
   const first = reports.length ? page * pageSize + 1 : 0;
   const last = page * pageSize + reports.length;
-  const resolvedLabel = resolvedStatuses.find((item) => item.value === resolvedStatus)?.label;
+  const resolvedLabel = STATUS_UI[resolvedStatus].label;
 
-  const emptyState =
-    mode === 'open' ? (
-      <AdminTableState
-        variant="empty"
-        colSpan={columnCount}
-        title="Không có báo cáo đang mở"
-        description="Khi người dùng báo cáo bài viết hoặc bình luận, báo cáo sẽ hiện ở đây."
-        action={
-          <button type="button" className="admin-button" onClick={onShowResolved}>
-            Xem báo cáo đã xử lý
-          </button>
-        }
-      />
-    ) : (
-      <AdminTableState
-        variant="empty"
-        colSpan={columnCount}
-        title={`Chưa có báo cáo "${resolvedLabel}"`}
-        description="Chọn kết quả xử lý khác để xem các báo cáo còn lại."
-      />
+  const emptyState = isOpenMode ? (
+    <AdminTableState
+      variant="empty"
+      colSpan={columnCount}
+      title="Không còn báo cáo cần xử lý"
+      description="Báo cáo mới từ người dùng sẽ hiện ở đây."
+      action={
+        <button type="button" className="admin-button" onClick={onShowResolved}>
+          Xem báo cáo đã xử lý
+        </button>
+      }
+    />
+  ) : (
+    <AdminTableState
+      variant="empty"
+      colSpan={columnCount}
+      title={`Chưa có báo cáo “${resolvedLabel}”`}
+      description="Chọn kết quả xử lý khác để xem các báo cáo còn lại."
+    />
+  );
+
+  const renderRow = (report: AdminForumReport) => {
+    const entry = ownerships.entries[report.reportId];
+    const heldByOther =
+      isOpenMode &&
+      typeof entry === 'object' &&
+      entry.assigned &&
+      entry.assignedAdminUserId !== user?.id;
+    const reviewedByMe = Boolean(user?.id) && report.reviewedByUserId === user?.id;
+    return (
+      <tr key={report.reportId}>
+        <td>
+          <ReportContentCell report={report} />
+        </td>
+        <td>
+          <ReasonCell report={report} />
+        </td>
+        <td>{report.reporterFullName?.trim() || <span className={list.muted}>Không rõ</span>}</td>
+        <td>
+          {isOpenMode ? (
+            <OwnerCell entry={entry} currentUserId={user?.id} />
+          ) : (
+            <div className={styles.stackCell}>
+              <StatusPill status={report.status} />
+              {/* TODO(api): add reviewedByDisplayName to show who closed reports of other admins. */}
+              {reviewedByMe && <span className={styles.metaLine}>bởi Bạn</span>}
+            </div>
+          )}
+        </td>
+        <td>
+          {isOpenMode ? (
+            <WaitCell from={report.createdAt} />
+          ) : (
+            <span className={list.date}>{formatReportTime(report.resolvedAt)}</span>
+          )}
+        </td>
+        <td className={`${list.actionCell} ${styles.actionCell}`}>
+          <Link
+            className={`admin-button ${isOpenMode && !heldByOther ? 'is-primary' : ''}`}
+            href={`/${locale}/admin/reports/${report.reportId}`}
+          >
+            {isOpenMode && !heldByOther ? 'Mở báo cáo' : 'Xem'}
+          </Link>
+        </td>
+      </tr>
     );
+  };
 
   return (
     <>
@@ -127,7 +239,23 @@ export function UserReportsTab({
             aria-label="Tìm báo cáo"
           />
         </label>
-        {mode === 'resolved' && (
+        <label className={list.selectField}>
+          <span>Loại nội dung</span>
+          <select
+            value={targetType}
+            onChange={(event) => {
+              setTargetType(event.target.value as '' | TargetType);
+              setPage(0);
+            }}
+          >
+            {TARGET_TYPE_FILTER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {!isOpenMode && (
           <label className={list.selectField}>
             <span>Kết quả</span>
             <select
@@ -137,7 +265,7 @@ export function UserReportsTab({
                 setPage(0);
               }}
             >
-              {resolvedStatuses.map((item) => (
+              {RESOLVED_FILTER_OPTIONS.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
                 </option>
@@ -148,21 +276,21 @@ export function UserReportsTab({
         <button
           type="button"
           className={`admin-button ${list.toolbarEnd}`}
-          onClick={() => void loadReports()}
+          onClick={refresh}
           disabled={loading}
         >
           <RefreshCw aria-hidden="true" /> Làm mới
         </button>
       </div>
       <div className={list.tableScroll}>
-        <table className={`${list.table} ${styles.reportsTable}`} data-mode={mode}>
+        <table className={`${list.table} ${styles.reportsTable}`}>
           <thead>
             <tr>
               <th>Nội dung bị báo cáo</th>
-              <th>Người báo cáo</th>
               <th>Lý do</th>
-              <th>Gửi lúc</th>
-              {mode === 'resolved' && <th>Kết quả</th>}
+              <th>Người báo cáo</th>
+              <th>{isOpenMode ? 'Người xử lý' : 'Kết quả'}</th>
+              <th>{isOpenMode ? 'Đã chờ' : 'Đóng lúc'}</th>
               <th>
                 <span className="sr-only">Thao tác</span>
               </th>
@@ -175,52 +303,17 @@ export function UserReportsTab({
               <AdminTableState
                 variant="error"
                 colSpan={columnCount}
-                onRetry={() => void loadReports()}
+                title="Không tải được danh sách báo cáo"
+                description="Kiểm tra kết nối rồi thử lại. Dữ liệu chưa bị thay đổi."
+                onRetry={refresh}
               />
             ) : reports.length ? (
-              reports.map((report) => (
-                <tr key={report.reportId}>
-                  <td>
-                    <ContentCell
-                      targetType={report.targetType}
-                      title={report.targetTitle}
-                      excerpt={report.targetContentPreview}
-                      authorName={report.targetAuthorFullName}
-                    />
-                  </td>
-                  <td>
-                    {report.reporterFullName ?? <span className={list.muted}>Không xác định</span>}
-                  </td>
-                  <td>
-                    <span className={styles.tag}>{labelOf(report.reasonType)}</span>
-                  </td>
-                  <td className={list.date}>{formatDateTime(report.createdAt)}</td>
-                  {mode === 'resolved' && (
-                    <td>
-                      <span
-                        className={`admin-report-status ${report.status
-                          .toLowerCase()
-                          .replaceAll('_', '-')}`}
-                      >
-                        {labelOf(report.status)}
-                      </span>
-                    </td>
-                  )}
-                  <td className={list.actionCell}>
-                    <Link
-                      className={`admin-button ${mode === 'open' ? 'is-primary' : ''}`}
-                      href={`/${locale}/admin/reports/${report.reportId}`}
-                    >
-                      {mode === 'open' ? 'Xử lý' : 'Xem'}
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            ) : keyword ? (
+              reports.map(renderRow)
+            ) : isFiltered ? (
               <AdminTableState
                 variant="no-results"
                 colSpan={columnCount}
-                searchTerm={keyword}
+                title="Không có báo cáo khớp bộ lọc"
                 onClearFilters={clearFilters}
               />
             ) : (

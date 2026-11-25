@@ -1,0 +1,196 @@
+/* Community report moderation: pills shared by list + detail, and the user-report table cells. */
+
+/* Pills (colours come from reportModeration.constants via CSS variables) */
+.pill {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid var(--pill-border, #e2e8f0);
+  border-radius: 999px;
+  background: var(--pill-bg, #f1f5f9);
+  color: var(--pill-color, #475569);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pill svg {
+  width: 13px;
+  height: 13px;
+}
+
+.typeChip {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.typeChip svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.fallbackText {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+}
+
+.metaLine {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+/* Table */
+.reportsTable {
+  min-width: 1040px;
+}
+
+.reportsTable th:nth-child(1) {
+  width: 38%;
+}
+
+.reportsTable th:nth-child(2) {
+  width: 13%;
+}
+
+.reportsTable th:nth-child(3) {
+  width: 13%;
+}
+
+.reportsTable th:nth-child(4) {
+  width: 14%;
+}
+
+.reportsTable th:nth-child(5) {
+  width: 11%;
+}
+
+.reportsTable th:nth-child(6) {
+  width: 11%;
+}
+
+.contentCell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contentCell strong {
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contentCell p {
+  max-width: 440px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stackCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.owner {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.owner > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ownerAvatar {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ownerAvatar.isMine {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.ownerSkeleton {
+  display: inline-flex;
+  width: 110px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ownerSkeleton > :first-child {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+
+.ownerSkeleton > :last-child {
+  flex: 1;
+}
+
+.wait {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-main);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wait.isLong {
+  color: #b45309;
+}
+
+.wait svg {
+  width: 14px;
+  height: 14px;
+}
+
+.actionCell :global(.admin-button) {
+  min-height: 40px;
+}

@@ -322,6 +322,14 @@ export interface AdminForumReport {
   createdAt: string;
 }
 
+/** Body of POST /api/admin/forum/reports/{reportId}/resolve. */
+export interface AdminForumReportResolveRequest {
+  /** See REPORT_ACTIONS in views/admin/reports/reportModeration.constants.ts. */
+  action: string;
+  /** ≤ 500 characters. */
+  reviewNote?: string;
+}
+
 export interface AdminForumReportsResponse {
   content: AdminForumReport[];
   page: number;

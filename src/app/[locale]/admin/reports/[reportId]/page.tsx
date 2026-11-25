@@ -1,6 +1,6 @@
 /** @file page.tsx @description Route chi tiết báo cáo cộng đồng cho quản trị viên. */
 
-import { AdminReportDetailView } from '@/views/admin/AdminReportDetailView';
+import { AdminReportDetailView } from '@/views/admin/report-detail/AdminReportDetailView';
 
 export default async function AdminReportDetailPage({
   params,
