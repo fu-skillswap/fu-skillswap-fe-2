@@ -66,23 +66,6 @@ function slotLabel(slot?: string, slotObj?: any) {
   }
 }
 
-/** Chuyển đổi mốc thời gian sang định dạng chuẩn ISO-8601 (bỏ ký tự Z ở cuối) cho Backend Spring Boot */
-function formatIso8601(input?: string): string {
-  if (!input) return new Date().toISOString().replace(/Z$/, '');
-  try {
-    const trimmed = input.trim();
-    const hasOffset = /[+-]\d{2}:\d{2}$/.test(trimmed);
-    const isoCandidate = trimmed.includes('Z') || hasOffset ? trimmed : `${trimmed}Z`;
-    const d = new Date(isoCandidate);
-    if (!isNaN(d.getTime())) {
-      return d.toISOString().replace(/Z$/, '');
-    }
-  } catch {
-    // fallback
-  }
-  return new Date().toISOString().replace(/Z$/, '');
-}
-
 function getCurrentWeekRange() {
   const current = new Date();
   const dayOfWeek = current.getDay();
@@ -328,7 +311,8 @@ export function BookingFlow({
     const payload: CreateBookingRequest = {
       slotId,
       serviceId: service.id,
-      startAt: formatIso8601(rawStartAt),
+      // Sent as the BE returned it (UTC instant); mentorRepo.createBookingRequest keeps the trailing "Z".
+      startAt: rawStartAt,
       learningGoalTitle: learningGoalTitle.trim(),
       learningGoalDescription: learningGoalDescription.trim(),
     };
