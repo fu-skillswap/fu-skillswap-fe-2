@@ -13,16 +13,22 @@ export const FORUM_REPORT_CASE_TYPE = 'FORUM_REPORT';
 /* ------------------------------------------------------------------ */
 
 /**
- * `action` values for POST /api/admin/forum/reports/{reportId}/resolve.
- * TODO(api): confirm values with BE — Swagger only types `action` as a required string.
+ * `action` values for POST /api/admin/forum/reports/{reportId}/resolve, matching the BE enum
+ * `ForumModerationAction` (CONFIRM_NO_ACTION | HIDE_POST | HIDE_COMMENT | DISMISS).
+ * Hiding depends on the target: the BE rejects HIDE_POST on a comment report and vice versa.
  */
 export const REPORT_ACTIONS = {
-  HIDE: 'HIDE_TARGET',
-  KEEP: 'NO_ACTION',
+  HIDE: { POST: 'HIDE_POST', COMMENT: 'HIDE_COMMENT' },
+  KEEP: 'CONFIRM_NO_ACTION',
   DISMISS: 'DISMISS',
 } as const;
 
 export type ReportDecision = keyof typeof REPORT_ACTIONS;
+
+export function getResolveAction(decision: ReportDecision, targetType: string): string {
+  if (decision === 'HIDE') return REPORT_ACTIONS.HIDE[getTargetType(targetType)];
+  return REPORT_ACTIONS[decision];
+}
 
 /** Status (and target status) the report should end up in after each choice. */
 export const DECISION_RESULT: Record<
@@ -131,14 +137,15 @@ export function targetNoun(value: string) {
 
 export type TargetState = 'visible' | 'hidden' | 'deleted' | 'unknown';
 
-// TODO(api): confirm the targetStatus values with BE (especially the one for author-deleted content).
-const VISIBLE_STATUSES = new Set(['VISIBLE', 'ACTIVE', 'PUBLISHED']);
+// BE values: posts PUBLISHED | HIDDEN, comments VISIBLE | HIDDEN. The BE sends `targetStatus: null`
+// when the post/comment no longer exists (deleted by its author).
+const VISIBLE_STATUSES = new Set(['VISIBLE', 'PUBLISHED']);
 const HIDDEN_STATUSES = new Set(['HIDDEN']);
-const DELETED_STATUSES = new Set(['DELETED', 'REMOVED']);
+const DELETED_STATUSES = new Set(['DELETED']);
 
 export function getTargetState(targetStatus: string | null | undefined): TargetState {
   const value = targetStatus?.toUpperCase();
-  if (!value) return 'unknown';
+  if (!value) return 'deleted';
   if (VISIBLE_STATUSES.has(value)) return 'visible';
   if (HIDDEN_STATUSES.has(value)) return 'hidden';
   if (DELETED_STATUSES.has(value)) return 'deleted';
