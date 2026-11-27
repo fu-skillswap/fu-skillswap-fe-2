@@ -25,6 +25,7 @@ import {
   Ticket,
   TriangleAlert,
   Users,
+  Wallet,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -74,6 +75,7 @@ export function AdminSidebar({ locale }: { locale: string }) {
 
   const navigation: NavigationItem[] = [
     { href: `${adminRoot}/dashboard`, label: 'Tổng quan', icon: LayoutDashboard, exact: true },
+    { href: `${adminRoot}/revenue`, label: 'Doanh thu', icon: Wallet },
     {
       href: `${adminRoot}/mentor-verification`,
       label: 'Xác minh mentor',
