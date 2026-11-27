@@ -177,9 +177,12 @@ export function MentorWalletView() {
               Thêm tài khoản
             </Button>
             <Button
+              // `secondary` is white with blue text; overriding text color on `primary` does not
+              // work because both classes have the same specificity (text stayed white on white).
+              variant={canWithdraw ? 'secondary' : 'primary'}
               className={
                 canWithdraw
-                  ? 'border-white bg-white text-primary hover:bg-blue-50'
+                  ? 'border-white bg-white text-primary shadow-md hover:border-white hover:bg-blue-50'
                   : 'border-white/30 bg-white/15 text-white'
               }
               leftIcon={<ArrowDownToLine />}
