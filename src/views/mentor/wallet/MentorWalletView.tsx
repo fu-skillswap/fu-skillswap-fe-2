@@ -19,6 +19,7 @@ import {
   Ticket,
   WalletCards,
 } from 'lucide-react';
+import { SCOIN_TO_VND } from '@/constants/legal';
 import { walletCouponLabel } from '@/lib/coupon';
 import { useEffect, useMemo, useState } from 'react';
 import { useMenteeShell } from '@/components/domain/mentee-shell/MenteeShell';
@@ -66,6 +67,11 @@ function formatScoin(value: number) {
   return `${new Intl.NumberFormat('vi-VN').format(value)} S-coins`;
 }
 
+/** S-coins are paid out 1:1 in VND (see SCOIN_TO_VND). */
+function formatVnd(scoin: number) {
+  return `${new Intl.NumberFormat('vi-VN').format(scoin * (SCOIN_TO_VND ?? 1))} VNĐ`;
+}
+
 function formatDateTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -94,6 +100,11 @@ export function MentorWalletView() {
   const canWithdraw = Boolean(
     state.activeProfiles.length && (state.wallet?.availableScoin ?? 0) > 0,
   );
+
+  // After a withdrawal is sent, show it in "Yêu cầu rút" so the mentor sees it was recorded.
+  useEffect(() => {
+    if (state.lastPayoutRequest) setActiveTab('payouts');
+  }, [state.lastPayoutRequest]);
 
   useEffect(() => {
     setHeaderTitle('Ví S-coins');
@@ -166,9 +177,12 @@ export function MentorWalletView() {
               Thêm tài khoản
             </Button>
             <Button
+              // `secondary` is white with blue text; overriding text color on `primary` does not
+              // work because both classes have the same specificity (text stayed white on white).
+              variant={canWithdraw ? 'secondary' : 'primary'}
               className={
                 canWithdraw
-                  ? 'border-white bg-white text-primary hover:bg-blue-50'
+                  ? 'border-white bg-white text-primary shadow-md hover:border-white hover:bg-blue-50'
                   : 'border-white/30 bg-white/15 text-white'
               }
               leftIcon={<ArrowDownToLine />}
@@ -374,6 +388,14 @@ function TransactionRow({ transaction }: { transaction: WalletTransactionRespons
   );
 }
 
+const STATUS_HINTS: Record<PayoutRequestStatus, string> = {
+  REQUESTED: 'SkillSwap đang kiểm tra yêu cầu.',
+  APPROVED: 'Đã duyệt, đang chuyển khoản về tài khoản của bạn.',
+  PAID: 'Tiền đã được chuyển vào tài khoản ngân hàng.',
+  REJECTED: 'Yêu cầu bị từ chối, xem lý do bên dưới.',
+  CANCELLED: 'Yêu cầu đã hủy.',
+};
+
 function PayoutRow({ request }: { request: PayoutRequestResponse }) {
   const variant =
     request.status === 'PAID'
@@ -383,16 +405,33 @@ function PayoutRow({ request }: { request: PayoutRequestResponse }) {
         : request.status === 'APPROVED'
           ? 'info'
           : 'neutral';
+  const lastUpdate =
+    request.paidAt ?? request.rejectedAt ?? request.approvedAt ?? request.reviewedAt ?? null;
   return (
-    <div className="flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:px-5">
-      <div className="min-w-0 flex-1">
-        <strong className="text-xs">{formatScoin(request.amountScoin)}</strong>
-        <p className="m-0 mt-0.5 truncate text-[10px] text-text-muted">
-          {request.bankNameSnapshot} · {request.bankAccountNumberMaskedSnapshot} ·{' '}
-          {formatDateTime(request.requestedAt)}
+    <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:px-5">
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <strong className="block text-sm">
+          {formatScoin(request.amountScoin)}{' '}
+          <span className="text-[11px] font-semibold text-text-muted">
+            ≈ {formatVnd(request.amountScoin)}
+          </span>
+        </strong>
+        <p className="m-0 text-[11px] text-text-secondary">
+          Về {request.bankAccountNameSnapshot} · {request.bankNameSnapshot} ·{' '}
+          {request.bankAccountNumberMaskedSnapshot}
         </p>
-        {request.status === 'REJECTED' && request.adminNote && (
-          <p className="mb-0 mt-1 text-[10px] text-danger">Lý do: {request.adminNote}</p>
+        <p className="m-0 text-[10px] text-text-muted">
+          Gửi lúc {formatDateTime(request.requestedAt)}
+          {lastUpdate ? ` · Cập nhật ${formatDateTime(lastUpdate)}` : ''} · Mã{' '}
+          {request.payoutRequestId.slice(0, 8).toUpperCase()}
+        </p>
+        <p className="m-0 text-[10px] text-text-muted">{STATUS_HINTS[request.status]}</p>
+        {request.adminNote && (
+          <p
+            className={`mb-0 mt-1 text-[10px] ${request.status === 'REJECTED' ? 'text-danger' : 'text-text-secondary'}`}
+          >
+            {request.status === 'REJECTED' ? 'Lý do' : 'Ghi chú của SkillSwap'}: {request.adminNote}
+          </p>
         )}
       </div>
       <Badge variant={variant}>{STATUS_LABELS[request.status]}</Badge>
@@ -559,6 +598,10 @@ function WithdrawModal({ state }: { state: ReturnType<typeof useMentorWallet> })
   const errors = state.withdrawForm.formState.errors;
   const selectedId = state.withdrawForm.watch('payoutProfileId');
   const selected = state.activeProfiles.find((profile) => profile.payoutProfileId === selectedId);
+  const available = state.wallet?.availableScoin ?? 0;
+  const rawAmount = Number(state.withdrawForm.watch('amountScoin'));
+  const amount = Number.isFinite(rawAmount) && rawAmount > 0 ? Math.floor(rawAmount) : 0;
+  const validAmount = amount > 0 && amount <= available;
   return (
     <Modal
       open={state.isWithdrawOpen}
@@ -573,15 +616,26 @@ function WithdrawModal({ state }: { state: ReturnType<typeof useMentorWallet> })
             {formatScoin(state.wallet?.availableScoin ?? 0)}
           </strong>
         </div>
-        <TextField
-          label="Số S-coins muốn rút"
-          required
-          type="number"
-          min={1}
-          max={state.wallet?.availableScoin ?? 0}
-          error={errors.amountScoin?.message}
-          {...state.withdrawForm.register('amountScoin', { valueAsNumber: true })}
-        />
+        <div className="space-y-1.5">
+          <TextField
+            label="Số S-coins muốn rút"
+            required
+            type="number"
+            min={1}
+            max={available}
+            error={errors.amountScoin?.message}
+            {...state.withdrawForm.register('amountScoin', { valueAsNumber: true })}
+          />
+          <button
+            type="button"
+            className="cursor-pointer border-none bg-transparent p-0 text-[11px] font-bold text-primary"
+            onClick={() =>
+              state.withdrawForm.setValue('amountScoin', available, { shouldValidate: true })
+            }
+          >
+            Rút toàn bộ {formatScoin(available)}
+          </button>
+        </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="payout-profile" className="text-xs font-semibold text-text-secondary">
             Tài khoản nhận tiền <span className="text-danger">*</span>
@@ -604,17 +658,29 @@ function WithdrawModal({ state }: { state: ReturnType<typeof useMentorWallet> })
             </p>
           )}
         </div>
-        {selected && (
-          <div className="flex items-center gap-3 rounded-xl border border-border-light bg-surface-subtle p-3">
-            <Landmark className="h-5 w-5 shrink-0 text-primary" />
-            <div>
-              <strong className="text-xs">{selected.accountHolderName}</strong>
-              <p className="m-0 mt-0.5 text-[11px] text-text-muted">
-                {selected.bankName} · {selected.accountNumberMasked}
-              </p>
-            </div>
-          </div>
-        )}
+        <dl className="m-0 divide-y divide-border-light rounded-xl border border-border-light bg-surface-subtle text-xs">
+          <SummaryLine label="Số S-coins rút" value={validAmount ? formatScoin(amount) : '—'} />
+          <SummaryLine
+            label="Số tiền nhận về"
+            value={validAmount ? formatVnd(amount) : '—'}
+            hint="1 S-coin = 1 VNĐ"
+            strong
+          />
+          <SummaryLine
+            label="Số dư còn lại sau khi rút"
+            value={validAmount ? formatScoin(available - amount) : formatScoin(available)}
+          />
+          <SummaryLine label="Chủ tài khoản" value={selected?.accountHolderName ?? '—'} />
+          <SummaryLine
+            label="Ngân hàng"
+            value={
+              selected
+                ? `${selected.bankName}${selected.bankCode ? ` (${selected.bankCode})` : ''}`
+                : '—'
+            }
+          />
+          <SummaryLine label="Số tài khoản" value={selected?.accountNumberMasked ?? '—'} />
+        </dl>
         <TextArea
           label="Ghi chú"
           rows={2}
@@ -626,21 +692,63 @@ function WithdrawModal({ state }: { state: ReturnType<typeof useMentorWallet> })
           <strong className="flex items-center gap-1.5">
             <Clock3 className="h-3.5 w-3.5" /> Quy trình xử lý
           </strong>
+          <ol className="mb-0 mt-1 space-y-0.5 pl-4">
+            <li>
+              Gửi yêu cầu: yêu cầu ở trạng thái <b>Chờ duyệt</b>.
+            </li>
+            <li>
+              SkillSwap kiểm tra rồi <b>Duyệt</b> và chuyển khoản về tài khoản trên.
+            </li>
+            <li>
+              Chuyển xong, trạng thái thành <b>Đã chuyển</b>. Nếu bị <b>Từ chối</b>, lý do hiện
+              trong tab Yêu cầu rút.
+            </li>
+          </ol>
           <p className="mb-0 mt-1">
-            Yêu cầu được ghi nhận ở trạng thái Chờ duyệt, sau đó có thể Đã duyệt, Đã chuyển hoặc Từ
-            chối. Tài khoản nhận tiền được lưu dạng bản chụp tại thời điểm gửi.
+            Kiểm tra kỹ chủ tài khoản và số tài khoản: thông tin này được lưu nguyên tại lúc gửi.
           </p>
         </div>
         <footer className="flex justify-end gap-2 border-t border-border-light pt-4">
           <Button type="button" variant="outline" onClick={state.closeWithdraw}>
             Hủy
           </Button>
-          <Button type="submit" leftIcon={<Banknote />} loading={state.isSaving}>
-            Xác nhận yêu cầu
+          <Button
+            type="submit"
+            leftIcon={<Banknote />}
+            loading={state.isSaving}
+            disabled={!validAmount || !selected}
+          >
+            {validAmount ? `Rút ${formatScoin(amount)}` : 'Xác nhận yêu cầu'}
           </Button>
         </footer>
       </form>
     </Modal>
+  );
+}
+
+function SummaryLine({
+  label,
+  value,
+  hint,
+  strong,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 px-3 py-2">
+      <dt className="text-text-secondary">
+        {label}
+        {hint && <span className="ml-1 text-[10px] text-text-muted">({hint})</span>}
+      </dt>
+      <dd
+        className={`m-0 text-right tabular-nums ${strong ? 'text-sm font-extrabold text-primary' : 'font-semibold text-text-main'}`}
+      >
+        {value}
+      </dd>
+    </div>
   );
 }
 
