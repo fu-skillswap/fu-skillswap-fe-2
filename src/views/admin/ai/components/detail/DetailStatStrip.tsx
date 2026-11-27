@@ -50,11 +50,12 @@ export function DetailStatStrip({
         )?.costVnd ?? 0)
       : undefined;
 
-  const pending = (section: Section<unknown>, api: string): Stat['sub'] =>
+  // TODO(api): 'missing' sections come from /v1/ops/usage and /v1/ops/feedback (not deployed yet).
+  const pending = (section: Section<unknown>): Stat['sub'] =>
     section.status === 'loading'
       ? 'Đang tải…'
       : section.status === 'missing'
-        ? `Cần API ${api}`
+        ? 'Dịch vụ AI chưa cung cấp số liệu này'
         : 'Không tải được';
 
   const build = (stat: AiDetailStat): Stat => {
@@ -64,7 +65,7 @@ export function DetailStatStrip({
         return {
           label: group.unit ? `${capitalize(group.unit)} hôm nay` : 'Lượt gọi AI hôm nay',
           value: units === undefined ? '—' : formatCount(units),
-          sub: units === undefined ? pending(usage, '/v1/ops/usage') : undefined,
+          sub: units === undefined ? pending(usage) : undefined,
           muted: units === undefined,
         };
       case 'cost':
@@ -73,7 +74,7 @@ export function DetailStatStrip({
           value: cost === undefined ? '—' : formatVnd(cost),
           sub:
             cost === undefined
-              ? pending(budget, '/v1/ops/budget')
+              ? pending(budget)
               : units && perUnit
                 ? `≈ ${formatUnitVnd(cost / units)} / ${perUnit}`
                 : undefined,
@@ -84,7 +85,7 @@ export function DetailStatStrip({
           return {
             label: 'Được đánh giá hữu ích',
             value: '—',
-            sub: pending(feedbackSummary, '/v1/ops/feedback'),
+            sub: pending(feedbackSummary),
             muted: true,
           };
         }
@@ -102,7 +103,7 @@ export function DetailStatStrip({
         return {
           label: 'Bị chặn vì hỏi quá nhiều',
           value: '—',
-          sub: 'Cần số lượt bị chặn từ /v1/ops/usage',
+          sub: 'Dịch vụ AI chưa cung cấp số liệu này',
           muted: true,
         };
     }

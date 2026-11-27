@@ -61,7 +61,7 @@ export function FeatureRows({
       // TODO(api): GET /v1/ops/features — statuses, models and limits per feature.
       <span className={styles.muted}>
         {features.status === 'missing'
-          ? 'Cần API /v1/ops/features để biết trạng thái'
+          ? 'Dịch vụ AI chưa báo trạng thái'
           : 'Không tải được trạng thái'}
       </span>
     );
@@ -112,7 +112,10 @@ export function FeatureRows({
           } else {
             work = {
               main: '—',
-              sub: usage.status === 'missing' ? 'Cần API /v1/ops/usage' : 'Không tải được số liệu',
+              sub:
+                usage.status === 'missing'
+                  ? 'Dịch vụ AI chưa báo số lượt'
+                  : 'Không tải được số liệu',
               muted: true,
             };
           }

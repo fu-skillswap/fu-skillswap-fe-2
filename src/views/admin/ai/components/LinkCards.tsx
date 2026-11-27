@@ -59,7 +59,9 @@ export function LinkCards({
         <div className={`${styles.card} ${styles.linkCard} ${styles.isDisabled}`}>
           <span>
             <strong>Nội dung AI gắn cờ</strong>
-            <p className={styles.muted}>Chưa có dữ liệu. Cần API hàng đợi kiểm duyệt từ backend.</p>
+            <p className={styles.muted}>
+              Chưa có dữ liệu. Hệ thống chưa cung cấp hàng đợi kiểm duyệt.
+            </p>
           </span>
         </div>
       )}

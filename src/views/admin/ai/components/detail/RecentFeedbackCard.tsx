@@ -75,7 +75,7 @@ export function RecentFeedbackCard({
                 variant="empty"
                 colSpan={COLUMN_COUNT}
                 title="Chưa có dữ liệu"
-                description="Cần API /v1/ops/feedback từ dịch vụ AI."
+                description="Dịch vụ AI chưa cung cấp đánh giá của người dùng."
               />
             ) : feedback.status === 'error' ? (
               <AdminTableState variant="error" colSpan={COLUMN_COUNT} onRetry={onRetry} />

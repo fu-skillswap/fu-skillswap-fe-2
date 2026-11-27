@@ -35,7 +35,7 @@ export function GuardrailsCard({
   const rows: Array<[string, string]> = [
     [
       `${formatVnd(dailyBudget)}/ngày`,
-      'Trần chi phí cho toàn hệ thống. Ngân sách AI cả dự án là 5 triệu đồng, trần này giữ tiền không cạn chỉ vì một lỗi lặp.',
+      `Trần chi phí cho toàn hệ thống. Ngân sách AI cả dự án là ${formatVnd(5_000_000)}, trần này giữ tiền không cạn chỉ vì một lỗi lặp.`,
     ],
     [
       `${formatCount(chatPerHour)} câu/giờ`,

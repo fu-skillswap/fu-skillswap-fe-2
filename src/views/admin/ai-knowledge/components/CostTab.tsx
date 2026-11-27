@@ -195,7 +195,7 @@ function HistoryCard({ usage, budgetVnd }: { usage: Section<AiUsage>; budgetVnd:
 }
 
 function MethodCard({ budgetVnd }: { budgetVnd: number }) {
-  const perMillion = (usd: number) => (usd > 0 ? formatVnd(usd * USD_TO_VND) : '0đ');
+  const perMillion = (usd: number) => (usd > 0 ? formatVnd(usd * USD_TO_VND) : formatVnd(0));
   return (
     <section id="cost-method" className={styles.card} aria-labelledby="cost-method-title">
       <h2 id="cost-method-title" className="admin-card-title">
@@ -208,7 +208,7 @@ function MethodCard({ budgetVnd }: { budgetVnd: number }) {
         </li>
         <li>
           <b>Tiền = token vào × giá vào + token ra × giá ra</b>, theo bảng giá FPT AI Marketplace
-          bên dưới, quy đổi 1 USD = {USD_TO_VND.toLocaleString('vi-VN')}đ.
+          bên dưới, quy đổi 1 USD = {formatVnd(USD_TO_VND)}.
         </li>
         <li>
           <b>Trần mỗi ngày {formatVnd(budgetVnd)}.</b> Chạm trần thì KouKou và bot diễn đàn tạm

@@ -51,7 +51,7 @@ export function SettingsCard({
         <p className={styles.sourceNote}>
           {features.status === 'loading'
             ? 'Đang đọc cấu hình từ server AI…'
-            : 'Giá trị mặc định trong mã nguồn. Chưa đọc được cấu hình thật trên server (cần API /v1/ops/features).'}
+            : 'Đây là giá trị mặc định. Dịch vụ AI chưa cho xem cấu hình thật đang chạy trên server.'}
         </p>
       )}
       <dl className={styles.settings}>
