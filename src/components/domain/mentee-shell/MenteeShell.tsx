@@ -42,6 +42,8 @@ function routeTitle(pathname: string) {
   if (pathname.endsWith('/profile')) return 'Hồ sơ của tôi';
   if (pathname.endsWith('/settings')) return 'Cài đặt & hỗ trợ';
   if (/\/my-bookings\/[^/]+\/checkout$/.test(pathname)) return 'Xác nhận thanh toán';
+  if (pathname.endsWith('/payment/return')) return 'Kết quả thanh toán';
+  if (pathname.includes('/invoices')) return 'Hóa đơn của tôi';
   if (pathname.includes('/my-bookings')) return 'Booking của tôi';
   if (pathname.includes('/mentor-booking')) return 'Tìm Mentor';
   if (pathname.includes('/post-detail/')) return 'Chi tiết bài viết';

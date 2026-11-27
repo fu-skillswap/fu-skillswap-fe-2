@@ -1,9 +1,7 @@
 /**
  * @file page.tsx
- * @description Return URL after paying on the payment gateway (`/[locale]/payment/success`).
- * The booking status is confirmed server-side, so just send the mentee back to their bookings.
- * The gateway may still land here for a cancelled payment, so its `status` / `cancel` params
- * decide which notice is shown.
+ * @description Legacy return URL (`/[locale]/payment/success`). Forwards the gateway's query to
+ * `/payment/return`, which checks the real status with the backend and shows the receipt.
  */
 
 import { redirect } from 'next/navigation';
@@ -18,8 +16,10 @@ export default async function PaymentSuccessPage({
   searchParams,
 }: PaymentSuccessPageProps) {
   const { locale } = await params;
-  const query = await searchParams;
-  const status = String(query.status ?? '').toUpperCase();
-  const cancelled = query.cancel === 'true' || status === 'CANCELLED';
-  redirect(`/${locale}/my-bookings?payment=${cancelled ? 'cancelled' : 'success'}`);
+  const query = new URLSearchParams();
+  Object.entries(await searchParams).forEach(([key, value]) => {
+    if (typeof value === 'string') query.set(key, value);
+  });
+  const search = query.toString();
+  redirect(`/${locale}/payment/return${search ? `?${search}` : ''}`);
 }

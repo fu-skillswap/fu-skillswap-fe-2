@@ -67,6 +67,11 @@ export const bookingRepo = {
     );
     return { ...page, content: await markReviewedBookings(page.content ?? []) };
   },
+  /** Mentee bookings without the per-booking review lookup (receipts do not need it). */
+  listForMenteePlain: () =>
+    apiClient<MentorBookingPageResponse>(
+      '/api/me/bookings?role=MENTEE&page=0&size=100&sortBy=createdAt&direction=DESC',
+    ),
   detail: (bookingId: string) => apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}`),
   cancel: (bookingId: string, cancelReason: string) =>
     apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}/cancel`, {

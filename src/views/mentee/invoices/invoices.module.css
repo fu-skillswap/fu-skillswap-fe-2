@@ -1,0 +1,6 @@
+/* Print rules for the receipt itself live in globals.css (`[data-print-root]`). */
+@media print {
+  .noPrint {
+    display: none !important;
+  }
+}

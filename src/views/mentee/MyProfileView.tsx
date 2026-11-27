@@ -55,6 +55,7 @@ import { useForm } from 'react-hook-form';
 import { MentorAvailabilityCard, toMentorProfileRequest } from './MentorAvailabilityCard';
 import { MentorVisibilityNotice } from '@/components/domain/mentor-shell/MentorVisibilityNotice';
 import { MyBlogPostsSection } from './MyBlogPostsSection';
+import { RecentInvoicesSection } from './invoices/RecentInvoicesSection';
 import styles from './MyProfileView.module.css';
 
 /** Tạo chữ viết tắt 2 ký tự làm Avatar */
@@ -1505,6 +1506,8 @@ export function MyProfileView() {
       {isMentor && mentorProfile && (
         <MyBlogPostsSection locale={locale} authorName={displayName} authorAvatarUrl={avatarUrl} />
       )}
+
+      <RecentInvoicesSection locale={locale} />
 
       {/* Modal Thêm/Sửa Dự án */}
       {isProjectModalOpen && (
