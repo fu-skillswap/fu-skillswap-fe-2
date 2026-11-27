@@ -297,6 +297,8 @@ export interface AdminBookingsResponse {
 export interface AdminBookingsQuery {
   page?: number;
   size?: number;
+  sortBy?: string;
+  direction?: 'ASC' | 'DESC';
 }
 
 export type ForumReportStatus =

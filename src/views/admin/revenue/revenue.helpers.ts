@@ -27,20 +27,14 @@ export function formatCount(value?: number | null) {
   return isFiniteNumber(value) ? numberFormatter.format(value) : '—';
 }
 
-/** "12.500 S-coin", `—` when absent. */
-export function formatScoinAmount(value?: number | null) {
-  return isFiniteNumber(value) ? `${numberFormatter.format(value)} S-coin` : '—';
-}
-
-/** "12.500.000 ₫", `—` when absent. */
+/** "12.500.000 VNĐ", `—` when absent. */
 export function formatVnd(value?: number | null) {
-  return isFiniteNumber(value) ? `${numberFormatter.format(value)} ₫` : '—';
+  return isFiniteNumber(value) ? `${numberFormatter.format(Math.round(value))} VNĐ` : '—';
 }
 
-/** "≈ 12.500.000 ₫" for an S-coin amount, or `undefined` when the rate or value is unknown. */
-export function scoinToVndHint(value?: number | null) {
-  if (!isFiniteNumber(value) || SCOIN_TO_VND === null) return undefined;
-  return `≈ ${formatVnd(value * SCOIN_TO_VND)}`;
+/** S-coin amount (backend unit) shown in VNĐ using `SCOIN_TO_VND` (1:1 when unset). */
+export function formatScoinAsVnd(value?: number | null) {
+  return isFiniteNumber(value) ? formatVnd(value * (SCOIN_TO_VND ?? 1)) : '—';
 }
 
 /** Share of GMV the platform keeps, in percent; `undefined` when GMV is 0 or unknown. */

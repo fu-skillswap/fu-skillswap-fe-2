@@ -5581,6 +5581,194 @@
   line-height: 1.5;
 }
 
+/* Lịch sử giao dịch */
+.admin-revenue-transactions {
+  margin-bottom: 20px;
+}
+
+.admin-revenue-transactions .admin-card-title {
+  margin-bottom: 4px;
+}
+
+.admin-revenue-transactions-sub,
+.admin-revenue-transactions-note {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.admin-revenue-transactions-note {
+  margin-top: 12px;
+}
+
+.admin-revenue-transactions-total {
+  margin: 0 0 0 auto;
+  color: var(--admin-copy);
+  font-size: 13px;
+}
+
+.admin-revenue-transactions-total strong {
+  color: var(--admin-navy);
+}
+
+.admin-revenue-transactions-table th.is-numeric,
+.admin-revenue-transactions-table td.is-numeric {
+  text-align: right;
+}
+
+.admin-revenue-transactions-table td {
+  vertical-align: middle;
+}
+
+.admin-revenue-tx-service {
+  display: block;
+  color: var(--admin-navy);
+  font-size: 13px;
+}
+
+.admin-revenue-tx-meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.admin-revenue-tx-amount {
+  color: var(--admin-navy);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-revenue-transactions-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  color: var(--admin-copy);
+  font-size: 13px;
+}
+
+/* Dashboard summary card (Tổng quan → "Doanh thu nền tảng") */
+.admin-revenue-summary {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-revenue-summary .admin-panel-heading,
+.admin-revenue-summary .admin-card-title {
+  margin-bottom: 0;
+}
+
+.admin-revenue-summary .admin-revenue-segment {
+  justify-self: start;
+}
+
+.admin-revenue-summary-hero {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--admin-soft);
+}
+
+.admin-revenue-summary-hero > i {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--success);
+  background: var(--admin-surface);
+  font-style: normal;
+}
+
+.admin-revenue-summary-hero > i svg {
+  width: 24px;
+  height: 24px;
+}
+
+.admin-revenue-summary-hero > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-revenue-summary-hero span {
+  color: var(--admin-copy);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-revenue-summary-hero strong {
+  color: var(--admin-navy);
+  font-size: 28px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.admin-revenue-summary-hero em {
+  color: var(--admin-copy);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.admin-revenue-summary-list {
+  display: grid;
+  margin: 0;
+}
+
+.admin-revenue-summary-list > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-revenue-summary-list dt {
+  color: var(--admin-copy);
+  font-size: 13px;
+}
+
+.admin-revenue-summary-list dd {
+  margin: 0;
+  color: var(--admin-navy);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.admin-revenue-summary-foot {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-revenue-summary-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.admin-revenue-summary-empty p {
+  margin: 0;
+  color: var(--admin-copy);
+  font-size: 14px;
+}
+
 @media (max-width: 1180px) {
   .admin-revenue-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5593,7 +5781,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .admin-revenue-page .admin-table-wrap table {
+  .admin-revenue-page .admin-table-wrap .admin-revenue-compare {
     min-width: 0;
   }
 }
