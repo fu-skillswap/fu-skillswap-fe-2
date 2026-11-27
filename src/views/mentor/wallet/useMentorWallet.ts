@@ -1,7 +1,7 @@
 'use client';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type {
   MentorPayoutProfileResponse,
@@ -17,6 +17,7 @@ import {
   type PayoutRequestFormValues,
 } from '@/models/schemas/mentorWalletSchema';
 import { useAuth } from '@/providers/AuthProvider';
+import { newIdempotencyKey } from '@/repositories/bookingRepo';
 import { walletRepo } from '@/repositories/walletRepo';
 import { getUserFriendlyErrorMessage, showError, showSuccess } from '@/utils/toast';
 
@@ -39,6 +40,10 @@ export function useMentorWallet() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
+  /** Last request created in this visit; the view opens the "Yêu cầu rút" tab on it. */
+  const [lastPayoutRequest, setLastPayoutRequest] = useState<PayoutRequestResponse>();
+  /** One key per withdrawal attempt: kept across retries of that attempt, renewed on open. */
+  const withdrawKeyRef = useRef<string>('');
 
   const profileForm = useForm<PayoutProfileFormValues>({
     resolver: yupResolver(payoutProfileSchema),
@@ -130,6 +135,7 @@ export function useMentorWallet() {
       payoutProfileId: defaultProfile?.payoutProfileId ?? '',
       note: '',
     });
+    withdrawKeyRef.current = newIdempotencyKey();
     setIsWithdrawOpen(true);
   };
 
@@ -144,12 +150,19 @@ export function useMentorWallet() {
       payoutProfileId: values.payoutProfileId,
       note: values.note?.trim() || undefined,
     };
+    const profile = activeProfiles.find((item) => item.payoutProfileId === values.payoutProfileId);
+    if (!withdrawKeyRef.current) withdrawKeyRef.current = newIdempotencyKey();
     try {
-      await walletRepo.createPayoutRequest(payload);
+      const created = await walletRepo.createPayoutRequest(payload, withdrawKeyRef.current);
+      withdrawKeyRef.current = '';
+      const amount = new Intl.NumberFormat('vi-VN').format(values.amountScoin);
+      const bank = created?.bankNameSnapshot ?? profile?.bankName;
+      const account = created?.bankAccountNumberMaskedSnapshot ?? profile?.accountNumberMasked;
       showSuccess({
-        title: 'Đã gửi yêu cầu rút tiền',
-        description: 'Bạn có thể theo dõi trạng thái xử lý ngay trong ví.',
+        title: `Đã gửi yêu cầu rút ${amount} S-coins`,
+        description: `Tiền sẽ chuyển về ${[bank, account].filter(Boolean).join(' · ')} sau khi SkillSwap duyệt. Theo dõi trong tab "Yêu cầu rút".`,
       });
+      if (created?.payoutRequestId) setLastPayoutRequest(created);
       setIsWithdrawOpen(false);
       await refresh();
     } catch (reason) {
@@ -169,6 +182,7 @@ export function useMentorWallet() {
     isProfileOpen,
     isSaving,
     isWithdrawOpen,
+    lastPayoutRequest,
     openCreateProfile,
     openEditProfile,
     openWithdraw,
