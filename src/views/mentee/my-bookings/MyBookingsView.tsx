@@ -45,7 +45,16 @@ import { type MenteeBookingMutation, useMyBookings } from './useMyBookings';
 const isCancelRequest = (booking: MentorBookingResponse) =>
   getBookingStateKey(booking) === 'PENDING';
 
-export function MyBookingsView({ locale: localeProp }: { locale: string }) {
+export function MyBookingsView({
+  locale: localeProp,
+  title = 'Lịch đặt của tôi',
+  subtitle = 'Xem mỗi buổi đang ở bước nào và việc tiếp theo cần làm.',
+}: {
+  locale: string;
+  /** Overridden when embedded in the mentor's "Lịch đặt" (sessions they booked as a learner). */
+  title?: string;
+  subtitle?: string;
+}) {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale || localeProp || 'vi';
@@ -219,10 +228,8 @@ export function MyBookingsView({ locale: localeProp }: { locale: string }) {
     <section className={styles.page}>
       <header className={styles.headerCard}>
         <div>
-          <h1 className={styles.headerTitle}>Lịch đặt của tôi</h1>
-          <p className={styles.headerSubtitle}>
-            Xem mỗi buổi đang ở bước nào và việc tiếp theo cần làm.
-          </p>
+          <h1 className={styles.headerTitle}>{title}</h1>
+          <p className={styles.headerSubtitle}>{subtitle}</p>
         </div>
         <Link className={`${styles.btn} ${styles.btnPrimary}`} href={`/${locale}/mentor-booking`}>
           <Plus aria-hidden="true" />
