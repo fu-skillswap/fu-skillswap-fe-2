@@ -611,6 +611,21 @@
   line-height: 1;
 }
 
+.admin-booking-metrics > article small {
+  color: var(--admin-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.admin-booking-overdue {
+  display: block;
+  margin-top: 6px;
+  color: #b45309;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
 .admin-icon {
   display: inline-flex;
   width: 38px;

@@ -115,6 +115,10 @@ export function getBookingStatusConfig(status?: string): BookingStatusConfig {
   if (upper === 'CANCELED_BY_MENTOR') upper = 'CANCELLED_BY_MENTOR';
   if (upper === 'REJECTED_BY_MENTOR') upper = 'REJECTED';
   if (upper === 'REQUESTED') upper = 'PENDING';
+  // Raw BE enum names (admin endpoints) that differ from the display-state keys above.
+  if (upper === 'CONFIRMED') upper = 'PAID';
+  if (upper === 'WAITING_PAYMENT') upper = 'ACCEPTED_AWAITING_PAYMENT';
+  if (upper === 'PAYMENT_EXPIRED') upper = 'EXPIRED_AWAITING_PAYMENT';
   if (BOOKING_STATUS_MAP[upper]) {
     return BOOKING_STATUS_MAP[upper];
   }

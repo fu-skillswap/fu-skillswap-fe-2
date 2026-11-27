@@ -21,13 +21,65 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import {
-  BookingStatusBadge,
-  BOOKING_STATUS_MAP,
-  getBookingStatusConfig,
-} from '@/components/ui/BookingStatusBadge';
+import { BookingStatusBadge, getBookingStatusConfig } from '@/components/ui/BookingStatusBadge';
 
 const pageSize = 10;
+
+/** Raw booking statuses accepted by `GET /api/admin/bookings?status=` (Swagger enum). */
+const BOOKING_STATUSES = [
+  'REQUESTED',
+  'WAITING_PAYMENT',
+  'CONFIRMED',
+  'UNDER_REVIEW',
+  'COMPLETED',
+  'REJECTED_BY_MENTOR',
+  'CANCELED_BY_MENTEE',
+  'CANCELED_BY_MENTOR',
+  'REQUEST_EXPIRED',
+  'PAYMENT_EXPIRED',
+] as const;
+
+/** Upper bound when listing confirmed bookings to find sessions whose time has passed. */
+const CONFIRMED_SCAN_SIZE = 200;
+
+interface BookingCounts {
+  total: number;
+  requested: number;
+  completed: number;
+  underReview: number;
+  /** CONFIRMED bookings whose end time has passed: waiting for the session to be confirmed. */
+  awaitingCompletion: number;
+}
+
+function isPastSession(booking: AdminBooking, now = Date.now()) {
+  const end = booking.selectedEndTime ? new Date(booking.selectedEndTime).getTime() : NaN;
+  return booking.bookingStatus === 'CONFIRMED' && Number.isFinite(end) && end < now;
+}
+
+/** System-wide counts: the dashboard breakdown by raw status, or one count query per status. */
+async function loadBookingCounts(): Promise<BookingCounts> {
+  const confirmedPromise = adminRepo
+    .getBookings({ status: 'CONFIRMED', page: 0, size: CONFIRMED_SCAN_SIZE })
+    .then((data) => data.content.filter((booking) => isPastSession(booking)).length);
+  const breakdown = await adminRepo
+    .getOverview()
+    .then((overview) => overview.bookings ?? null)
+    .catch(() => null);
+  const countOf = async (status: string) =>
+    breakdown
+      ? (breakdown[status] ?? 0)
+      : (await adminRepo.getBookings({ status, page: 0, size: 1 })).totalElements;
+  const total = breakdown
+    ? Object.values(breakdown).reduce((sum, value) => sum + (Number(value) || 0), 0)
+    : (await adminRepo.getBookings({ page: 0, size: 1 })).totalElements;
+  const [requested, completed, underReview, awaitingCompletion] = await Promise.all([
+    countOf('REQUESTED'),
+    countOf('COMPLETED'),
+    countOf('UNDER_REVIEW'),
+    confirmedPromise,
+  ]);
+  return { total, requested, completed, underReview, awaitingCompletion };
+}
 
 function getLabel(value: string | null) {
   if (!value) return 'Chưa cập nhật';
@@ -77,12 +129,29 @@ export function AdminBookingsView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [counts, setCounts] = useState<BookingCounts>();
+
+  const loadCounts = useCallback(async () => {
+    try {
+      setCounts(await loadBookingCounts());
+    } catch {
+      setCounts(undefined);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCounts();
+  }, [loadCounts]);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
     setFailed(false);
     try {
-      const data = await adminRepo.getBookings({ page, size: pageSize });
+      const data = await adminRepo.getBookings({
+        status: statusFilter || undefined,
+        page,
+        size: pageSize,
+      });
       setBookings(data.content);
       setTotalElements(data.totalElements);
       setTotalPages(data.totalPages);
@@ -92,16 +161,21 @@ export function AdminBookingsView() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, statusFilter]);
 
   useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
 
+  const refresh = () => {
+    void loadBookings();
+    void loadCounts();
+  };
+
   const visibleBookings = useMemo(() => {
     const keyword = searchTerm.trim().toLocaleLowerCase('vi-VN');
+    // Status is filtered by the API; search only covers the loaded page.
     return bookings.filter((booking) => {
-      const matchingStatus = !statusFilter || booking.bookingStatus === statusFilter;
       const matchingKeyword =
         !keyword ||
         [
@@ -110,13 +184,10 @@ export function AdminBookingsView() {
           booking.menteeDisplayName,
           booking.serviceTitle,
         ].some((value) => value?.toLocaleLowerCase('vi-VN').includes(keyword));
-      return matchingStatus && matchingKeyword;
+      return matchingKeyword;
     });
-  }, [bookings, searchTerm, statusFilter]);
+  }, [bookings, searchTerm]);
   const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
-  const completedCount = bookings.filter((booking) => booking.bookingStatus === 'COMPLETED').length;
-  const pendingCount = bookings.filter((booking) => booking.bookingStatus === 'REQUESTED').length;
-  const issueCount = bookings.filter((booking) => booking.issueType).length;
   const firstEntry = visibleBookings.length ? page * pageSize + 1 : 0;
   const lastEntry = visibleBookings.length ? Math.min((page + 1) * pageSize, totalElements) : 0;
 
@@ -139,24 +210,32 @@ export function AdminBookingsView() {
           <BookingMetric
             icon={<ClipboardList aria-hidden="true" />}
             label="Tổng lịch hẹn"
-            value={totalElements}
+            value={counts?.total}
+            hint="Toàn hệ thống"
           />
           <BookingMetric
             icon={<CalendarCheck2 aria-hidden="true" />}
-            label="Chờ phản hồi trên trang"
-            value={pendingCount}
+            label="Chờ mentor phản hồi"
+            value={counts?.requested}
+            hint="Mentor chưa nhận hoặc từ chối"
             tone="pending"
           />
           <BookingMetric
             icon={<CalendarCheck2 aria-hidden="true" />}
-            label="Hoàn thành trên trang"
-            value={completedCount}
+            label="Buổi đã hoàn thành"
+            value={counts?.completed}
+            hint={
+              counts?.awaitingCompletion
+                ? `+${counts.awaitingCompletion} buổi đã qua giờ học, chờ xác nhận hoàn tất`
+                : 'Đã được xác nhận hoàn tất'
+            }
             tone="completed"
           />
           <BookingMetric
             icon={<CircleAlert aria-hidden="true" />}
-            label="Có sự cố trên trang"
-            value={issueCount}
+            label="Đang xử lý sự cố"
+            value={counts?.underReview}
+            hint="Mentee hoặc mentor đã báo sự cố"
             tone="issues"
           />
         </section>
@@ -178,17 +257,20 @@ export function AdminBookingsView() {
                 <select
                   aria-label="Lọc trạng thái lịch hẹn"
                   value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value);
+                    setPage(0);
+                  }}
                 >
                   <option value="">Tất cả</option>
-                  {Object.entries(BOOKING_STATUS_MAP).map(([statusKey, config]) => (
-                    <option key={statusKey} value={statusKey}>
-                      {config.label}
+                  {BOOKING_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {getLabel(status)}
                     </option>
                   ))}
                 </select>
               </label>
-              <button type="button" onClick={() => void loadBookings()} disabled={loading}>
+              <button type="button" onClick={refresh} disabled={loading}>
                 <RefreshCw aria-hidden="true" /> Làm mới
               </button>
             </div>
@@ -229,18 +311,19 @@ export function AdminBookingsView() {
                     title={
                       searchTerm.trim()
                         ? undefined
-                        : `Không có lịch hẹn ở trạng thái "${getLabel(statusFilter)}" trên trang này`
+                        : `Không có lịch hẹn ở trạng thái "${getLabel(statusFilter)}"`
                     }
                     description={
                       searchTerm.trim() && statusFilter
                         ? `Kiểm tra lại chính tả, hoặc bỏ lọc trạng thái "${getLabel(statusFilter)}".`
                         : searchTerm.trim()
                           ? undefined
-                          : 'Chọn trạng thái khác, xóa bộ lọc hoặc chuyển trang.'
+                          : 'Chọn trạng thái khác hoặc xóa bộ lọc.'
                     }
                     onClearFilters={() => {
                       setSearchTerm('');
                       setStatusFilter('');
+                      setPage(0);
                     }}
                   />
                 ) : (
@@ -299,11 +382,13 @@ function BookingMetric({
   icon,
   label,
   value,
+  hint,
   tone = '',
 }: {
   icon: ReactNode;
   label: string;
-  value: number;
+  value?: number;
+  hint?: string;
   tone?: string;
 }) {
   return (
@@ -311,7 +396,8 @@ function BookingMetric({
       <i>{icon}</i>
       <div>
         <span>{label}</span>
-        <strong>{new Intl.NumberFormat('vi-VN').format(value)}</strong>
+        <strong>{value === undefined ? '—' : new Intl.NumberFormat('vi-VN').format(value)}</strong>
+        {hint && <small>{hint}</small>}
       </div>
     </article>
   );
@@ -342,6 +428,9 @@ function BookingRow({ booking }: { booking: AdminBooking }) {
       </td>
       <td>
         <BookingStatusBadge status={booking.bookingStatus} />
+        {isPastSession(booking) && (
+          <small className="admin-booking-overdue">Đã qua giờ học · chờ xác nhận hoàn tất</small>
+        )}
         {booking.issueType && (
           <small className="admin-booking-issue">Sự cố: {getLabel(booking.issueType)}</small>
         )}
