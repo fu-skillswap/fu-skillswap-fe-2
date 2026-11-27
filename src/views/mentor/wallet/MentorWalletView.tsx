@@ -36,6 +36,7 @@ import type {
   WalletTransactionResponse,
 } from '@/models/auth';
 import { useAuth } from '@/providers/AuthProvider';
+import { HeldEarningsPanel } from './components/HeldEarningsPanel';
 import { useMentorWallet } from './useMentorWallet';
 
 const WALLET_NOTICE_VERSION = 'v1';
@@ -220,6 +221,8 @@ export function MentorWalletView() {
         />
       </section>
 
+      <HeldEarningsPanel />
+
       <div className="overflow-hidden rounded-xl border border-border-light bg-white shadow-xs">
         <div className="flex flex-col justify-between gap-3 border-b border-border-light px-4 py-3 sm:flex-row sm:items-center sm:px-5">
           <Tabs
@@ -260,7 +263,7 @@ export function MentorWalletView() {
               <EmptyLine
                 icon={<ReceiptText />}
                 title="Chưa có giao dịch"
-                description="Thu nhập và các khoản rút sẽ xuất hiện tại đây."
+                description="Tiền buổi học vào đây sau khi buổi học hoàn tất, cùng các khoản rút."
               />
             )
           ) : state.requests.length ? (
