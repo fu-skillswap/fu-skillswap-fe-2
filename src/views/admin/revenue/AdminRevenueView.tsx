@@ -6,6 +6,7 @@
  * Data sources (Swagger):
  * - `GET /api/admin/dashboard/overview`   → `financial`, `paymentOrders`, `payoutRequests`, `campaigns`
  * - `GET /api/admin/dashboard/timeseries` → `paymentOrdersPaid` per day (last 30 days)
+ * - `GET /api/admin/bookings`             → "Lịch sử giao dịch" (see RevenueTransactionsPanel)
  *
  * TODO(api): a revenue-by-day endpoint (platform fee / GMV per day, custom date range) is needed
  * to chart money instead of the number of paid orders.
@@ -14,7 +15,6 @@
 'use client';
 
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
-import { SCOIN_TO_VND } from '@/constants/legal';
 import type {
   AdminDashboardOverviewResponse,
   AdminDashboardTimeseriesResponse,
@@ -39,16 +39,16 @@ import {
   REVENUE_PERIODS,
   formatCount,
   formatPercent,
-  formatScoinAmount,
+  formatScoinAsVnd,
   formatShortDate,
   formatSnapshotTime,
   formatVnd,
   getAverageOrderValue,
   getPaymentOrderRows,
   getTakeRate,
-  scoinToVndHint,
   type RevenuePeriod,
 } from './revenue.helpers';
+import { RevenueTransactionsPanel } from './RevenueTransactionsPanel';
 
 type LoadState<T> = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: T };
 
@@ -66,16 +66,14 @@ function buildKpis(metrics: AdminFinancialPeriodMetrics | null | undefined, noun
   const cards: KpiCard[] = [
     {
       label: 'Doanh thu nền tảng',
-      value: formatScoinAmount(metrics?.platformFeeScoin),
-      hint: scoinToVndHint(metrics?.platformFeeScoin),
+      value: formatScoinAsVnd(metrics?.platformFeeScoin),
       description: `Phí SkillSwap giữ lại từ các buổi học đã thanh toán ${noun}`,
       icon: Coins,
       tone: 'green',
     },
     {
       label: 'Tổng giá trị giao dịch',
-      value: formatScoinAmount(metrics?.gmvScoin),
-      hint: scoinToVndHint(metrics?.gmvScoin),
+      value: formatScoinAsVnd(metrics?.gmvScoin),
       description: 'Tổng số tiền mentee đã thanh toán, gồm cả phần của mentor',
       icon: ShoppingBag,
       tone: 'blue',
@@ -85,7 +83,7 @@ function buildKpis(metrics: AdminFinancialPeriodMetrics | null | undefined, noun
       value: formatCount(metrics?.totalTransactions),
       hint:
         averageOrder !== undefined
-          ? `Trung bình ${formatScoinAmount(Math.round(averageOrder))}/giao dịch`
+          ? `Trung bình ${formatScoinAsVnd(Math.round(averageOrder))}/giao dịch`
           : undefined,
       description: `Số đơn thanh toán đã hoàn tất ${noun}`,
       icon: Receipt,
@@ -394,10 +392,9 @@ export function AdminRevenueView() {
                         >
                           <th scope="row">{item.label}</th>
                           <td>
-                            {isLoading ? '…' : formatScoinAmount(metrics?.platformFeeScoin)}
+                            {isLoading ? '…' : formatScoinAsVnd(metrics?.platformFeeScoin)}
                             <small>
-                              Tổng giao dịch{' '}
-                              {isLoading ? '…' : formatScoinAmount(metrics?.gmvScoin)}
+                              Tổng giao dịch {isLoading ? '…' : formatScoinAsVnd(metrics?.gmvScoin)}
                             </small>
                           </td>
                           <td>{isLoading ? '…' : formatCount(metrics?.totalTransactions)}</td>
@@ -409,6 +406,8 @@ export function AdminRevenueView() {
               </div>
             </section>
           </div>
+
+          <RevenueTransactionsPanel />
 
           <div className="admin-revenue-columns">
             <section className="admin-panel" aria-labelledby="revenue-held-heading">
@@ -435,8 +434,10 @@ export function AdminRevenueView() {
                     <Wallet aria-hidden="true" />
                     Số dư S-coin của người dùng
                   </dt>
-                  <dd>{isLoading ? '…' : formatScoinAmount(financial?.totalCreditLedgerScoin)}</dd>
-                  <p>Tổng S-coin trong ví mentee, dùng được cho lần đặt lịch sau.</p>
+                  <dd>{isLoading ? '…' : formatScoinAsVnd(financial?.totalCreditLedgerScoin)}</dd>
+                  <p>
+                    Tổng số dư ví S-coin của mentee (quy đổi VNĐ), dùng được cho lần đặt lịch sau.
+                  </p>
                 </div>
                 <div>
                   <dt>
@@ -492,8 +493,8 @@ export function AdminRevenueView() {
                 <div className="admin-revenue-budget">
                   <div>
                     <Ticket aria-hidden="true" />
-                    <strong>{formatScoinAmount(budgetUsed)}</strong>
-                    <span>đã dùng trên {formatScoinAmount(budgetTotal)} ngân sách</span>
+                    <strong>{formatScoinAsVnd(budgetUsed)}</strong>
+                    <span>đã dùng trên {formatScoinAsVnd(budgetTotal)} ngân sách</span>
                   </div>
                   <div
                     className="admin-revenue-progress"
@@ -527,12 +528,8 @@ export function AdminRevenueView() {
                 <dd>Phần phí SkillSwap giữ lại; phần còn lại thuộc về mentor.</dd>
               </div>
               <div>
-                <dt>Quy đổi</dt>
-                <dd>
-                  {SCOIN_TO_VND !== null
-                    ? `1 S-coin ≈ ${formatVnd(SCOIN_TO_VND)}. Số tiền VND chỉ mang tính tham khảo.`
-                    : 'Số liệu được tính bằng S-coin.'}
-                </dd>
+                <dt>Đơn vị tiền</dt>
+                <dd>Mọi số tiền hiển thị bằng VNĐ (1 S-coin = 1 VNĐ).</dd>
               </div>
             </dl>
           </section>

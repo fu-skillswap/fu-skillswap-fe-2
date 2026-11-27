@@ -6,15 +6,13 @@
  * - `GET /api/admin/dashboard/overview`     → metric cards (nested users / bookings / reports…)
  * - `GET /api/admin/dashboard/queues`       → "Cần xử lý" list
  * - `GET /api/admin/dashboard/queue-items`  → "Chi tiết hàng đợi"
- * - `GET /api/admin/audit-logs`             → "Hoạt động quản trị gần đây"
+ *   (`financial` block → "Doanh thu nền tảng" summary)
  */
 
 'use client';
 
-import { AdminTableState } from '@/components/domain/admin/AdminTableState';
 import { AdminTopbarActions } from '@/components/domain/admin/AdminTopbarActions';
 import type {
-  AdminAuditLogItem,
   AdminDashboardOverviewResponse,
   AdminQueueCardResponse,
   AdminQueueItem,
@@ -39,16 +37,12 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ACTIVE_BOOKING_STATUSES,
   apiPathToAdminRoute,
-  auditEntityToAdminRoute,
   formatRelativeTime,
-  getActionLabel,
-  getEntityLabel,
   getQueueLabel,
   queueKeyToAdminRoute,
   sumStatuses,
 } from './dashboard.helpers';
-
-const RECENT_ACTIVITY_SIZE = 6;
+import { RevenueSummaryPanel } from './revenue/RevenueSummaryPanel';
 
 function formatNumber(value?: number | null) {
   return value === undefined || value === null ? '—' : new Intl.NumberFormat('vi-VN').format(value);
@@ -78,8 +72,7 @@ export function AdminDashboardView() {
   const [queueItemsStatus, setQueueItemsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     'idle',
   );
-  const [auditLogs, setAuditLogs] = useState<AdminAuditLogItem[]>([]);
-  const [auditStatus, setAuditStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [overviewFailed, setOverviewFailed] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -90,7 +83,9 @@ export function AdminDashboardView() {
       ]);
       if (overviewResult.status === 'fulfilled') {
         setOverview(overviewResult.value);
+        setOverviewFailed(false);
       } else {
+        setOverviewFailed(true);
         showError(overviewResult.reason, { title: 'Không thể tải số liệu tổng quan' });
       }
       if (queueResult.status === 'fulfilled') {
@@ -119,26 +114,9 @@ export function AdminDashboardView() {
     }
   }, [activeQueue]);
 
-  const loadAuditLogs = useCallback(async () => {
-    setAuditStatus('loading');
-    try {
-      const page = await adminRepo.getAuditLogs({
-        page: 0,
-        size: RECENT_ACTIVITY_SIZE,
-        sortBy: 'createdAt',
-        direction: 'DESC',
-      });
-      setAuditLogs(Array.isArray(page?.content) ? page.content : []);
-      setAuditStatus('ready');
-    } catch {
-      setAuditStatus('error');
-    }
-  }, []);
-
   useEffect(() => {
     void loadDashboard();
-    void loadAuditLogs();
-  }, [loadDashboard, loadAuditLogs]);
+  }, [loadDashboard]);
   useEffect(() => {
     void loadQueueItems();
   }, [loadQueueItems]);
@@ -147,7 +125,7 @@ export function AdminDashboardView() {
     setAssigningCase(item.caseId);
     try {
       await adminRepo.assignCase(item.caseType, item.caseId);
-      await Promise.all([loadQueueItems(), loadDashboard(), loadAuditLogs()]);
+      await Promise.all([loadQueueItems(), loadDashboard()]);
     } catch (reason) {
       showError(reason, { title: 'Không thể cập nhật hàng đợi' });
     } finally {
@@ -245,7 +223,7 @@ export function AdminDashboardView() {
               <button
                 className="admin-button primary"
                 type="button"
-                onClick={() => void Promise.all([loadDashboard(), loadAuditLogs()])}
+                onClick={() => void loadDashboard()}
                 disabled={loading}
               >
                 <CirclePlus aria-hidden="true" />
@@ -324,63 +302,13 @@ export function AdminDashboardView() {
                 )}
               </div>
             </section>
-            <section className="admin-panel" id="reports">
-              <header className="admin-panel-heading">
-                <h2 className="admin-card-title">Hoạt động quản trị gần đây</h2>
-                {/* TODO(api): no admin audit-log screen yet; GET /api/admin/audit-logs is ready for one. */}
-              </header>
-              <div className="admin-table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Hoạt động</th>
-                      <th>Đối tượng</th>
-                      <th>Quản trị viên</th>
-                      <th>Thời gian</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {auditStatus === 'loading' ? (
-                      <AdminTableState
-                        variant="loading"
-                        colSpan={4}
-                        skeletonRows={4}
-                        title="Đang tải hoạt động gần đây…"
-                      />
-                    ) : auditStatus === 'error' ? (
-                      <AdminTableState
-                        variant="error"
-                        colSpan={4}
-                        onRetry={() => void loadAuditLogs()}
-                      />
-                    ) : !auditLogs.length ? (
-                      <AdminTableState
-                        variant="empty"
-                        colSpan={4}
-                        title="Chưa có hoạt động gần đây"
-                        description="Khi quản trị viên duyệt hồ sơ, xử lý báo cáo hoặc khóa tài khoản, hoạt động sẽ hiện ở đây."
-                      />
-                    ) : (
-                      auditLogs.map((log) => {
-                        const href = auditEntityToAdminRoute(locale, log.entityType, log.entityId);
-                        const entityLabel = getEntityLabel(log.entityType);
-                        return (
-                          <tr key={log.auditLogId}>
-                            <td>
-                              <i className="status" />
-                              {getActionLabel(log.action)}
-                            </td>
-                            <td>{href ? <Link href={href}>{entityLabel}</Link> : entityLabel}</td>
-                            <td>{log.actorDisplayName ?? 'Hệ thống'}</td>
-                            <td>{formatRelativeTime(log.createdAt)}</td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <RevenueSummaryPanel
+              locale={locale}
+              financial={overview?.financial}
+              loading={loading}
+              failed={overviewFailed}
+              onRetry={() => void loadDashboard()}
+            />
           </div>
           <section className="admin-case-panel" id="queue-details">
             <header className="admin-panel-heading">

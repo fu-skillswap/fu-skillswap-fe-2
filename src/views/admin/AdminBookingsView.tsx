@@ -47,11 +47,11 @@ function getPageNumbers(currentPage: number, totalPages: number) {
   return Array.from({ length: end - start }, (_, index) => start + index);
 }
 
-function getPaymentStatusClass(value: string | null) {
+export function getPaymentStatusClass(value: string | null) {
   return value?.trim().toLowerCase().replaceAll('_', '-') ?? '';
 }
 
-function getPaymentStatusLabel(value: string | null) {
+export function getPaymentStatusLabel(value: string | null) {
   if (!value) return 'Chưa cập nhật';
   const labels: Record<string, string> = {
     PENDING: 'Đang chờ',

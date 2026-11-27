@@ -20,7 +20,7 @@ export const PLATFORM_OPERATOR_READY = !Object.values(PLATFORM_OPERATOR).some((v
 );
 
 /**
- * VND charged by PayOS per S-coin. Swagger's checkout example (110 S-coins ↔ 110.000 VND)
- * suggests 1.000. TODO: confirm rate with BE/finance; set to null to hide the rate clause.
+ * VND charged by PayOS per S-coin. Confirmed 1:1 by the product owner (real bookings average
+ * ~111.000 S-coins per session). Set to null to hide the rate clause.
  */
-export const SCOIN_TO_VND: number | null = 1000;
+export const SCOIN_TO_VND: number | null = 1;
