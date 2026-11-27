@@ -26,7 +26,7 @@ import {
   Video,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { BookingCardTop } from '../my-bookings/components/BookingCard';
 import {
   getBookingStatusConfig,
@@ -36,6 +36,7 @@ import {
 } from '../my-bookings/bookingStatusConfig';
 import styles from './BookingCheckoutView.module.css';
 import { buildRefundTimeline, formatWhen } from './checkout.helpers';
+import { PolicyDialog, type PolicyKind } from './components/PolicyDialog';
 import { COUPON_CARD_ID, useBookingCheckout } from './useBookingCheckout';
 
 const STEPS = ['Kiểm tra & áp mã', 'Thanh toán qua PayOS', 'Giữ chỗ thành công'];
@@ -110,8 +111,12 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
   const couponInputId = useId();
   const consentHelpId = useId();
   const privacyHref = `/${locale}/chinh-sach-bao-mat`;
-  // TODO(legal): route — no "Điều khoản sử dụng" page yet; links to the privacy policy for now.
-  const termsHref = privacyHref;
+  const [policy, setPolicy] = useState<PolicyKind | null>(null);
+  // Inside the consent <label>, preventDefault keeps the click from toggling the checkbox.
+  const openPolicy = (kind: PolicyKind) => (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setPolicy(kind);
+  };
 
   const header = (
     <header className={styles.header}>
@@ -393,10 +398,9 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
                 </p>
               </>
             ) : (
-              // TODO(legal): route — no standalone refund policy page yet.
-              <Link className={styles.textLink} href={privacyHref}>
+              <button type="button" className={styles.textLink} onClick={openPolicy('refund')}>
                 Xem Chính sách hủy &amp; hoàn tiền
-              </Link>
+              </button>
             )}
           </section>
 
@@ -429,15 +433,14 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
               <InfoRow icon={<Lock />} title="Thông tin cá nhân">
                 Mentor thấy tên hiển thị và lời nhắn của bạn để chuẩn bị buổi học. Thông tin thanh
                 toán do PayOS xử lý, SkillSwap không lưu số thẻ.{' '}
-                <Link className={styles.textLink} href={privacyHref}>
+                <button type="button" className={styles.textLink} onClick={openPolicy('privacy')}>
                   Xem Chính sách bảo mật
-                </Link>
+                </button>
                 .
               </InfoRow>
               <InfoRow icon={<Building2 />} title="Đơn vị cung cấp nền tảng">
-                {/* TODO(legal): fill PLATFORM_OPERATOR in src/constants/legal.ts before launch. */}
-                {PLATFORM_OPERATOR.operatorName} · Mã số thuế {PLATFORM_OPERATOR.taxCode} ·{' '}
-                {PLATFORM_OPERATOR.address} · {PLATFORM_OPERATOR.email}
+                <b>{PLATFORM_OPERATOR.operatorName}</b> là đơn vị vận hành nền tảng · Liên hệ{' '}
+                {PLATFORM_OPERATOR.email}
               </InfoRow>
             </ul>
           </section>
@@ -541,17 +544,17 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
               />
               <span>
                 Tôi đã đọc và đồng ý với{' '}
-                <Link className={styles.textLink} href={termsHref}>
+                <button type="button" className={styles.textLink} onClick={openPolicy('terms')}>
                   Điều khoản sử dụng
-                </Link>
+                </button>
                 ,{' '}
-                <a className={styles.textLink} href={`#${REFUND_SECTION_ID}`}>
+                <button type="button" className={styles.textLink} onClick={openPolicy('refund')}>
                   Chính sách hủy &amp; hoàn tiền
-                </a>{' '}
+                </button>{' '}
                 và{' '}
-                <Link className={styles.textLink} href={privacyHref}>
+                <button type="button" className={styles.textLink} onClick={openPolicy('privacy')}>
                   Chính sách bảo mật
-                </Link>{' '}
+                </button>{' '}
                 của SkillSwap.
               </span>
             </label>
@@ -600,6 +603,14 @@ export function BookingCheckoutView({ locale, bookingId }: { locale: string; boo
           </a>
         )}
       </div>
+
+      <PolicyDialog
+        kind={policy}
+        refundPolicy={booking?.cancellationRefundPolicy}
+        privacyHref={privacyHref}
+        onChange={setPolicy}
+        onClose={() => setPolicy(null)}
+      />
     </section>
   );
 }

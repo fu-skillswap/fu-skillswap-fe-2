@@ -63,7 +63,7 @@ export function ToolUsageCard({ usage }: { usage?: ChatToolUsage }) {
         <p className={styles.emptyNote}>
           {usage
             ? 'Hôm nay KouKou chưa trả lời câu nào.'
-            : 'Chưa có dữ liệu. Cần số lượt dùng từng nguồn dữ liệu trong API /v1/ops/usage từ dịch vụ AI.'}
+            : 'Chưa có dữ liệu. Dịch vụ AI chưa báo KouKou đã dùng nguồn dữ liệu nào.'}
         </p>
       )}
     </section>

@@ -14,7 +14,9 @@ import {
   GROUP_COLORS,
   OTHER_COLOR,
   formatCount,
+  VND_UNIT,
   formatVnd,
+  formatVndAmount,
   roundEstimate,
 } from '../aiOverview.constants';
 import type { Section } from '../useAiOverview';
@@ -116,7 +118,10 @@ export function SpendCard({
       <div className={styles.spendMain}>
         <span className={styles.eyebrow}>Chi phí AI hôm nay</span>
         <p className={styles.hero}>
-          <strong>{formatVnd(spentVnd)}</strong> <span>trên trần {formatVnd(budgetVnd)}</span>
+          <strong>
+            {formatVndAmount(spentVnd)} <small>{VND_UNIT}</small>
+          </strong>{' '}
+          <span>trên trần {formatVnd(budgetVnd)}</span>
         </p>
         <p className={styles.spendSentence}>
           {remainingVnd > 0 ? (

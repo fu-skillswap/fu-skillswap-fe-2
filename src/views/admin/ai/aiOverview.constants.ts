@@ -46,7 +46,7 @@ export const OTHER_COLOR = '#8394ac';
 export interface FeatureCopy {
   icon: LucideIcon;
   description: string;
-  /** Unit in "≈ 9,7đ / câu". */
+  /** Unit in "≈ 9,7 VNĐ / câu". */
   perUnit?: string;
   /** Shown under "Đang tắt" when the server gives no reason. */
   enableHint?: string;
@@ -101,15 +101,24 @@ export const FEATURE_ROW_KEYS: AiFeatureGroupKey[] = [
 const vndFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
 const numberFormatter = new Intl.NumberFormat('vi-VN');
 
-/** "8.420đ" */
-export function formatVnd(value: number) {
-  return `${vndFormatter.format(Math.round(value))}đ`;
+/** Currency unit used everywhere in the admin portal (matches the revenue page). */
+export const VND_UNIT = 'VNĐ';
+
+/** "8.420" — the amount without unit, for layouts that style the unit separately. */
+export function formatVndAmount(value: number) {
+  return vndFormatter.format(Math.round(value));
 }
 
-/** "≈ 9,7đ" for small per-unit costs, whole đồng otherwise. */
+/** "8.420 VNĐ" */
+export function formatVnd(value: number) {
+  return `${formatVndAmount(value)} ${VND_UNIT}`;
+}
+
+/** "9,7 VNĐ" for small per-unit costs, whole đồng otherwise. */
 export function formatUnitVnd(value: number) {
   const digits = value < 100 ? 1 : 0;
-  return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: digits }).format(value)}đ`;
+  const amount = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: digits }).format(value);
+  return `${amount} ${VND_UNIT}`;
 }
 
 export function formatCount(value: number) {

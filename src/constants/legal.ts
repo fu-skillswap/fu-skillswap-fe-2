@@ -6,11 +6,9 @@
 
 import { SKILLSWAP_CONTACT_EMAIL } from '@/constants/contact';
 
-/** TODO(legal): fill before launch with the registered operator details. */
+/** Operator shown before payment. SkillSwap runs the platform; no tax code/address is shown. */
 export const PLATFORM_OPERATOR = {
-  operatorName: '[Tên đơn vị vận hành]',
-  taxCode: '[Mã số thuế]',
-  address: '[Địa chỉ trụ sở]',
+  operatorName: 'SkillSwap',
   email: SKILLSWAP_CONTACT_EMAIL,
 } as const;
 

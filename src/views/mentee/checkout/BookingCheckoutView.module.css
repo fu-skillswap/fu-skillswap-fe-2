@@ -252,6 +252,17 @@
   text-underline-offset: 2px;
 }
 
+button.textLink {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: inherit;
+  cursor: pointer;
+}
+
 .back:focus-visible,
 .btnPrimary:focus-visible,
 .btnOutline:focus-visible,
