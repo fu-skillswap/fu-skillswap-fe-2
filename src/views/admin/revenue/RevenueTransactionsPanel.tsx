@@ -1,14 +1,8 @@
 /**
  * @file RevenueTransactionsPanel.tsx
  * @description Bảng "Lịch sử giao dịch" trên trang Doanh thu: ai đã trả bao nhiêu, cho buổi học
- * nào, với mentor nào.
- *
- * Data source: `GET /api/admin/bookings` (sorted by `createdAt` DESC), keeping paid services whose
- * payment actually moved money (PAID / REFUNDED). Filtering and paging happen on the client.
- *
- * TODO(api): an admin payment-orders list (`GET /api/admin/payment-orders` with paidAt, amount
- * actually charged after coupon/credit, platform fee and payment-status filter, server paging) is
- * needed; bookings only expose the list price, not what PayOS collected.
+ * nào, với mentor nào, có dùng mã giảm giá không. Data loading/matching lives in
+ * `revenueTransactions.ts`; filtering and paging happen on the client.
  */
 
 'use client';
@@ -20,21 +14,16 @@ import {
   adminListStyles as list,
 } from '@/components/domain/admin/AdminListControls';
 import { AdminTableState } from '@/components/domain/admin/AdminTableState';
-import type { AdminBooking } from '@/models/admin';
-import { adminRepo } from '@/repositories/adminRepo';
 import { getPaymentStatusClass, getPaymentStatusLabel } from '@/views/admin/AdminBookingsView';
-import { Search } from 'lucide-react';
+import { Search, Ticket } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatCount, formatScoinAsVnd } from './revenue.helpers';
+import { loadRevenueTransactions, type RevenueTransactionsData } from './revenueTransactions';
 
-const FETCH_PAGE_SIZE = 100;
-/** Safety cap: 10 × 100 most recent bookings. */
-const MAX_FETCH_PAGES = 10;
 const TABLE_PAGE_SIZE = 10;
 const COLUMN_COUNT = 5;
-const MONEY_MOVED_STATUSES = ['PAID', 'REFUNDED'];
 
-type StatusFilter = 'ALL' | 'PAID' | 'REFUNDED';
+type StatusFilter = 'ALL' | 'PAID' | 'COUPON' | 'REFUNDED';
 
 const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
   hour: '2-digit',
@@ -51,50 +40,25 @@ function formatDateTime(value?: string | null) {
   return Number.isNaN(date.getTime()) ? '—' : dateTimeFormatter.format(date);
 }
 
-/** What the mentee was charged before coupon/credit (surcharge included). */
-function getBookingAmount(booking: AdminBooking) {
-  return booking.servicePriceWithSurchargeScoin ?? booking.servicePriceScoinSnapshot ?? 0;
-}
-
 function normalize(value: string | null | undefined) {
   return (value ?? '').toLocaleLowerCase('vi-VN').normalize('NFD').replace(/\p{M}/gu, '');
 }
 
-async function fetchPaidBookings() {
-  const result: AdminBooking[] = [];
-  for (let page = 0; page < MAX_FETCH_PAGES; page += 1) {
-    const response = await adminRepo.getBookings({
-      page,
-      size: FETCH_PAGE_SIZE,
-      sortBy: 'createdAt',
-      direction: 'DESC',
-    });
-    const content = Array.isArray(response?.content) ? response.content : [];
-    result.push(
-      ...content.filter(
-        (booking) =>
-          !booking.serviceIsFreeSnapshot && MONEY_MOVED_STATUSES.includes(booking.paymentStatus),
-      ),
-    );
-    if (response?.last !== false || !content.length) break;
-  }
-  return result;
-}
+type LoadState =
+  { status: 'loading' } | { status: 'error' } | ({ status: 'ready' } & RevenueTransactionsData);
 
 export function RevenueTransactionsPanel() {
-  const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
-  const [bookings, setBookings] = useState<AdminBooking[]>([]);
-  const [status, setStatus] = useState<StatusFilter>('ALL');
+  const [state, setState] = useState<LoadState>({ status: 'loading' });
+  const [filter, setFilter] = useState<StatusFilter>('ALL');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
 
   const load = useCallback(async () => {
-    setState('loading');
+    setState({ status: 'loading' });
     try {
-      setBookings(await fetchPaidBookings());
-      setState('ready');
+      setState({ status: 'ready', ...(await loadRevenueTransactions()) });
     } catch {
-      setState('error');
+      setState({ status: 'error' });
     }
   }, []);
 
@@ -102,35 +66,45 @@ export function RevenueTransactionsPanel() {
     void load();
   }, [load]);
 
+  const transactions = useMemo(() => (state.status === 'ready' ? state.transactions : []), [state]);
+  const ready = state.status === 'ready';
+
   const counts = useMemo(
     () => ({
-      ALL: bookings.length,
-      PAID: bookings.filter((booking) => booking.paymentStatus === 'PAID').length,
-      REFUNDED: bookings.filter((booking) => booking.paymentStatus === 'REFUNDED').length,
+      ALL: transactions.length,
+      PAID: transactions.filter((tx) => tx.booking.paymentStatus === 'PAID').length,
+      COUPON: transactions.filter((tx) => tx.coupon).length,
+      REFUNDED: transactions.filter((tx) => tx.booking.paymentStatus === 'REFUNDED').length,
     }),
-    [bookings],
+    [transactions],
   );
 
   const filtered = useMemo(() => {
     const term = normalize(search.trim());
-    return bookings.filter((booking) => {
-      if (status !== 'ALL' && booking.paymentStatus !== status) return false;
+    return transactions.filter((tx) => {
+      if (filter === 'COUPON' && !tx.coupon) return false;
+      if ((filter === 'PAID' || filter === 'REFUNDED') && tx.booking.paymentStatus !== filter) {
+        return false;
+      }
       if (!term) return true;
-      return [booking.menteeDisplayName, booking.mentorDisplayName, booking.serviceTitle].some(
-        (field) => normalize(field).includes(term),
-      );
+      return [
+        tx.booking.menteeDisplayName,
+        tx.booking.mentorDisplayName,
+        tx.booking.serviceTitle,
+        tx.coupon?.code,
+      ].some((field) => normalize(field).includes(term));
     });
-  }, [bookings, search, status]);
+  }, [transactions, search, filter]);
 
-  const totalAmount = filtered
-    .filter((booking) => booking.paymentStatus === 'PAID')
-    .reduce((sum, booking) => sum + getBookingAmount(booking), 0);
+  const paid = filtered.filter((tx) => tx.booking.paymentStatus === 'PAID');
+  const totalCollected = paid.reduce((sum, tx) => sum + tx.amountPaid, 0);
+  const totalDiscount = paid.reduce((sum, tx) => sum + (tx.coupon?.discount ?? 0), 0);
   const totalPages = Math.ceil(filtered.length / TABLE_PAGE_SIZE);
   const currentPage = Math.min(page, Math.max(0, totalPages - 1));
   const rows = filtered.slice(currentPage * TABLE_PAGE_SIZE, (currentPage + 1) * TABLE_PAGE_SIZE);
 
-  const changeStatus = (value: StatusFilter) => {
-    setStatus(value);
+  const changeFilter = (value: StatusFilter) => {
+    setFilter(value);
     setPage(0);
   };
 
@@ -142,27 +116,20 @@ export function RevenueTransactionsPanel() {
             Lịch sử giao dịch
           </h2>
           <p className="admin-revenue-transactions-sub">
-            Ai đã thanh toán, bao nhiêu tiền, cho buổi học nào. Mới nhất ở trên cùng.
+            Ai đã thanh toán, thực trả bao nhiêu, cho buổi học nào. Mới nhất ở trên cùng.
           </p>
         </div>
       </header>
 
       <AdminListTabs
-        ariaLabel="Lọc theo trạng thái thanh toán"
-        value={status}
-        onChange={changeStatus}
+        ariaLabel="Lọc giao dịch"
+        value={filter}
+        onChange={changeFilter}
         tabs={[
-          { value: 'ALL', label: 'Tất cả', count: state === 'ready' ? counts.ALL : undefined },
-          {
-            value: 'PAID',
-            label: 'Đã thanh toán',
-            count: state === 'ready' ? counts.PAID : undefined,
-          },
-          {
-            value: 'REFUNDED',
-            label: 'Đã hoàn tiền',
-            count: state === 'ready' ? counts.REFUNDED : undefined,
-          },
+          { value: 'ALL', label: 'Tất cả', count: ready ? counts.ALL : undefined },
+          { value: 'PAID', label: 'Đã thanh toán', count: ready ? counts.PAID : undefined },
+          { value: 'COUPON', label: 'Có dùng mã', count: ready ? counts.COUPON : undefined },
+          { value: 'REFUNDED', label: 'Đã hoàn tiền', count: ready ? counts.REFUNDED : undefined },
         ]}
       />
 
@@ -177,16 +144,23 @@ export function RevenueTransactionsPanel() {
               setSearch(event.target.value);
               setPage(0);
             }}
-            placeholder="Tìm theo tên mentee, mentor hoặc dịch vụ"
+            placeholder="Tìm theo mentee, mentor, dịch vụ hoặc mã giảm giá"
           />
         </label>
-        {state === 'ready' && (
+        {ready && (
           <p className="admin-revenue-transactions-total" aria-live="polite">
-            {formatCount(filtered.length)} giao dịch · Đã thu{' '}
-            <strong>{formatScoinAsVnd(totalAmount)}</strong>
+            {formatCount(filtered.length)} giao dịch · Thực thu{' '}
+            <strong>{formatScoinAsVnd(totalCollected)}</strong>
+            {totalDiscount > 0 && <> · Đã giảm {formatScoinAsVnd(totalDiscount)}</>}
           </p>
         )}
       </div>
+
+      {state.status === 'ready' && !state.couponsLoaded && (
+        <p className="admin-revenue-transactions-warning" role="status">
+          Chưa tải được dữ liệu mã giảm giá, nên số tiền đang là giá gốc. Tải lại trang để thử lại.
+        </p>
+      )}
 
       <div className="admin-table-wrap">
         <table className="admin-revenue-transactions-table">
@@ -195,26 +169,26 @@ export function RevenueTransactionsPanel() {
               <th>Người thanh toán</th>
               <th>Mentor nhận</th>
               <th>Buổi học</th>
-              <th className="is-numeric">Số tiền</th>
+              <th className="is-numeric">Thực trả</th>
               <th>Trạng thái</th>
             </tr>
           </thead>
           <tbody>
-            {state === 'loading' ? (
+            {state.status === 'loading' ? (
               <AdminTableState
                 variant="loading"
                 colSpan={COLUMN_COUNT}
                 skeletonRows={5}
                 title="Đang tải giao dịch…"
               />
-            ) : state === 'error' ? (
+            ) : state.status === 'error' ? (
               <AdminTableState
                 variant="error"
                 colSpan={COLUMN_COUNT}
                 title="Không tải được lịch sử giao dịch"
                 onRetry={() => void load()}
               />
-            ) : !bookings.length ? (
+            ) : !transactions.length ? (
               <AdminTableState
                 variant="empty"
                 colSpan={COLUMN_COUNT}
@@ -228,11 +202,11 @@ export function RevenueTransactionsPanel() {
                 searchTerm={search.trim() || undefined}
                 onClearFilters={() => {
                   setSearch('');
-                  changeStatus('ALL');
+                  changeFilter('ALL');
                 }}
               />
             ) : (
-              rows.map((booking) => (
+              rows.map(({ booking, listPrice, coupon, amountPaid }) => (
                 <tr key={booking.bookingId}>
                   <td>
                     <AdminPersonCell
@@ -263,14 +237,28 @@ export function RevenueTransactionsPanel() {
                   </td>
                   <td className="is-numeric">
                     <strong className="admin-revenue-tx-amount">
-                      {formatScoinAsVnd(getBookingAmount(booking))}
+                      {formatScoinAsVnd(amountPaid)}
                     </strong>
+                    {coupon && (
+                      <>
+                        <small className="admin-revenue-tx-original">
+                          <span className="sr-only">Giá gốc </span>
+                          <s>{formatScoinAsVnd(listPrice)}</s>
+                        </small>
+                        <span className="admin-revenue-tx-coupon">
+                          <Ticket aria-hidden="true" />
+                          {coupon.code} −{formatScoinAsVnd(coupon.discount)}
+                        </span>
+                      </>
+                    )}
                   </td>
                   <td>
                     <span
                       className={`admin-booking-payment ${getPaymentStatusClass(booking.paymentStatus)}`}
                     >
-                      {getPaymentStatusLabel(booking.paymentStatus)}
+                      {amountPaid === 0 && booking.paymentStatus === 'PAID'
+                        ? 'Miễn phí nhờ mã'
+                        : getPaymentStatusLabel(booking.paymentStatus)}
                     </span>
                   </td>
                 </tr>
@@ -280,7 +268,7 @@ export function RevenueTransactionsPanel() {
         </table>
       </div>
 
-      {state === 'ready' && totalPages > 1 && (
+      {ready && totalPages > 1 && (
         <div className="admin-revenue-transactions-footer">
           <span>
             Hiển thị {formatCount(currentPage * TABLE_PAGE_SIZE + 1)}–
@@ -291,8 +279,12 @@ export function RevenueTransactionsPanel() {
         </div>
       )}
       <p className="admin-revenue-transactions-note">
-        Số tiền là giá buổi học mentee phải trả (đã gồm phụ phí nền tảng), chưa trừ mã giảm giá hoặc
-        số dư S-coin đã dùng.
+        Thực trả = giá buổi học (đã gồm phụ phí nền tảng) trừ mã giảm giá. Mã giảm giá được ghép với
+        buổi học theo người dùng mã và thời điểm thanh toán. Phần trả bằng số dư S-coin hoặc ưu đãi
+        chiến dịch chưa có dữ liệu chi tiết nên chưa được trừ.
+        {state.status === 'ready' && state.unmatchedRedemptions > 0
+          ? ` Có ${formatCount(state.unmatchedRedemptions)} lượt dùng mã chưa ghép được với buổi học nào.`
+          : ''}
       </p>
     </section>
   );
