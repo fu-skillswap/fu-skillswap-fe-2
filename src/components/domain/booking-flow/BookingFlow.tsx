@@ -349,7 +349,7 @@ export function BookingFlow({
     const payload: CreateBookingRequest = {
       slotId,
       serviceId: service.id,
-      // Sent as the BE returned it (UTC instant); mentorRepo.createBookingRequest keeps the trailing "Z".
+      // Sent exactly as the BE returned it (same time the calendar shows); no timezone conversion.
       startAt: rawStartAt,
       learningGoalTitle: learningGoalTitle.trim(),
       learningGoalDescription: learningGoalDescription.trim(),
