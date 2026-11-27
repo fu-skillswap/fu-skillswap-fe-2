@@ -4,6 +4,7 @@
  */
 
 import { apiClient } from '@/models/apiClient';
+import { newIdempotencyKey } from '@/repositories/bookingRepo';
 import type {
   MentorPayoutProfileResponse,
   MentorPayoutProfileUpsertRequest,
@@ -34,9 +35,17 @@ export const walletRepo = {
     }),
   listPayoutRequests: (): Promise<PayoutRequestResponse[]> =>
     apiClient<PayoutRequestResponse[]>('/api/mentor/payout-requests'),
-  createPayoutRequest: (data: PayoutRequestCreateRequest): Promise<PayoutRequestResponse> =>
+  /**
+   * The BE rejects this call without an `Idempotency-Key` (400 IDEMPOTENCY_KEY_REQUIRED). Reuse the
+   * same key when retrying the same request so a slow network never creates two withdrawals.
+   */
+  createPayoutRequest: (
+    data: PayoutRequestCreateRequest,
+    idempotencyKey: string = newIdempotencyKey(),
+  ): Promise<PayoutRequestResponse> =>
     apiClient<PayoutRequestResponse>('/api/mentor/payout-requests', {
       method: 'POST',
       data,
+      headers: { 'Idempotency-Key': idempotencyKey },
     }),
 };
