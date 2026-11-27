@@ -18,6 +18,7 @@ import type { NavSection } from '@/components/domain/notifications/notificationT
 import { useMarkSectionSeen, useNavBadges } from '@/components/domain/notifications/useNavBadges';
 import {
   CalendarDays,
+  ReceiptText,
   ChevronDown,
   CircleHelp,
   Crown,
@@ -321,6 +322,21 @@ export function MenteeHeader({ title, locale, user, onToggleSidebar }: MenteeHea
                       aria-hidden="true"
                     />
                     Lịch sử booking
+                  </button>
+                  <button
+                    type="button"
+                    className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border-none bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-text-secondary transition-colors hover:bg-surface-subtle hover:text-text-main"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      router.push(`/${locale}/invoices`);
+                    }}
+                    role="menuitem"
+                  >
+                    <ReceiptText
+                      className="h-4.5 w-4.5 shrink-0 text-text-muted"
+                      aria-hidden="true"
+                    />
+                    Hóa đơn thanh toán
                   </button>
                 </div>
 

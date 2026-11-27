@@ -597,3 +597,25 @@ body {
   line-height: 20px;
   pointer-events: none;
 }
+
+/* Printing a receipt: only the element marked data-print-root is printed (no app shell). */
+@media print {
+  body:has([data-print-root]) * {
+    visibility: hidden;
+  }
+
+  [data-print-root],
+  [data-print-root] * {
+    visibility: visible;
+  }
+
+  [data-print-root] {
+    position: absolute;
+    inset: 0 0 auto;
+    margin: 0;
+    border: 0 !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

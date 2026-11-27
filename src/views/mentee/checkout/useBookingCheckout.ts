@@ -7,6 +7,7 @@
 'use client';
 
 import { formatScoin, mapCouponError } from '@/lib/coupon';
+import { savePendingPayment } from '@/lib/pendingPayment';
 import { ApiClientError } from '@/models/apiClient';
 import type { MentorBookingResponse, PaymentCheckoutResponse } from '@/models/auth';
 import type { CheckoutPreviewResponse, UserCouponView } from '@/models/coupon';
@@ -199,8 +200,9 @@ export function useBookingCheckout(locale: string, bookingId: string) {
   const handleCheckoutResult = (result: PaymentCheckoutResponse) => {
     const status = String(result.status ?? '').toUpperCase();
     if (status === 'PAID') {
+      // Fully covered by coupon/credit: no PayOS step, show the receipt straight away.
       showSuccess('Đã thanh toán. Buổi học đã được giữ chỗ.');
-      router.push(bookingsHref);
+      router.push(`/${locale}/payment/return?bookingId=${encodeURIComponent(bookingId)}`);
       return;
     }
     if (status === 'FAILED' || status === 'EXPIRED' || status === 'CANCELLED') {
@@ -217,6 +219,8 @@ export function useBookingCheckout(locale: string, bookingId: string) {
     // The URL is temporary; it is never stored.
     if (result.checkoutUrl) {
       setPayState('redirecting');
+      // PayOS only returns its orderCode, so remember which booking the return page must check.
+      savePendingPayment(bookingId, result.orderCode);
       window.location.assign(result.checkoutUrl);
       return;
     }

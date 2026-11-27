@@ -626,6 +626,8 @@ export interface PaymentCheckoutResponse {
   remainingPayableScoin?: number;
   remainingPayableVnd?: number;
   status: PaymentOrderStatus | (string & {});
+  /** PayOS order code (Swagger marks it internal); used to match the gateway's return URL. */
+  providerOrderCode?: string | null;
   checkoutUrl?: string | null;
   /** Compatibility field only — prefer `checkoutUrl`. */
   paymentLink?: string | null;
