@@ -295,6 +295,8 @@ export interface AdminBookingsResponse {
 }
 
 export interface AdminBookingsQuery {
+  /** Raw booking status (REQUESTED, CONFIRMED, COMPLETED, …). */
+  status?: string;
   page?: number;
   size?: number;
   sortBy?: string;
