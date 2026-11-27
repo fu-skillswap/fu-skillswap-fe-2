@@ -56,7 +56,7 @@ export function AiOverviewView() {
           <SpendCard
             budget={budget}
             usage={usage}
-            costHref={`${adminRoot}/ai/cost`}
+            costHref={`${adminRoot}/ai-knowledge?tab=cost#cost-method`}
             onRetry={() => void reload()}
           />
           <FeatureRows
