@@ -24,6 +24,11 @@ export const mentorBookingRepo = {
     apiClient<MentorBookingPageResponse>(
       '/api/me/bookings?role=MENTOR&page=0&size=100&sortBy=createdAt&direction=DESC',
     ),
+  /** Total bookings for one side only (size=1 page, read `totalElements`). */
+  count: (role: 'MENTOR' | 'MENTEE'): Promise<number> =>
+    apiClient<MentorBookingPageResponse>(`/api/me/bookings?role=${role}&page=0&size=1`).then(
+      (page) => page.totalElements ?? 0,
+    ),
   detail: (bookingId: string): Promise<MentorBookingResponse> =>
     apiClient<MentorBookingResponse>(`/api/me/bookings/${bookingId}`),
   accept: (bookingId: string, data: AcceptMentorBookingRequest): Promise<MentorBookingResponse> =>
